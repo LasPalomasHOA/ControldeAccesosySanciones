@@ -105,6 +105,12 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Nombre y correo son obligatorios' });
     }
 
+    const emailNormalizado = correo.trim().toLowerCase();
+    const existente = await db.Usuario.findOne({ where: { correo: emailNormalizado } });
+    if (existente) {
+      return res.status(409).json({ error: `El correo "${emailNormalizado}" ya está registrado en el sistema.` });
+    }
+
     let finalIdRol = id_rol;
     if (!finalIdRol && rol) {
       const rolEncontrado = await db.Rol.findOne({ where: { nombre: rol.toUpperCase() } });
@@ -118,8 +124,8 @@ router.post('/', async (req, res) => {
     const nuevo = await db.Usuario.create({
       id_empresa: id_empresa || null,
       id_rol: finalIdRol,
-      nombre,
-      correo,
+      nombre: nombre.trim(),
+      correo: emailNormalizado,
       password_hash: hash,
       activo: activo !== undefined ? activo : true
     });

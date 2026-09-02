@@ -60,7 +60,17 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
-    return res.json();
+    const text = await res.text();
+    let json: any = {};
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = { error: text || `Error HTTP ${res.status}` };
+    }
+    if (!res.ok) {
+      throw new Error(json.error || json.details || `Error del servidor (${res.status})`);
+    }
+    return json;
   },
   async updateUsuario(id: string | number, data: any) {
     const res = await fetch(`${API_BASE_URL}/usuarios/${id}`, {
