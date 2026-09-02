@@ -263,9 +263,9 @@ function IconDownload({ className = "w-4 h-4" }: { className?: string }) {
 
 type UserRole = "admin" | "supervisor" | "contratista" | "caseta";
 type PortalScreen = "reglamento" | "dashboard" | "alta" | "trabajadores" | "corbatin" | "sanciones";
-type SupervisorTab = "bandeja" | "apelaciones" | "proveedores" | "guardias" | "historial";
-type AdminTab = "supervisores" | "auditoria";
-type CasetaTab = "registro" | "bitacora";
+type SupervisorTab = "bandeja" | "apelaciones" | "proveedores" | "guardias" | "historial" | "corbatines";
+type AdminTab = "supervisores" | "auditoria" | "corbatines";
+type CasetaTab = "registro" | "bitacora" | "corbatines";
 
 interface Trabajador {
   id_trabajador: number | string;
@@ -873,6 +873,27 @@ export default function App() {
   const [portalScreen, setPortalScreen] = useState<PortalScreen>("dashboard");
   const [casetaTab, setCasetaTab] = useState<CasetaTab>("registro");
 
+  // Estado para búsqueda y filtros del módulo de Corbatines PDF
+  const [corbatinesSearchTerm, setCorbatinesSearchTerm] = useState("");
+  const [corbatinesEmpresaFilter, setCorbatinesEmpresaFilter] = useState("all");
+
+  // Sincronización con la dirección URL del navegador (/corbatines, /corbatin, /corbatines-pdf)
+  useEffect(() => {
+    const handleUrlRoute = () => {
+      const path = window.location.pathname.toLowerCase();
+      if (path.includes("corbatin")) {
+        setAdminTab("corbatines");
+        setSupervisorTab("corbatines");
+        setPortalScreen("corbatin");
+        setCasetaTab("corbatines");
+      }
+    };
+
+    handleUrlRoute();
+    window.addEventListener("popstate", handleUrlRoute);
+    return () => window.removeEventListener("popstate", handleUrlRoute);
+  }, []);
+
   const [users, setUsers] = useState<UserAccount[]>(INITIAL_USERS);
   const [empresas, setEmpresas] = useState<Empresa[]>(INITIAL_EMPRESAS);
   const [vehicles, setVehicles] = useState<Vehicle[]>(INITIAL_VEHICLES);
@@ -1162,7 +1183,13 @@ export default function App() {
         };
 
         setCurrentUser(loggedUser);
-        if (roleMapped === "contratista" && !loggedUser.hasAcceptedReglamento) {
+        const isCorbatinUrl = typeof window !== "undefined" && window.location.pathname.toLowerCase().includes("corbatin");
+        if (isCorbatinUrl) {
+          setAdminTab("corbatines");
+          setSupervisorTab("corbatines");
+          setPortalScreen("corbatin");
+          setCasetaTab("corbatines");
+        } else if (roleMapped === "contratista" && !loggedUser.hasAcceptedReglamento) {
           setPortalScreen("reglamento");
         } else {
           setPortalScreen("dashboard");
@@ -1184,7 +1211,13 @@ export default function App() {
         return;
       }
       setCurrentUser(found);
-      if (found.role === "contratista" && !found.hasAcceptedReglamento) {
+      const isCorbatinUrl = typeof window !== "undefined" && window.location.pathname.toLowerCase().includes("corbatin");
+      if (isCorbatinUrl) {
+        setAdminTab("corbatines");
+        setSupervisorTab("corbatines");
+        setPortalScreen("corbatin");
+        setCasetaTab("corbatines");
+      } else if (found.role === "contratista" && !found.hasAcceptedReglamento) {
         setPortalScreen("reglamento");
       } else {
         setPortalScreen("dashboard");
@@ -1207,7 +1240,13 @@ export default function App() {
     if (found) {
       setCurrentUser(found);
       setLoginError("");
-      if (found.role === "contratista" && !found.hasAcceptedReglamento) {
+      const isCorbatinUrl = typeof window !== "undefined" && window.location.pathname.toLowerCase().includes("corbatin");
+      if (isCorbatinUrl) {
+        setAdminTab("corbatines");
+        setSupervisorTab("corbatines");
+        setPortalScreen("corbatin");
+        setCasetaTab("corbatines");
+      } else if (found.role === "contratista" && !found.hasAcceptedReglamento) {
         setPortalScreen("reglamento");
       } else {
         setPortalScreen("dashboard");
@@ -2162,6 +2201,24 @@ export default function App() {
                     </div>
                   </button>
                 </div>
+
+                <div className="mt-4 pt-3 border-t border-slate-200">
+                  <button
+                    onClick={() => {
+                      handleQuickLogin("contratista");
+                      setPortalScreen("corbatin");
+                      setAdminTab("corbatines");
+                      setSupervisorTab("corbatines");
+                      if (typeof window !== "undefined") {
+                        window.history.pushState(null, '', '/corbatines');
+                      }
+                    }}
+                    className="w-full py-2.5 px-3 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-800 text-xs font-bold hover:bg-emerald-100 transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                  >
+                    <IconFileText className="w-4 h-4 text-emerald-700" />
+                    <span>Acceso Directo: Descargar e Imprimir Corbatines PDF (/corbatines)</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -2173,6 +2230,163 @@ export default function App() {
       </div>
     );
   }
+
+  // ─── Componente Reutilizable de Generación y Descarga de Corbatines PDF ────
+  const renderCorbatinesSection = () => {
+    const isContratista = currentUser?.role === "contratista";
+    
+    // Filtrar vehículos: Si es contratista, solo su empresa; si es Admin/Supervisor/Caseta, permitir ver todos
+    let availableVehicles = isContratista && currentUser?.empresaNombre
+      ? vehicles.filter(v => v.empresaNombre === currentUser.empresaNombre)
+      : vehicles;
+
+    if (!isContratista && corbatinesEmpresaFilter !== "all") {
+      availableVehicles = availableVehicles.filter(v => v.empresaNombre === corbatinesEmpresaFilter);
+    }
+
+    if (corbatinesSearchTerm.trim()) {
+      const q = corbatinesSearchTerm.toLowerCase();
+      availableVehicles = availableVehicles.filter(v =>
+        v.placas.toLowerCase().includes(q) ||
+        v.marca.toLowerCase().includes(q) ||
+        v.modelo.toLowerCase().includes(q) ||
+        v.empresaNombre.toLowerCase().includes(q) ||
+        v.corbatinNum.toLowerCase().includes(q) ||
+        (v.conductor && v.conductor.toLowerCase().includes(q))
+      );
+    }
+
+    const currentVeh = availableVehicles.find(v => v.id === selectedVehicleId) || availableVehicles[0];
+
+    return (
+      <div>
+        <PageHero
+          img={IMG_PARK}
+          title="Descarga e Impresión de Corbatines PDF"
+          subtitle="Visualiza y descarga el corbatín físico con código QR para colocar en el retrovisor"
+        />
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Panel Izquierdo: Selección y Filtros */}
+            <div className="w-full lg:w-80 shrink-0 no-print space-y-4">
+              <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
+                <div className="px-5 py-4 border-b bg-slate-50 space-y-3" style={{ borderColor: "var(--color-border)" }}>
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-bold text-sm text-slate-800 flex items-center gap-2">
+                      <IconFileText className="w-4 h-4 text-[#0D6E5F]" />
+                      <span>Seleccionar Vehículo</span>
+                    </h2>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
+                      {availableVehicles.length} unidad{availableVehicles.length !== 1 ? 'es' : ''}
+                    </span>
+                  </div>
+
+                  {/* Filtro de empresa para Administrador / Supervisor */}
+                  {!isContratista && empresas.length > 0 && (
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 mb-1">Empresa Contratista:</label>
+                      <select
+                        value={corbatinesEmpresaFilter}
+                        onChange={(e) => setCorbatinesEmpresaFilter(e.target.value)}
+                        className="w-full text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-[#0D6E5F]"
+                      >
+                        <option value="all">Todas las empresas ({empresas.length})</option>
+                        {empresas.map((emp) => (
+                          <option key={emp.id} value={emp.razonSocial}>
+                            {emp.razonSocial}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Buscador de vehículo */}
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Buscar por placa, corbatín, marca..."
+                      value={corbatinesSearchTerm}
+                      onChange={(e) => setCorbatinesSearchTerm(e.target.value)}
+                      className="w-full text-xs px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                    />
+                  </div>
+                </div>
+
+                <div className="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
+                  {availableVehicles.length === 0 ? (
+                    <div className="p-6 text-center text-xs text-slate-500">
+                      No se encontraron vehículos registrados con los criterios seleccionados.
+                    </div>
+                  ) : (
+                    availableVehicles.map((v) => (
+                      <button
+                        key={v.id}
+                        onClick={() => setSelectedVehicleId(v.id)}
+                        className={`w-full text-left px-5 py-3.5 transition-all hover:bg-slate-50 cursor-pointer ${
+                          currentVeh?.id === v.id ? "bg-[#E6F4F1] border-l-4 border-[#0D6E5F]" : ""
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-sm text-slate-800">{v.marca} {v.modelo}</span>
+                          <span className="text-xs font-mono font-bold text-[#0D6E5F]">#{v.corbatinNum}</span>
+                        </div>
+                        <div className="text-xs text-slate-500 font-mono mt-0.5 flex items-center justify-between">
+                          <span>{v.placas}</span>
+                          <span className="text-[10px] text-slate-400 truncate max-w-[120px]">{v.empresaNombre}</span>
+                        </div>
+                        <div className="mt-1.5"><StatusBadge status={v.status} /></div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Panel Derecho: Vista Previa y Descarga */}
+            <div className="flex-1 space-y-4">
+              {currentVeh ? (
+                <>
+                  <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" id="corbatin-container" style={{ borderColor: "var(--color-border)" }}>
+                    <div className="px-5 py-4 border-b bg-slate-50 flex items-center justify-between no-print" style={{ borderColor: "var(--color-border)" }}>
+                      <div>
+                        <h2 className="font-bold text-sm text-slate-800">Vista Previa — Corbatín #{currentVeh.corbatinNum}</h2>
+                        <p className="text-xs text-slate-500">{currentVeh.marca} {currentVeh.modelo} · {currentVeh.placas} ({currentVeh.empresaNombre})</p>
+                      </div>
+                      <StatusBadge status={currentVeh.status} />
+                    </div>
+                    <div className="p-4 sm:p-6 overflow-x-auto bg-slate-100 flex justify-center">
+                      <CorbatinDocument vehicle={currentVeh} />
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-3 no-print">
+                    <button
+                      onClick={() => handleDescargarPDFDirecto(currentVeh)}
+                      disabled={isGeneratingPDF}
+                      className="px-6 py-2.5 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] flex items-center gap-2 cursor-pointer shadow-md transition-all disabled:opacity-50"
+                      style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
+                    >
+                      <IconFileText className="w-4 h-4" />
+                      <span>{isGeneratingPDF ? "Generando Archivo PDF..." : "Descargar Corbatín en PDF (.pdf)"}</span>
+                    </button>
+                    <button
+                      onClick={() => window.print()}
+                      className="px-6 py-2.5 rounded-xl text-sm font-semibold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-sm"
+                    >
+                      Imprimir Directo
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 text-slate-500">
+                  Selecciona un vehículo para previsualizar y descargar su corbatín.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const apelacionesPendientesCount = sanciones.filter(s => s.status === "En Apelación").length;
 
@@ -2189,16 +2403,23 @@ export default function App() {
               {currentUser.role === "admin" && (
                 <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                   <button
-                    onClick={() => setAdminTab("supervisores")}
+                    onClick={() => { setAdminTab("supervisores"); if (typeof window !== "undefined") window.history.pushState(null, '', '/'); }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${adminTab === "supervisores" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Supervisores HOA ({users.filter(u => u.role === "supervisor").length})
                   </button>
                   <button
-                    onClick={() => setAdminTab("auditoria")}
+                    onClick={() => { setAdminTab("auditoria"); if (typeof window !== "undefined") window.history.pushState(null, '', '/'); }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${adminTab === "auditoria" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Auditoría Global & Claves
+                  </button>
+                  <button
+                    onClick={() => { setAdminTab("corbatines"); if (typeof window !== "undefined") window.history.pushState(null, '', '/corbatines'); }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${adminTab === "corbatines" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                  >
+                    <IconFileText className="w-3.5 h-3.5" />
+                    <span>Corbatines PDF</span>
                   </button>
                 </div>
               )}
@@ -2206,7 +2427,7 @@ export default function App() {
               {currentUser.role === "supervisor" && (
                 <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                   <button
-                    onClick={() => setSupervisorTab("bandeja")}
+                    onClick={() => { setSupervisorTab("bandeja"); if (typeof window !== "undefined") window.history.pushState(null, '', '/'); }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${supervisorTab === "bandeja" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     <span>Infracciones</span>
@@ -2215,7 +2436,7 @@ export default function App() {
                     </span>
                   </button>
                   <button
-                    onClick={() => setSupervisorTab("apelaciones")}
+                    onClick={() => { setSupervisorTab("apelaciones"); if (typeof window !== "undefined") window.history.pushState(null, '', '/'); }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${supervisorTab === "apelaciones" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     <span>Bandeja de Apelaciones</span>
@@ -2226,22 +2447,29 @@ export default function App() {
                     )}
                   </button>
                   <button
-                    onClick={() => setSupervisorTab("proveedores")}
+                    onClick={() => { setSupervisorTab("proveedores"); if (typeof window !== "undefined") window.history.pushState(null, '', '/'); }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${supervisorTab === "proveedores" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Proveedores ({empresas.length})
                   </button>
                   <button
-                    onClick={() => setSupervisorTab("guardias")}
+                    onClick={() => { setSupervisorTab("guardias"); if (typeof window !== "undefined") window.history.pushState(null, '', '/'); }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${supervisorTab === "guardias" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Guardias ({users.filter(u => u.role === "caseta").length})
                   </button>
                   <button
-                    onClick={() => setSupervisorTab("historial")}
+                    onClick={() => { setSupervisorTab("historial"); if (typeof window !== "undefined") window.history.pushState(null, '', '/'); }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${supervisorTab === "historial" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Historial
+                  </button>
+                  <button
+                    onClick={() => { setSupervisorTab("corbatines"); if (typeof window !== "undefined") window.history.pushState(null, '', '/corbatines'); }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${supervisorTab === "corbatines" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                  >
+                    <IconFileText className="w-3.5 h-3.5" />
+                    <span>Corbatines PDF</span>
                   </button>
                 </div>
               )}
@@ -2249,19 +2477,19 @@ export default function App() {
               {currentUser.role === "contratista" && (
                 <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                   <button
-                    onClick={() => setPortalScreen("dashboard")}
+                    onClick={() => { setPortalScreen("dashboard"); if (typeof window !== "undefined") window.history.pushState(null, '', '/'); }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${portalScreen === "dashboard" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Flotilla
                   </button>
                   <button
-                    onClick={() => setPortalScreen("alta")}
+                    onClick={() => { setPortalScreen("alta"); if (typeof window !== "undefined") window.history.pushState(null, '', '/'); }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${portalScreen === "alta" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     + Alta Vehículo
                   </button>
                   <button
-                    onClick={() => setPortalScreen("trabajadores")}
+                    onClick={() => { setPortalScreen("trabajadores"); if (typeof window !== "undefined") window.history.pushState(null, '', '/'); }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${portalScreen === "trabajadores" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     <span>Trabajadores</span>
@@ -2270,13 +2498,14 @@ export default function App() {
                     </span>
                   </button>
                   <button
-                    onClick={() => setPortalScreen("corbatin")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${portalScreen === "corbatin" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    onClick={() => { setPortalScreen("corbatin"); if (typeof window !== "undefined") window.history.pushState(null, '', '/corbatines'); }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${portalScreen === "corbatin" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
-                    Corbatines PDF
+                    <IconFileText className="w-3.5 h-3.5" />
+                    <span>Corbatines PDF</span>
                   </button>
                   <button
-                    onClick={() => setPortalScreen("sanciones")}
+                    onClick={() => { setPortalScreen("sanciones"); if (typeof window !== "undefined") window.history.pushState(null, '', '/'); }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${portalScreen === "sanciones" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Sanciones & Apelaciones {sanciones.filter(s => !currentUser.empresaNombre || s.empresaNombre === currentUser.empresaNombre).length > 0 ? `(${sanciones.filter(s => !currentUser.empresaNombre || s.empresaNombre === currentUser.empresaNombre).length})` : ""}
@@ -2287,16 +2516,23 @@ export default function App() {
               {currentUser.role === "caseta" && (
                 <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                   <button
-                    onClick={() => setCasetaTab("registro")}
+                    onClick={() => { setCasetaTab("registro"); if (typeof window !== "undefined") window.history.pushState(null, '', '/'); }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${casetaTab === "registro" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     + Registro de Entrada
                   </button>
                   <button
-                    onClick={() => setCasetaTab("bitacora")}
+                    onClick={() => { setCasetaTab("bitacora"); if (typeof window !== "undefined") window.history.pushState(null, '', '/'); }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${casetaTab === "bitacora" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Bitácora ({bitacora.filter(b => b.estado === "Dentro").length} dentro)
+                  </button>
+                  <button
+                    onClick={() => { setCasetaTab("corbatines"); if (typeof window !== "undefined") window.history.pushState(null, '', '/corbatines'); }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${casetaTab === "corbatines" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                  >
+                    <IconFileText className="w-3.5 h-3.5" />
+                    <span>Corbatines PDF</span>
                   </button>
                 </div>
               )}
@@ -2450,6 +2686,8 @@ export default function App() {
                   </div>
                 </div>
               )}
+
+              {adminTab === "corbatines" && renderCorbatinesSection()}
             </div>
           </main>
         )}
@@ -2788,6 +3026,8 @@ export default function App() {
                   </div>
                 </div>
               )}
+
+              {supervisorTab === "corbatines" && renderCorbatinesSection()}
             </div>
           </main>
         )}
@@ -3445,75 +3685,7 @@ export default function App() {
             )}
 
 
-            {portalScreen === "corbatin" && (
-              <div>
-                <PageHero img={IMG_PARK} title="Descarga e Impresión de Corbatines PDF" subtitle="Visualiza y descarga el corbatín físico con código QR para colocar en el retrovisor" />
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                  <div className="flex flex-col lg:flex-row gap-6">
-                    <div className="w-full lg:w-72 shrink-0 no-print">
-                      <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
-                        <div className="px-5 py-4 border-b bg-slate-50" style={{ borderColor: "var(--color-border)" }}>
-                          <h2 className="font-bold text-sm text-slate-800">Seleccionar Vehículo</h2>
-                        </div>
-                        <div className="divide-y divide-slate-100">
-                          {vehicles.filter(v => v.empresaNombre === currentUser.empresaNombre).map((v) => (
-                            <button
-                              key={v.id}
-                              onClick={() => setSelectedVehicleId(v.id)}
-                              className={`w-full text-left px-5 py-4 transition-all hover:bg-slate-50 cursor-pointer ${(selectedVehicleId || vehicles[0].id) === v.id ? "bg-[#E6F4F1] border-l-4 border-[#0D6E5F]" : ""
-                                }`}
-                            >
-                              <div className="font-semibold text-sm text-slate-800">{v.marca} {v.modelo}</div>
-                              <div className="text-xs text-slate-500 font-mono mt-0.5">{v.placas} · Corbatín #{v.corbatinNum}</div>
-                              <div className="mt-1.5"><StatusBadge status={v.status} /></div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex-1 space-y-4">
-                      {(() => {
-                        const veh = vehicles.find((v) => v.id === (selectedVehicleId || vehicles[0].id)) || vehicles[0];
-                        return (
-                          <>
-                            <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" id="corbatin-container" style={{ borderColor: "var(--color-border)" }}>
-                              <div className="px-5 py-4 border-b bg-slate-50 flex items-center justify-between no-print" style={{ borderColor: "var(--color-border)" }}>
-                                <div>
-                                  <h2 className="font-bold text-sm text-slate-800">Vista Previa — Corbatín #{veh.corbatinNum}</h2>
-                                  <p className="text-xs text-slate-500">{veh.marca} {veh.modelo} · {veh.placas}</p>
-                                </div>
-                                <StatusBadge status={veh.status} />
-                              </div>
-                              <div className="p-4 sm:p-6 overflow-x-auto bg-slate-100 flex justify-center">
-                                <CorbatinDocument vehicle={veh} />
-                              </div>
-                            </div>
-                            <div className="flex gap-3 no-print">
-                              <button
-                                onClick={() => handleDescargarPDFDirecto(veh)}
-                                disabled={isGeneratingPDF}
-                                className="px-6 py-2.5 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] flex items-center gap-2 cursor-pointer shadow-md transition-all disabled:opacity-50"
-                                style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
-                              >
-                                <IconFileText className="w-4 h-4" />
-                                <span>{isGeneratingPDF ? "Generando Archivo PDF..." : "Descargar Corbatín en PDF (.pdf)"}</span>
-                              </button>
-                              <button
-                                onClick={() => window.print()}
-                                className="px-6 py-2.5 rounded-xl text-sm font-semibold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-sm"
-                              >
-                                Imprimir
-                              </button>
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            {portalScreen === "corbatin" && renderCorbatinesSection()}
 
             {/* SANCIONES & APELACIÓN */}
             {portalScreen === "sanciones" && (
@@ -4197,6 +4369,8 @@ export default function App() {
                   </div>
                 </div>
               )}
+
+              {casetaTab === "corbatines" && renderCorbatinesSection()}
             </div>
           </main>
         )}
