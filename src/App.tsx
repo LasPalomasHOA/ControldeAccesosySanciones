@@ -2187,7 +2187,7 @@ export default function App() {
               <LPLogo size={160} />
             </div>
 
-            <div className="hidden md:flex items-center gap-1">
+            <div className="hidden md:flex items-center gap-1 shrink-0">
               {currentUser.role === "admin" && (
                 <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                   <button
@@ -2249,37 +2249,37 @@ export default function App() {
               )}
 
               {currentUser.role === "contratista" && (
-                <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+                <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-2xl border border-slate-200/80 whitespace-nowrap shrink-0 shadow-xs">
                   <button
                     onClick={() => setPortalScreen("dashboard")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${portalScreen === "dashboard" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${portalScreen === "dashboard" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Flotilla
                   </button>
                   <button
                     onClick={() => setPortalScreen("alta")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${portalScreen === "alta" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${portalScreen === "alta" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     + Alta Vehículo
                   </button>
                   <button
                     onClick={() => setPortalScreen("trabajadores")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${portalScreen === "trabajadores" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${portalScreen === "trabajadores" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     <span>Trabajadores</span>
-                    <span className="px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
+                    <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
                       {trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre && t.activo).length}
                     </span>
                   </button>
                   <button
                     onClick={() => setPortalScreen("corbatin")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${portalScreen === "corbatin" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${portalScreen === "corbatin" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Corbatines PDF
                   </button>
                   <button
                     onClick={() => setPortalScreen("sanciones")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${portalScreen === "sanciones" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${portalScreen === "sanciones" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Sanciones & Apelaciones {sanciones.filter(s => !currentUser.empresaNombre || s.empresaNombre === currentUser.empresaNombre).length > 0 ? `(${sanciones.filter(s => !currentUser.empresaNombre || s.empresaNombre === currentUser.empresaNombre).length})` : ""}
                   </button>
@@ -2304,7 +2304,7 @@ export default function App() {
               )}
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 shrink-0">
               <div className="text-right">
                 <div className="text-xs font-bold text-slate-800 flex items-center justify-end gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
@@ -4413,12 +4413,13 @@ export default function App() {
                 const f = e.currentTarget;
                 const nom = (f.elements.namedItem("nombre") as HTMLInputElement).value.trim();
                 const emailVal = (f.elements.namedItem("email") as HTMLInputElement).value.trim();
+                const passVal = (f.elements.namedItem("password") as HTMLInputElement).value.trim();
 
                 try {
                   await api.createUsuario({
                     nombre: nom,
                     correo: emailVal,
-                    password: "123456",
+                    password: passVal || "123456",
                     id_rol: 2, // SUPERVISOR
                     id_empresa: null,
                     activo: true,
@@ -4439,6 +4440,11 @@ export default function App() {
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico Oficial *</label>
                 <input name="email" type="email" required placeholder="seguridad@laspalomasresort.net" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Contraseña *</label>
+                <input name="password" type="password" required placeholder="Mínimo 6 caracteres" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+                <p className="text-[10px] text-slate-400 mt-1">Si se deja en blanco, se usará "123456" por defecto.</p>
               </div>
               <div className="flex justify-end gap-2 pt-3">
                 <button type="button" onClick={() => setShowCreateSupervisorModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>
@@ -4466,6 +4472,7 @@ export default function App() {
                 const contacto = (f.elements.namedItem("contacto") as HTMLInputElement).value.trim();
                 const tel = (f.elements.namedItem("telefono") as HTMLInputElement).value.trim();
                 const email = (f.elements.namedItem("email") as HTMLInputElement).value.trim();
+                const passVal = (f.elements.namedItem("password") as HTMLInputElement).value.trim();
 
                 try {
                   const empRes = await api.createEmpresa({
@@ -4479,7 +4486,7 @@ export default function App() {
                   await api.createUsuario({
                     nombre: contacto,
                     correo: email,
-                    password: "123456",
+                    password: passVal || "123456",
                     id_rol: 5, // PROVEEDOR
                     id_empresa: empRes?.id_empresa || null,
                     activo: true,
@@ -4514,6 +4521,11 @@ export default function App() {
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico *</label>
                 <input name="email" type="email" required placeholder="contacto@empresa.com" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
               </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Contraseña de Acceso al Portal *</label>
+                <input name="password" type="password" required placeholder="Mínimo 6 caracteres" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+                <p className="text-[10px] text-slate-400 mt-1">El contratista usará esta contraseña para ingresar al portal.</p>
+              </div>
               <div className="flex justify-end gap-2 pt-3">
                 <button type="button" onClick={() => setShowCreateEmpresaModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>
                 <button type="submit" className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer">Crear Proveedor</button>
@@ -4537,12 +4549,13 @@ export default function App() {
                 const f = e.currentTarget;
                 const nom = (f.elements.namedItem("nombre") as HTMLInputElement).value.trim();
                 const emailVal = (f.elements.namedItem("email") as HTMLInputElement).value.trim();
+                const passVal = (f.elements.namedItem("password") as HTMLInputElement).value.trim();
 
                 try {
                   await api.createUsuario({
                     nombre: nom,
                     correo: emailVal,
-                    password: "123456",
+                    password: passVal || "123456",
                     id_rol: 4, // CASETA
                     id_empresa: null,
                     activo: true,
@@ -4563,6 +4576,11 @@ export default function App() {
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico *</label>
                 <input name="email" type="email" required placeholder="caseta.sur@laspalomasresort.net" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Contraseña *</label>
+                <input name="password" type="password" required placeholder="Mínimo 6 caracteres" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+                <p className="text-[10px] text-slate-400 mt-1">El oficial usará esta contraseña para acceder desde la tablet.</p>
               </div>
               <div className="flex justify-end gap-2 pt-3">
                 <button type="button" onClick={() => setShowCreateGuardiaModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>

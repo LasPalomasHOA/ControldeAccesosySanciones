@@ -26,7 +26,7 @@ if (postgresUrl) {
       idle: 10000
     },
     define: {
-      schema: process.env.DB_SCHEMA || 'public',
+      schema: process.env.DB_SCHEMA || 'control_acceso',
       freezeTableName: true,
       timestamps: true
     },
@@ -43,7 +43,7 @@ if (postgresUrl) {
       port: process.env.DB_PORT || 5432,
       dialect: process.env.DB_DIALECT || 'postgres',
       define: {
-        schema: process.env.DB_SCHEMA || 'public',
+        schema: process.env.DB_SCHEMA || 'control_acceso',
         freezeTableName: true,
         timestamps: true
       },
