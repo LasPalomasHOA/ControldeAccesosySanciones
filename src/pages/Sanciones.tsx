@@ -25,7 +25,7 @@ export const Sanciones: React.FC = () => {
     return matchesSearch && isNotPending && matchesStatus;
   });
 
-  const getGravedadBadge = (gravedad: string) => {
+  const getGravedadBadge = (gravedad?: string) => {
     switch (gravedad) {
       case 'leve': return 'bg-slate-100 text-slate-700 border border-slate-200';
       case 'moderada': return 'bg-amber-50 text-amber-600 border border-amber-200';
@@ -35,7 +35,7 @@ export const Sanciones: React.FC = () => {
     }
   };
 
-  const getEstadoBadge = (estado: string) => {
+  const getEstadoBadge = (estado?: string) => {
     switch (estado) {
       case 'activa': return <span className="bg-rose-50 text-rose-600 border border-rose-100 px-2 py-0.5 rounded-full text-xs font-semibold">Activa</span>;
       case 'resuelta': return <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full text-xs font-semibold">Resuelta / Pagada</span>;
@@ -128,9 +128,9 @@ export const Sanciones: React.FC = () => {
                     className="hover:bg-slate-50/50 transition-colors font-medium cursor-pointer"
                   >
                     <td className="py-3.5 px-4 text-xs font-semibold text-slate-400">
-                      {new Date(san.fechaSancion).toLocaleDateString()}{' '}
+                      {san.fechaSancion ? new Date(san.fechaSancion).toLocaleDateString() : 'N/A'}{' '}
                       <span className="text-[10px] block mt-0.5">
-                        {new Date(san.fechaSancion).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {san.fechaSancion ? new Date(san.fechaSancion).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                       </span>
                     </td>
                     <td className="py-3.5 px-4">
@@ -217,7 +217,7 @@ export const Sanciones: React.FC = () => {
                 </div>
                 <div className="mt-1">
                   <span className="text-slate-400 block text-[9px] uppercase tracking-wider font-bold">Fecha Sanción</span>
-                  <span className="text-slate-700 font-bold block mt-0.5">{new Date(selectedSancion.fechaSancion).toLocaleDateString()}</span>
+                  <span className="text-slate-700 font-bold block mt-0.5">{selectedSancion.fechaSancion ? new Date(selectedSancion.fechaSancion).toLocaleDateString() : 'N/A'}</span>
                 </div>
               </div>
 

@@ -9,7 +9,7 @@ export const Aprobaciones: React.FC = () => {
 
   const pendientes = sanciones.filter(s => s.estado === 'pendiente_aprobacion');
 
-  const getGravedadColor = (gravedad: string) => {
+  const getGravedadColor = (gravedad?: string) => {
     switch (gravedad) {
       case 'leve': return 'bg-slate-100 text-slate-700';
       case 'moderada': return 'bg-amber-100 text-amber-700';

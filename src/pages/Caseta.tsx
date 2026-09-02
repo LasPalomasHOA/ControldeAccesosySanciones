@@ -46,12 +46,12 @@ export const Caseta: React.FC = () => {
   const activeCompanies = empresas.filter(e => e.estado === 'activo');
 
   const matchedVehicles = plateSearch.trim()
-    ? vehiculos.filter(v => v.placa.toLowerCase().includes(plateSearch.toLowerCase()))
+    ? vehiculos.filter(v => (v.placa || v.placas || '').toLowerCase().includes(plateSearch.toLowerCase()))
     : [];
 
   const handleSelectVehiculo = (v: Vehiculo) => {
     setSelectedVehiculo(v);
-    setPlateSearch(v.placa);
+    setPlateSearch(v.placa || v.placas || '');
     // Find workers of same company
     const companyWorkers = trabajadores.filter(t => t.empresaId === v.empresaId && t.estado === 'activo');
     setSelectedTrabajador(companyWorkers[0] || null);
@@ -156,7 +156,7 @@ export const Caseta: React.FC = () => {
     }, 1500);
   };
 
-  const getEstatusColor = (status: string) => {
+  const getEstatusColor = (status?: string) => {
     switch (status) {
       case 'permitido':
         return 'border-emerald-500 bg-emerald-50/20 text-emerald-700';

@@ -277,16 +277,16 @@ export interface Empresa {
 }
 
 export interface Trabajador {
-  id_trabajador: string | number;
-  id_empresa: string | number;
+  id_trabajador?: string | number;
+  id_empresa?: string | number;
   empresaNombre?: string;
   nombre: string;
   apellidos: string;
   telefono?: string;
   foto_url?: string;
-  activo: boolean;
-  created_at: string;
-  updated_at: string;
+  activo?: boolean;
+  created_at?: string;
+  updated_at?: string;
   // Campos auxiliares para compatibilidad
   id?: string;
   empresaId?: string | number;

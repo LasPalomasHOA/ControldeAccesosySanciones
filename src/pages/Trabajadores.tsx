@@ -41,12 +41,12 @@ export const Trabajadores: React.FC = () => {
 
   const openEditModal = (trab: Trabajador) => {
     setEditingTrabajador(trab);
-    setNombre(trab.nombre);
-    setApellidos(trab.apellidos);
-    setNss(trab.nss);
-    setRol(trab.rol);
-    setEmpresaId(trab.empresaId);
-    setEstado(trab.estado);
+    setNombre(trab.nombre || '');
+    setApellidos(trab.apellidos || '');
+    setNss(trab.nss || '');
+    setRol(trab.rol || '');
+    setEmpresaId(String(trab.empresaId || trab.id_empresa || ''));
+    setEstado(trab.estado || 'activo');
     setObservaciones(trab.observaciones || '');
     setError('');
     setIsModalOpen(true);
@@ -102,10 +102,10 @@ export const Trabajadores: React.FC = () => {
 
   const filteredTrabajadores = trabajadores.filter(t => {
     const matchesSearch =
-      t.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.apellidos.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.nss.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.rol.toLowerCase().includes(searchTerm.toLowerCase());
+      (t.nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (t.apellidos || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (t.nss || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (t.rol || '').toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesCompany = companyFilter === 'all' || t.empresaId === companyFilter;
     const matchesStatus = statusFilter === 'all' || t.estado === statusFilter;
@@ -113,7 +113,7 @@ export const Trabajadores: React.FC = () => {
     return matchesSearch && matchesCompany && matchesStatus;
   });
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status?: string) => {
     switch (status) {
       case 'activo':
         return <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full text-xs font-semibold">Activo</span>;

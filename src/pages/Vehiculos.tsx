@@ -48,14 +48,14 @@ export const Vehiculos: React.FC = () => {
   const openEditModal = (v: Vehiculo, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditingVehiculo(v);
-    setPlaca(v.placa);
-    setMarca(v.marca);
-    setModelo(v.modelo);
-    setColor(v.color);
-    setEmpresaId(v.empresaId);
-    setCorbatinNumero(v.corbatinNumero);
-    setCorbatinVencimiento(v.corbatinVencimiento);
-    setEstadoAcceso(v.estadoAcceso);
+    setPlaca(v.placa || v.placas || '');
+    setMarca(v.marca || '');
+    setModelo(v.modelo || '');
+    setColor(v.color || '');
+    setEmpresaId(v.empresaId || '');
+    setCorbatinNumero(v.corbatinNumero || '');
+    setCorbatinVencimiento(v.corbatinVencimiento || '');
+    setEstadoAcceso(v.estadoAcceso || 'permitido');
     setError('');
     setIsModalOpen(true);
   };
@@ -108,10 +108,10 @@ export const Vehiculos: React.FC = () => {
 
   const filteredVehiculos = vehiculos.filter(v => {
     const matchesSearch =
-      v.placa.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      v.marca.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      v.modelo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      v.corbatinNumero.toLowerCase().includes(searchTerm.toLowerCase());
+      (v.placa || v.placas || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (v.marca || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (v.modelo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (v.corbatinNumero || '').toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesCompany = companyFilter === 'all' || v.empresaId === companyFilter;
     const matchesStatus = statusFilter === 'all' || v.estadoAcceso === statusFilter;
@@ -119,7 +119,7 @@ export const Vehiculos: React.FC = () => {
     return matchesSearch && matchesCompany && matchesStatus;
   });
 
-  const getVehiculoStatusBadge = (status: string) => {
+  const getVehiculoStatusBadge = (status?: string) => {
     switch (status) {
       case 'permitido':
         return <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded text-xs font-semibold">Permitido</span>;
@@ -128,7 +128,7 @@ export const Vehiculos: React.FC = () => {
       case 'bloqueado':
         return <span className="bg-rose-50 text-rose-600 border border-rose-100 px-2 py-0.5 rounded text-xs font-semibold">Bloqueado</span>;
       default:
-        return null;
+        return <span className="bg-slate-50 text-slate-500 border border-slate-200 px-2 py-0.5 rounded text-xs font-semibold">Desconocido</span>;
     }
   };
 
@@ -248,14 +248,14 @@ export const Vehiculos: React.FC = () => {
                     <td className="py-3.5 px-4 text-center">
                       <span
                         className={`font-bold px-2 py-0.5 rounded-full text-xs ${
-                          v.reincidencias >= 3
+                          (v.reincidencias || 0) >= 3
                             ? 'bg-rose-100 text-rose-700'
-                            : v.reincidencias > 0
+                            : (v.reincidencias || 0) > 0
                             ? 'bg-amber-100 text-amber-700'
                             : 'bg-slate-100 text-slate-500'
                         }`}
                       >
-                        {v.reincidencias} faltas
+                        {v.reincidencias || 0} faltas
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-center">
@@ -407,7 +407,7 @@ export const Vehiculos: React.FC = () => {
                               {san.estado}
                             </span>
                           </div>
-                          <p className="text-slate-400">Aplicado: {new Date(san.fechaSancion).toLocaleDateString()}</p>
+                          <p className="text-slate-400">Aplicado: {san.fechaSancion ? new Date(san.fechaSancion).toLocaleDateString() : 'N/A'}</p>
                           <div className="text-slate-500 leading-relaxed font-semibold">Multa: ${san.montoMulta} USD</div>
                           {san.comentarios && <p className="text-slate-400 italic font-normal">Nota: "{san.comentarios}"</p>}
                         </div>
