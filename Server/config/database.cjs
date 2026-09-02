@@ -52,13 +52,16 @@ if (postgresUrl) {
       ssl: {
         require: true,
         rejectUnauthorized: false
-      }
+      },
+      connectTimeout: 30000,
+      keepAlive: true
     },
     pool: {
-      max: process.env.DB_POOL_MAX ? parseInt(process.env.DB_POOL_MAX, 10) : 3,
+      max: process.env.DB_POOL_MAX ? parseInt(process.env.DB_POOL_MAX, 10) : 5,
       min: 0,
-      acquire: 20000,
-      idle: 5000
+      acquire: 30000,
+      idle: 10000,
+      evict: 5000
     },
     define: {
       schema,
