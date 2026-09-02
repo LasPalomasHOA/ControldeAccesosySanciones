@@ -1,0 +1,96 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import 'tailwindcss';
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+@theme inline {
+  --color-bg: #F1F5F9;
+  --color-surface: #FFFFFF;
+  --color-card: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-border-strong: #CBD5E1;
+  --color-primary: #0D6E5F;
+  --color-primary-light: #E6F4F1;
+  --color-primary-mid: #1A9980;
+  --color-accent: #B8860B;
+  --color-fg: #1E293B;
+  --color-muted: #64748B;
+  --color-danger: #DC2626;
+  --color-danger-light: #FEF2F2;
+  --color-warn: #D97706;
+  --color-warn-light: #FFFBEB;
+  --color-success: #059669;
+  --color-success-light: #ECFDF5;
+  --color-sky: #0369A1;
+  --color-sky-light: #EFF6FF;
+  --font-display: 'Instrument Sans', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ─── TOAST NOTIFICATIONS ─────────────────────────────────────────── */
+@keyframes slideInRight {
+  from {
+    transform: translateX(110%) scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes toastProgress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+.toast-enter {
+  animation: slideInRight 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.toast-progress-bar {
+  animation: toastProgress 4.5s linear forwards;
+}
+
+/* ─── PRINT STYLES FOR CORBATÍN PDF / IMPRESIÓN ─────────────────────────── */
+@media print {
+  @page {
+    size: landscape;
+    margin: 1cm;
+  }
+
+  body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  header,
+  footer,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  #corbatin-container {
+    padding: 0 !important;
+    background: white !important;
+    border: none !important;
+  }
+
+  #corbatin-printable {
+    margin: 0 auto !important;
+    box-shadow: none !important;
+    border: 2px solid #000 !important;
+    max-width: 100% !important;
+    width: 780px !important;
+    display: grid !important;
+    grid-template-columns: 390px 390px !important;
+    page-break-inside: avoid !important;
+  }
+}
