@@ -28,17 +28,6 @@ async function ensureDbInit() {
       try {
         await db.sequelize.authenticate();
         console.log('✅ Conexión a la base de datos PostgreSQL/Supabase establecida.');
-
-        // Sincronizar modelos y crear tablas si no existen
-        await db.sequelize.sync();
-        console.log('✅ Tablas y relaciones sincronizadas.');
-
-        // Sembrar datos base iniciales si están vacías
-        try {
-          await seedDatabase(false);
-        } catch (seedErr) {
-          console.warn('Nota sobre inicialización de datos base:', seedErr.message);
-        }
       } catch (error) {
         dbInitPromise = null; // Permitir reintento si fue un fallo transitorio
         throw error;
