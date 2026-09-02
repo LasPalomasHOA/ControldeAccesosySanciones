@@ -19,9 +19,31 @@ let sequelize;
 const postgresUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.SUPABASE_POSTGRES_URL || process.env.DB_URL;
 const schema = process.env.DB_SCHEMA || 'control_acceso';
 
+function resolveServerlessDbUrl(rawUrl) {
+  if (!rawUrl) return rawUrl;
+  let cleanUrl = rawUrl.split('?')[0].trim();
+  try {
+    const parsed = new URL(cleanUrl);
+    // Detectar si es una conexión directa db.<project-ref>.supabase.co
+    const directMatch = parsed.hostname.match(/^db\.([a-z0-9]+)\.supabase\.co$/i);
+    if (directMatch) {
+      const projectRef = directMatch[1];
+      // En entornos Serverless como Vercel (IPv4), se debe usar el Pooler oficial de Supabase
+      parsed.hostname = 'aws-0-us-east-1.pooler.supabase.com';
+      parsed.port = '6543';
+      if (!parsed.username.includes('.')) {
+        parsed.username = `${parsed.username}.${projectRef}`;
+      }
+      return parsed.toString();
+    }
+  } catch (err) {
+    // Si no es un URL estándar, retornar como está
+  }
+  return cleanUrl;
+}
+
 if (postgresUrl) {
-  // Limpiar posibles query parameters que causan conflicto con SSL en pg (como sslmode=require)
-  const connectionUri = postgresUrl.split('?')[0];
+  const connectionUri = resolveServerlessDbUrl(postgresUrl);
 
   // Conexión por URL completa (Supabase / Neon / Render / Heroku / Vercel Postgres)
   sequelize = new Sequelize(connectionUri, {
@@ -33,10 +55,10 @@ if (postgresUrl) {
       }
     },
     pool: {
-      max: process.env.DB_POOL_MAX ? parseInt(process.env.DB_POOL_MAX, 10) : 10,
+      max: process.env.DB_POOL_MAX ? parseInt(process.env.DB_POOL_MAX, 10) : 3,
       min: 0,
-      acquire: 30000,
-      idle: 10000
+      acquire: 20000,
+      idle: 5000
     },
     define: {
       schema,
