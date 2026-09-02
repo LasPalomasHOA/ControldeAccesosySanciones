@@ -4,6 +4,12 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "outputDirectory": "dist",
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "Server/**",
+      "maxDuration": 15
+    }
+  },
   "rewrites": [
     {
       "source": "/api",
