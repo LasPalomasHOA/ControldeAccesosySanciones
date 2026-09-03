@@ -73,8 +73,8 @@ async function ensureDbInit() {
   return dbInitPromise;
 }
 
-// Iniciar conexión asíncrona inmediata si no es serverless
-if (!process.env.VERCEL) {
+// Iniciar conexión asíncrona inmediata únicamente en modo standalone
+if (require.main === module) {
   ensureDbInit().catch(() => {});
 }
 
@@ -166,8 +166,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Iniciar listener HTTP inmediatamente en modo standalone
-if (require.main === module || !process.env.VERCEL) {
+// Iniciar listener HTTP únicamente cuando se ejecuta directamente con `node Server/index.cjs`
+if (require.main === module) {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor Express listo en http://localhost:${PORT}`);
   });
