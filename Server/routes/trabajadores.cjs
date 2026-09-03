@@ -30,7 +30,7 @@ router.get('/', async (req, res) => {
     res.json(resultado);
   } catch (error) {
     console.error('Error al obtener trabajadores:', error);
-    res.status(500).json({ error: 'Error al consultar la base de datos de trabajadores' });
+    res.status(500).json({ error: 'Error al consultar la base de datos de trabajadores', details: error.message });
   }
 });
 

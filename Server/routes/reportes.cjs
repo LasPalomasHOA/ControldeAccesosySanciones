@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
     res.json(reportes);
   } catch (error) {
     console.error('Error al consultar reportes:', error);
-    res.status(500).json({ error: 'Error al consultar reportes de infracciones' });
+    res.status(500).json({ error: 'Error al consultar reportes de infracciones', details: error.message });
   }
 });
 

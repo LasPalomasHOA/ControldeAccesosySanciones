@@ -54,7 +54,7 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Error en login:', error);
-    res.status(500).json({ error: 'Error al procesar inicio de sesión' });
+    res.status(500).json({ error: 'Error al procesar inicio de sesión', details: error.message });
   }
 });
 
@@ -93,7 +93,7 @@ router.get('/', async (req, res) => {
     res.json(resultado);
   } catch (error) {
     console.error('Error al listar usuarios:', error);
-    res.status(500).json({ error: 'Error al consultar usuarios' });
+    res.status(500).json({ error: 'Error al consultar usuarios', details: error.message });
   }
 });
 

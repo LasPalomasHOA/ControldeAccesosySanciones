@@ -60,7 +60,7 @@ router.get('/', async (req, res) => {
     res.json(resultado);
   } catch (error) {
     console.error('Error al obtener vehículos:', error);
-    res.status(500).json({ error: 'Error al consultar vehículos' });
+    res.status(500).json({ error: 'Error al consultar vehículos', details: error.message });
   }
 });
 

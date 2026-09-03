@@ -36,39 +36,36 @@ let isDbReady = false;
 let dbError = null;
 
 async function ensureDbInit() {
+  if (isDbReady) return;
   if (dbInitPromise) return dbInitPromise;
 
   dbInitPromise = (async () => {
     try {
       await db.sequelize.authenticate();
-      console.log('✅ Conexión a base de datos Supabase / PostgreSQL establecida con éxito.');
+      console.log('✅ Conexión a base de datos Supabase / PostgreSQL verificada.');
 
-      // Crear esquema si no existe y sincronizar modelos
-      try {
-        const schemaName = process.env.DB_SCHEMA || 'control_acceso';
-        if (schemaName && schemaName !== 'public') {
-          await db.sequelize.createSchema(schemaName).catch(() => {});
+      // En entornos Serverless de Vercel NO se ejecuta sync() ni seedDatabase()
+      // porque las tablas ya existen y ejecutar DDL en cada invocación provoca timeouts de 15s y error 500.
+      if (!process.env.VERCEL && process.env.AUTO_SYNC === 'true') {
+        try {
+          const schemaName = process.env.DB_SCHEMA || 'control_acceso';
+          if (schemaName && schemaName !== 'public') {
+            await db.sequelize.createSchema(schemaName).catch(() => {});
+          }
+          await db.sequelize.sync({ alter: false });
+          await seedDatabase(false);
+          console.log(`✅ Tablas y catálogos verificados en el esquema "${schemaName}".`);
+        } catch (syncErr) {
+          console.warn('Nota sobre inicialización local:', syncErr.message);
         }
-        await db.sequelize.sync({ alter: false });
-        console.log(`✅ Tablas y relaciones verificadas en el esquema "${schemaName}".`);
-      } catch (syncErr) {
-        console.warn('Nota sobre sincronización de tablas:', syncErr.message);
-      }
-
-      // Sembrar datos base esenciales
-      try {
-        await seedDatabase(false);
-        console.log('✅ Catálogos esenciales verificados.');
-      } catch (seedErr) {
-        console.warn('Nota sobre inicialización de catálogos base:', seedErr.message);
       }
 
       isDbReady = true;
+      dbError = null;
     } catch (error) {
       dbError = error.message;
       dbInitPromise = null; // Permitir reintento si fue transitorio
-      console.warn('⚠️ Conexión a Supabase / PostgreSQL no disponible:', error.message);
-      console.info('💡 Revisa tus credenciales en el archivo .env.');
+      console.error('⚠️ Conexión a Supabase / PostgreSQL no disponible:', error.message);
       throw error;
     }
   })();
@@ -76,10 +73,12 @@ async function ensureDbInit() {
   return dbInitPromise;
 }
 
-// Iniciar conexión asíncrona de fondo
-ensureDbInit().catch(() => {});
+// Iniciar conexión asíncrona inmediata si no es serverless
+if (!process.env.VERCEL) {
+  ensureDbInit().catch(() => {});
+}
 
-// Middleware para asegurar conexión a BD antes de atender peticiones a la API (evita race conditions)
+// Middleware para asegurar conexión a BD antes de atender peticiones a la API
 app.use(async (req, res, next) => {
   if (req.path === '/api/status' || req.path === '/api') {
     return next();
@@ -88,8 +87,13 @@ app.use(async (req, res, next) => {
     try {
       await ensureDbInit();
     } catch (err) {
-      // Si la BD falla, se continúa para permitir respuestas con fallback en modo offline si aplica
-      console.warn('⚠️ Petición atendida con base de datos no disponible:', err.message);
+      console.error(`⚠️ Petición a ${req.path} no procesada: BD no disponible (${err.message})`);
+      return res.status(503).json({
+        error: 'Error de conexión con la base de datos PostgreSQL / Supabase',
+        details: err.message,
+        path: req.path,
+        hint: 'Verifica la variable POSTGRES_URL en el panel de Vercel (Project Settings -> Environment Variables)'
+      });
     }
   }
   next();
@@ -139,6 +143,28 @@ app.use('/api/reportes', require('./routes/reportes.cjs'));
 app.use('/api/sanciones', require('./routes/sanciones.cjs'));
 app.use('/api/bitacora', require('./routes/bitacora.cjs'));
 app.use('/api/seed', require('./routes/seed.cjs'));
+
+// Manejador para rutas no encontradas dentro de /api
+app.use('/api/*', (req, res) => {
+  res.status(404).json({
+    error: 'Ruta de API no encontrada',
+    path: req.originalUrl,
+    method: req.method
+  });
+});
+
+// Manejador global de errores para Express
+app.use((err, req, res, next) => {
+  console.error('Unhandled Express Error:', err);
+  if (res.headersSent) {
+    return next(err);
+  }
+  res.status(500).json({
+    error: 'Error interno en el servidor',
+    message: err.message || 'Error no especificado',
+    path: req.originalUrl
+  });
+});
 
 // Iniciar listener HTTP inmediatamente en modo standalone
 if (require.main === module || !process.env.VERCEL) {

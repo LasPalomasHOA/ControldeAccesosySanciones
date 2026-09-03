@@ -42,6 +42,8 @@ function resolveServerlessDbUrl(rawUrl) {
   return cleanUrl;
 }
 
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_VERSION);
+
 if (postgresUrl) {
   const connectionUri = resolveServerlessDbUrl(postgresUrl);
 
@@ -53,15 +55,15 @@ if (postgresUrl) {
         require: true,
         rejectUnauthorized: false
       },
-      connectTimeout: 30000,
+      connectTimeout: 15000,
       keepAlive: true
     },
     pool: {
-      max: process.env.DB_POOL_MAX ? parseInt(process.env.DB_POOL_MAX, 10) : 5,
+      max: isServerless ? 2 : (process.env.DB_POOL_MAX ? parseInt(process.env.DB_POOL_MAX, 10) : 5),
       min: 0,
-      acquire: 30000,
-      idle: 10000,
-      evict: 5000
+      acquire: 15000,
+      idle: 2000,
+      evict: 1000
     },
     define: {
       schema,
@@ -75,7 +77,8 @@ if (postgresUrl) {
   const isRemoteOrSsl = Boolean(
     dbHost.includes('supabase.com') ||
     dbHost.includes('neon.tech') ||
-    process.env.DB_SSL === 'true'
+    process.env.DB_SSL === 'true' ||
+    process.env.VERCEL
   );
 
   const dialectOptions = isRemoteOrSsl
@@ -83,25 +86,28 @@ if (postgresUrl) {
         ssl: {
           require: true,
           rejectUnauthorized: false
-        }
+        },
+        connectTimeout: 15000,
+        keepAlive: true
       }
     : {};
 
-  // Conexión por variables individuales
+  // Conexión por variables individuales (fallback con credenciales operativas de Supabase Pooler 6543)
   sequelize = new Sequelize(
     process.env.DB_NAME || 'postgres',
-    process.env.DB_USER || 'admin_acceso.iocpmwzyvkangytybcwh',
-    process.env.DB_PASSWORD || 'ControlAcceso2026!',
+    process.env.DB_USER || 'postgres.iocpmwzyvkangytybcwh',
+    process.env.DB_PASSWORD || 'Laspalomas26',
     {
       host: dbHost,
-      port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
+      port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 6543,
       dialect: process.env.DB_DIALECT || 'postgres',
       dialectOptions,
       pool: {
-        max: process.env.DB_POOL_MAX ? parseInt(process.env.DB_POOL_MAX, 10) : 10,
+        max: isServerless ? 2 : (process.env.DB_POOL_MAX ? parseInt(process.env.DB_POOL_MAX, 10) : 5),
         min: 0,
-        acquire: 30000,
-        idle: 10000
+        acquire: 15000,
+        idle: 2000,
+        evict: 1000
       },
       define: {
         schema,

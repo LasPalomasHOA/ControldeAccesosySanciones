@@ -47,7 +47,7 @@ router.get('/', async (req, res) => {
     res.json(resultado);
   } catch (error) {
     console.error('Error al consultar sanciones:', error);
-    res.status(500).json({ error: 'Error al consultar sanciones' });
+    res.status(500).json({ error: 'Error al consultar sanciones', details: error.message });
   }
 });
 

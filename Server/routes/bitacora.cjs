@@ -56,7 +56,7 @@ router.get('/', async (req, res) => {
     res.json(resultado);
   } catch (error) {
     console.error('Error al consultar bitácora:', error);
-    res.status(500).json({ error: 'Error al consultar bitácora de accesos' });
+    res.status(500).json({ error: 'Error al consultar bitácora de accesos', details: error.message });
   }
 });
 

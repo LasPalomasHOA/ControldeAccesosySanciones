@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
     res.json(resultado);
   } catch (error) {
     console.error('Error al obtener empresas:', error);
-    res.status(500).json({ error: 'Error al consultar empresas' });
+    res.status(500).json({ error: 'Error al consultar empresas', details: error.message });
   }
 });
 
