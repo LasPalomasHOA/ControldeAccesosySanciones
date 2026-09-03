@@ -1,10 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import QRCode from "qrcode";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { api } from "./services/api";
 
 // ─── SVG Icons (Clean, Modern, Vector) ────────────────────────────────────────
+function IconSpinner({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={`${className} animate-spin`} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+    </svg>
+  );
+}
+
 function IconBuilding({ className = "w-5 h-5" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -920,6 +929,48 @@ export default function App() {
   const [nuevoVehiculoFoto, setNuevoVehiculoFoto] = useState<string>("");
   const [nuevoVehiculoFotoError, setNuevoVehiculoFotoError] = useState<string>("");
 
+  // ─── Estados y Refs de Bloqueo para Prevención de Doble Clic y Envíos Duplicados ───
+  const [isSubmittingTrabajador, setIsSubmittingTrabajador] = useState(false);
+  const isSubmittingTrabajadorRef = useRef(false);
+
+  const [isSubmittingTrabajadorEdit, setIsSubmittingTrabajadorEdit] = useState(false);
+  const isSubmittingTrabajadorEditRef = useRef(false);
+
+  const [isDeletingTrabajador, setIsDeletingTrabajador] = useState(false);
+  const isDeletingTrabajadorRef = useRef(false);
+
+  const [isSubmittingVehiculo, setIsSubmittingVehiculo] = useState(false);
+  const isSubmittingVehiculoRef = useRef(false);
+
+  const [isSubmittingEntrada, setIsSubmittingEntrada] = useState(false);
+  const isSubmittingEntradaRef = useRef(false);
+
+  const [isSubmittingEmpresa, setIsSubmittingEmpresa] = useState(false);
+  const isSubmittingEmpresaRef = useRef(false);
+
+  const [isSubmittingSupervisor, setIsSubmittingSupervisor] = useState(false);
+  const isSubmittingSupervisorRef = useRef(false);
+
+  const [isSubmittingGuardia, setIsSubmittingGuardia] = useState(false);
+  const isSubmittingGuardiaRef = useRef(false);
+
+  const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
+  const isSubmittingPasswordRef = useRef(false);
+
+  const [isSubmittingApelacion, setIsSubmittingApelacion] = useState(false);
+  const isSubmittingApelacionRef = useRef(false);
+
+  const [isSubmittingReglamento, setIsSubmittingReglamento] = useState(false);
+  const isSubmittingReglamentoRef = useRef(false);
+
+  const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
+  const isSubmittingLoginRef = useRef(false);
+
+  const [togglingTrabajadorIds, setTogglingTrabajadorIds] = useState<Record<string | number, boolean>>({});
+  const [togglingVehiculoIds, setTogglingVehiculoIds] = useState<Record<string | number, boolean>>({});
+  const [marcandoSalidaIds, setMarcandoSalidaIds] = useState<Record<string | number, boolean>>({});
+  const [resolvingInfraccionIds, setResolvingInfraccionIds] = useState<Record<string | number, boolean>>({});
+  const [resolvingSancionIds, setResolvingSancionIds] = useState<Record<string | number, boolean>>({});
 
   // Caseta Registration Form States
   const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>("EMP-01");
@@ -1582,6 +1633,8 @@ export default function App() {
       showToast(`El vehículo con placas ${v.placas} se encuentra suspendido por Supervisión HOA. No puede habilitarse hasta resolver la sanción.`, "warning", "Vehículo Suspendido");
       return;
     }
+    if (togglingVehiculoIds[v.id]) return;
+    setTogglingVehiculoIds((prev) => ({ ...prev, [v.id]: true }));
 
     const nuevoEstatus = v.status === "Habilitado" ? "DESHABILITADO" : "HABILITADO";
     try {
@@ -1592,20 +1645,29 @@ export default function App() {
       showToast(`Vehículo ${v.marca} ${v.modelo} (${v.placas}) ha sido ${nuevoEstatus === "HABILITADO" ? "Habilitado" : "Deshabilitado"} con éxito.`, "success");
     } catch (err: any) {
       showToast("Error al actualizar estatus del vehículo: " + (err.message || err), "error");
+    } finally {
+      setTogglingVehiculoIds((prev) => {
+        const next = { ...prev };
+        delete next[v.id];
+        return next;
+      });
     }
   };
 
   const handleRegistrarEntrada = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingEntradaRef.current) return;
+    isSubmittingEntradaRef.current = true;
+    setIsSubmittingEntrada(true);
 
-    const emp = empresas.find((item) => item.id === selectedEmpresaId) || empresas[0];
+    try {
+      const emp = empresas.find((item) => item.id === selectedEmpresaId) || empresas[0];
 
-    // Registro en Modalidad Peatonal (Contratista a pie)
-    if (casetaModoAcceso === "peatonal") {
-      const nom = casetaPeatonalNombre.trim() || (currentTrabajadorPeatonal ? `${currentTrabajadorPeatonal.nombre} ${currentTrabajadorPeatonal.apellidos}` : "Colaborador Peatonal");
-      const tel = casetaPeatonalTelefono.trim() || currentTrabajadorPeatonal?.telefono || emp?.telefono || "";
+      // Registro en Modalidad Peatonal (Contratista a pie)
+      if (casetaModoAcceso === "peatonal") {
+        const nom = casetaPeatonalNombre.trim() || (currentTrabajadorPeatonal ? `${currentTrabajadorPeatonal.nombre} ${currentTrabajadorPeatonal.apellidos}` : "Colaborador Peatonal");
+        const tel = casetaPeatonalTelefono.trim() || currentTrabajadorPeatonal?.telefono || emp?.telefono || "";
 
-      try {
         await api.registrarAcceso({
           id_caseta: 1,
           id_vehiculo: null,
@@ -1624,19 +1686,15 @@ export default function App() {
         setCasetaSuccessMsg(true);
         setTimeout(() => setCasetaSuccessMsg(false), 4000);
         showToast(`Ingreso peatonal de ${nom} registrado en caseta.`, "success");
-      } catch (err: any) {
-        showToast("Error al registrar entrada peatonal: " + (err.message || err), "error");
+        return;
       }
-      return;
-    }
 
-    // Registro en Modalidad Vehicular
-    if (!currentCasetaVehicle) {
-      showToast("Selecciona un vehículo habilitado para registrar la entrada.", "warning");
-      return;
-    }
+      // Registro en Modalidad Vehicular
+      if (!currentCasetaVehicle) {
+        showToast("Selecciona un vehículo habilitado para registrar la entrada.", "warning");
+        return;
+      }
 
-    try {
       await api.registrarAcceso({
         id_caseta: 1,
         id_vehiculo: Number(currentCasetaVehicle.id),
@@ -1657,20 +1715,33 @@ export default function App() {
       showToast(`Entrada autorizada para el vehículo ${currentCasetaVehicle.placas}.`, "success");
     } catch (err: any) {
       showToast("Error al registrar entrada vehicular: " + (err.message || err), "error");
+    } finally {
+      isSubmittingEntradaRef.current = false;
+      setIsSubmittingEntrada(false);
     }
   };
 
   const handleMarcarSalida = async (id: string) => {
+    if (marcandoSalidaIds[id]) return;
+    setMarcandoSalidaIds((prev) => ({ ...prev, [id]: true }));
     try {
       await api.registrarSalida(id);
       await loadDatabaseData();
       showToast("Salida registrada con éxito.", "info", "Registro Actualizado");
     } catch (err: any) {
       showToast("Error al registrar salida en la base de datos: " + (err.message || err), "error");
+    } finally {
+      setMarcandoSalidaIds((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
     }
   };
 
   const handleAprobarInfraccion = async (inf: InfraccionReporte) => {
+    if (resolvingInfraccionIds[inf.id]) return;
+    setResolvingInfraccionIds((prev) => ({ ...prev, [inf.id]: true }));
     try {
       await api.dictaminarReporte(inf.id, {
         decision: 'APROBADO',
@@ -1682,10 +1753,18 @@ export default function App() {
       showToast(`Infracción ${inf.folio} aprobada. Se ha aplicado la suspensión de acceso vehicular en PostgreSQL.`, "success", "Infracción Aprobada");
     } catch (err: any) {
       showToast(`Error al aprobar reporte en la base de datos: ${err.message || err}`, "error");
+    } finally {
+      setResolvingInfraccionIds((prev) => {
+        const next = { ...prev };
+        delete next[inf.id];
+        return next;
+      });
     }
   };
 
   const handleRechazarInfraccion = async (inf: InfraccionReporte) => {
+    if (resolvingInfraccionIds[inf.id]) return;
+    setResolvingInfraccionIds((prev) => ({ ...prev, [inf.id]: true }));
     try {
       await api.dictaminarReporte(inf.id, {
         decision: 'RECHAZADO',
@@ -1697,40 +1776,55 @@ export default function App() {
       showToast(`Infracción ${inf.folio} desestimada y guardada en PostgreSQL.`, "info", "Infracción Desestimada");
     } catch (err: any) {
       showToast(`Error al desestimar reporte en la base de datos: ${err.message || err}`, "error");
+    } finally {
+      setResolvingInfraccionIds((prev) => {
+        const next = { ...prev };
+        delete next[inf.id];
+        return next;
+      });
     }
   };
 
   const handleEnviarApelacion = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedSancionParaApelar) return;
+    if (!selectedSancionParaApelar || isSubmittingApelacionRef.current) return;
+    isSubmittingApelacionRef.current = true;
+    setIsSubmittingApelacion(true);
 
-    const fechaHoy = new Date().toISOString().split("T")[0];
-    const updatedSanciones: Sancion[] = sanciones.map((s) => {
-      if (s.id === selectedSancionParaApelar.id) {
-        return {
-          ...s,
-          status: "En Apelación",
-          apelacion: {
-            fecha: fechaHoy,
-            argumentos: apelacionArgumentos,
-            representante: currentUser?.nombre || "Representante Acreditado",
-            estado: "Pendiente",
-          }
-        };
-      }
-      return s;
-    });
+    try {
+      const fechaHoy = new Date().toISOString().split("T")[0];
+      const updatedSanciones: Sancion[] = sanciones.map((s) => {
+        if (s.id === selectedSancionParaApelar.id) {
+          return {
+            ...s,
+            status: "En Apelación",
+            apelacion: {
+              fecha: fechaHoy,
+              argumentos: apelacionArgumentos,
+              representante: currentUser?.nombre || "Representante Acreditado",
+              estado: "Pendiente",
+            }
+          };
+        }
+        return s;
+      });
 
-    setSanciones(updatedSanciones);
-    setSelectedSancionParaApelar(null);
-    setApelacionArgumentos("");
-    showToast(`Apelación formal para la sanción ${selectedSancionParaApelar.id} enviada al Comité de Supervisión HOA.`, "success", "Apelación Enviada");
+      setSanciones(updatedSanciones);
+      setSelectedSancionParaApelar(null);
+      setApelacionArgumentos("");
+      showToast(`Apelación formal para la sanción ${selectedSancionParaApelar.id} enviada al Comité de Supervisión HOA.`, "success", "Apelación Enviada");
+    } finally {
+      isSubmittingApelacionRef.current = false;
+      setIsSubmittingApelacion(false);
+    }
   };
 
   const handleAceptarApelacion = async (sancionId: string, dictamen: string) => {
+    if (resolvingSancionIds[sancionId]) return;
     const targetSancion = sanciones.find(s => s.id === sancionId);
     if (!targetSancion) return;
 
+    setResolvingSancionIds((prev) => ({ ...prev, [sancionId]: true }));
     try {
       await api.updateSancion(sancionId, {
         estatus: 'CANCELADA',
@@ -1739,6 +1833,12 @@ export default function App() {
       await loadDatabaseData();
     } catch (err) {
       console.warn("Error al actualizar sanción en BD:", err);
+    } finally {
+      setResolvingSancionIds((prev) => {
+        const next = { ...prev };
+        delete next[sancionId];
+        return next;
+      });
     }
 
     const fechaHoy = new Date().toISOString().split("T")[0];
@@ -1774,9 +1874,11 @@ export default function App() {
   };
 
   const handleRatificarSancion = async (sancionId: string, dictamen: string) => {
+    if (resolvingSancionIds[sancionId]) return;
     const targetSancion = sanciones.find(s => s.id === sancionId);
     if (!targetSancion) return;
 
+    setResolvingSancionIds((prev) => ({ ...prev, [sancionId]: true }));
     try {
       await api.updateSancion(sancionId, {
         estatus: 'ACTIVA',
@@ -1785,6 +1887,12 @@ export default function App() {
       await loadDatabaseData();
     } catch (err) {
       console.warn("Error al ratificar sanción en BD:", err);
+    } finally {
+      setResolvingSancionIds((prev) => {
+        const next = { ...prev };
+        delete next[sancionId];
+        return next;
+      });
     }
 
     const fechaHoy = new Date().toISOString().split("T")[0];
@@ -1810,6 +1918,7 @@ export default function App() {
 
   const handleGuardarNuevaPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingPasswordRef.current) return;
     setPasswordModalError("");
 
     if (!selectedUserParaPassword) return;
@@ -1826,6 +1935,9 @@ export default function App() {
       return;
     }
 
+    isSubmittingPasswordRef.current = true;
+    setIsSubmittingPassword(true);
+
     try {
       await api.updateUsuario(selectedUserParaPassword.id, {
         password: nuevaPassword.trim(),
@@ -1838,6 +1950,9 @@ export default function App() {
       setPasswordModalError("");
     } catch (err: any) {
       setPasswordModalError("Error al actualizar en base de datos: " + err.message);
+    } finally {
+      isSubmittingPasswordRef.current = false;
+      setIsSubmittingPassword(false);
     }
   };
 
@@ -1857,6 +1972,159 @@ export default function App() {
         }
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  // ─── Handlers para Creación de Vehículos, Supervisores, Empresas, Guardias ───
+  const handleGuardarNuevoVehiculo = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (isSubmittingVehiculoRef.current) return;
+
+    if (!nuevoVehiculoFoto) {
+      setNuevoVehiculoFotoError("Es obligatorio adjuntar una fotografía oficial del vehículo.");
+      return;
+    }
+
+    isSubmittingVehiculoRef.current = true;
+    setIsSubmittingVehiculo(true);
+
+    const form = e.currentTarget;
+    const marcaVal = (form.elements.namedItem("marca") as HTMLInputElement)?.value || "";
+    const modeloVal = (form.elements.namedItem("modelo") as HTMLInputElement)?.value || "";
+    const anioVal = (form.elements.namedItem("año") as HTMLInputElement || form.elements.namedItem("anio") as HTMLInputElement)?.value || "";
+    const placasVal = ((form.elements.namedItem("placas") as HTMLInputElement)?.value || "").toUpperCase();
+    const colorVal = (form.elements.namedItem("color") as HTMLInputElement)?.value || "";
+
+    const emp = empresas.find(em => em.nombre === currentUser?.empresaNombre) || empresas[0];
+
+    try {
+      await api.createVehiculo({
+        id_empresa: emp?.id || 1,
+        marca: marcaVal,
+        modelo: modeloVal,
+        año: anioVal || null,
+        placas: placasVal,
+        color: colorVal,
+        foto_url: nuevoVehiculoFoto,
+        estatus_acceso: "HABILITADO",
+      });
+
+      await loadDatabaseData();
+      form.reset();
+      setNuevoVehiculoFoto("");
+      setNuevoVehiculoFotoError("");
+      showToast("Vehículo registrado exitosamente con fotografía oficial y corbatín QR.", "success", "Vehículo Registrado");
+      setPortalScreen("dashboard");
+    } catch (err: any) {
+      showToast("Error al registrar vehículo en la base de datos: " + (err.message || err), "error");
+    } finally {
+      isSubmittingVehiculoRef.current = false;
+      setIsSubmittingVehiculo(false);
+    }
+  };
+
+  const handleGuardarNuevoSupervisor = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (isSubmittingSupervisorRef.current) return;
+    isSubmittingSupervisorRef.current = true;
+    setIsSubmittingSupervisor(true);
+
+    const f = e.currentTarget;
+    const nom = (f.elements.namedItem("nombre") as HTMLInputElement).value.trim();
+    const emailVal = (f.elements.namedItem("email") as HTMLInputElement).value.trim();
+    const passVal = (f.elements.namedItem("password") as HTMLInputElement).value.trim();
+
+    try {
+      await api.createUsuario({
+        nombre: nom,
+        correo: emailVal,
+        password: passVal || "123456",
+        id_rol: 2, // SUPERVISOR
+        id_empresa: null,
+        activo: true,
+      });
+      await loadDatabaseData();
+      setShowCreateSupervisorModal(false);
+      showToast(`Cuenta de Supervisor para "${nom}" (${emailVal}) creada y guardada exitosamente.`, "success", "Supervisor Creado");
+    } catch (err: any) {
+      showToast("Error al guardar supervisor en la base de datos: " + (err.message || err), "error");
+    } finally {
+      isSubmittingSupervisorRef.current = false;
+      setIsSubmittingSupervisor(false);
+    }
+  };
+
+  const handleGuardarNuevaEmpresa = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (isSubmittingEmpresaRef.current) return;
+    isSubmittingEmpresaRef.current = true;
+    setIsSubmittingEmpresa(true);
+
+    const f = e.currentTarget;
+    const empNombre = (f.elements.namedItem("nombre") as HTMLInputElement).value.trim();
+    const rfcVal = (f.elements.namedItem("rfc") as HTMLInputElement).value.trim().toUpperCase();
+    const contacto = (f.elements.namedItem("contacto") as HTMLInputElement).value.trim();
+    const tel = (f.elements.namedItem("telefono") as HTMLInputElement).value.trim();
+    const email = (f.elements.namedItem("email") as HTMLInputElement).value.trim();
+    const passVal = (f.elements.namedItem("password") as HTMLInputElement).value.trim();
+
+    try {
+      const empRes = await api.createEmpresa({
+        razon_social: empNombre,
+        responsable_nombre: contacto,
+        telefono: tel,
+        correo: email,
+        estatus: "ACTIVA",
+      });
+
+      await api.createUsuario({
+        nombre: contacto,
+        correo: email,
+        password: passVal || "123456",
+        id_rol: 5, // PROVEEDOR
+        id_empresa: empRes?.id_empresa || null,
+        activo: true,
+      });
+
+      await loadDatabaseData();
+      setShowCreateEmpresaModal(false);
+      showToast(`Empresa "${empNombre}" y cuenta "${email}" creadas exitosamente.`, "success", "Proveedor Creado");
+    } catch (err: any) {
+      showToast("Error al registrar proveedor en la base de datos: " + (err.message || err), "error");
+    } finally {
+      isSubmittingEmpresaRef.current = false;
+      setIsSubmittingEmpresa(false);
+    }
+  };
+
+  const handleGuardarNuevoGuardia = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (isSubmittingGuardiaRef.current) return;
+    isSubmittingGuardiaRef.current = true;
+    setIsSubmittingGuardia(true);
+
+    const f = e.currentTarget;
+    const nom = (f.elements.namedItem("nombre") as HTMLInputElement).value.trim();
+    const emailVal = (f.elements.namedItem("email") as HTMLInputElement).value.trim();
+    const passVal = (f.elements.namedItem("password") as HTMLInputElement).value.trim();
+
+    try {
+      await api.createUsuario({
+        nombre: nom,
+        correo: emailVal,
+        password: passVal || "123456",
+        id_rol: 4, // CASETA
+        id_empresa: null,
+        activo: true,
+      });
+      await loadDatabaseData();
+      setShowCreateGuardiaModal(false);
+      showToast(`Oficial de Caseta "${nom}" (${emailVal}) registrado exitosamente.`, "success", "Oficial Registrado");
+    } catch (err: any) {
+      showToast("Error al registrar oficial en la base de datos: " + (err.message || err), "error");
+    } finally {
+      isSubmittingGuardiaRef.current = false;
+      setIsSubmittingGuardia(false);
     }
   };
 
@@ -1883,6 +2151,7 @@ export default function App() {
 
   const handleGuardarNuevoTrabajador = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingTrabajadorRef.current) return;
     setTrabajadorFormError("");
 
     const nom = trabajadorNombre.trim();
@@ -1910,6 +2179,9 @@ export default function App() {
       return;
     }
 
+    isSubmittingTrabajadorRef.current = true;
+    setIsSubmittingTrabajador(true);
+
     const currentEmpresaObj = empresas.find(emp => emp.nombre === currentUser?.empresaNombre) || empresas[0];
     const defaultFoto = trabajadorFotoUrl || `https://images.unsplash.com/photo-${Math.floor(Math.random() * 100) + 1500000000000}?auto=format&fit=crop&q=80&w=250`;
 
@@ -1934,11 +2206,15 @@ export default function App() {
     } catch (err: any) {
       setTrabajadorFormError("Error al guardar en base de datos: " + (err.message || err));
       showToast("Error al guardar en base de datos: " + (err.message || err), "error");
+    } finally {
+      isSubmittingTrabajadorRef.current = false;
+      setIsSubmittingTrabajador(false);
     }
   };
 
   const handleGuardarEdicionTrabajador = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingTrabajadorEditRef.current) return;
     if (!selectedTrabajadorParaEditar) return;
     setTrabajadorFormError("");
 
@@ -1967,6 +2243,9 @@ export default function App() {
       return;
     }
 
+    isSubmittingTrabajadorEditRef.current = true;
+    setIsSubmittingTrabajadorEdit(true);
+
     try {
       await api.updateTrabajador(selectedTrabajadorParaEditar.id_trabajador, {
         nombre: nom,
@@ -1982,12 +2261,17 @@ export default function App() {
     } catch (err: any) {
       setTrabajadorFormError("Error al actualizar en base de datos: " + (err.message || err));
       showToast("Error al actualizar en base de datos: " + (err.message || err), "error");
+    } finally {
+      isSubmittingTrabajadorEditRef.current = false;
+      setIsSubmittingTrabajadorEdit(false);
     }
   };
 
   const handleConfirmarEliminarTrabajador = async () => {
-    if (!selectedTrabajadorParaEliminar) return;
+    if (!selectedTrabajadorParaEliminar || isDeletingTrabajadorRef.current) return;
     const eliminado = selectedTrabajadorParaEliminar;
+    isDeletingTrabajadorRef.current = true;
+    setIsDeletingTrabajador(true);
     try {
       await api.deleteTrabajador(eliminado.id_trabajador);
       await loadDatabaseData();
@@ -1995,10 +2279,15 @@ export default function App() {
       setSelectedTrabajadorParaEliminar(null);
     } catch (err: any) {
       showToast("Error al eliminar de base de datos: " + (err.message || err), "error");
+    } finally {
+      isDeletingTrabajadorRef.current = false;
+      setIsDeletingTrabajador(false);
     }
   };
 
   const handleToggleActivoTrabajador = async (trab: Trabajador) => {
+    if (togglingTrabajadorIds[trab.id_trabajador]) return;
+    setTogglingTrabajadorIds((prev) => ({ ...prev, [trab.id_trabajador]: true }));
     const nuevoActivo = !trab.activo;
     try {
       await api.updateTrabajador(trab.id_trabajador, {
@@ -2016,6 +2305,12 @@ export default function App() {
         return t;
       }));
       showToast(`Colaborador ${trab.nombre} ${nuevoActivo ? "habilitado" : "deshabilitado"} localmente.`, "info");
+    } finally {
+      setTogglingTrabajadorIds((prev) => {
+        const next = { ...prev };
+        delete next[trab.id_trabajador];
+        return next;
+      });
     }
   };
 
@@ -2100,10 +2395,20 @@ export default function App() {
 
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 active:scale-[0.98] shadow-md cursor-pointer"
+                  disabled={isSubmittingLogin}
+                  className={`w-full py-3 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 active:scale-[0.98] shadow-md cursor-pointer flex items-center justify-center gap-2 ${
+                    isSubmittingLogin ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                  }`}
                   style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))", fontFamily: "var(--font-display)" }}
                 >
-                  Iniciar Sesión →
+                  {isSubmittingLogin ? (
+                    <>
+                      <IconSpinner className="w-4 h-4" />
+                      <span>Iniciando Sesión...</span>
+                    </>
+                  ) : (
+                    <span>Iniciar Sesión →</span>
+                  )}
                 </button>
               </form>
 
@@ -2543,14 +2848,29 @@ export default function App() {
                             <div className="flex gap-2 pt-2">
                               <button
                                 onClick={() => handleAprobarInfraccion(inf)}
-                                className="flex-1 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                                disabled={Boolean(resolvingInfraccionIds[inf.id])}
+                                className={`flex-1 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm ${
+                                  resolvingInfraccionIds[inf.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                                }`}
                               >
-                                <IconCheckCircle className="w-4 h-4" />
-                                <span>Aprobar Suspensión</span>
+                                {resolvingInfraccionIds[inf.id] ? (
+                                  <>
+                                    <IconSpinner className="w-3.5 h-3.5" />
+                                    <span>Procesando...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <IconCheckCircle className="w-4 h-4" />
+                                    <span>Aprobar Suspensión</span>
+                                  </>
+                                )}
                               </button>
                               <button
                                 onClick={() => handleRechazarInfraccion(inf)}
-                                className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all border border-slate-300 cursor-pointer"
+                                disabled={Boolean(resolvingInfraccionIds[inf.id])}
+                                className={`px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all border border-slate-300 cursor-pointer ${
+                                  resolvingInfraccionIds[inf.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                                }`}
                               >
                                 Desestimar
                               </button>
@@ -2615,17 +2935,41 @@ export default function App() {
                           <div className="flex flex-col sm:flex-row gap-3 pt-2 justify-end">
                             <button
                               onClick={() => handleAceptarApelacion(s.id, "Apelación procedente. Se levanta la suspensión vehicular y se deja sin efectos la medida.")}
-                              className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                              disabled={Boolean(resolvingSancionIds[s.id])}
+                              className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm ${
+                                resolvingSancionIds[s.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                              }`}
                             >
-                              <IconCheckCircle className="w-4 h-4" />
-                              <span>Aceptar Apelación y Levantar Suspensión</span>
+                              {resolvingSancionIds[s.id] ? (
+                                <>
+                                  <IconSpinner className="w-3.5 h-3.5" />
+                                  <span>Procesando...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <IconCheckCircle className="w-4 h-4" />
+                                  <span>Aceptar Apelación y Levantar Suspensión</span>
+                                </>
+                              )}
                             </button>
                             <button
                               onClick={() => handleRatificarSancion(s.id, "Apelación improcedente. Se ratifica la suspensión por no aportar elementos suficientes.")}
-                              className="px-5 py-2.5 rounded-xl text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 border border-red-300 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                              disabled={Boolean(resolvingSancionIds[s.id])}
+                              className={`px-5 py-2.5 rounded-xl text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 border border-red-300 transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                                resolvingSancionIds[s.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                              }`}
                             >
-                              <IconAlertTriangle className="w-4 h-4" />
-                              <span>Ratificar Sanción (Rechazar)</span>
+                              {resolvingSancionIds[s.id] ? (
+                                <>
+                                  <IconSpinner className="w-3.5 h-3.5" />
+                                  <span>Procesando...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <IconAlertTriangle className="w-4 h-4" />
+                                  <span>Ratificar Sanción (Rechazar)</span>
+                                </>
+                              )}
                             </button>
                           </div>
                         </div>
@@ -2833,34 +3177,54 @@ export default function App() {
                         type="text"
                         id="repName"
                         placeholder="Ej. Ing. Roberto Garza Leal"
-                        defaultValue={currentUser.nombre}
+                        defaultValue={currentUser?.nombre || ""}
                         className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 italic"
                       />
                     </div>
                     <div className="flex justify-end pt-2">
                       <button
                         type="button"
+                        disabled={isSubmittingReglamento}
                         onClick={async () => {
-                          const repNameInput = (document.getElementById("repName") as HTMLInputElement)?.value || currentUser.nombre;
-                          const currentEmp = empresas.find(e => e.nombre === currentUser.empresaNombre) || empresas[0];
+                          if (isSubmittingReglamentoRef.current) return;
+                          isSubmittingReglamentoRef.current = true;
+                          setIsSubmittingReglamento(true);
                           try {
-                            await api.aceptarReglamento({
-                              id_empresa: currentEmp?.id || 1,
-                              id_usuario: currentUser.id || 1,
-                              firma_nombre: repNameInput
-                            });
-                          } catch (err) {
-                            console.warn("Error guardando aceptación de reglamento en BD:", err);
+                            const repNameInput = (document.getElementById("repName") as HTMLInputElement)?.value || currentUser?.nombre || "";
+                            const currentEmp = empresas.find(e => e.nombre === currentUser?.empresaNombre) || empresas[0];
+                            try {
+                              await api.aceptarReglamento({
+                                id_empresa: currentEmp?.id || 1,
+                                id_usuario: currentUser?.id || 1,
+                                firma_nombre: repNameInput
+                              });
+                            } catch (err) {
+                              console.warn("Error guardando aceptación de reglamento en BD:", err);
+                            }
+                            if (currentUser) {
+                              setUsers(users.map(u => u.id === currentUser.id ? { ...u, hasAcceptedReglamento: true } : u));
+                              setCurrentUser({ ...currentUser, hasAcceptedReglamento: true });
+                            }
+                            setPortalScreen("dashboard");
+                            showToast("Reglamento aceptado y firmado digitalmente con éxito.", "success", "Firma Registrada");
+                          } finally {
+                            isSubmittingReglamentoRef.current = false;
+                            setIsSubmittingReglamento(false);
                           }
-                          setUsers(users.map(u => u.id === currentUser.id ? { ...u, hasAcceptedReglamento: true } : u));
-                          setCurrentUser({ ...currentUser, hasAcceptedReglamento: true });
-                          setPortalScreen("dashboard");
-                          showToast("Reglamento aceptado y firmado digitalmente con éxito.", "success", "Firma Registrada");
                         }}
-                        className="px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 cursor-pointer"
+                        className={`px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 cursor-pointer flex items-center gap-2 ${
+                          isSubmittingReglamento ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                        }`}
                         style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                       >
-                        Aceptar y Firmar Digitalmente →
+                        {isSubmittingReglamento ? (
+                          <>
+                            <IconSpinner className="w-4 h-4" />
+                            <span>Firmando Reglamento...</span>
+                          </>
+                        ) : (
+                          <span>Aceptar y Firmar Digitalmente →</span>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -2967,7 +3331,10 @@ export default function App() {
                                 <td className="px-5 py-3">
                                   <button
                                     onClick={() => handleToggleActivoTrabajador(t)}
-                                    className="cursor-pointer group flex items-center gap-1.5"
+                                    disabled={Boolean(togglingTrabajadorIds[t.id_trabajador])}
+                                    className={`cursor-pointer group flex items-center gap-1.5 ${
+                                      togglingTrabajadorIds[t.id_trabajador] ? "opacity-50 pointer-events-none" : ""
+                                    }`}
                                     title="Clic para cambiar estatus"
                                   >
                                     {t.activo ? (
@@ -3056,7 +3423,10 @@ export default function App() {
                                   <button
                                     type="button"
                                     onClick={() => handleToggleEstatusVehiculo(v)}
-                                    className="cursor-pointer transition-all active:scale-95 group flex items-center"
+                                    disabled={Boolean(togglingVehiculoIds[v.id])}
+                                    className={`cursor-pointer transition-all active:scale-95 group flex items-center ${
+                                      togglingVehiculoIds[v.id] ? "opacity-50 pointer-events-none" : ""
+                                    }`}
                                     title={v.status === "Habilitado" ? "Clic para deshabilitar vehículo" : "Clic para habilitar vehículo"}
                                   >
                                     {v.status === "Habilitado" ? (
@@ -3092,44 +3462,7 @@ export default function App() {
                       Datos del Nuevo Vehículo
                     </h2>
                     <form
-                      onSubmit={async (e) => {
-                        e.preventDefault();
-                        if (!nuevoVehiculoFoto) {
-                          setNuevoVehiculoFotoError("Es obligatorio adjuntar una fotografía oficial del vehículo.");
-                          return;
-                        }
-
-                        const form = e.currentTarget;
-                        const marcaVal = (form.elements.namedItem("marca") as HTMLInputElement)?.value || "";
-                        const modeloVal = (form.elements.namedItem("modelo") as HTMLInputElement)?.value || "";
-                        const anioVal = (form.elements.namedItem("año") as HTMLInputElement || form.elements.namedItem("anio") as HTMLInputElement)?.value || "";
-                        const placasVal = ((form.elements.namedItem("placas") as HTMLInputElement)?.value || "").toUpperCase();
-                        const colorVal = (form.elements.namedItem("color") as HTMLInputElement)?.value || "";
-
-                        const emp = empresas.find(em => em.nombre === currentUser.empresaNombre) || empresas[0];
-
-                        try {
-                          await api.createVehiculo({
-                            id_empresa: emp?.id || 1,
-                            marca: marcaVal,
-                            modelo: modeloVal,
-                            año: anioVal || null,
-                            placas: placasVal,
-                            color: colorVal,
-                            foto_url: nuevoVehiculoFoto,
-                            estatus_acceso: "HABILITADO",
-                          });
-
-                          await loadDatabaseData();
-                          form.reset();
-                          setNuevoVehiculoFoto("");
-                          setNuevoVehiculoFotoError("");
-                          showToast("Vehículo registrado exitosamente con fotografía oficial y corbatín QR.", "success", "Vehículo Registrado");
-                          setPortalScreen("dashboard");
-                        } catch (err: any) {
-                          showToast("Error al registrar vehículo en la base de datos: " + (err.message || err), "error");
-                        }
-                      }}
+                      onSubmit={handleGuardarNuevoVehiculo}
                       className="space-y-5"
                     >
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -3204,8 +3537,22 @@ export default function App() {
                       </div>
 
                       <div className="flex justify-end pt-3">
-                        <button type="submit" className="px-7 py-3 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md" style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}>
-                          Registrar y Generar Corbatín
+                        <button
+                          type="submit"
+                          disabled={isSubmittingVehiculo}
+                          className={`px-7 py-3 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center gap-2 ${
+                            isSubmittingVehiculo ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                          }`}
+                          style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
+                        >
+                          {isSubmittingVehiculo ? (
+                            <>
+                              <IconSpinner className="w-4 h-4" />
+                              <span>Registrando Unidad...</span>
+                            </>
+                          ) : (
+                            <span>Registrar y Generar Corbatín</span>
+                          )}
                         </button>
                       </div>
                     </form>
@@ -3397,7 +3744,10 @@ export default function App() {
                                 <td className="px-5 py-3.5">
                                   <button
                                     onClick={() => handleToggleActivoTrabajador(t)}
-                                    className="cursor-pointer group flex items-center gap-1.5 text-left"
+                                    disabled={Boolean(togglingTrabajadorIds[t.id_trabajador])}
+                                    className={`cursor-pointer group flex items-center gap-1.5 text-left ${
+                                      togglingTrabajadorIds[t.id_trabajador] ? "opacity-50 pointer-events-none" : ""
+                                    }`}
                                     title="Clic para alternar estatus (Activo / Inactivo)"
                                   >
                                     {t.activo ? (
@@ -3879,10 +4229,20 @@ export default function App() {
                           ) : (
                             <button
                               type="submit"
-                              className="w-full py-3 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md"
+                              disabled={isSubmittingEntrada}
+                              className={`w-full py-3 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 ${
+                                isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                              }`}
                               style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                             >
-                              {casetaOverrideActive ? "Autorizar Ingreso Vehicular con Anulación" : "Permitir Entrada Vehicular y Registrar"}
+                              {isSubmittingEntrada ? (
+                                <>
+                                  <IconSpinner className="w-4 h-4" />
+                                  <span>Registrando Entrada...</span>
+                                </>
+                              ) : (
+                                <span>{casetaOverrideActive ? "Autorizar Ingreso Vehicular con Anulación" : "Permitir Entrada Vehicular y Registrar"}</span>
+                              )}
                             </button>
                           )}
                         </div>
@@ -4031,10 +4391,22 @@ export default function App() {
                         <div className="pt-2">
                           <button
                             type="submit"
-                            className="w-full py-3 rounded-xl text-sm font-bold text-white bg-sky-700 hover:bg-sky-800 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                            disabled={isSubmittingEntrada}
+                            className={`w-full py-3 rounded-xl text-sm font-bold text-white bg-sky-700 hover:bg-sky-800 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md ${
+                              isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                            }`}
                           >
-                            <IconWalk className="w-4 h-4" />
-                            <span>Autorizar y Registrar Ingreso Peatonal</span>
+                            {isSubmittingEntrada ? (
+                              <>
+                                <IconSpinner className="w-4 h-4" />
+                                <span>Registrando Ingreso Peatonal...</span>
+                              </>
+                            ) : (
+                              <>
+                                <IconWalk className="w-4 h-4" />
+                                <span>Autorizar y Registrar Ingreso Peatonal</span>
+                              </>
+                            )}
                           </button>
                         </div>
                       </form>
@@ -4212,9 +4584,19 @@ export default function App() {
                                   <button
                                     type="button"
                                     onClick={() => handleMarcarSalida(b.id)}
-                                    className="px-3 py-1 text-xs font-bold rounded-lg bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 cursor-pointer"
+                                    disabled={Boolean(marcandoSalidaIds[b.id])}
+                                    className={`px-3 py-1 text-xs font-bold rounded-lg bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 cursor-pointer flex items-center gap-1.5 ${
+                                      marcandoSalidaIds[b.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                                    }`}
                                   >
-                                    Registrar Salida
+                                    {marcandoSalidaIds[b.id] ? (
+                                      <>
+                                        <IconSpinner className="w-3 h-3" />
+                                        <span>Marcando...</span>
+                                      </>
+                                    ) : (
+                                      <span>Registrar Salida</span>
+                                    )}
                                   </button>
                                 ) : (
                                   <span className="text-xs text-slate-400">Completado</span>
@@ -4318,9 +4700,19 @@ export default function App() {
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 transition-all cursor-pointer shadow-md"
+                    disabled={isSubmittingPassword}
+                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
+                      isSubmittingPassword ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
                   >
-                    Guardar Clave
+                    {isSubmittingPassword ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Guardando...</span>
+                      </>
+                    ) : (
+                      <span>Guardar Clave</span>
+                    )}
                   </button>
                 </div>
               </div>
@@ -4374,7 +4766,7 @@ export default function App() {
                 <input
                   type="text"
                   required
-                  defaultValue={currentUser.nombre}
+                  defaultValue={currentUser?.nombre || ""}
                   className="w-full rounded-xl px-4 py-2 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-sky-200 font-medium text-slate-800"
                 />
               </div>
@@ -4389,9 +4781,19 @@ export default function App() {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 transition-all cursor-pointer shadow-md"
+                  disabled={isSubmittingApelacion}
+                  className={`px-6 py-2 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
+                    isSubmittingApelacion ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                  }`}
                 >
-                  Enviar Recurso a Supervisión HOA →
+                  {isSubmittingApelacion ? (
+                    <>
+                      <IconSpinner className="w-3.5 h-3.5" />
+                      <span>Enviando Recurso...</span>
+                    </>
+                  ) : (
+                    <span>Enviar Recurso a Supervisión HOA →</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -4408,29 +4810,7 @@ export default function App() {
               <button onClick={() => setShowCreateSupervisorModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">✕</button>
             </div>
             <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const f = e.currentTarget;
-                const nom = (f.elements.namedItem("nombre") as HTMLInputElement).value.trim();
-                const emailVal = (f.elements.namedItem("email") as HTMLInputElement).value.trim();
-                const passVal = (f.elements.namedItem("password") as HTMLInputElement).value.trim();
-
-                try {
-                  await api.createUsuario({
-                    nombre: nom,
-                    correo: emailVal,
-                    password: passVal || "123456",
-                    id_rol: 2, // SUPERVISOR
-                    id_empresa: null,
-                    activo: true,
-                  });
-                  await loadDatabaseData();
-                  setShowCreateSupervisorModal(false);
-                  showToast(`Cuenta de Supervisor para "${nom}" (${emailVal}) creada y guardada exitosamente.`, "success", "Supervisor Creado");
-                } catch (err: any) {
-                  showToast("Error al guardar supervisor en la base de datos: " + (err.message || err), "error");
-                }
-              }}
+              onSubmit={handleGuardarNuevoSupervisor}
               className="space-y-3"
             >
               <div>
@@ -4448,7 +4828,22 @@ export default function App() {
               </div>
               <div className="flex justify-end gap-2 pt-3">
                 <button type="button" onClick={() => setShowCreateSupervisorModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>
-                <button type="submit" className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer">Guardar Supervisor</button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingSupervisor}
+                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${
+                    isSubmittingSupervisor ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                  }`}
+                >
+                  {isSubmittingSupervisor ? (
+                    <>
+                      <IconSpinner className="w-3.5 h-3.5" />
+                      <span>Guardando...</span>
+                    </>
+                  ) : (
+                    <span>Guardar Supervisor</span>
+                  )}
+                </button>
               </div>
             </form>
           </div>
@@ -4464,41 +4859,7 @@ export default function App() {
               <button onClick={() => setShowCreateEmpresaModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">✕</button>
             </div>
             <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const f = e.currentTarget;
-                const empNombre = (f.elements.namedItem("nombre") as HTMLInputElement).value.trim();
-                const rfcVal = (f.elements.namedItem("rfc") as HTMLInputElement).value.trim().toUpperCase();
-                const contacto = (f.elements.namedItem("contacto") as HTMLInputElement).value.trim();
-                const tel = (f.elements.namedItem("telefono") as HTMLInputElement).value.trim();
-                const email = (f.elements.namedItem("email") as HTMLInputElement).value.trim();
-                const passVal = (f.elements.namedItem("password") as HTMLInputElement).value.trim();
-
-                try {
-                  const empRes = await api.createEmpresa({
-                    razon_social: empNombre,
-                    responsable_nombre: contacto,
-                    telefono: tel,
-                    correo: email,
-                    estatus: "ACTIVA",
-                  });
-
-                  await api.createUsuario({
-                    nombre: contacto,
-                    correo: email,
-                    password: passVal || "123456",
-                    id_rol: 5, // PROVEEDOR
-                    id_empresa: empRes?.id_empresa || null,
-                    activo: true,
-                  });
-
-                  await loadDatabaseData();
-                  setShowCreateEmpresaModal(false);
-                  showToast(`Empresa "${empNombre}" y cuenta "${email}" creadas exitosamente.`, "success", "Proveedor Creado");
-                } catch (err: any) {
-                  showToast("Error al registrar proveedor en la base de datos: " + (err.message || err), "error");
-                }
-              }}
+              onSubmit={handleGuardarNuevaEmpresa}
               className="space-y-3"
             >
               <div>
@@ -4528,7 +4889,22 @@ export default function App() {
               </div>
               <div className="flex justify-end gap-2 pt-3">
                 <button type="button" onClick={() => setShowCreateEmpresaModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>
-                <button type="submit" className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer">Crear Proveedor</button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingEmpresa}
+                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${
+                    isSubmittingEmpresa ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                  }`}
+                >
+                  {isSubmittingEmpresa ? (
+                    <>
+                      <IconSpinner className="w-3.5 h-3.5" />
+                      <span>Creando Proveedor...</span>
+                    </>
+                  ) : (
+                    <span>Crear Proveedor</span>
+                  )}
+                </button>
               </div>
             </form>
           </div>
@@ -4544,29 +4920,7 @@ export default function App() {
               <button onClick={() => setShowCreateGuardiaModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">✕</button>
             </div>
             <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const f = e.currentTarget;
-                const nom = (f.elements.namedItem("nombre") as HTMLInputElement).value.trim();
-                const emailVal = (f.elements.namedItem("email") as HTMLInputElement).value.trim();
-                const passVal = (f.elements.namedItem("password") as HTMLInputElement).value.trim();
-
-                try {
-                  await api.createUsuario({
-                    nombre: nom,
-                    correo: emailVal,
-                    password: passVal || "123456",
-                    id_rol: 4, // CASETA
-                    id_empresa: null,
-                    activo: true,
-                  });
-                  await loadDatabaseData();
-                  setShowCreateGuardiaModal(false);
-                  showToast(`Oficial de Caseta "${nom}" (${emailVal}) registrado exitosamente.`, "success", "Oficial Registrado");
-                } catch (err: any) {
-                  showToast("Error al registrar oficial en la base de datos: " + (err.message || err), "error");
-                }
-              }}
+              onSubmit={handleGuardarNuevoGuardia}
               className="space-y-3"
             >
               <div>
@@ -4584,7 +4938,22 @@ export default function App() {
               </div>
               <div className="flex justify-end gap-2 pt-3">
                 <button type="button" onClick={() => setShowCreateGuardiaModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>
-                <button type="submit" className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer">Guardar Oficial</button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingGuardia}
+                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${
+                    isSubmittingGuardia ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                  }`}
+                >
+                  {isSubmittingGuardia ? (
+                    <>
+                      <IconSpinner className="w-3.5 h-3.5" />
+                      <span>Guardando Oficial...</span>
+                    </>
+                  ) : (
+                    <span>Guardar Oficial</span>
+                  )}
+                </button>
               </div>
             </form>
           </div>
@@ -4602,7 +4971,7 @@ export default function App() {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 uppercase">Alta de Nuevo Trabajador</h3>
-                  <p className="text-xs text-slate-500">Empresa: {currentUser.empresaNombre}</p>
+                  <p className="text-xs text-slate-500">Empresa: {currentUser?.empresaNombre || ""}</p>
                 </div>
               </div>
               <button onClick={() => setShowCreateTrabajadorModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
@@ -4729,10 +5098,20 @@ export default function App() {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md"
+                  disabled={isSubmittingTrabajador}
+                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${
+                    isSubmittingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                  }`}
                   style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                 >
-                  Guardar Trabajador →
+                  {isSubmittingTrabajador ? (
+                    <>
+                      <IconSpinner className="w-3.5 h-3.5" />
+                      <span>Guardando Trabajador...</span>
+                    </>
+                  ) : (
+                    <span>Guardar Trabajador →</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -4881,9 +5260,19 @@ export default function App() {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md"
+                  disabled={isSubmittingTrabajadorEdit}
+                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-2 ${
+                    isSubmittingTrabajadorEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                  }`}
                 >
-                  Guardar Cambios →
+                  {isSubmittingTrabajadorEdit ? (
+                    <>
+                      <IconSpinner className="w-3.5 h-3.5" />
+                      <span>Guardando Cambios...</span>
+                    </>
+                  ) : (
+                    <span>Guardar Cambios →</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -4927,10 +5316,22 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleConfirmarEliminarTrabajador}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5"
+                disabled={isDeletingTrabajador}
+                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
+                  isDeletingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                }`}
               >
-                <IconTrash className="w-4 h-4" />
-                <span>Eliminar Definitivamente</span>
+                {isDeletingTrabajador ? (
+                  <>
+                    <IconSpinner className="w-4 h-4" />
+                    <span>Eliminando...</span>
+                  </>
+                ) : (
+                  <>
+                    <IconTrash className="w-4 h-4" />
+                    <span>Eliminar Definitivamente</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
