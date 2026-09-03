@@ -302,6 +302,7 @@ interface UserAccount {
   fechaCreacion: string;
   creadoPor: string;
   hasAcceptedReglamento?: boolean;
+  activo?: boolean;
 }
 
 interface Empresa {
@@ -398,10 +399,10 @@ interface InfraccionReporte {
 // ─── Initial Database ─────────────────────────────────────────────────────────
 
 const INITIAL_USERS: UserAccount[] = [
-  { id: "1", username: "admin@laspalomashoa.com", password: "123456", nombre: "Administrador de Seguridad HOA", email: "admin@laspalomashoa.com", role: "admin", fechaCreacion: "2026-01-01", creadoPor: "Sistema Raíz" },
-  { id: "2", username: "supervisor@laspalomashoa.com", password: "123456", nombre: "Supervisor Operativo", email: "supervisor@laspalomashoa.com", role: "supervisor", turno: "Turno General 24/7", fechaCreacion: "2026-01-10", creadoPor: "Admin TI" },
-  { id: "5", username: "proveedor@constructoraintegral.com", password: "123456", nombre: "Roberto Silva Morales", email: "proveedor@constructoraintegral.com", role: "contratista", empresaNombre: "Constructora Integral del Noroeste S.A. de C.V.", fechaCreacion: "2026-02-01", creadoPor: "Supervisor HOA", hasAcceptedReglamento: true },
-  { id: "4", username: "caseta@laspalomashoa.com", password: "123456", nombre: "Guardia Caseta Principal", email: "caseta@laspalomashoa.com", role: "caseta", turno: "Vespertino (14:00 - 22:00)", fechaCreacion: "2026-02-05", creadoPor: "Supervisor HOA" },
+  { id: "1", username: "admin@laspalomashoa.com", password: "123456", nombre: "Administrador de Seguridad HOA", email: "admin@laspalomashoa.com", role: "admin", fechaCreacion: "2026-01-01", creadoPor: "Sistema Raíz", activo: true },
+  { id: "2", username: "supervisor@laspalomashoa.com", password: "123456", nombre: "Supervisor Operativo", email: "supervisor@laspalomashoa.com", role: "supervisor", turno: "Turno General 24/7", fechaCreacion: "2026-01-10", creadoPor: "Admin TI", activo: true },
+  { id: "5", username: "proveedor@constructoraintegral.com", password: "123456", nombre: "Roberto Silva Morales", email: "proveedor@constructoraintegral.com", role: "contratista", empresaNombre: "Constructora Integral del Noroeste S.A. de C.V.", fechaCreacion: "2026-02-01", creadoPor: "Supervisor HOA", hasAcceptedReglamento: true, activo: true },
+  { id: "4", username: "caseta@laspalomashoa.com", password: "123456", nombre: "Guardia Caseta Principal", email: "caseta@laspalomashoa.com", role: "caseta", turno: "Vespertino (14:00 - 22:00)", fechaCreacion: "2026-02-05", creadoPor: "Supervisor HOA", activo: true },
 ];
 
 const INITIAL_EMPRESAS: Empresa[] = [];
@@ -968,6 +969,8 @@ export default function App() {
 
   const [togglingTrabajadorIds, setTogglingTrabajadorIds] = useState<Record<string | number, boolean>>({});
   const [togglingVehiculoIds, setTogglingVehiculoIds] = useState<Record<string | number, boolean>>({});
+  const [togglingUserIds, setTogglingUserIds] = useState<Record<string | number, boolean>>({});
+  const togglingUserIdsRef = useRef<Record<string | number, boolean>>({});
   const [marcandoSalidaIds, setMarcandoSalidaIds] = useState<Record<string | number, boolean>>({});
   const [resolvingInfraccionIds, setResolvingInfraccionIds] = useState<Record<string | number, boolean>>({});
   const [resolvingSancionIds, setResolvingSancionIds] = useState<Record<string | number, boolean>>({});
@@ -1041,6 +1044,7 @@ export default function App() {
           fechaCreacion: u.created_at ? new Date(u.created_at).toISOString().split("T")[0] : "2026-01-01",
           creadoPor: "Administrador de Seguridad HOA",
           hasAcceptedReglamento: true,
+          activo: u.activo !== false,
         }));
         setUsers(mappedUsers);
       }
@@ -2314,6 +2318,37 @@ export default function App() {
     }
   };
 
+  const handleToggleActivoUsuario = async (user: UserAccount) => {
+    if (togglingUserIdsRef.current[user.id]) return;
+    togglingUserIdsRef.current = { ...togglingUserIdsRef.current, [user.id]: true };
+    setTogglingUserIds((prev) => ({ ...prev, [user.id]: true }));
+    const nuevoActivo = user.activo === false ? true : false;
+    try {
+      await api.updateUsuario(user.id, {
+        activo: nuevoActivo,
+      });
+      await loadDatabaseData();
+      showToast(
+        `Usuario "${user.nombre}" (${user.username}) ${nuevoActivo ? "activado" : "desactivado"} exitosamente.`,
+        "success",
+        nuevoActivo ? "Usuario Activado" : "Usuario Desactivado"
+      );
+    } catch (err: any) {
+      console.warn("Error al actualizar estatus de usuario en PostgreSQL:", err);
+      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, activo: nuevoActivo } : u));
+      showToast(`Estatus de usuario "${user.nombre}" actualizado localmente.`, "info");
+    } finally {
+      const updated = { ...togglingUserIdsRef.current };
+      delete updated[user.id];
+      togglingUserIdsRef.current = updated;
+      setTogglingUserIds((prev) => {
+        const next = { ...prev };
+        delete next[user.id];
+        return next;
+      });
+    }
+  };
+
   const handleFotoTrabajadorUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTrabajadorFormError("");
     const file = e.target.files?.[0];
@@ -2686,9 +2721,27 @@ export default function App() {
                               <td className="px-5 py-3 text-xs text-slate-500">{sup.fechaCreacion}</td>
                               <td className="px-5 py-3 text-xs text-slate-500">{sup.creadoPor}</td>
                               <td className="px-5 py-3">
-                                <span className="text-xs text-emerald-700 font-bold bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
-                                  Activo
-                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleActivoUsuario(sup)}
+                                  disabled={Boolean(togglingUserIds[sup.id])}
+                                  className={`cursor-pointer group flex items-center gap-1.5 transition-all ${
+                                    togglingUserIds[sup.id] ? "opacity-50 pointer-events-none" : ""
+                                  }`}
+                                  title={sup.activo !== false ? "Clic para desactivar supervisor" : "Clic para activar supervisor"}
+                                >
+                                  {sup.activo !== false ? (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 shadow-sm transition-all">
+                                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                      <span>Activo</span>
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-300 hover:bg-red-100 hover:border-red-400 shadow-sm transition-all">
+                                      <span className="w-2 h-2 rounded-full bg-red-400" />
+                                      <span>Inactivo</span>
+                                    </span>
+                                  )}
+                                </button>
                               </td>
                             </tr>
                           ))}
@@ -2711,7 +2764,7 @@ export default function App() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
-                          {["Usuario", "Nombre Completo", "Rol en el Sistema", "Detalles / Empresa", "Clave Actual", "Acción TI"].map((h) => (
+                          {["Usuario", "Nombre Completo", "Rol en el Sistema", "Detalles / Empresa", "Acción TI"].map((h) => (
                             <th key={h} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
                           ))}
                         </tr>
@@ -2731,11 +2784,6 @@ export default function App() {
                               </span>
                             </td>
                             <td className="px-5 py-3 text-xs text-slate-600">{u.empresaNombre || u.turno || u.email}</td>
-                            <td className="px-5 py-3 text-xs font-mono text-slate-500">
-                              <span className="bg-slate-100 px-2 py-1 rounded border border-slate-200 text-slate-700">
-                                {u.password ? "••••••••" : "Por Defecto (123)"}
-                              </span>
-                            </td>
                             <td className="px-5 py-3">
                               <button
                                 onClick={() => {
@@ -3078,9 +3126,27 @@ export default function App() {
                                 <td className="px-5 py-3 text-xs text-slate-500">{g.fechaCreacion}</td>
                                 <td className="px-5 py-3 text-xs text-slate-500">{g.creadoPor}</td>
                                 <td className="px-5 py-3">
-                                  <span className="text-xs text-emerald-700 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                                    En Servicio
-                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleActivoUsuario(g)}
+                                    disabled={Boolean(togglingUserIds[g.id])}
+                                    className={`cursor-pointer group flex items-center gap-1.5 transition-all ${
+                                      togglingUserIds[g.id] ? "opacity-50 pointer-events-none" : ""
+                                    }`}
+                                    title={g.activo !== false ? "Clic para desactivar oficial" : "Clic para activar oficial"}
+                                  >
+                                    {g.activo !== false ? (
+                                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 shadow-sm transition-all">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                        <span>En Servicio</span>
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-300 hover:bg-red-100 hover:border-red-400 shadow-sm transition-all">
+                                        <span className="w-2 h-2 rounded-full bg-red-400" />
+                                        <span>Inactivo</span>
+                                      </span>
+                                    )}
+                                  </button>
                                 </td>
                               </tr>
                             ))
