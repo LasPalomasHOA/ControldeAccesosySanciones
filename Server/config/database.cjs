@@ -21,7 +21,7 @@ const schema = process.env.DB_SCHEMA || 'control_acceso';
 
 function resolveServerlessDbUrl(rawUrl) {
   if (!rawUrl) return rawUrl;
-  let cleanUrl = rawUrl.split('?')[0].trim();
+  let cleanUrl = rawUrl.replace(/^["']|["']$/g, '').split('?')[0].trim();
   try {
     const parsed = new URL(cleanUrl);
     // Detectar si es una conexión directa db.<project-ref>.supabase.co
