@@ -92,13 +92,8 @@ router.post('/:id/revisar', async (req, res) => {
   try {
     const { decision, comentarios, id_usuario } = req.body;
 
-    // Bloquear el reporte a nivel de fila durante la transacción para evitar condiciones de carrera si 2 supervisores dictaminan a la vez
+    // 1. Bloquear únicamente la fila del reporte sin LEFT OUTER JOINS para evitar error de PostgreSQL "FOR UPDATE cannot be applied to outer join"
     const reporte = await db.ReporteInfraccion.findByPk(req.params.id, {
-      include: [
-        { model: db.Vehiculo, as: 'vehiculo' },
-        { model: db.Sancion, as: 'sancion' },
-        { model: db.RevisionReporte, as: 'revisiones' }
-      ],
       lock: transaction.LOCK ? transaction.LOCK.UPDATE : undefined,
       transaction
     });
@@ -108,19 +103,18 @@ router.post('/:id/revisar', async (req, res) => {
       return res.status(404).json({ error: 'Reporte de infracción no encontrado' });
     }
 
-    // Comprobar si ya fue dictaminado previamente por otro supervisor
-    if (reporte.estatus_revision !== 'PENDIENTE' || (reporte.sancion && reporte.sancion.id_sancion)) {
+    // 2. Comprobar si ya fue dictaminado previamente por otro supervisor
+    if (reporte.estatus_revision !== 'PENDIENTE') {
       await transaction.rollback();
       return res.status(409).json({
         error: `Este reporte ya fue dictaminado previamente como ${reporte.estatus_revision} por otro supervisor.`,
         yaDictaminado: true,
         estatus_revision: reporte.estatus_revision,
-        reporte,
-        sancion: reporte.sancion
+        reporte
       });
     }
 
-    // Verificar si ya existe sanción asociada
+    // 3. Verificar si ya existe sanción asociada a este reporte
     const sancionExistente = await db.Sancion.findOne({
       where: { id_reporte: reporte.id_reporte },
       transaction
@@ -135,20 +129,36 @@ router.post('/:id/revisar', async (req, res) => {
       });
     }
 
+    // 4. Validar id_usuario para respetar integridad referencial
+    let usuarioValidoId = 2; // Default Supervisor Operativo
+    if (id_usuario && !isNaN(Number(id_usuario))) {
+      const uExiste = await db.Usuario.findByPk(Number(id_usuario), { transaction });
+      if (uExiste) usuarioValidoId = Number(id_usuario);
+    }
+
+    // 5. Cargar vehículo asociado
+    const vehiculo = reporte.id_vehiculo
+      ? await db.Vehiculo.findByPk(reporte.id_vehiculo, { transaction })
+      : null;
+
+    // 6. Actualizar estatus del reporte
     reporte.estatus_revision = decision === 'APROBADO' ? 'APROBADO' : 'RECHAZADO';
     await reporte.save({ transaction });
 
-    // Contar reincidencias previas del vehículo de forma consistente
-    const conteoSanciones = await db.Sancion.count({
-      where: { id_vehiculo: reporte.id_vehiculo },
-      transaction
-    });
+    // 7. Contar reincidencias previas del vehículo de forma consistente
+    const conteoSanciones = reporte.id_vehiculo
+      ? await db.Sancion.count({
+          where: { id_vehiculo: reporte.id_vehiculo },
+          transaction
+        })
+      : 0;
     const nivelReincidencia = Math.min(conteoSanciones + 1, 4);
 
+    // 8. Crear dictamen de revisión
     const revision = await db.RevisionReporte.create(
       {
         id_reporte: reporte.id_reporte,
-        id_usuario: id_usuario || 2,
+        id_usuario: usuarioValidoId,
         decision,
         comentarios: comentarios || null,
         fecha_revision: new Date(),
@@ -157,7 +167,7 @@ router.post('/:id/revisar', async (req, res) => {
       { transaction }
     );
 
-    // Si se aprueba, generar sanción única
+    // 9. Si se aprueba, generar sanción única
     let sancion = null;
     if (decision === 'APROBADO') {
       const regla = await db.ReglaReincidencia.findOne({
@@ -168,8 +178,8 @@ router.post('/:id/revisar', async (req, res) => {
       sancion = await db.Sancion.create(
         {
           id_reporte: reporte.id_reporte,
-          id_vehiculo: reporte.id_vehiculo,
-          id_empresa: reporte.vehiculo?.id_empresa || 1,
+          id_vehiculo: reporte.id_vehiculo || 1,
+          id_empresa: vehiculo?.id_empresa || 1,
           id_regla: regla?.id_regla || 1,
           numero_reincidencia: nivelReincidencia,
           fecha_inicio: new Date(),
@@ -179,15 +189,15 @@ router.post('/:id/revisar', async (req, res) => {
               : new Date(Date.now() + (nivelReincidencia === 2 ? 7 : 30) * 24 * 60 * 60 * 1000),
           estatus: 'ACTIVA',
           motivo: comentarios || `Sanción por falta nivel ${nivelReincidencia}`,
-          id_usuario: id_usuario || 2
+          id_usuario: usuarioValidoId
         },
         { transaction }
       );
 
       // Actualizar estatus de acceso en vehículo si la regla bloquea
-      if (regla && !regla.permite_acceso && reporte.vehiculo) {
-        reporte.vehiculo.estatus_acceso = 'SUSPENDIDO';
-        await reporte.vehiculo.save({ transaction });
+      if (regla && !regla.permite_acceso && vehiculo) {
+        vehiculo.estatus_acceso = 'SUSPENDIDO';
+        await vehiculo.save({ transaction });
       }
     }
 
