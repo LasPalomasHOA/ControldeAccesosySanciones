@@ -547,6 +547,22 @@ function playNotificationChime() {
   }
 }
 
+function normalizeFotoUrl(url?: string | null): string {
+  if (!url) return "";
+  const trimmed = String(url).trim();
+  if (!trimmed || trimmed === "null" || trimmed === "undefined") return "";
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("data:") || trimmed.startsWith("blob:")) {
+    return trimmed;
+  }
+  if (trimmed.startsWith("/uploads/")) {
+    return trimmed;
+  }
+  if (trimmed.startsWith("uploads/")) {
+    return `/${trimmed}`;
+  }
+  return `/uploads/${trimmed}`;
+}
+
 // ─── Page Hero Banner ─────────────────────────────────────────────────────────
 
 function PageHero({ img, title, subtitle, children }: { img: string; title: string; subtitle: string; children?: React.ReactNode }) {
@@ -1021,6 +1037,7 @@ export default function App() {
   // Caseta Registration Form States
   const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>("EMP-01");
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
+  const [selectedCorbatinVehicleId, setSelectedCorbatinVehicleId] = useState<string>("");
   const [casetaModoAcceso, setCasetaModoAcceso] = useState<"vehicular" | "peatonal">("vehicular");
   const [casetaPeatonalTrabajadorId, setCasetaPeatonalTrabajadorId] = useState<string>("");
   const [casetaPeatonalNombre, setCasetaPeatonalNombre] = useState("");
@@ -1123,7 +1140,7 @@ export default function App() {
             color: v.color,
             conductor: v.conductor || "",
             telefono: v.empresa?.telefono || empMatch?.telefono || v.telefono || "",
-            foto: v.foto_url || v.foto,
+            foto: normalizeFotoUrl(v.foto_url || v.foto),
             status: (v.estatus_acceso === "HABILITADO" ? "Habilitado" : (v.estatus_acceso === "DESHABILITADO" ? "Deshabilitado" : (v.estatus_acceso === "SUSPENDIDO" ? "Suspendido" : "Restringido"))) as "Habilitado" | "Deshabilitado" | "Suspendido" | "Restringido",
             corbatinNum: v.corbatinNumero || "101",
           };
@@ -3876,7 +3893,14 @@ export default function App() {
                             <tr key={v.id} className="hover:bg-slate-50 transition-colors">
                               <td className="px-5 py-3">
                                 {v.foto ? (
-                                  <img src={v.foto} alt={`${v.marca} ${v.modelo}`} className="w-14 h-10 object-cover rounded-lg border border-slate-200 shadow-sm" />
+                                  <img
+                                    src={normalizeFotoUrl(v.foto)}
+                                    alt={`${v.marca} ${v.modelo}`}
+                                    className="w-14 h-10 object-cover rounded-lg border border-slate-200 shadow-sm"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = "none";
+                                    }}
+                                  />
                                 ) : (
                                   <div className="w-14 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
                                     <IconCar className="w-5 h-5" />
@@ -4294,12 +4318,14 @@ export default function App() {
                                 </div>
                               );
                             }
+                            const activeVeh = listToRender.find((v) => v.id === selectedCorbatinVehicleId) || listToRender[0];
                             return listToRender.map((v) => (
                               <button
                                 key={v.id}
-                                onClick={() => setSelectedVehicleId(v.id)}
-                                className={`w-full text-left px-5 py-4 transition-all hover:bg-slate-50 cursor-pointer ${(selectedVehicleId || listToRender[0]?.id) === v.id ? "bg-[#E6F4F1] border-l-4 border-[#0D6E5F]" : ""
-                                  }`}
+                                onClick={() => setSelectedCorbatinVehicleId(v.id)}
+                                className={`w-full text-left px-5 py-4 transition-all hover:bg-slate-50 cursor-pointer ${
+                                  activeVeh?.id === v.id ? "bg-[#E6F4F1] border-l-4 border-[#0D6E5F]" : ""
+                                }`}
                               >
                                 <div className="font-semibold text-sm text-slate-800">{v.marca} {v.modelo}</div>
                                 <div className="text-xs text-slate-500 font-mono mt-0.5">{v.placas} · Corbatín #{v.corbatinNum || "101"}</div>
@@ -4318,7 +4344,7 @@ export default function App() {
                           (v.empresaNombre || "").trim().toLowerCase() === (currentUser.empresaNombre || "").trim().toLowerCase()
                         );
                         const listToRender = empVehicles.length > 0 ? empVehicles : vehicles;
-                        const veh = listToRender.find((v) => v.id === (selectedVehicleId || listToRender[0]?.id)) || listToRender[0];
+                        const veh = listToRender.find((v) => v.id === selectedCorbatinVehicleId) || listToRender[0];
 
                         if (!veh) {
                           return (
