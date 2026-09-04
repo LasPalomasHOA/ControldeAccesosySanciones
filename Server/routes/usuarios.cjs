@@ -165,18 +165,34 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/usuarios/:id - Desactivar o eliminar usuario
+// DELETE /api/usuarios/:id - Eliminar usuario permanentemente
 router.delete('/:id', async (req, res) => {
   try {
     const usuario = await db.Usuario.findByPk(req.params.id);
-    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (!usuario) {
+      return res.json({ message: 'El usuario ya no existe o fue eliminado previamente', id: req.params.id });
+    }
 
-    usuario.activo = false;
-    await usuario.save();
-    res.json({ message: 'Usuario desactivado exitosamente', id: req.params.id });
+    // Desvincular referencias en tablas donde id_usuario sea clave foránea opcional
+    await db.RevisionReporte.update({ id_usuario: null }, { where: { id_usuario: req.params.id } }).catch(() => {});
+    await db.ReporteInfraccion.update({ id_usuario: null }, { where: { id_usuario: req.params.id } }).catch(() => {});
+    await db.Evidencia.update({ id_usuario: null }, { where: { id_usuario: req.params.id } }).catch(() => {});
+    await db.Sancion.update({ id_usuario: null }, { where: { id_usuario: req.params.id } }).catch(() => {});
+    await db.BitacoraAcceso.update({ id_usuario: null }, { where: { id_usuario: req.params.id } }).catch(() => {});
+    await db.AceptacionReglamento.update({ id_usuario: null }, { where: { id_usuario: req.params.id } }).catch(() => {});
+
+    try {
+      await usuario.destroy();
+      res.json({ message: 'Usuario eliminado permanentemente de la base de datos', id: req.params.id });
+    } catch (destroyErr) {
+      console.warn('No se pudo hacer hard delete por restricción de integridad, aplicando soft delete:', destroyErr.message);
+      usuario.activo = false;
+      await usuario.save();
+      res.json({ message: 'Usuario desactivado por tener registros históricos inmutables', id: req.params.id });
+    }
   } catch (error) {
-    console.error('Error al desactivar usuario:', error);
-    res.status(500).json({ error: 'Error al desactivar usuario' });
+    console.error('Error al eliminar usuario:', error);
+    res.status(500).json({ error: 'Error al eliminar usuario', details: error.message });
   }
 });
 
