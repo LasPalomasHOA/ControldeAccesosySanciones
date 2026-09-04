@@ -1035,7 +1035,7 @@ export default function App() {
   const [resolvingSancionIds, setResolvingSancionIds] = useState<Record<string | number, boolean>>({});
 
   // Caseta Registration Form States
-  const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>("EMP-01");
+  const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>("");
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
   const [selectedCorbatinVehicleId, setSelectedCorbatinVehicleId] = useState<string>("");
   const [casetaModoAcceso, setCasetaModoAcceso] = useState<"vehicular" | "peatonal">("vehicular");
@@ -1052,9 +1052,49 @@ export default function App() {
 
   const currentEmpresa = empresas.find((e) => e.id === selectedEmpresaId) || empresas[0];
   const empresaVehicles = vehicles.filter((v) => v.empresaId === selectedEmpresaId && v.status === "Habilitado");
-  const currentCasetaVehicle = empresaVehicles.find((v) => v.id === selectedVehicleId) || (empresaVehicles.length > 0 ? empresaVehicles[0] : undefined);
+  const currentCasetaVehicle = vehicles.find((v) => v.id === selectedVehicleId) || empresaVehicles.find((v) => v.id === selectedVehicleId) || (empresaVehicles.length > 0 ? empresaVehicles[0] : undefined);
   const empresaTrabajadores = trabajadores.filter((t) => t.id_empresa === selectedEmpresaId || t.empresaNombre === currentEmpresa?.nombre);
   const currentTrabajadorPeatonal = empresaTrabajadores.find((t) => String(t.id_trabajador) === String(casetaPeatonalTrabajadorId));
+
+  // Asegurar que selectedEmpresaId siempre apunte a una empresa válida de la base de datos
+  useEffect(() => {
+    if (empresas.length > 0 && (!selectedEmpresaId || !empresas.some((e) => e.id === selectedEmpresaId))) {
+      const empConVehiculos = empresas.find((e) => vehicles.some((v) => v.empresaId === e.id));
+      setSelectedEmpresaId(empConVehiculos ? empConVehiculos.id : empresas[0].id);
+    }
+  }, [empresas, vehicles, selectedEmpresaId]);
+
+  // Búsqueda inteligente y autocompletado al ingresar un número de corbatín
+  const handleCorbatinInputChange = (val: string) => {
+    setCasetaCorbatin(val);
+    const clean = val.trim();
+    if (!clean) return;
+
+    const cleanLower = clean.toLowerCase();
+    const digitsOnly = clean.replace(/\D/g, "");
+
+    const matched = vehicles.find((v) => {
+      const vNum = String(v.corbatinNum || "").trim();
+      const vDigits = vNum.replace(/\D/g, "");
+      if (vNum.toLowerCase() === cleanLower) return true;
+      if (digitsOnly && vDigits === digitsOnly) return true;
+      return false;
+    });
+
+    if (matched) {
+      if (matched.empresaId && matched.empresaId !== selectedEmpresaId) {
+        setSelectedEmpresaId(matched.empresaId);
+      }
+      setSelectedVehicleId(matched.id);
+
+      if (!casetaHoraEntrada) {
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, "0");
+        const mm = String(now.getMinutes()).padStart(2, "0");
+        setCasetaHoraEntrada(`${hh}:${mm} hrs`);
+      }
+    }
+  };
 
   useEffect(() => {
     if (empresaVehicles.length > 0 && (!selectedVehicleId || !empresaVehicles.some((v) => v.id === selectedVehicleId))) {
@@ -1071,7 +1111,7 @@ export default function App() {
     if (currentCasetaVehicle) {
       setCasetaCorbatin(currentCasetaVehicle.corbatinNum);
     }
-  }, [selectedVehicleId, currentCasetaVehicle]);
+  }, [selectedVehicleId]);
 
   useEffect(() => {
     if (currentTrabajadorPeatonal) {
@@ -4885,7 +4925,7 @@ export default function App() {
                               <input
                                 type="text"
                                 value={casetaCorbatin}
-                                onChange={(e) => setCasetaCorbatin(e.target.value)}
+                                onChange={(e) => handleCorbatinInputChange(e.target.value)}
                                 placeholder="# Corbatín"
                                 className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono font-bold text-slate-800"
                               />
