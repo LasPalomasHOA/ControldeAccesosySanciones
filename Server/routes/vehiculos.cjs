@@ -27,6 +27,14 @@ router.get('/', async (req, res) => {
       order: [['created_at', 'DESC']]
     });
 
+    const formatFoto = (url) => {
+      if (!url) return null;
+      const str = String(url).trim();
+      if (str.startsWith('http://') || str.startsWith('https://') || str.startsWith('data:') || str.startsWith('blob:') || str.startsWith('/uploads/')) return str;
+      if (str.startsWith('uploads/')) return `/${str}`;
+      return `/uploads/${str}`;
+    };
+
     const resultado = vehiculos.map(v => {
       const plain = v.get({ plain: true });
       const corbatinActivo = plain.corbatines?.find(c => c.estatus === 'ACTIVO') || plain.corbatines?.[0];
@@ -47,6 +55,8 @@ router.get('/', async (req, res) => {
         empresaNombre: plain.empresa?.razon_social || '',
         año: plain.año,
         anio: plain.año,
+        foto_url: formatFoto(plain.foto_url),
+        foto: formatFoto(plain.foto_url),
         corbatinNumero: corbatinActivo ? String(corbatinActivo.numero) : '',
         corbatinVencimiento: corbatinActivo?.fecha_vencimiento ? new Date(corbatinActivo.fecha_vencimiento).toISOString().split('T')[0] : '',
         qr_token: corbatinActivo?.qr_token || '',
