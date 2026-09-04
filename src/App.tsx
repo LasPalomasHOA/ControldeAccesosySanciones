@@ -2966,17 +2966,7 @@ export default function App() {
               img={IMG_AERIAL}
               title="Consola de Supervisión y Control HOA"
               subtitle="Dictamen de infracciones móviles, resolución de apelaciones y asignación de proveedores/guardias"
-            >
-              <div className="flex items-center gap-2 mt-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 backdrop-blur-sm shadow-xs">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
-                  </span>
-                  <span>En Vivo · Sincronización Automática con App Móvil</span>
-                </span>
-              </div>
-            </PageHero>
+            />
 
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
               {supervisorTab === "bandeja" && (
