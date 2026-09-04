@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../models/index.cjs');
+const events = require('../events.cjs');
 const { saveBase64Image } = require('../utils/imageHandler.cjs');
 
 // GET /api/vehiculos - Listar todos los vehículos
@@ -53,7 +54,7 @@ router.get('/', async (req, res) => {
         conductorId: conductorAsignado?.id_trabajador || null,
         reincidencias: plain.sanciones?.length || 0,
         estadoAcceso,
-        status: plain.estatus_acceso === 'HABILITADO' ? 'Habilitado' : (plain.estatus_acceso === 'SUSPENDIDO' ? 'Suspendido' : 'Restringido')
+        status: plain.estatus_acceso === 'HABILITADO' ? 'Habilitado' : (plain.estatus_acceso === 'SUSPENDIDO' ? 'Suspendido' : (plain.estatus_acceso === 'DESHABILITADO' ? 'Deshabilitado' : 'Restringido'))
       };
     });
 
@@ -179,6 +180,14 @@ router.put('/:id', async (req, res) => {
     }
 
     await vehiculo.save();
+
+    try {
+      events.broadcastEvent('VEHICULO_ACTUALIZADO', {
+        id_vehiculo: vehiculo.id_vehiculo,
+        estatus_acceso: vehiculo.estatus_acceso
+      });
+    } catch (e) {}
+
     res.json(vehiculo);
   } catch (error) {
     console.error('Error al actualizar vehículo:', error);

@@ -1740,21 +1740,41 @@ export default function App() {
   };
 
   const handleToggleEstatusVehiculo = async (v: Vehicle) => {
-    if (v.status === "Suspendido") {
-      showToast(`El vehículo con placas ${v.placas} se encuentra suspendido por Supervisión HOA. No puede habilitarse hasta resolver la sanción.`, "warning", "Vehículo Suspendido");
-      return;
-    }
     if (togglingVehiculoIds[v.id]) return;
     setTogglingVehiculoIds((prev) => ({ ...prev, [v.id]: true }));
 
-    const nuevoEstatus = v.status === "Habilitado" ? "DESHABILITADO" : "HABILITADO";
+    const esHabilitado = v.status === "Habilitado";
+    const nuevoEstatus = esHabilitado ? "DESHABILITADO" : "HABILITADO";
+    const nuevoStatusFrontend = esHabilitado ? ("Deshabilitado" as const) : ("Habilitado" as const);
+
+    // Actualización optimista instantánea
+    setVehicles((prev) =>
+      prev.map((item) =>
+        item.id === v.id
+          ? { ...item, status: nuevoStatusFrontend }
+          : item
+      )
+    );
+
     try {
       await api.updateVehiculo(v.id, {
         estatus_acceso: nuevoEstatus
       });
       await loadDatabaseData();
-      showToast(`Vehículo ${v.marca} ${v.modelo} (${v.placas}) ha sido ${nuevoEstatus === "HABILITADO" ? "Habilitado" : "Deshabilitado"} con éxito.`, "success");
+      showToast(
+        `Vehículo ${v.marca} ${v.modelo} (${v.placas}) ha sido ${nuevoStatusFrontend === "Habilitado" ? "Habilitado" : "Deshabilitado"} con éxito.`,
+        nuevoStatusFrontend === "Habilitado" ? "success" : "info"
+      );
     } catch (err: any) {
+      console.error("Error al actualizar estatus del vehículo:", err);
+      // Revertir en caso de fallo
+      setVehicles((prev) =>
+        prev.map((item) =>
+          item.id === v.id
+            ? { ...item, status: v.status }
+            : item
+        )
+      );
       showToast("Error al actualizar estatus del vehículo: " + (err.message || err), "error");
     } finally {
       setTogglingVehiculoIds((prev) => {
@@ -3702,34 +3722,32 @@ export default function App() {
                               <td className="px-5 py-3 text-slate-500 font-mono text-xs">{v.telefono}</td>
                               <td className="px-5 py-3 font-mono font-bold" style={{ color: "var(--color-primary)" }}>#{v.corbatinNum}</td>
                               <td className="px-5 py-3">
-                                {v.status === "Suspendido" ? (
-                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
-                                    <span className="w-2 h-2 rounded-full bg-red-500" />
-                                    Suspendido
-                                  </span>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleToggleEstatusVehiculo(v)}
-                                    disabled={Boolean(togglingVehiculoIds[v.id])}
-                                    className={`cursor-pointer transition-all active:scale-95 group flex items-center ${
-                                      togglingVehiculoIds[v.id] ? "opacity-50 pointer-events-none" : ""
-                                    }`}
-                                    title={v.status === "Habilitado" ? "Clic para deshabilitar vehículo" : "Clic para habilitar vehículo"}
-                                  >
-                                    {v.status === "Habilitado" ? (
-                                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 shadow-sm transition-all">
-                                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                                        <span>Habilitado</span>
-                                      </span>
-                                    ) : (
-                                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-300 hover:bg-slate-200 hover:border-slate-400 shadow-sm transition-all">
-                                        <span className="w-2 h-2 rounded-full bg-slate-400" />
-                                        <span>Deshabilitado</span>
-                                      </span>
-                                    )}
-                                  </button>
-                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleEstatusVehiculo(v)}
+                                  disabled={Boolean(togglingVehiculoIds[v.id])}
+                                  className={`cursor-pointer transition-all active:scale-95 group flex items-center ${
+                                    togglingVehiculoIds[v.id] ? "opacity-50 pointer-events-none" : ""
+                                  }`}
+                                  title={v.status === "Habilitado" ? "Clic para deshabilitar vehículo" : "Clic para habilitar vehículo"}
+                                >
+                                  {v.status === "Habilitado" ? (
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 shadow-sm transition-all">
+                                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                      <span>Habilitado</span>
+                                    </span>
+                                  ) : v.status === "Suspendido" ? (
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-300 hover:bg-red-100 hover:border-red-400 shadow-sm transition-all">
+                                      <span className="w-2 h-2 rounded-full bg-red-500" />
+                                      <span>Suspendido</span>
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-300 hover:bg-slate-200 hover:border-slate-400 shadow-sm transition-all">
+                                      <span className="w-2 h-2 rounded-full bg-slate-400" />
+                                      <span>Deshabilitado</span>
+                                    </span>
+                                  )}
+                                </button>
                               </td>
                             </tr>
                           ))}
