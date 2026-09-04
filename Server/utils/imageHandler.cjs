@@ -24,6 +24,12 @@ function saveBase64Image(dataString, prefix = 'img') {
     return dataString.length > 500 ? dataString.substring(0, 500) : dataString;
   }
 
+  // En Vercel Serverless las funciones son efímeras y stateless (el sistema de archivos /tmp no se comparte entre peticiones)
+  // Por lo tanto, preservamos la imagen en Base64 directamente en PostgreSQL para garantizar 100% de disponibilidad sin errores 404
+  if (process.env.VERCEL) {
+    return dataString;
+  }
+
   try {
     const matches = dataString.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
     if (!matches || matches.length !== 3) {

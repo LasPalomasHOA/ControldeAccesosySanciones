@@ -2157,21 +2157,52 @@ export default function App() {
     }
   };
 
-  // Image Upload Handler for New Guardia
+  // Image Upload Handler for New Guardia (con compresión client-side para Vercel y base de datos)
   const handleFotoGuardiaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNuevoGuardiaFotoError("");
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setNuevoGuardiaFotoError("La fotografía del oficial no debe exceder 5 MB.");
+      if (file.size > 8 * 1024 * 1024) {
+        setNuevoGuardiaFotoError("La fotografía del oficial no debe exceder 8 MB.");
         return;
       }
       const reader = new FileReader();
       reader.onload = (uploadEvent) => {
-        if (uploadEvent.target?.result) {
-          setNuevoGuardiaFoto(uploadEvent.target.result as string);
+        const rawData = uploadEvent.target?.result as string;
+        if (!rawData) return;
+
+        // Comprimir en canvas para optimizar tamaño en Base64 (máx 640px, JPEG 0.85)
+        const img = new Image();
+        img.onload = () => {
+          const maxDim = 640;
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressed = canvas.toDataURL("image/jpeg", 0.85);
+            setNuevoGuardiaFoto(compressed);
+          } else {
+            setNuevoGuardiaFoto(rawData);
+          }
           setNuevoGuardiaFotoError("");
-        }
+        };
+        img.onerror = () => {
+          setNuevoGuardiaFoto(rawData);
+          setNuevoGuardiaFotoError("");
+        };
+        img.src = rawData;
       };
       reader.readAsDataURL(file);
     }
@@ -3514,14 +3545,22 @@ export default function App() {
                                     <button
                                       type="button"
                                       onClick={() => setSelectedFotoGuardiaPreview(g)}
-                                      className="cursor-pointer group block"
+                                      className="cursor-pointer group block relative"
                                       title="Clic para ver fotografía ampliada"
                                     >
                                       <img
                                         src={g.foto_url}
                                         alt={g.nombre}
                                         className="w-10 h-10 rounded-xl object-cover border-2 border-slate-200 group-hover:border-[#0D6E5F] shadow-sm transition-all group-hover:scale-105"
+                                        onError={(e) => {
+                                          e.currentTarget.style.display = "none";
+                                          const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                          if (fallback) fallback.style.display = "flex";
+                                        }}
                                       />
+                                      <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 hidden items-center justify-center text-slate-500 font-bold text-xs">
+                                        {g.nombre.charAt(0)}
+                                      </div>
                                     </button>
                                   ) : (
                                     <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 font-bold text-xs">
@@ -6161,9 +6200,24 @@ export default function App() {
               <button onClick={() => setSelectedFotoGuardiaPreview(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer text-sm p-1">✕</button>
             </div>
 
-            <div className="w-full h-72 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center">
+            <div className="w-full h-72 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center relative">
               {selectedFotoGuardiaPreview.foto_url ? (
-                <img src={selectedFotoGuardiaPreview.foto_url} alt={selectedFotoGuardiaPreview.nombre} className="w-full h-full object-cover" />
+                <>
+                  <img
+                    src={selectedFotoGuardiaPreview.foto_url}
+                    alt={selectedFotoGuardiaPreview.nombre}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                      const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                      if (fallback) fallback.style.display = "flex";
+                    }}
+                  />
+                  <div className="hidden flex-col items-center justify-center p-6 text-center text-slate-400">
+                    <IconUsers className="w-16 h-16 mb-2 text-slate-300" />
+                    <span className="text-xs font-medium">Fotografía no disponible</span>
+                  </div>
+                </>
               ) : (
                 <IconUsers className="w-16 h-16 text-slate-300" />
               )}

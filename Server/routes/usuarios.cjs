@@ -127,7 +127,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'La fotografía del oficial de caseta es obligatoria.' });
     }
 
-    const finalFotoUrl = foto_url ? saveBase64Image(foto_url, 'guardia') : null;
+    const finalFotoUrl = foto_url || null;
 
     const rawPassword = password || password_hash || '123456';
     const hash = bcrypt.hashSync(rawPassword, 10);
