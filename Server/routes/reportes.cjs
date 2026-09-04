@@ -2,19 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../models/index.cjs');
 
-// Gestión de clientes SSE en tiempo real para sincronización instantánea
-let sseClients = [];
-
-function broadcastEvent(eventType, payload) {
-  const data = JSON.stringify({ type: eventType, data: payload, timestamp: Date.now() });
-  sseClients.forEach(client => {
-    try {
-      client.res.write(`data: ${data}\n\n`);
-    } catch (err) {
-      // Ignorar fallos de clientes desconectados
-    }
-  });
-}
+const events = require('../events.cjs');
 
 // GET /api/reportes/stream - Canal SSE para actualizaciones en vivo
 router.get('/stream', (req, res) => {
@@ -26,7 +14,7 @@ router.get('/stream', (req, res) => {
 
   const clientId = Date.now() + Math.random();
   const newClient = { id: clientId, res };
-  sseClients.push(newClient);
+  events.addClient(newClient);
 
   // Mensaje inicial de conexión
   res.write(`data: ${JSON.stringify({ type: 'CONECTADO', message: 'Canal SSE activo', timestamp: Date.now() })}\n\n`);
@@ -42,7 +30,7 @@ router.get('/stream', (req, res) => {
 
   req.on('close', () => {
     clearInterval(keepAliveInterval);
-    sseClients = sseClients.filter(c => c.id !== clientId);
+    events.removeClient(clientId);
   });
 });
 
@@ -125,7 +113,7 @@ router.post('/', async (req, res) => {
 
     // Emitir evento SSE en tiempo real a todos los clientes conectados
     try {
-      broadcastEvent('NUEVO_REPORTE', {
+      events.broadcastEvent('NUEVO_REPORTE', {
         id_reporte: nuevoReporte.id_reporte,
         id_vehiculo: nuevoReporte.id_vehiculo,
         id_infraccion: nuevoReporte.id_infraccion,
@@ -260,7 +248,7 @@ router.post('/:id/revisar', async (req, res) => {
 
     // Emitir evento SSE en tiempo real a todos los clientes conectados
     try {
-      broadcastEvent('REPORTE_DICTAMINADO', {
+      events.broadcastEvent('REPORTE_DICTAMINADO', {
         id_reporte: reporte.id_reporte,
         decision,
         estatus_revision: reporte.estatus_revision,
