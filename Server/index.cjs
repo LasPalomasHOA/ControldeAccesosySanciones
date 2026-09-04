@@ -17,7 +17,7 @@ const express = require('express');
 const cors = require('cors');
 const db = require('./models/index.cjs');
 const { seedDatabase } = require('./seedData.cjs');
-const { UPLOADS_DIR } = require('./utils/imageHandler.cjs');
+const { UPLOADS_DIR, resolveFotoToDataUrl } = require('./utils/imageHandler.cjs');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -27,8 +27,31 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// Servir archivos subidos e imágenes (local o /tmp en serverless)
-app.use('/uploads', express.static(UPLOADS_DIR));
+// Directorios posibles para resolver archivos estáticos de uploads
+const staticUploadsDirs = [
+  path.join(__dirname, 'uploads'),
+  path.join(process.cwd(), 'Server', 'uploads'),
+  path.join(process.cwd(), 'public', 'uploads'),
+  path.join('/tmp', 'uploads')
+];
+
+staticUploadsDirs.forEach(dir => {
+  if (fs.existsSync(dir)) {
+    app.use('/uploads', express.static(dir));
+  }
+});
+
+// Ruta explícita GET /uploads/:filename para garantizar entrega en Vercel
+app.get('/uploads/:filename', (req, res, next) => {
+  const filename = path.basename(req.params.filename);
+  for (const dir of staticUploadsDirs) {
+    const fullPath = path.join(dir, filename);
+    if (fs.existsSync(fullPath)) {
+      return res.sendFile(fullPath);
+    }
+  }
+  next();
+});
 
 // Gestión de conexión e inicialización de BD (memoizada para Serverless y Standalone)
 let dbInitPromise = null;
@@ -44,13 +67,33 @@ async function ensureDbInit() {
       await db.sequelize.authenticate();
       console.log('✅ Conexión a base de datos Supabase / PostgreSQL verificada.');
 
-      // Asegurar columna foto_url en usuarios
+      // Asegurar columna foto_url en usuarios y migrar rutas viejas a Base64
       try {
         const schemaName = process.env.DB_SCHEMA || 'control_acceso';
         await db.sequelize.query(`
           ALTER TABLE IF EXISTS "${schemaName}"."usuarios" 
           ADD COLUMN IF NOT EXISTS "foto_url" TEXT;
         `);
+
+        // Migrar automáticamente registros que contengan rutas '/uploads/' o 'guardia_' a Base64 en PostgreSQL
+        const usuariosConRuta = await db.Usuario.findAll({
+          where: {
+            foto_url: {
+              [db.Sequelize.Op.or]: [
+                { [db.Sequelize.Op.like]: '%uploads/%' },
+                { [db.Sequelize.Op.like]: 'guardia_%' }
+              ]
+            }
+          }
+        });
+
+        for (const u of usuariosConRuta) {
+          const resolved = resolveFotoToDataUrl(u.foto_url);
+          if (resolved && resolved.startsWith('data:image')) {
+            await u.update({ foto_url: resolved });
+            console.log(`✅ Fotografía de usuario ${u.nombre} (ID: ${u.id_usuario}) migrada a Base64 en la base de datos.`);
+          }
+        }
       } catch (colErr) {
         // Ignorar si ya existe o no aplica
       }

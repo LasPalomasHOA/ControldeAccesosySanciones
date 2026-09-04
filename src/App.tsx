@@ -2225,6 +2225,62 @@ export default function App() {
     }
   };
 
+  // Handler para actualizar la foto de un oficial de caseta directamente a PostgreSQL
+  const handleUpdateGuardiaFoto = async (guardiaId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 8 * 1024 * 1024) {
+      showToast("La fotografía del oficial no debe exceder 8 MB.", "error", "Tamaño Excedido");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      const rawData = uploadEvent.target?.result as string;
+      if (!rawData) return;
+
+      const img = new Image();
+      img.onload = async () => {
+        const maxDim = 640;
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        const compressed = ctx ? (ctx.drawImage(img, 0, 0, width, height), canvas.toDataURL("image/jpeg", 0.85)) : rawData;
+
+        try {
+          const res = await fetch(`/api/usuarios/${guardiaId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ foto_url: compressed })
+          });
+
+          if (!res.ok) throw new Error("Error al guardar la fotografía en el servidor");
+
+          setUsers(prev => prev.map(u => u.id === guardiaId ? { ...u, foto_url: compressed } : u));
+          setSelectedFotoGuardiaPreview(prev => prev && prev.id === guardiaId ? { ...prev, foto_url: compressed } : prev);
+          showToast("Fotografía del oficial guardada exitosamente en la base de datos.", "success", "Fotografía Guardada");
+        } catch (err: any) {
+          console.error("Error al actualizar fotografía:", err);
+          showToast("Error al guardar la fotografía del oficial.", "error", "Error de Guardado");
+        }
+      };
+      img.src = rawData;
+    };
+    reader.readAsDataURL(file);
+  };
+
   // ─── Handlers para Creación de Vehículos, Supervisores, Empresas, Guardias ───
   const handleGuardarNuevoVehiculo = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -3580,9 +3636,14 @@ export default function App() {
                                       </div>
                                     </button>
                                   ) : (
-                                    <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 font-bold text-xs">
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedFotoGuardiaPreview(g)}
+                                      className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 flex items-center justify-center text-slate-500 font-bold text-xs cursor-pointer transition-all hover:scale-105"
+                                      title="Clic para ver o subir fotografía del oficial"
+                                    >
                                       {g.nombre.charAt(0)}
-                                    </div>
+                                    </button>
                                   )}
                                 </td>
                                 <td className="px-5 py-3 font-mono text-xs font-bold text-slate-700">{g.id}</td>
@@ -6254,6 +6315,20 @@ export default function App() {
               <span className={`px-2.5 py-0.5 rounded-full font-bold ${selectedFotoGuardiaPreview.activo !== false ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
                 {selectedFotoGuardiaPreview.activo !== false ? "En Servicio" : "Inactivo"}
               </span>
+            </div>
+
+            {/* Acción para cambiar o subir fotografía a la Base de Datos */}
+            <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+              <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-[#0D6E5F] border border-slate-200 hover:border-emerald-300 font-bold text-xs cursor-pointer shadow-sm transition-all hover:scale-[1.01]">
+                <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
+                <span>{selectedFotoGuardiaPreview.foto_url ? "Cambiar Fotografía del Oficial" : "Subir Fotografía del Oficial"}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleUpdateGuardiaFoto(selectedFotoGuardiaPreview.id, e)}
+                />
+              </label>
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../models/index.cjs');
-const { saveBase64Image } = require('../utils/imageHandler.cjs');
+const { saveBase64Image, resolveFotoToDataUrl } = require('../utils/imageHandler.cjs');
 
 // GET /api/trabajadores - Listar todos los trabajadores (o filtrar por id_empresa)
 router.get('/', async (req, res) => {
@@ -23,7 +23,8 @@ router.get('/', async (req, res) => {
         ...plain,
         id: String(plain.id_trabajador),
         id_empresa: String(plain.id_empresa),
-        empresaNombre: plain.empresa?.razon_social || ''
+        empresaNombre: plain.empresa?.razon_social || '',
+        foto_url: resolveFotoToDataUrl(plain.foto_url)
       };
     });
 
