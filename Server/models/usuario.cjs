@@ -41,6 +41,11 @@ const Usuario = sequelize.define(
       allowNull: false,
       defaultValue: true,
       comment: 'Habilitación de acceso (DEFAULT TRUE)'
+    },
+    foto_url: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Fotografía en Base64 o URL directa del oficial o usuario'
     }
   },
   {

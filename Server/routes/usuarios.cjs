@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const db = require('../models/index.cjs');
+const { saveBase64Image } = require('../utils/imageHandler.cjs');
 
 // POST /api/usuarios/login - Autenticación con contraseña cifrada (bcrypt)
 router.post('/login', async (req, res) => {
@@ -50,7 +51,8 @@ router.post('/login', async (req, res) => {
       rol: rolMap[plain.rol?.nombre] || plain.rol?.nombre?.toLowerCase() || 'admin',
       rolNombre: plain.rol?.nombre,
       empresaNombre: plain.empresa?.razon_social || '',
-      avatar: `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150`
+      foto_url: plain.foto_url || null,
+      avatar: plain.foto_url || `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150`
     });
   } catch (error) {
     console.error('Error en login:', error);
@@ -86,7 +88,8 @@ router.get('/', async (req, res) => {
         rol: rolMap[plain.rol?.nombre] || plain.rol?.nombre?.toLowerCase() || 'admin',
         rolNombre: plain.rol?.nombre,
         empresaNombre: plain.empresa?.razon_social || '',
-        avatar: `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150`
+        foto_url: plain.foto_url || null,
+        avatar: plain.foto_url || `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150`
       };
     });
 
@@ -100,7 +103,7 @@ router.get('/', async (req, res) => {
 // POST /api/usuarios - Crear usuario con contraseña encriptada
 router.post('/', async (req, res) => {
   try {
-    const { nombre, correo, password, password_hash, id_rol, id_empresa, rol, activo } = req.body;
+    const { nombre, correo, password, password_hash, id_rol, id_empresa, rol, activo, foto_url } = req.body;
     if (!nombre || !correo) {
       return res.status(400).json({ error: 'Nombre y correo son obligatorios' });
     }
@@ -118,6 +121,14 @@ router.post('/', async (req, res) => {
     }
     if (!finalIdRol) finalIdRol = 1;
 
+    // Si es guardia de caseta (rol 4 o 'caseta'), la foto es obligatoria
+    const esGuardia = finalIdRol === 4 || (rol && ['CASETA', 'AGENTE', 'GUARDIA'].includes(rol.toUpperCase()));
+    if (esGuardia && !foto_url) {
+      return res.status(400).json({ error: 'La fotografía del oficial de caseta es obligatoria.' });
+    }
+
+    const finalFotoUrl = foto_url ? saveBase64Image(foto_url, 'guardia') : null;
+
     const rawPassword = password || password_hash || '123456';
     const hash = bcrypt.hashSync(rawPassword, 10);
 
@@ -127,12 +138,18 @@ router.post('/', async (req, res) => {
       nombre: nombre.trim(),
       correo: emailNormalizado,
       password_hash: hash,
+      foto_url: finalFotoUrl,
       activo: activo !== undefined ? activo : true
     });
 
     const plain = nuevo.get({ plain: true });
     delete plain.password_hash;
-    res.status(201).json(plain);
+    res.status(201).json({
+      ...plain,
+      id: String(plain.id_usuario),
+      foto_url: finalFotoUrl,
+      avatar: finalFotoUrl || `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150`
+    });
   } catch (error) {
     console.error('Error al crear usuario:', error);
     res.status(500).json({ error: 'Error al registrar usuario', details: error.message });

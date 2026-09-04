@@ -44,6 +44,17 @@ async function ensureDbInit() {
       await db.sequelize.authenticate();
       console.log('✅ Conexión a base de datos Supabase / PostgreSQL verificada.');
 
+      // Asegurar columna foto_url en usuarios
+      try {
+        const schemaName = process.env.DB_SCHEMA || 'control_acceso';
+        await db.sequelize.query(`
+          ALTER TABLE IF EXISTS "${schemaName}"."usuarios" 
+          ADD COLUMN IF NOT EXISTS "foto_url" TEXT;
+        `);
+      } catch (colErr) {
+        // Ignorar si ya existe o no aplica
+      }
+
       // En entornos Serverless de Vercel NO se ejecuta sync() ni seedDatabase()
       // porque las tablas ya existen y ejecutar DDL en cada invocación provoca timeouts de 15s y error 500.
       if (!process.env.VERCEL && process.env.AUTO_SYNC === 'true') {

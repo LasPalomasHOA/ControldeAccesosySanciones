@@ -303,6 +303,7 @@ interface UserAccount {
   creadoPor: string;
   hasAcceptedReglamento?: boolean;
   activo?: boolean;
+  foto_url?: string;
 }
 
 interface Empresa {
@@ -556,7 +557,7 @@ function PageHero({ img, title, subtitle, children }: { img: string; title: stri
         style={{ backgroundImage: `url(${img})`, filter: "blur(2px) brightness(0.55)", transform: "scale(1.06)" }}
       />
       <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(13,110,95,0.90) 0%, rgba(13,110,95,0.65) 60%, rgba(0,0,0,0.50) 100%)" }} />
-      <div className="relative z-10 px-6 sm:px-10 py-6 sm:py-8 max-w-6xl">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight" style={{ fontFamily: "var(--font-display)", textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
           {title}
         </h1>
@@ -964,6 +965,11 @@ export default function App() {
   const [nuevoVehiculoFoto, setNuevoVehiculoFoto] = useState<string>("");
   const [nuevoVehiculoFotoError, setNuevoVehiculoFotoError] = useState<string>("");
 
+  // New Guardia Photo State
+  const [nuevoGuardiaFoto, setNuevoGuardiaFoto] = useState<string>("");
+  const [nuevoGuardiaFotoError, setNuevoGuardiaFotoError] = useState<string>("");
+  const [selectedFotoGuardiaPreview, setSelectedFotoGuardiaPreview] = useState<UserAccount | null>(null);
+
   // ─── Estados y Refs de Bloqueo para Prevención de Doble Clic y Envíos Duplicados ───
   const [isSubmittingTrabajador, setIsSubmittingTrabajador] = useState(false);
   const isSubmittingTrabajadorRef = useRef(false);
@@ -1082,6 +1088,7 @@ export default function App() {
           creadoPor: "Administrador de Seguridad HOA",
           hasAcceptedReglamento: true,
           activo: u.activo !== false,
+          foto_url: u.foto_url || u.avatar || "",
         }));
         setUsers(mappedUsers);
       }
@@ -2130,6 +2137,26 @@ export default function App() {
     }
   };
 
+  // Image Upload Handler for New Guardia
+  const handleFotoGuardiaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNuevoGuardiaFotoError("");
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setNuevoGuardiaFotoError("La fotografía del oficial no debe exceder 5 MB.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        if (uploadEvent.target?.result) {
+          setNuevoGuardiaFoto(uploadEvent.target.result as string);
+          setNuevoGuardiaFotoError("");
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // ─── Handlers para Creación de Vehículos, Supervisores, Empresas, Guardias ───
   const handleGuardarNuevoVehiculo = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -2255,6 +2282,12 @@ export default function App() {
   const handleGuardarNuevoGuardia = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isSubmittingGuardiaRef.current) return;
+
+    if (!nuevoGuardiaFoto) {
+      setNuevoGuardiaFotoError("Es obligatorio adjuntar una fotografía oficial del oficial de caseta.");
+      return;
+    }
+
     isSubmittingGuardiaRef.current = true;
     setIsSubmittingGuardia(true);
 
@@ -2271,10 +2304,13 @@ export default function App() {
         id_rol: 4, // CASETA
         id_empresa: null,
         activo: true,
+        foto_url: nuevoGuardiaFoto,
       });
       await loadDatabaseData();
       setShowCreateGuardiaModal(false);
-      showToast(`Oficial de Caseta "${nom}" (${emailVal}) registrado exitosamente.`, "success", "Oficial Registrado");
+      setNuevoGuardiaFoto("");
+      setNuevoGuardiaFotoError("");
+      showToast(`Oficial de Caseta "${nom}" (${emailVal}) registrado exitosamente con fotografía oficial.`, "success", "Oficial Registrado");
     } catch (err: any) {
       showToast("Error al registrar oficial en la base de datos: " + (err.message || err), "error");
     } finally {
@@ -2699,7 +2735,7 @@ export default function App() {
     <div className="flex flex-col justify-between" style={{ background: "var(--color-bg)", minHeight: "100vh", fontFamily: "var(--font-body)" }}>
       <div>
         <header className="sticky top-0 z-50 border-b bg-white no-print" style={{ borderColor: "var(--color-border)", boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center h-16 gap-6 justify-between">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center h-16 gap-4 sm:gap-6 justify-between">
             <div className="shrink-0">
               <LPLogo size={160} />
             </div>
@@ -2709,13 +2745,13 @@ export default function App() {
                 <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                   <button
                     onClick={() => setAdminTab("supervisores")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${adminTab === "supervisores" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${adminTab === "supervisores" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Supervisores HOA ({users.filter(u => u.role === "supervisor").length})
                   </button>
                   <button
                     onClick={() => setAdminTab("auditoria")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${adminTab === "auditoria" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${adminTab === "auditoria" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Auditoría Global & Claves
                   </button>
@@ -2726,7 +2762,7 @@ export default function App() {
                 <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                   <button
                     onClick={() => setSupervisorTab("bandeja")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${supervisorTab === "bandeja" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${supervisorTab === "bandeja" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     <span>Infracciones</span>
                     {infraccionesPendientes.filter(i => i.estado === "Pendiente").length > 0 ? (
@@ -2744,7 +2780,7 @@ export default function App() {
                   </button>
                   <button
                     onClick={() => setSupervisorTab("apelaciones")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${supervisorTab === "apelaciones" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${supervisorTab === "apelaciones" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     <span>Bandeja de Apelaciones</span>
                     {apelacionesPendientesCount > 0 && (
@@ -2755,19 +2791,19 @@ export default function App() {
                   </button>
                   <button
                     onClick={() => setSupervisorTab("proveedores")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${supervisorTab === "proveedores" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${supervisorTab === "proveedores" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Proveedores ({empresas.length})
                   </button>
                   <button
                     onClick={() => setSupervisorTab("guardias")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${supervisorTab === "guardias" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${supervisorTab === "guardias" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Guardias ({users.filter(u => u.role === "caseta").length})
                   </button>
                   <button
                     onClick={() => setSupervisorTab("historial")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${supervisorTab === "historial" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${supervisorTab === "historial" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Historial
                   </button>
@@ -2778,19 +2814,19 @@ export default function App() {
                 <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-2xl border border-slate-200/80 whitespace-nowrap shrink-0 shadow-xs">
                   <button
                     onClick={() => setPortalScreen("dashboard")}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${portalScreen === "dashboard" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${portalScreen === "dashboard" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Flotilla
                   </button>
                   <button
                     onClick={() => setPortalScreen("alta")}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${portalScreen === "alta" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${portalScreen === "alta" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     + Alta Vehículo
                   </button>
                   <button
                     onClick={() => setPortalScreen("trabajadores")}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${portalScreen === "trabajadores" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${portalScreen === "trabajadores" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     <span>Trabajadores</span>
                     <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
@@ -2799,13 +2835,13 @@ export default function App() {
                   </button>
                   <button
                     onClick={() => setPortalScreen("corbatin")}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${portalScreen === "corbatin" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${portalScreen === "corbatin" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Corbatines PDF
                   </button>
                   <button
                     onClick={() => setPortalScreen("sanciones")}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${portalScreen === "sanciones" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${portalScreen === "sanciones" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Sanciones & Apelaciones {sanciones.filter(s => !currentUser.empresaNombre || s.empresaNombre === currentUser.empresaNombre).length > 0 ? `(${sanciones.filter(s => !currentUser.empresaNombre || s.empresaNombre === currentUser.empresaNombre).length})` : ""}
                   </button>
@@ -2816,13 +2852,13 @@ export default function App() {
                 <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                   <button
                     onClick={() => setCasetaTab("registro")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${casetaTab === "registro" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${casetaTab === "registro" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     + Registro de Entrada
                   </button>
                   <button
                     onClick={() => setCasetaTab("bitacora")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${casetaTab === "bitacora" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${casetaTab === "bitacora" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Bitácora ({bitacora.filter(b => b.estado === "Dentro").length} dentro)
                   </button>
@@ -2843,12 +2879,119 @@ export default function App() {
 
               <button
                 onClick={handleLogout}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-all flex items-center gap-1.5 cursor-pointer no-print"
+                className="px-3 py-1.5 rounded-xl text-xs font-bold border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-colors duration-150 flex items-center gap-1.5 cursor-pointer no-print"
               >
                 <IconLogOut className="w-3.5 h-3.5" />
                 <span>Cerrar Sesión</span>
               </button>
             </div>
+          </div>
+
+          {/* Barra de Navegación Móvil Horizontal */}
+          <div className="md:hidden border-t bg-slate-50/95 px-4 py-2 overflow-x-auto flex items-center gap-1.5 no-print" style={{ borderColor: "var(--color-border)" }}>
+            {currentUser.role === "supervisor" && (
+              <>
+                <button
+                  onClick={() => setSupervisorTab("bandeja")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${supervisorTab === "bandeja" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                >
+                  Infracciones ({infraccionesPendientes.filter(i => i.estado === "Pendiente").length})
+                </button>
+                <button
+                  onClick={() => setSupervisorTab("apelaciones")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${supervisorTab === "apelaciones" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                >
+                  Apelaciones ({apelacionesPendientesCount})
+                </button>
+                <button
+                  onClick={() => setSupervisorTab("proveedores")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${supervisorTab === "proveedores" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                >
+                  Proveedores ({empresas.length})
+                </button>
+                <button
+                  onClick={() => setSupervisorTab("guardias")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${supervisorTab === "guardias" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                >
+                  Guardias ({users.filter(u => u.role === "caseta").length})
+                </button>
+                <button
+                  onClick={() => setSupervisorTab("historial")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${supervisorTab === "historial" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                >
+                  Historial
+                </button>
+              </>
+            )}
+
+            {currentUser.role === "admin" && (
+              <>
+                <button
+                  onClick={() => setAdminTab("supervisores")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${adminTab === "supervisores" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                >
+                  Supervisores ({users.filter(u => u.role === "supervisor").length})
+                </button>
+                <button
+                  onClick={() => setAdminTab("auditoria")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${adminTab === "auditoria" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                >
+                  Auditoría Global
+                </button>
+              </>
+            )}
+
+            {currentUser.role === "contratista" && (
+              <>
+                <button
+                  onClick={() => setPortalScreen("dashboard")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${portalScreen === "dashboard" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                >
+                  Flotilla
+                </button>
+                <button
+                  onClick={() => setPortalScreen("alta")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${portalScreen === "alta" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                >
+                  + Alta
+                </button>
+                <button
+                  onClick={() => setPortalScreen("trabajadores")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${portalScreen === "trabajadores" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                >
+                  Trabajadores ({trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre && t.activo).length})
+                </button>
+                <button
+                  onClick={() => setPortalScreen("corbatin")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${portalScreen === "corbatin" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                >
+                  Corbatines
+                </button>
+                <button
+                  onClick={() => setPortalScreen("sanciones")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${portalScreen === "sanciones" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                >
+                  Sanciones
+                </button>
+              </>
+            )}
+
+            {currentUser.role === "caseta" && (
+              <>
+                <button
+                  onClick={() => setCasetaTab("registro")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${casetaTab === "registro" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                >
+                  + Registro
+                </button>
+                <button
+                  onClick={() => setCasetaTab("bitacora")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${casetaTab === "bitacora" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                >
+                  Bitácora ({bitacora.filter(b => b.estado === "Dentro").length})
+                </button>
+              </>
+            )}
           </div>
         </header>
 
@@ -2871,7 +3014,7 @@ export default function App() {
               </div>
             </PageHero>
 
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 min-h-[calc(100vh-16rem)]">
               {adminTab === "supervisores" && (
                 <div className="space-y-4">
                   <div className="rounded-2xl border bg-white shadow-sm overflow-hidden" style={{ borderColor: "var(--color-border)" }}>
@@ -3015,7 +3158,7 @@ export default function App() {
               subtitle="Dictamen de infracciones móviles, resolución de apelaciones y asignación de proveedores/guardias"
             />
 
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 min-h-[calc(100vh-16rem)]">
               {supervisorTab === "bandeja" && (
                 <div className="space-y-4">
                   {infraccionesPendientes.filter(i => i.estado === "Pendiente").length === 0 ? (
@@ -3314,8 +3457,12 @@ export default function App() {
                         <p className="text-xs text-slate-500">Crea y asigna cuentas para guardias que operan en tablets de caseta.</p>
                       </div>
                       <button
-                        onClick={() => setShowCreateGuardiaModal(true)}
-                        className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer"
+                        onClick={() => {
+                          setNuevoGuardiaFoto("");
+                          setNuevoGuardiaFotoError("");
+                          setShowCreateGuardiaModal(true);
+                        }}
+                        className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer shadow-sm"
                         style={{ background: "var(--color-primary)" }}
                       >
                         <IconUserPlus className="w-3.5 h-3.5" />
@@ -3326,7 +3473,7 @@ export default function App() {
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
-                            {["ID", "Nombre Oficial", "Usuario", "Fecha Alta", "Creado Por", "Estatus"].map((h) => (
+                            {["Fotografía", "ID", "Nombre Oficial", "Usuario / Acceso", "Fecha Alta", "Creado Por", "Estatus"].map((h) => (
                               <th key={h} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
                             ))}
                           </tr>
@@ -3334,14 +3481,34 @@ export default function App() {
                         <tbody className="divide-y divide-slate-100">
                           {users.filter(u => u.role === "caseta").length === 0 ? (
                             <tr>
-                              <td colSpan={6} className="px-5 py-8 text-center text-xs text-slate-500">
+                              <td colSpan={7} className="px-5 py-8 text-center text-xs text-slate-500">
                                 <IconUsers className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                                 No hay oficiales de caseta registrados en PostgreSQL.
                               </td>
                             </tr>
                           ) : (
                             users.filter(u => u.role === "caseta").map((g) => (
-                              <tr key={g.id} className="hover:bg-slate-50">
+                              <tr key={g.id} className="hover:bg-slate-50 transition-colors">
+                                <td className="px-5 py-3">
+                                  {g.foto_url ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedFotoGuardiaPreview(g)}
+                                      className="cursor-pointer group block"
+                                      title="Clic para ver fotografía ampliada"
+                                    >
+                                      <img
+                                        src={g.foto_url}
+                                        alt={g.nombre}
+                                        className="w-10 h-10 rounded-xl object-cover border-2 border-slate-200 group-hover:border-[#0D6E5F] shadow-sm transition-all group-hover:scale-105"
+                                      />
+                                    </button>
+                                  ) : (
+                                    <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 font-bold text-xs">
+                                      {g.nombre.charAt(0)}
+                                    </div>
+                                  )}
+                                </td>
                                 <td className="px-5 py-3 font-mono text-xs font-bold text-slate-700">{g.id}</td>
                                 <td className="px-5 py-3 font-bold text-xs text-slate-900">{g.nombre}</td>
                                 <td className="px-5 py-3 font-mono text-xs text-slate-600">{g.username}</td>
@@ -3527,7 +3694,7 @@ export default function App() {
                   title={`Panel de Contratista — ${currentUser.empresaNombre}`}
                   subtitle="Administración de flotilla vehicular, plantilla de trabajadores acreditados y control de accesos"
                 />
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 min-h-[calc(100vh-16rem)]">
                   {/* KPI Statistics */}
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {[
@@ -3858,7 +4025,7 @@ export default function App() {
                   subtitle="Acreditación, consulta, modificación y control de acceso del personal de la empresa"
                 />
 
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 min-h-[calc(100vh-16rem)]">
                   {/* KPI Cards for Trabajadores */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="rounded-2xl border p-5 flex items-start gap-4 bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
@@ -4088,7 +4255,7 @@ export default function App() {
             {portalScreen === "corbatin" && (
               <div>
                 <PageHero img={IMG_PARK} title="Descarga e Impresión de Corbatines PDF" subtitle="Visualiza y descarga el corbatín físico con código QR para colocar en el retrovisor" />
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-16rem)]">
                   <div className="flex flex-col lg:flex-row gap-6">
                     <div className="w-full lg:w-72 shrink-0 no-print">
                       <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
@@ -4188,7 +4355,7 @@ export default function App() {
             {portalScreen === "sanciones" && (
               <div>
                 <PageHero img={IMG_AERIAL} title="Historial de Sanciones & Módulo de Apelación" subtitle="Consulta de suspensiones vehiculares, interposición de recursos y resoluciones de HOA" />
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 min-h-[calc(100vh-16rem)]">
                   {(() => {
                     const empresaSanciones = currentUser.empresaNombre
                       ? sanciones.filter(s => s.empresaNombre === currentUser.empresaNombre)
@@ -4448,7 +4615,7 @@ export default function App() {
           <main>
             <PageHero img={IMG_GATE} title="Registro de Caseta de Vigilancia (Tablet)" subtitle="Formulario ultrarrápido con validación de suspensiones en tiempo real, acceso peatonal y exportación de bitácora" />
 
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 min-h-[calc(100vh-16rem)]">
               {casetaTab === "registro" && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="lg:col-span-2 rounded-2xl border p-6 bg-white shadow-sm space-y-5" style={{ borderColor: "var(--color-border)" }}>
@@ -5350,34 +5517,131 @@ export default function App() {
       {/* ─── MODAL 3: SUPERVISOR CREATES GUARDIA DE CASETA ─── */}
       {showCreateGuardiaModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200">
+          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b pb-3">
-              <h3 className="text-sm font-bold text-slate-900 uppercase">Crear Cuenta de Guardia de Caseta</h3>
-              <button onClick={() => setShowCreateGuardiaModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">✕</button>
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
+                  <IconShield className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 uppercase">Crear Cuenta de Guardia de Caseta</h3>
+                  <p className="text-xs text-slate-500">Asigna credenciales y fotografía oficial para el operador de caseta</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowCreateGuardiaModal(false);
+                  setNuevoGuardiaFoto("");
+                  setNuevoGuardiaFotoError("");
+                }}
+                className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1"
+              >
+                ✕
+              </button>
             </div>
+
+            {nuevoGuardiaFotoError && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                <span>{nuevoGuardiaFotoError}</span>
+              </div>
+            )}
+
             <form
               onSubmit={handleGuardarNuevoGuardia}
-              className="space-y-3"
+              className="space-y-4"
             >
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre Completo del Oficial *</label>
-                <input name="nombre" required placeholder="Ej. Oficial Ramón Beltrán" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre Completo del Oficial *</label>
+                <input name="nombre" required placeholder="Ej. Oficial Ramón Beltrán" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
               </div>
+
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico *</label>
-                <input name="email" type="email" required placeholder="caseta.sur@laspalomasresort.net" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Correo Electrónico Oficial *</label>
+                <input name="email" type="email" required placeholder="caseta.sur@laspalomasresort.net" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800" />
               </div>
+
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Contraseña *</label>
-                <input name="password" type="password" required placeholder="Mínimo 6 caracteres" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
-                <p className="text-[10px] text-slate-400 mt-1">El oficial usará esta contraseña para acceder desde la tablet.</p>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Contraseña de Tablet *</label>
+                <input name="password" type="password" required placeholder="Mínimo 6 caracteres" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800" />
+                <p className="text-[11px] text-slate-400 mt-1">El oficial usará esta contraseña para acceder desde la tablet.</p>
               </div>
-              <div className="flex justify-end gap-2 pt-3">
-                <button type="button" onClick={() => setShowCreateGuardiaModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>
+
+              {/* FOTOGRAFÍA OBLIGATORIA DEL GUARDIA */}
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Fotografía Oficial del Oficial *
+                  </label>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                    Obligatoria
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                  <div className="sm:col-span-2 space-y-2">
+                    <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                      <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
+                      <span>{nuevoGuardiaFoto ? "Cambiar Fotografía" : "Subir Foto desde Dispositivo"}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFotoGuardiaChange}
+                      />
+                    </label>
+                    <p className="text-[11px] text-slate-400">
+                      Fotografía frontal y nítida del rostro del oficial para control de caseta (JPG o PNG, máx 5MB).
+                    </p>
+                    {nuevoGuardiaFoto && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNuevoGuardiaFoto("");
+                          setNuevoGuardiaFotoError("");
+                        }}
+                        className="text-xs text-red-600 hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <IconTrash className="w-3.5 h-3.5" />
+                        <span>Remover fotografía</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className={`h-32 rounded-2xl border-2 ${nuevoGuardiaFoto ? 'border-emerald-400 bg-emerald-50/20' : 'border-dashed border-slate-300 bg-slate-50'} flex items-center justify-center overflow-hidden relative shadow-inner`}>
+                    {nuevoGuardiaFoto ? (
+                      <div className="relative w-full h-full group">
+                        <img src={nuevoGuardiaFoto} alt="Preview Guardia" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
+                          Foto Asignada ✓
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center p-2 text-slate-400">
+                        <IconUsers className="w-7 h-7 mx-auto mb-1 opacity-50" />
+                        <span className="text-[10px] block font-semibold text-amber-600">Foto Requerida *</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateGuardiaModal(false);
+                    setNuevoGuardiaFoto("");
+                    setNuevoGuardiaFotoError("");
+                  }}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancelar
+                </button>
                 <button
                   type="submit"
                   disabled={isSubmittingGuardia}
-                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
                     isSubmittingGuardia ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
                   }`}
                 >
@@ -5387,7 +5651,7 @@ export default function App() {
                       <span>Guardando Oficial...</span>
                     </>
                   ) : (
-                    <span>Guardar Oficial</span>
+                    <span>Guardar Oficial →</span>
                   )}
                 </button>
               </div>
@@ -5856,6 +6120,41 @@ export default function App() {
               <span className="font-semibold text-slate-600">{selectedFotoTrabajadorPreview.empresaNombre}</span>
               <span className={`px-2.5 py-0.5 rounded-full font-bold ${selectedFotoTrabajadorPreview.activo ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
                 {selectedFotoTrabajadorPreview.activo ? "Autorizado" : "Inactivo"}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL VISTA PREVIA DE FOTOGRAFÍA DE OFICIAL DE CASETA ─── */}
+      {selectedFotoGuardiaPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" onClick={() => setSelectedFotoGuardiaPreview(null)}>
+          <div className="max-w-md w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
+                  <IconShield className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-slate-900">{selectedFotoGuardiaPreview.nombre}</h4>
+                  <p className="text-xs text-slate-500 font-mono">Oficial de Caseta · ID: #{selectedFotoGuardiaPreview.id}</p>
+                </div>
+              </div>
+              <button onClick={() => setSelectedFotoGuardiaPreview(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer text-sm p-1">✕</button>
+            </div>
+
+            <div className="w-full h-72 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center">
+              {selectedFotoGuardiaPreview.foto_url ? (
+                <img src={selectedFotoGuardiaPreview.foto_url} alt={selectedFotoGuardiaPreview.nombre} className="w-full h-full object-cover" />
+              ) : (
+                <IconUsers className="w-16 h-16 text-slate-300" />
+              )}
+            </div>
+
+            <div className="flex justify-between items-center text-xs">
+              <span className="font-mono text-slate-600">{selectedFotoGuardiaPreview.username}</span>
+              <span className={`px-2.5 py-0.5 rounded-full font-bold ${selectedFotoGuardiaPreview.activo !== false ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+                {selectedFotoGuardiaPreview.activo !== false ? "En Servicio" : "Inactivo"}
               </span>
             </div>
           </div>
