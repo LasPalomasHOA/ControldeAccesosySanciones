@@ -1902,11 +1902,11 @@ export default function App() {
 
     const sancionId = selectedSancionParaApelar.id;
     const fechaHoy = new Date().toISOString().split("T")[0];
-    const apelacionPayload = {
+    const apelacionPayload: NonNullable<Sancion["apelacion"]> = {
       fecha: fechaHoy,
       argumentos: apelacionArgumentos.trim(),
       representante: currentUser?.nombre || "Representante Acreditado",
-      estado: "Pendiente"
+      estado: "Pendiente" as const,
     };
 
     try {
@@ -1923,12 +1923,12 @@ export default function App() {
     } catch (err: any) {
       console.error("Error al enviar apelación:", err);
       // Actualización optimista de respaldo
-      setSanciones((prev) =>
-        prev.map((s) => {
+      setSanciones((prev: Sancion[]) =>
+        prev.map((s: Sancion): Sancion => {
           if (s.id === sancionId) {
             return {
               ...s,
-              status: "En Apelación",
+              status: "En Apelación" as const,
               apelacion: apelacionPayload
             };
           }
@@ -1961,20 +1961,20 @@ export default function App() {
       showToast(`Apelación aprobada para el vehículo ${targetSancion.placas}. Suspensión levantada inmediatamente.`, "success", "Suspensión Levantada");
     } catch (err) {
       console.warn("Error al actualizar sanción en BD:", err);
-      setSanciones((prev) =>
-        prev.map((s) => {
+      setSanciones((prev: Sancion[]) =>
+        prev.map((s: Sancion): Sancion => {
           if (s.id === sancionId) {
             return {
               ...s,
-              status: "Aclarada",
+              status: "Aclarada" as const,
               apelacion: {
                 ...(s.apelacion || {
                   fecha: fechaHoy,
                   argumentos: "Aclaración presentada",
                   representante: "Representante Acreditado",
-                  estado: "Aprobada"
+                  estado: "Aprobada" as const
                 }),
-                estado: "Aprobada",
+                estado: "Aprobada" as const,
                 dictamenSupervisor: dictamen || "Apelación procedente. Se levanta la suspensión vehicular por resolución de Supervisión HOA.",
                 fechaDictamen: fechaHoy,
               }
@@ -2024,20 +2024,20 @@ export default function App() {
       showToast(`Se ha ratificado la sanción para ${targetSancion.placas}. La suspensión continúa vigente.`, "warning", "Sanción Ratificada");
     } catch (err) {
       console.warn("Error al ratificar sanción en BD:", err);
-      setSanciones((prev) =>
-        prev.map((s) => {
+      setSanciones((prev: Sancion[]) =>
+        prev.map((s: Sancion): Sancion => {
           if (s.id === sancionId) {
             return {
               ...s,
-              status: "Ratificada",
+              status: "Ratificada" as const,
               apelacion: {
                 ...(s.apelacion || {
                   fecha: fechaHoy,
                   argumentos: "Recurso presentado",
                   representante: "Representante Acreditado",
-                  estado: "Rechazada"
+                  estado: "Rechazada" as const
                 }),
-                estado: "Rechazada",
+                estado: "Rechazada" as const,
                 dictamenSupervisor: dictamen || "Apelación improcedente. Se ratifica la medida disciplinaria impuesta por gravedad de la falta.",
                 fechaDictamen: fechaHoy,
               }
