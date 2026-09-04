@@ -2,6 +2,50 @@ const express = require('express');
 const router = express.Router();
 const db = require('../models/index.cjs');
 
+// Gestión de clientes SSE en tiempo real para sincronización instantánea
+let sseClients = [];
+
+function broadcastEvent(eventType, payload) {
+  const data = JSON.stringify({ type: eventType, data: payload, timestamp: Date.now() });
+  sseClients.forEach(client => {
+    try {
+      client.res.write(`data: ${data}\n\n`);
+    } catch (err) {
+      // Ignorar fallos de clientes desconectados
+    }
+  });
+}
+
+// GET /api/reportes/stream - Canal SSE para actualizaciones en vivo
+router.get('/stream', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders?.();
+
+  const clientId = Date.now() + Math.random();
+  const newClient = { id: clientId, res };
+  sseClients.push(newClient);
+
+  // Mensaje inicial de conexión
+  res.write(`data: ${JSON.stringify({ type: 'CONECTADO', message: 'Canal SSE activo', timestamp: Date.now() })}\n\n`);
+
+  // Ping periódico cada 20s para mantener viva la conexión
+  const keepAliveInterval = setInterval(() => {
+    try {
+      res.write(': keepalive\n\n');
+    } catch (e) {
+      clearInterval(keepAliveInterval);
+    }
+  }, 20000);
+
+  req.on('close', () => {
+    clearInterval(keepAliveInterval);
+    sseClients = sseClients.filter(c => c.id !== clientId);
+  });
+});
+
 // GET /api/reportes - Listar reportes de infracciones
 router.get('/', async (req, res) => {
   try {
@@ -78,6 +122,17 @@ router.post('/', async (req, res) => {
         activa: true
       });
     }
+
+    // Emitir evento SSE en tiempo real a todos los clientes conectados
+    try {
+      broadcastEvent('NUEVO_REPORTE', {
+        id_reporte: nuevoReporte.id_reporte,
+        id_vehiculo: nuevoReporte.id_vehiculo,
+        id_infraccion: nuevoReporte.id_infraccion,
+        descripcion_hechos: nuevoReporte.descripcion_hechos,
+        ubicacion_texto: nuevoReporte.ubicacion_texto
+      });
+    } catch (e) {}
 
     res.status(201).json(nuevoReporte);
   } catch (error) {
@@ -202,6 +257,17 @@ router.post('/:id/revisar', async (req, res) => {
     }
 
     await transaction.commit();
+
+    // Emitir evento SSE en tiempo real a todos los clientes conectados
+    try {
+      broadcastEvent('REPORTE_DICTAMINADO', {
+        id_reporte: reporte.id_reporte,
+        decision,
+        estatus_revision: reporte.estatus_revision,
+        id_vehiculo: reporte.id_vehiculo
+      });
+    } catch (e) {}
+
     res.json({ reporte, revision, sancion });
   } catch (error) {
     if (transaction) await transaction.rollback().catch(() => {});

@@ -513,6 +513,39 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+function playNotificationChime() {
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    const now = ctx.currentTime;
+
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(587.33, now); // D5
+    gain1.gain.setValueAtTime(0.15, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.28);
+
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(880, now + 0.12); // A5
+    gain2.gain.setValueAtTime(0.18, now + 0.12);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.12);
+    osc2.stop(now + 0.45);
+  } catch (e) {
+    // Silencioso si el navegador restringe el audio antes de interacción
+  }
+}
+
 // ─── Page Hero Banner ─────────────────────────────────────────────────────────
 
 function PageHero({ img, title, subtitle, children }: { img: string; title: string; subtitle: string; children?: React.ReactNode }) {
@@ -1174,7 +1207,58 @@ export default function App() {
   };
 
   useEffect(() => {
+    // 1. Carga inicial de base de datos
     loadDatabaseData();
+
+    // 2. Conexión a canal Server-Sent Events (SSE) para sincronización en tiempo real
+    let eventSource: EventSource | null = null;
+    try {
+      eventSource = new EventSource("/api/reportes/stream");
+      eventSource.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          if (payload.type === "NUEVO_REPORTE") {
+            loadDatabaseData();
+            playNotificationChime();
+            showToast(
+              `🚨 Nueva infracción registrada en campo — Folio: FOL-${payload.data?.id_reporte || ""}`,
+              "warning",
+              "Infracción Detectada en Tiempo Real"
+            );
+          } else if (payload.type === "REPORTE_DICTAMINADO") {
+            loadDatabaseData();
+          }
+        } catch (e) {
+          // Ignorar pings de keepalive
+        }
+      };
+    } catch (sseErr) {
+      console.warn("Aviso: SSE no activo, utilizando sondeo continuo:", sseErr);
+    }
+
+    // 3. Sondeo continuo en segundo plano (cada 3.5s) para reflejar cambios de inmediato
+    const livePollingInterval = setInterval(() => {
+      loadDatabaseData();
+    }, 3500);
+
+    // 4. Sincronización inmediata cuando el supervisor cambia o regresa a la pestaña
+    const handleFocusOrVisibility = () => {
+      if (document.visibilityState === "visible") {
+        loadDatabaseData();
+      }
+    };
+
+    window.addEventListener("focus", handleFocusOrVisibility);
+    document.addEventListener("visibilitychange", handleFocusOrVisibility);
+
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+      clearInterval(livePollingInterval);
+      window.removeEventListener("focus", handleFocusOrVisibility);
+      document.removeEventListener("visibilitychange", handleFocusOrVisibility);
+    };
   }, []);
 
   const setHoraActual = () => {
@@ -2598,9 +2682,18 @@ export default function App() {
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${supervisorTab === "bandeja" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     <span>Infracciones</span>
-                    <span className="w-4 h-4 rounded-full bg-amber-400 text-slate-950 text-[10px] flex items-center justify-center font-black">
-                      {infraccionesPendientes.filter(i => i.estado === "Pendiente").length}
-                    </span>
+                    {infraccionesPendientes.filter(i => i.estado === "Pendiente").length > 0 ? (
+                      <span className="relative flex h-4 w-4">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-amber-400 text-slate-950 text-[10px] items-center justify-center font-black">
+                          {infraccionesPendientes.filter(i => i.estado === "Pendiente").length}
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="w-4 h-4 rounded-full bg-slate-200 text-slate-600 text-[10px] flex items-center justify-center font-black">
+                        0
+                      </span>
+                    )}
                   </button>
                   <button
                     onClick={() => setSupervisorTab("apelaciones")}
@@ -2873,7 +2966,17 @@ export default function App() {
               img={IMG_AERIAL}
               title="Consola de Supervisión y Control HOA"
               subtitle="Dictamen de infracciones móviles, resolución de apelaciones y asignación de proveedores/guardias"
-            />
+            >
+              <div className="flex items-center gap-2 mt-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 backdrop-blur-sm shadow-xs">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                  </span>
+                  <span>En Vivo · Sincronización Automática con App Móvil</span>
+                </span>
+              </div>
+            </PageHero>
 
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
               {supervisorTab === "bandeja" && (
