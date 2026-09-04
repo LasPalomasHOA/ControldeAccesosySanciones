@@ -1145,18 +1145,32 @@ export default function App() {
       }
 
       if (resSanciones.status === "fulfilled" && Array.isArray(resSanciones.value)) {
-        const mappedSanciones: Sancion[] = resSanciones.value.map((s: any) => ({
-          id: String(s.id_sancion || s.id),
-          vehicleId: String(s.id_vehiculo || s.vehicleId || ""),
-          empresaNombre: s.empresaNombre || s.empresa?.razon_social || "",
-          placas: s.placas || s.placa || s.vehiculo?.placas || "",
-          tipo: s.tipo || s.infraccionDescripcion || s.motivo || "Infracción",
-          fecha: s.fecha_inicio ? s.fecha_inicio.split("T")[0] : new Date().toISOString().split("T")[0],
-          medidaDisciplinaria: s.medidaDisciplinaria || s.motivo || "",
-          status: (s.status as any) || (s.estatus === "EN_APELACION" ? "En Apelación" : (s.estatus === "CANCELADA" || s.estatus === "ACLARADA" ? "Aclarada" : (s.estatus === "RATIFICADA" ? "Ratificada" : (s.estatus === "VENCIDA" ? "Cumplida" : "Activa")))),
-          descripcion: s.motivo || s.descripcion || "",
-          apelacion: s.apelacion || undefined,
-        }));
+        const cleanRawText = (text: string) => {
+          if (!text) return "";
+          return text
+            .replace(/\[APELACION_DATA\].*?\[\/APELACION_DATA\]/gs, "")
+            .replace(/\[DICTAMEN_DATA\].*?\[\/DICTAMEN_DATA\]/gs, "")
+            .trim();
+        };
+
+        const mappedSanciones: Sancion[] = resSanciones.value.map((s: any) => {
+          const descClean = cleanRawText(s.descripcion || s.motivo || "");
+          const tipoInf = s.tipo || s.infraccionDescripcion || s.reporte?.infraccion?.nombre || "Infracción al Reglamento";
+          const medidaLimpia = cleanRawText(s.medidaDisciplinaria || s.regla?.mensaje_alerta || `Sanción Nivel ${s.numero_reincidencia || 1}`);
+
+          return {
+            id: String(s.id_sancion || s.id),
+            vehicleId: String(s.id_vehiculo || s.vehicleId || ""),
+            empresaNombre: s.empresaNombre || s.empresa?.razon_social || "",
+            placas: s.placas || s.placa || s.vehiculo?.placas || "",
+            tipo: tipoInf,
+            fecha: s.fecha_inicio ? s.fecha_inicio.split("T")[0] : (s.fecha || new Date().toISOString().split("T")[0]),
+            medidaDisciplinaria: medidaLimpia,
+            status: (s.status as any) || (s.estatus === "EN_APELACION" ? "En Apelación" : (s.estatus === "CANCELADA" || s.estatus === "ACLARADA" ? "Aclarada" : (s.estatus === "RATIFICADA" ? "Ratificada" : (s.estatus === "VENCIDA" ? "Cumplida" : "Activa")))),
+            descripcion: descClean || "Infracción detectada en campo y documentada por seguridad",
+            apelacion: s.apelacion || undefined,
+          };
+        });
         setSanciones(mappedSanciones);
       }
 
@@ -3124,45 +3138,70 @@ export default function App() {
                     </div>
                   ) : (
                     sanciones.filter(s => s.status === "En Apelación").map((s) => (
-                      <div key={s.id} className="rounded-2xl border bg-white shadow-sm overflow-hidden border-sky-200" style={{ borderColor: "var(--color-border)" }}>
-                        <div className="px-5 py-4 border-b bg-sky-50 flex items-center justify-between">
+                      <div
+                        key={s.id}
+                        className="rounded-2xl border bg-white shadow-sm overflow-hidden border-sky-300 ring-1 ring-sky-100 hover:shadow-md transition-shadow"
+                      >
+                        {/* Cabecera del Recurso */}
+                        <div className="px-5 py-3.5 border-b bg-sky-50/80 flex flex-wrap items-center justify-between gap-3">
                           <div className="flex items-center gap-3">
-                            <span className="font-mono font-bold text-xs text-sky-800 bg-sky-100 px-2.5 py-1 rounded-lg">
-                              Recurso de Apelación: {s.id}
-                            </span>
-                            <span className="text-xs text-sky-700 font-semibold">Fecha: {s.apelacion?.fecha}</span>
+                            <div className="p-2 rounded-xl bg-sky-600 text-white shrink-0">
+                              <IconMessageSquare className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono font-bold text-xs text-sky-900 bg-sky-100/90 px-2 py-0.5 rounded-lg border border-sky-200">
+                                  Recurso de Apelación #{s.id}
+                                </span>
+                                <span className="text-xs text-sky-700 font-medium">
+                                  • Interpuesto: {s.apelacion?.fecha || s.fecha}
+                                </span>
+                              </div>
+                              <h4 className="font-bold text-sm text-slate-900 mt-0.5">{s.tipo}</h4>
+                            </div>
                           </div>
-                          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800 border border-sky-300">
-                            En Revisión de Comité
+                          <span className="text-xs font-bold px-3 py-1 rounded-full bg-sky-100 text-sky-800 border border-sky-300 flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
+                            <span>Pendiente de Dictamen</span>
                           </span>
                         </div>
 
-                        <div className="p-6 space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                            <div>
-                              <div className="text-slate-400 font-bold uppercase mb-1">Infracción Original Impuesta:</div>
-                              <div className="font-bold text-slate-800 text-sm">{s.tipo}</div>
-                              <div className="text-slate-600 mt-0.5">{s.descripcion}</div>
-                              <div className="text-red-600 font-bold mt-1">Sanción: {s.medidaDisciplinaria}</div>
+                        {/* Contenido del Recurso */}
+                        <div className="p-5 sm:p-6 space-y-4">
+                          {/* Datos Originales */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                                <IconShield className="w-3.5 h-3.5 text-red-500" />
+                                <span>Infracción Original & Sanción</span>
+                              </div>
+                              <div className="text-xs font-bold text-red-700">{s.medidaDisciplinaria}</div>
+                              <div className="text-xs text-slate-600 leading-relaxed mt-1">{s.descripcion}</div>
                             </div>
-                            <div>
-                              <div className="text-slate-400 font-bold uppercase mb-1">Datos de la Unidad:</div>
-                              <div><strong>Empresa:</strong> {s.empresaNombre}</div>
-                              <div><strong>Placas:</strong> <span className="font-mono font-bold">{s.placas}</span></div>
-                              <div><strong>Representante que apela:</strong> {s.apelacion?.representante}</div>
+
+                            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5 text-xs">
+                              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                                <IconCar className="w-3.5 h-3.5 text-slate-600" />
+                                <span>Unidad y Representante Legal</span>
+                              </div>
+                              <div><strong>Empresa:</strong> <span className="text-slate-800">{s.empresaNombre}</span></div>
+                              <div><strong>Placas:</strong> <span className="font-mono font-bold text-slate-900">{s.placas}</span></div>
+                              <div><strong>Representante Acreditado:</strong> <span className="text-slate-700">{s.apelacion?.representante || "Representante de la empresa"}</span></div>
                             </div>
                           </div>
 
-                          <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200 text-xs space-y-1.5">
+                          {/* Argumentos de Aclaración */}
+                          <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200/90 text-xs space-y-1.5">
                             <div className="text-amber-900 font-bold uppercase flex items-center gap-1.5">
-                              <IconMessageSquare className="w-4 h-4" />
-                              <span>Argumentación / Aclaración del Contratista:</span>
+                              <IconMessageSquare className="w-4 h-4 text-amber-700" />
+                              <span>Argumentación / Aclaración Formal del Contratista:</span>
                             </div>
-                            <p className="text-slate-700 leading-relaxed italic">
+                            <p className="text-slate-800 bg-white/90 p-3 rounded-lg border border-amber-200 leading-relaxed italic text-xs sm:text-sm">
                               "{s.apelacion?.argumentos}"
                             </p>
                           </div>
 
+                          {/* Acciones de Dictamen */}
                           <div className="flex flex-col sm:flex-row gap-3 pt-2 justify-end">
                             <button
                               onClick={() => handleAceptarApelacion(s.id, "Apelación procedente. Se levanta la suspensión vehicular y se deja sin efectos la medida.")}
@@ -3174,7 +3213,7 @@ export default function App() {
                               {resolvingSancionIds[s.id] ? (
                                 <>
                                   <IconSpinner className="w-3.5 h-3.5" />
-                                  <span>Procesando...</span>
+                                  <span>Procesando resolución...</span>
                                 </>
                               ) : (
                                 <>
@@ -4189,60 +4228,208 @@ export default function App() {
                             </div>
                           ) : (
                             empresaSanciones.map((s) => (
-                              <div key={s.id} className="rounded-2xl border p-5 bg-white shadow-sm space-y-3" style={{ borderColor: "var(--color-border)" }}>
-                                <div className="flex items-start justify-between">
-                                  <div>
-                                    <div className="font-bold text-sm text-slate-900">{s.tipo}</div>
-                                    <div className="text-xs text-slate-500 font-mono mt-0.5">{s.id} · Placas: {s.placas} · Fecha del reporte: {s.fecha}</div>
+                              <div
+                                key={s.id}
+                                className={`rounded-2xl border bg-white shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md ${
+                                  s.status === "En Apelación"
+                                    ? "border-sky-300 ring-1 ring-sky-100"
+                                    : s.status === "Ratificada"
+                                    ? "border-amber-300 ring-1 ring-amber-100"
+                                    : s.status === "Aclarada"
+                                    ? "border-emerald-300 ring-1 ring-emerald-100"
+                                    : "border-slate-200"
+                                }`}
+                              >
+                                {/* Cabecera de la Sanción */}
+                                <div
+                                  className={`px-5 py-3.5 border-b flex flex-wrap items-center justify-between gap-3 ${
+                                    s.status === "En Apelación"
+                                      ? "bg-sky-50/70"
+                                      : s.status === "Ratificada"
+                                      ? "bg-amber-50/70"
+                                      : s.status === "Aclarada"
+                                      ? "bg-emerald-50/70"
+                                      : s.status === "Activa"
+                                      ? "bg-red-50/50"
+                                      : "bg-slate-50"
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div
+                                      className={`p-2 rounded-xl text-white shrink-0 ${
+                                        s.status === "En Apelación"
+                                          ? "bg-sky-600"
+                                          : s.status === "Ratificada"
+                                          ? "bg-amber-600"
+                                          : s.status === "Aclarada"
+                                          ? "bg-emerald-600"
+                                          : s.status === "Activa"
+                                          ? "bg-red-600"
+                                          : "bg-slate-600"
+                                      }`}
+                                    >
+                                      <IconAlertTriangle className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                      <h3 className="font-bold text-sm sm:text-base text-slate-900 leading-tight">
+                                        {s.tipo}
+                                      </h3>
+                                      <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-slate-500">
+                                        <span className="font-mono font-bold text-slate-700 bg-white/90 px-2 py-0.5 rounded border border-slate-200">
+                                          Folio #{s.id}
+                                        </span>
+                                        <span>•</span>
+                                        <span className="font-mono font-semibold text-slate-700">
+                                          Placas: <strong className="text-slate-900">{s.placas}</strong>
+                                        </span>
+                                        <span>•</span>
+                                        <span>Fecha: {s.fecha}</span>
+                                      </div>
+                                    </div>
                                   </div>
-                                  <div className="text-right">
+
+                                  <div>
                                     <StatusBadge status={s.status} />
                                   </div>
                                 </div>
 
-                                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
-                                  <div><strong className="text-slate-700">Medida Disciplinaria:</strong> <span className="font-bold text-red-700">{s.medidaDisciplinaria}</span></div>
-                                  <div><strong className="text-slate-700">Motivo Detectado:</strong> <span className="text-slate-600">{s.descripcion}</span></div>
-                                </div>
-
-                                {s.apelacion && (
-                                  <div className="p-3.5 rounded-xl bg-sky-50/70 border border-sky-200 text-xs space-y-1.5">
-                                    <div className="flex items-center justify-between font-bold text-sky-900">
-                                      <span className="flex items-center gap-1.5">
-                                        <IconMessageSquare className="w-3.5 h-3.5" />
-                                        <span>Recurso de Apelación Registrado ({s.apelacion.fecha})</span>
-                                      </span>
-                                      <span className="font-mono">{s.apelacion.estado}</span>
-                                    </div>
-                                    <p className="text-slate-700 italic">"{s.apelacion.argumentos}"</p>
-                                    {s.apelacion.dictamenSupervisor && (
-                                      <div className="pt-1.5 border-t border-sky-200/80 text-emerald-800 font-semibold">
-                                        <strong>Dictamen de Supervisión HOA ({s.apelacion.fechaDictamen}):</strong> {s.apelacion.dictamenSupervisor}
+                                {/* Cuerpo Estructurado */}
+                                <div className="p-5 sm:p-6 space-y-4">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                                    {/* Medida Disciplinaria */}
+                                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                                        <IconShield className="w-3.5 h-3.5 text-red-500" />
+                                        <span>Medida Disciplinaria / Estatus</span>
                                       </div>
-                                    )}
-                                  </div>
-                                )}
+                                      <div className="text-xs sm:text-sm font-bold text-red-700 leading-snug">
+                                        {s.medidaDisciplinaria || "Amonestación / Suspensión de acceso"}
+                                      </div>
+                                    </div>
 
-                                {s.status === "Activa" && (
-                                  <div className="flex gap-2 pt-1">
-                                    <button
-                                      onClick={() => setSelectedSancionParaApelar(s)}
-                                      className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
-                                    >
-                                      <IconMessageSquare className="w-3.5 h-3.5" />
-                                      <span>Interponer Apelación / Aclaración</span>
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        setSanciones(sanciones.map(item => item.id === s.id ? { ...item, status: "Cumplida" } : item));
-                                        showToast("Se ha registrado el cumplimiento formal de la suspensión.", "success", "Sanción Cumplida");
-                                      }}
-                                      className="px-3.5 py-2 rounded-xl text-xs font-semibold border border-slate-300 text-slate-700 hover:bg-slate-50 cursor-pointer"
-                                    >
-                                      Registrar Cumplimiento
-                                    </button>
+                                    {/* Motivo de la Infracción */}
+                                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                                        <IconFileText className="w-3.5 h-3.5 text-slate-600" />
+                                        <span>Descripción de los Hechos</span>
+                                      </div>
+                                      <div className="text-xs font-medium text-slate-700 leading-relaxed">
+                                        {s.descripcion || "Infracción detectada en instalaciones"}
+                                      </div>
+                                    </div>
                                   </div>
-                                )}
+
+                                  {/* Sección de Apelación y Dictamen */}
+                                  {s.apelacion && (
+                                    <div
+                                      className={`rounded-xl border p-4 space-y-3 ${
+                                        s.status === "Aclarada"
+                                          ? "bg-emerald-50/50 border-emerald-200"
+                                          : s.status === "Ratificada"
+                                          ? "bg-amber-50/50 border-amber-200"
+                                          : "bg-sky-50/60 border-sky-200"
+                                      }`}
+                                    >
+                                      <div
+                                        className="flex flex-wrap items-center justify-between gap-2 border-b pb-2.5"
+                                        style={{ borderColor: "rgba(0,0,0,0.06)" }}
+                                      >
+                                        <div className="flex items-center gap-2">
+                                          <IconMessageSquare className="w-4 h-4 text-sky-700" />
+                                          <span className="font-bold text-xs uppercase tracking-wide text-slate-800">
+                                            Recurso de Apelación e Inconformidad
+                                          </span>
+                                          <span className="text-xs text-slate-500 font-mono">({s.apelacion.fecha})</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-xs text-slate-500">
+                                            Firmado por: <strong className="text-slate-700">{s.apelacion.representante}</strong>
+                                          </span>
+                                          <span
+                                            className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                                              s.apelacion.estado === "Aprobada"
+                                                ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                                : s.apelacion.estado === "Rechazada"
+                                                ? "bg-amber-100 text-amber-800 border border-amber-300"
+                                                : "bg-sky-100 text-sky-800 border border-sky-300"
+                                            }`}
+                                          >
+                                            {s.apelacion.estado === "Aprobada"
+                                              ? "Apelación Procedente"
+                                              : s.apelacion.estado === "Rechazada"
+                                              ? "Apelación Rechazada"
+                                              : "Pendiente de Dictamen"}
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      <div className="space-y-1">
+                                        <div className="text-[11px] font-semibold uppercase text-slate-500">
+                                          Argumentos / Pruebas del Contratista:
+                                        </div>
+                                        <p className="text-xs text-slate-800 bg-white/90 p-3 rounded-lg border border-slate-200/80 leading-relaxed italic">
+                                          "{s.apelacion.argumentos}"
+                                        </p>
+                                      </div>
+
+                                      {s.apelacion.dictamenSupervisor && (
+                                        <div
+                                          className={`p-3.5 rounded-xl border space-y-1 ${
+                                            s.status === "Aclarada"
+                                              ? "bg-emerald-100/70 border-emerald-300 text-emerald-950"
+                                              : "bg-amber-100/70 border-amber-300 text-amber-950"
+                                          }`}
+                                        >
+                                          <div className="flex items-center gap-1.5 font-bold text-xs uppercase">
+                                            <IconCheckCircle className="w-3.5 h-3.5" />
+                                            <span>
+                                              Dictamen Oficial de Supervisión HOA{" "}
+                                              {s.apelacion.fechaDictamen ? `(${s.apelacion.fechaDictamen})` : ""}:
+                                            </span>
+                                          </div>
+                                          <p className="text-xs font-semibold leading-relaxed">
+                                            {s.apelacion.dictamenSupervisor}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Botones de Acción */}
+                                  {s.status === "Activa" && (
+                                    <div className="flex flex-wrap gap-2.5 pt-1">
+                                      <button
+                                        onClick={() => setSelectedSancionParaApelar(s)}
+                                        className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                                      >
+                                        <IconMessageSquare className="w-3.5 h-3.5" />
+                                        <span>Interponer Apelación / Aclaración</span>
+                                      </button>
+                                      <button
+                                        onClick={async () => {
+                                          try {
+                                            await api.updateSancion(s.id, { estatus: "VENCIDA" });
+                                            await loadDatabaseData();
+                                          } catch (e) {
+                                            setSanciones((prev) =>
+                                              prev.map((item) =>
+                                                item.id === s.id ? { ...item, status: "Cumplida" as const } : item
+                                              )
+                                            );
+                                          }
+                                          showToast(
+                                            "Se ha registrado el cumplimiento formal de la suspensión.",
+                                            "success",
+                                            "Sanción Cumplida"
+                                          );
+                                        }}
+                                        className="px-3.5 py-2 rounded-xl text-xs font-semibold border border-slate-300 text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors"
+                                      >
+                                        Registrar Cumplimiento
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             ))
                           )}

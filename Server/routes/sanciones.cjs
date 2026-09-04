@@ -77,12 +77,14 @@ router.get('/', async (req, res) => {
       return {
         ...plain,
         id: String(plain.id_sancion),
+        motivo: motivoLimpio,
+        descripcion: motivoLimpio,
         placa: plain.vehiculo?.placas || '',
         placas: plain.vehiculo?.placas || '',
         empresaNombre: plain.empresa?.razon_social || '',
         infraccionCodigo: plain.reporte?.infraccion?.codigo || 'INF-01',
         infraccionDescripcion: plain.reporte?.infraccion?.nombre || motivoLimpio,
-        tipo: plain.reporte?.infraccion?.nombre || motivoLimpio,
+        tipo: plain.reporte?.infraccion?.nombre || 'Infracción Vehicular',
         gravedad: plain.numero_reincidencia >= 3 ? 'critica' : (plain.numero_reincidencia === 2 ? 'grave' : 'moderada'),
         estado: plain.estatus === 'ACTIVA' ? 'activa' : (plain.estatus === 'VENCIDA' ? 'resuelta' : 'pendiente_aprobacion'),
         status: frontendStatus,
@@ -90,7 +92,6 @@ router.get('/', async (req, res) => {
         fecha: plain.fecha_inicio ? new Date(plain.fecha_inicio).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         montoMulta: plain.numero_reincidencia * 100,
         medidaDisciplinaria: plain.regla?.mensaje_alerta || `Sanción nivel ${plain.numero_reincidencia}`,
-        descripcion: motivoLimpio,
         evidenciaUrl: plain.reporte?.evidencias?.[0]?.archivo || '',
         apelacion: apelacionObj
       };
