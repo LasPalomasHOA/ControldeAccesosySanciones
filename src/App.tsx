@@ -2769,15 +2769,15 @@ export default function App() {
   const apelacionesPendientesCount = sanciones.filter(s => s.status === "En Apelación").length;
 
   return (
-    <div className="flex flex-col justify-between" style={{ background: "var(--color-bg)", minHeight: "100vh", fontFamily: "var(--font-body)" }}>
-      <div>
-        <header className="sticky top-0 z-50 border-b bg-white no-print" style={{ borderColor: "var(--color-border)", boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center h-16 gap-4 sm:gap-6 justify-between">
+    <div className="flex flex-col justify-between w-full max-w-full overflow-x-hidden min-h-screen" style={{ background: "var(--color-bg)", fontFamily: "var(--font-body)" }}>
+      <div className="w-full max-w-full">
+        <header className="sticky top-0 z-50 border-b bg-white no-print w-full" style={{ borderColor: "var(--color-border)", boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center h-16 gap-3 sm:gap-4 justify-between w-full">
             <div className="shrink-0">
-              <LPLogo size={160} />
+              <LPLogo size={150} />
             </div>
 
-            <div className="hidden md:flex items-center gap-1 shrink-0">
+            <div className="hidden 2xl:flex items-center gap-1 shrink-0">
               {currentUser.role === "admin" && (
                 <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                   <button
@@ -2903,58 +2903,61 @@ export default function App() {
               )}
             </div>
 
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="text-right">
-                <div className="text-xs font-bold text-slate-800 flex items-center justify-end gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-                  {currentUser.nombre}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
+              <div className="text-right min-w-0 max-w-[120px] sm:max-w-[170px] md:max-w-[220px] lg:max-w-[260px]">
+                <div className="text-xs font-bold text-slate-800 flex items-center justify-end gap-1.5 truncate">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block shrink-0" />
+                  <span className="truncate">{currentUser.nombre}</span>
                 </div>
-                <div className="text-[11px] text-slate-500 font-mono">
+                <div
+                  className="text-[11px] text-slate-500 font-mono truncate"
+                  title={currentUser.role === "admin" ? "Administrador de Sistemas" : currentUser.role === "supervisor" ? "Supervisor de Seguridad HOA" : currentUser.role === "contratista" ? currentUser.empresaNombre : `Oficial de Caseta (${currentUser.turno})`}
+                >
                   {currentUser.role === "admin" ? "Administrador de Sistemas" : currentUser.role === "supervisor" ? "Supervisor de Seguridad HOA" : currentUser.role === "contratista" ? currentUser.empresaNombre : `Oficial de Caseta (${currentUser.turno})`}
                 </div>
               </div>
 
               <button
                 onClick={handleLogout}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-colors duration-150 flex items-center gap-1.5 cursor-pointer no-print"
+                className="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-colors duration-150 flex items-center gap-1.5 cursor-pointer no-print shrink-0"
               >
-                <IconLogOut className="w-3.5 h-3.5" />
-                <span>Cerrar Sesión</span>
+                <IconLogOut className="w-3.5 h-3.5 shrink-0" />
+                <span className="whitespace-nowrap">Cerrar Sesión</span>
               </button>
             </div>
           </div>
 
-          {/* Barra de Navegación Móvil Horizontal */}
-          <div className="md:hidden border-t bg-slate-50/95 px-4 py-2 overflow-x-auto flex items-center gap-1.5 no-print" style={{ borderColor: "var(--color-border)" }}>
+          {/* Barra de Navegación Horizontal para Tablets y Pantallas Compactas */}
+          <div className="2xl:hidden border-t bg-slate-50/95 px-4 py-2 overflow-x-auto flex items-center gap-1.5 no-print" style={{ borderColor: "var(--color-border)" }}>
             {currentUser.role === "supervisor" && (
               <>
                 <button
                   onClick={() => setSupervisorTab("bandeja")}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${supervisorTab === "bandeja" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${supervisorTab === "bandeja" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
                 >
                   Infracciones ({infraccionesPendientes.filter(i => i.estado === "Pendiente").length})
                 </button>
                 <button
                   onClick={() => setSupervisorTab("apelaciones")}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${supervisorTab === "apelaciones" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${supervisorTab === "apelaciones" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
                 >
                   Apelaciones ({apelacionesPendientesCount})
                 </button>
                 <button
                   onClick={() => setSupervisorTab("proveedores")}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${supervisorTab === "proveedores" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${supervisorTab === "proveedores" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
                 >
                   Proveedores ({empresas.length})
                 </button>
                 <button
                   onClick={() => setSupervisorTab("guardias")}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${supervisorTab === "guardias" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${supervisorTab === "guardias" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
                 >
                   Guardias ({users.filter(u => u.role === "caseta").length})
                 </button>
                 <button
                   onClick={() => setSupervisorTab("historial")}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${supervisorTab === "historial" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${supervisorTab === "historial" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
                 >
                   Historial
                 </button>
@@ -2965,15 +2968,15 @@ export default function App() {
               <>
                 <button
                   onClick={() => setAdminTab("supervisores")}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${adminTab === "supervisores" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${adminTab === "supervisores" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
                 >
                   Supervisores ({users.filter(u => u.role === "supervisor").length})
                 </button>
                 <button
                   onClick={() => setAdminTab("auditoria")}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${adminTab === "auditoria" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${adminTab === "auditoria" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
                 >
-                  Auditoría Global
+                  Auditoría Global & Claves
                 </button>
               </>
             )}
@@ -2982,33 +2985,36 @@ export default function App() {
               <>
                 <button
                   onClick={() => setPortalScreen("dashboard")}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${portalScreen === "dashboard" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap ${portalScreen === "dashboard" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
                 >
                   Flotilla
                 </button>
                 <button
                   onClick={() => setPortalScreen("alta")}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${portalScreen === "alta" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap ${portalScreen === "alta" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
                 >
-                  + Alta
+                  + Alta Vehículo
                 </button>
                 <button
                   onClick={() => setPortalScreen("trabajadores")}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${portalScreen === "trabajadores" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap flex items-center gap-1.5 ${portalScreen === "trabajadores" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
                 >
-                  Trabajadores ({trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre && t.activo).length})
+                  <span>Trabajadores</span>
+                  <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
+                    {trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre && t.activo).length}
+                  </span>
                 </button>
                 <button
                   onClick={() => setPortalScreen("corbatin")}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${portalScreen === "corbatin" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap ${portalScreen === "corbatin" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
                 >
-                  Corbatines
+                  Corbatines PDF
                 </button>
                 <button
                   onClick={() => setPortalScreen("sanciones")}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${portalScreen === "sanciones" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap ${portalScreen === "sanciones" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
                 >
-                  Sanciones
+                  Sanciones & Apelaciones {sanciones.filter(s => !currentUser.empresaNombre || s.empresaNombre === currentUser.empresaNombre).length > 0 ? `(${sanciones.filter(s => !currentUser.empresaNombre || s.empresaNombre === currentUser.empresaNombre).length})` : ""}
                 </button>
               </>
             )}
@@ -3017,15 +3023,15 @@ export default function App() {
               <>
                 <button
                   onClick={() => setCasetaTab("registro")}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${casetaTab === "registro" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${casetaTab === "registro" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
                 >
-                  + Registro
+                  + Registro de Entrada
                 </button>
                 <button
                   onClick={() => setCasetaTab("bitacora")}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${casetaTab === "bitacora" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${casetaTab === "bitacora" ? "bg-[#0D6E5F] text-white" : "text-slate-600 bg-white border border-slate-200"}`}
                 >
-                  Bitácora ({bitacora.filter(b => b.estado === "Dentro").length})
+                  Bitácora ({bitacora.filter(b => b.estado === "Dentro").length} dentro)
                 </button>
               </>
             )}
