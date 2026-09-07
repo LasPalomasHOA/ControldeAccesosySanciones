@@ -2046,7 +2046,7 @@ export default function App() {
       setTimeout(() => setCasetaSuccessMsg(false), 4000);
       showToast(`Entrada autorizada para el vehículo ${currentCasetaVehicle.placas}.`, "success");
     } catch (err: any) {
-      showToast("Error al registrar entrada vehicular: " + (err.message || err), "error");
+      showToast("Error al registrar entrada: " + (err.message || err), "error");
     } finally {
       isSubmittingEntradaRef.current = false;
       setIsSubmittingEntrada(false);
