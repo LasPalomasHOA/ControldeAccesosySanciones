@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 // Importaciones estáticas para forzar a @vercel/nft a empaquetar todas las dependencias del backend
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import pg from 'pg';
 import 'pg-hstore';
 import { Sequelize } from 'sequelize';

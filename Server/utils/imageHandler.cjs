@@ -58,13 +58,51 @@ function resolveFotoToDataUrl(fotoUrl) {
 }
 
 /**
- * Guarda o preserva la imagen en Base64 para almacenarla directamente en la BD (PostgreSQL / Supabase).
- * De esta manera las fotos persisten 100% en la base de datos sin depender del sistema de archivos efímero de Vercel.
+ * Optimiza y comprime una imagen en Base64 a WebP (<40 KB) para que la base de datos
+ * no se infle ni consuma Egress desmedido.
  */
-function saveBase64Image(dataString, prefix = 'img') {
-  if (!dataString) return null;
-  // Guardamos directamente en la base de datos en formato Base64 para que nunca se pierda
-  return dataString;
+async function optimizeBase64Image(base64Str, maxWidth = 600, quality = 70) {
+  if (!base64Str || typeof base64Str !== 'string') return base64Str;
+  const match = base64Str.match(/^data:([A-Za-z0-9\-+/]+);base64,(.+)$/);
+  let buffer;
+  if (match) {
+    buffer = Buffer.from(match[2], 'base64');
+  } else if (base64Str.length > 500 && !base64Str.startsWith('http') && !base64Str.startsWith('/')) {
+    try {
+      buffer = Buffer.from(base64Str, 'base64');
+    } catch {
+      return base64Str;
+    }
+  } else {
+    return base64Str; // Es URL remota http/https o ruta relativa
+  }
+
+  // Si ya es muy ligera (<= 40 KB), no es necesario recompilar
+  if (buffer.length <= 40 * 1024) {
+    return base64Str;
+  }
+
+  try {
+    const sharp = require('sharp');
+    const compressedBuffer = await sharp(buffer)
+      .resize({ width: maxWidth, height: maxWidth, fit: 'inside', withoutEnlargement: true })
+      .webp({ quality })
+      .toBuffer();
+
+    return `data:image/webp;base64,${compressedBuffer.toString('base64')}`;
+  } catch (err) {
+    // Si sharp no está disponible o falla, retornar original sin romper la petición
+    return base64Str;
+  }
 }
 
-module.exports = { saveBase64Image, resolveFotoToDataUrl, UPLOADS_DIR };
+/**
+ * Guarda o preserva la imagen en Base64 para almacenarla directamente en la BD (PostgreSQL / Supabase).
+ */
+async function saveBase64Image(dataString, prefix = 'img') {
+  if (!dataString) return null;
+  return await optimizeBase64Image(dataString);
+}
+
+module.exports = { saveBase64Image, optimizeBase64Image, resolveFotoToDataUrl, UPLOADS_DIR };
+

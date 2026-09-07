@@ -6,6 +6,16 @@ const events = require('../events.cjs');
 
 // GET /api/reportes/stream - Canal SSE para actualizaciones en vivo
 router.get('/stream', (req, res) => {
+  if (process.env.VERCEL) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'close');
+    // Indicamos al cliente que no intente reconectar en bucle en serverless
+    res.write('retry: 3600000\n\n');
+    res.write(`data: ${JSON.stringify({ type: 'SERVERLESS_STANDBY', message: 'SSE no aplicable en Vercel Serverless' })}\n\n`);
+    return res.end();
+  }
+
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');

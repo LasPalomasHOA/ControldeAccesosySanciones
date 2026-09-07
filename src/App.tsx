@@ -1301,55 +1301,164 @@ export default function App() {
     }
   };
 
+  // Recarga granular de Bitácora (evita recargar los otros 6 módulos en Caseta)
+  const reloadBitacora = async () => {
+    try {
+      const res = await api.getBitacora();
+      if (Array.isArray(res)) {
+        const mappedBit: RegistroCaseta[] = res.map((b: any) => ({
+          id: String(b.id_acceso || b.id),
+          empresaNombre: b.empresaNombre || b.vehiculo?.empresa?.razon_social || "",
+          vehicleId: String(b.id_vehiculo || ""),
+          placas: b.placas || b.vehiculo?.placas || "PEATONAL",
+          color: b.vehiculo?.color || "N/A",
+          conductor: b.conductor || "",
+          telefono: b.vehiculo?.empresa?.telefono || "",
+          corbatinNum: b.corbatinNumero || "—",
+          horaEntrada: b.hora_entrada || "00:00 hrs",
+          horaSalida: b.hora_salida || undefined,
+          trabajos: b.ubicacion_trabajo || b.observaciones || "Acceso regular",
+          guardiaNombre: b.guardiaNombre || "Oficial de Turno",
+          estado: b.hora_salida ? "Salida Registrada" : "Dentro",
+          tipoAcceso: (b.tipo || (b.id_vehiculo ? "Vehicular" : "Peatonal")) as "Vehicular" | "Peatonal",
+          observaciones: b.observaciones || undefined
+        }));
+        setBitacora(mappedBit);
+      }
+    } catch (e) {
+      console.warn("Error al recargar bitácora:", e);
+    }
+  };
+
+  // Recarga granular de Vehículos
+  const reloadVehiculos = async () => {
+    try {
+      const res = await api.getVehiculos();
+      if (Array.isArray(res)) {
+        const mappedVeh: Vehicle[] = res.map((v: any) => ({
+          id: String(v.id_vehiculo || v.id),
+          empresaId: String(v.id_empresa || v.empresaId),
+          empresaNombre: v.empresaNombre || v.empresa?.razon_social || "",
+          marca: v.marca,
+          modelo: v.modelo,
+          año: String(v.año || v.anio || ""),
+          anio: String(v.año || v.anio || ""),
+          placas: v.placas || v.placa,
+          color: v.color,
+          conductor: v.conductor || "",
+          telefono: v.empresa?.telefono || v.telefono || "",
+          foto: normalizeFotoUrl(v.foto_url || v.foto),
+          status: (v.estatus_acceso === "HABILITADO" ? "Habilitado" : (v.estatus_acceso === "DESHABILITADO" ? "Deshabilitado" : (v.estatus_acceso === "SUSPENDIDO" ? "Suspendido" : "Restringido"))) as "Habilitado" | "Deshabilitado" | "Suspendido" | "Restringido",
+          corbatinNum: v.corbatinNumero || "101",
+        }));
+        setVehicles(mappedVeh);
+      }
+    } catch (e) {
+      console.warn("Error al recargar vehículos:", e);
+    }
+  };
+
+  // Recarga granular de Trabajadores
+  const reloadTrabajadores = async () => {
+    try {
+      const res = await api.getTrabajadores();
+      if (Array.isArray(res)) {
+        const mappedTrab: Trabajador[] = res.map((t: any) => ({
+          id_trabajador: t.id_trabajador || t.id,
+          id_empresa: String(t.id_empresa),
+          empresaNombre: t.empresaNombre || t.empresa?.razon_social || "",
+          nombre: t.nombre,
+          apellidos: t.apellidos,
+          telefono: t.telefono,
+          foto_url: t.foto_url,
+          activo: t.activo !== false,
+          created_at: t.created_at || new Date().toISOString(),
+          updated_at: t.updated_at || new Date().toISOString(),
+        }));
+        setTrabajadores(mappedTrab);
+      }
+    } catch (e) {
+      console.warn("Error al recargar trabajadores:", e);
+    }
+  };
+
+  // Recarga granular de Usuarios
+  const reloadUsuarios = async () => {
+    try {
+      const res = await api.getUsuarios();
+      if (Array.isArray(res)) {
+        const mappedUsers: UserAccount[] = res.map((u: any) => ({
+          id: String(u.id_usuario || u.id),
+          username: u.correo,
+          nombre: u.nombre,
+          email: u.correo,
+          role: (u.rol === "admin" ? "admin" : (u.rol === "supervisor" ? "supervisor" : (u.rol === "proveedor" ? "contratista" : "caseta"))) as UserRole,
+          empresaNombre: u.empresaNombre || "",
+          fechaCreacion: u.created_at ? new Date(u.created_at).toISOString().split("T")[0] : "2026-01-01",
+          creadoPor: "Administrador de Seguridad HOA",
+          hasAcceptedReglamento: true,
+          activo: u.activo !== false,
+          foto_url: u.foto_url || u.avatar || "",
+        }));
+        setUsers(mappedUsers);
+      }
+    } catch (e) {
+      console.warn("Error al recargar usuarios:", e);
+    }
+  };
+
   useEffect(() => {
     // 1. Carga inicial de base de datos
     loadDatabaseData(true);
 
-    // 2. Conexión a canal Server-Sent Events (SSE) para sincronización en tiempo real
+    // 2. Conexión a canal Server-Sent Events (SSE) SOLO en entorno local para evitar bucle serverless en Vercel
     let eventSource: EventSource | null = null;
-    try {
-      eventSource = new EventSource("/api/reportes/stream");
-      eventSource.onmessage = (event) => {
-        try {
-          const payload = JSON.parse(event.data);
-          if (payload.type === "NUEVO_REPORTE") {
-            loadDatabaseData(true);
-            playNotificationChime();
-            showToast(
-              `🚨 Nueva infracción registrada en campo — Folio: FOL-${payload.data?.id_reporte || ""}`,
-              "warning",
-              "Infracción Detectada en Tiempo Real"
-            );
-          } else if (
-            payload.type === "REPORTE_DICTAMINADO" || 
-            payload.type === "NUEVA_APELACION" || 
-            payload.type === "SANCION_DICTAMINADA" ||
-            payload.type === "NUEVO_ACCESO" ||
-            payload.type === "SALIDA_REGISTRADA" ||
-            payload.type === "VEHICULO_ACTUALIZADO"
-          ) {
-            loadDatabaseData(true);
+    const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+    if (isLocal) {
+      try {
+        eventSource = new EventSource("/api/reportes/stream");
+        eventSource.onmessage = (event) => {
+          try {
+            const payload = JSON.parse(event.data);
+            if (payload.type === "NUEVO_REPORTE") {
+              loadDatabaseData(true);
+              playNotificationChime();
+              showToast(
+                `🚨 Nueva infracción registrada en campo — Folio: FOL-${payload.data?.id_reporte || ""}`,
+                "warning",
+                "Infracción Detectada en Tiempo Real"
+              );
+            } else if (
+              payload.type === "REPORTE_DICTAMINADO" || 
+              payload.type === "NUEVA_APELACION" || 
+              payload.type === "SANCION_DICTAMINADA" ||
+              payload.type === "NUEVO_ACCESO" ||
+              payload.type === "SALIDA_REGISTRADA" ||
+              payload.type === "VEHICULO_ACTUALIZADO"
+            ) {
+              loadDatabaseData(true);
+            }
+          } catch (e) {
+            // Ignorar pings de keepalive
           }
-        } catch (e) {
-          // Ignorar pings de keepalive
-        }
-      };
-    } catch (sseErr) {
-      console.warn("Aviso: SSE no activo:", sseErr);
+        };
+      } catch (sseErr) {
+        console.warn("Aviso: SSE no activo:", sseErr);
+      }
     }
 
-    // 3. Sincronización de respaldo a baja frecuencia (cada 90s) únicamente si la pestaña está visible
+    // 3. Sincronización periódica controlada (cada 120s) únicamente si la pestaña está visible
     const backgroundSyncInterval = setInterval(() => {
       if (document.visibilityState === "visible") {
         loadDatabaseData(false);
       }
-    }, 90000);
+    }, 120000);
 
-    // 4. Sincronización inteligente cuando el usuario regresa a la pestaña (si pasaron >30s)
+    // 4. Sincronización inteligente al regresar a la pestaña (si pasaron >60s de inactividad)
     const handleFocusOrVisibility = () => {
       if (document.visibilityState === "visible") {
         const now = Date.now();
-        if (now - lastFetchTimestampRef.current > 30000) {
+        if (now - lastFetchTimestampRef.current > 60000) {
           loadDatabaseData(false);
         }
       }
@@ -1903,7 +2012,7 @@ export default function App() {
           tipo: 'entrada'
         });
 
-        await loadDatabaseData();
+        await reloadBitacora();
         setCasetaTrabajos("");
         setCasetaPeatonalObservaciones("");
         setCasetaSuccessMsg(true);
@@ -1930,7 +2039,7 @@ export default function App() {
         tipo: 'entrada'
       });
 
-      await loadDatabaseData();
+      await reloadBitacora();
       setCasetaTrabajos("");
       setCasetaOverrideActive(false);
       setCasetaSuccessMsg(true);
@@ -1949,7 +2058,7 @@ export default function App() {
     setMarcandoSalidaIds((prev) => ({ ...prev, [id]: true }));
     try {
       await api.registrarSalida(id);
-      await loadDatabaseData();
+      await reloadBitacora();
       showToast("Salida registrada con éxito.", "info", "Registro Actualizado");
     } catch (err: any) {
       showToast("Error al registrar salida en la base de datos: " + (err.message || err), "error");
@@ -2311,7 +2420,7 @@ export default function App() {
         estatus_acceso: "HABILITADO",
       });
 
-      await loadDatabaseData();
+      await reloadVehiculos();
       form.reset();
       setNuevoVehiculoFoto("");
       setNuevoVehiculoFotoError("");
@@ -2345,7 +2454,7 @@ export default function App() {
         id_empresa: null,
         activo: true,
       });
-      await loadDatabaseData();
+      await reloadUsuarios();
       setShowCreateSupervisorModal(false);
       showToast(`Cuenta de Supervisor para "${nom}" (${emailVal}) creada y guardada exitosamente.`, "success", "Supervisor Creado");
     } catch (err: any) {
@@ -2505,7 +2614,7 @@ export default function App() {
         foto_url: defaultFoto,
         activo: trabajadorActivo,
       });
-      await loadDatabaseData();
+      await reloadTrabajadores();
       setShowCreateTrabajadorModal(false);
       setTrabajadorNombre("");
       setTrabajadorApellidos("");
@@ -2565,7 +2674,7 @@ export default function App() {
         foto_url: trabajadorFotoUrl || selectedTrabajadorParaEditar.foto_url,
         activo: trabajadorActivo,
       });
-      await loadDatabaseData();
+      await reloadTrabajadores();
       showToast(`Información de "${nom} ${ape}" actualizada con éxito en PostgreSQL.`, "success", "Trabajador Actualizado");
       setSelectedTrabajadorParaEditar(null);
       setTrabajadorFormError("");
@@ -2589,12 +2698,12 @@ export default function App() {
         prev.filter((t) => String(t.id_trabajador) !== String(eliminado.id_trabajador))
       );
       await api.deleteTrabajador(eliminado.id_trabajador);
-      await loadDatabaseData();
+      await reloadTrabajadores();
       showToast(`El colaborador "${eliminado.nombre} ${eliminado.apellidos}" fue eliminado permanentemente.`, "success", "Colaborador Eliminado");
       setSelectedTrabajadorParaEliminar(null);
     } catch (err: any) {
       showToast("Error al eliminar de base de datos: " + (err.message || err), "error");
-      await loadDatabaseData();
+      await reloadTrabajadores();
     } finally {
       isDeletingTrabajadorRef.current = false;
       setIsDeletingTrabajador(false);
@@ -2610,12 +2719,12 @@ export default function App() {
       // Actualización optimista en memoria
       setUsers((prev) => prev.filter((u) => String(u.id) !== String(eliminado.id)));
       await api.deleteUsuario(eliminado.id);
-      await loadDatabaseData();
+      await reloadUsuarios();
       showToast(`El supervisor "${eliminado.nombre}" (${eliminado.username}) fue eliminado permanentemente.`, "success", "Supervisor Eliminado");
       setSelectedSupervisorParaEliminar(null);
     } catch (err: any) {
       showToast("Error al eliminar supervisor de la base de datos: " + (err.message || err), "error");
-      await loadDatabaseData();
+      await reloadUsuarios();
     } finally {
       isDeletingSupervisorRef.current = false;
       setIsDeletingSupervisor(false);
@@ -2630,7 +2739,7 @@ export default function App() {
       await api.updateTrabajador(trab.id_trabajador, {
         activo: nuevoActivo,
       });
-      await loadDatabaseData();
+      await reloadTrabajadores();
       showToast(`Colaborador ${trab.nombre} ${trab.apellidos} ${nuevoActivo ? "habilitado" : "deshabilitado"} exitosamente.`, "success");
     } catch (err: any) {
       console.warn("Error al actualizar estatus de trabajador en PostgreSQL:", err);
@@ -2660,7 +2769,7 @@ export default function App() {
       await api.updateUsuario(user.id, {
         activo: nuevoActivo,
       });
-      await loadDatabaseData();
+      await reloadUsuarios();
       showToast(
         `Usuario "${user.nombre}" (${user.username}) ${nuevoActivo ? "activado" : "desactivado"} exitosamente.`,
         "success",

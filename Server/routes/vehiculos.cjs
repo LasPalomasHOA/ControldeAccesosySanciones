@@ -126,6 +126,9 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Empresa, marca, modelo, placas y color son obligatorios' });
     }
 
+    const rawFoto = foto_url || foto || null;
+    const optimizedFoto = rawFoto ? await saveBase64Image(rawFoto) : null;
+
     const nuevoVehiculo = await db.Vehiculo.create({
       id_empresa: empId,
       marca,
@@ -133,7 +136,7 @@ router.post('/', async (req, res) => {
       año: finalAño ? parseInt(finalAño, 10) : null,
       placas: finalPlacas,
       color,
-      foto_url: foto_url || foto || null,
+      foto_url: optimizedFoto,
       estatus_acceso: estatus_acceso || 'HABILITADO'
     });
 
@@ -182,7 +185,8 @@ router.put('/:id', async (req, res) => {
     if (placas || placa) vehiculo.placas = (placas || placa).toUpperCase();
     if (color !== undefined) vehiculo.color = color;
     if (foto_url !== undefined || foto !== undefined) {
-      vehiculo.foto_url = foto_url || foto;
+      const incoming = foto_url || foto;
+      vehiculo.foto_url = incoming ? await saveBase64Image(incoming) : null;
     }
     if (estatus_acceso !== undefined) vehiculo.estatus_acceso = estatus_acceso;
     else if (estadoAcceso !== undefined) {

@@ -66,12 +66,14 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'id_empresa, nombre y apellidos son campos obligatorios' });
     }
 
+    const optimizedFoto = foto_url ? await saveBase64Image(foto_url) : null;
+
     const nuevo = await db.Trabajador.create({
       id_empresa,
       nombre,
       apellidos,
       telefono: telefono || null,
-      foto_url: foto_url || null,
+      foto_url: optimizedFoto,
       activo: activo !== undefined ? activo : true
     });
 
@@ -101,7 +103,7 @@ router.put('/:id', async (req, res) => {
     if (apellidos !== undefined) trabajador.apellidos = apellidos;
     if (telefono !== undefined) trabajador.telefono = telefono;
     if (foto_url !== undefined) {
-      trabajador.foto_url = foto_url;
+      trabajador.foto_url = foto_url ? await saveBase64Image(foto_url) : null;
     }
     if (activo !== undefined) trabajador.activo = activo;
 
