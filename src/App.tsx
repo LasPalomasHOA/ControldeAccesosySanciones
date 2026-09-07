@@ -813,27 +813,25 @@ function ToastContainer({ toasts, onClose }: { toasts: ToastNotification[]; onCl
         return (
           <div
             key={toast.id}
-            className={`toast-enter pointer-events-auto relative overflow-hidden rounded-2xl bg-white/95 backdrop-blur-md border p-4 shadow-2xl transition-all ${
-              isSuccess
-                ? "border-emerald-200 shadow-emerald-950/15"
-                : isError
+            className={`toast-enter pointer-events-auto relative overflow-hidden rounded-2xl bg-white/95 backdrop-blur-md border p-4 shadow-2xl transition-all ${isSuccess
+              ? "border-emerald-200 shadow-emerald-950/15"
+              : isError
                 ? "border-red-200 shadow-red-950/15"
                 : isWarning
-                ? "border-amber-200 shadow-amber-950/15"
-                : "border-sky-200 shadow-sky-950/15"
-            }`}
+                  ? "border-amber-200 shadow-amber-950/15"
+                  : "border-sky-200 shadow-sky-950/15"
+              }`}
           >
             <div className="flex items-start gap-3.5">
               <div
-                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                  isSuccess
-                    ? "bg-emerald-100 text-emerald-700"
-                    : isError
+                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isSuccess
+                  ? "bg-emerald-100 text-emerald-700"
+                  : isError
                     ? "bg-red-100 text-red-700"
                     : isWarning
-                    ? "bg-amber-100 text-amber-700"
-                    : "bg-sky-100 text-sky-700"
-                }`}
+                      ? "bg-amber-100 text-amber-700"
+                      : "bg-sky-100 text-sky-700"
+                  }`}
               >
                 {isSuccess && <IconCheckCircle className="w-5 h-5" />}
                 {isError && <IconAlertTriangle className="w-5 h-5" />}
@@ -843,15 +841,14 @@ function ToastContainer({ toasts, onClose }: { toasts: ToastNotification[]; onCl
 
               <div className="flex-1 min-w-0 pr-2">
                 <h4
-                  className={`text-xs font-bold uppercase tracking-wider ${
-                    isSuccess
-                      ? "text-emerald-800"
-                      : isError
+                  className={`text-xs font-bold uppercase tracking-wider ${isSuccess
+                    ? "text-emerald-800"
+                    : isError
                       ? "text-red-800"
                       : isWarning
-                      ? "text-amber-800"
-                      : "text-sky-800"
-                  }`}
+                        ? "text-amber-800"
+                        : "text-sky-800"
+                    }`}
                 >
                   {toast.title}
                 </h4>
@@ -873,15 +870,14 @@ function ToastContainer({ toasts, onClose }: { toasts: ToastNotification[]; onCl
             {/* Progress bar */}
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-100 overflow-hidden">
               <div
-                className={`toast-progress-bar h-full ${
-                  isSuccess
-                    ? "bg-emerald-500"
-                    : isError
+                className={`toast-progress-bar h-full ${isSuccess
+                  ? "bg-emerald-500"
+                  : isError
                     ? "bg-red-500"
                     : isWarning
-                    ? "bg-amber-500"
-                    : "bg-sky-500"
-                }`}
+                      ? "bg-amber-500"
+                      : "bg-sky-500"
+                  }`}
               />
             </div>
           </div>
@@ -902,10 +898,10 @@ export default function App() {
       type === "success"
         ? "Operación Exitosa"
         : type === "error"
-        ? "Error del Sistema"
-        : type === "warning"
-        ? "Atención Requerida"
-        : "Notificación";
+          ? "Error del Sistema"
+          : type === "warning"
+            ? "Atención Requerida"
+            : "Notificación";
     const newToast: ToastNotification = {
       id,
       title: title || defaultTitle,
@@ -1429,8 +1425,8 @@ export default function App() {
                 "Infracción Detectada en Tiempo Real"
               );
             } else if (
-              payload.type === "REPORTE_DICTAMINADO" || 
-              payload.type === "NUEVA_APELACION" || 
+              payload.type === "REPORTE_DICTAMINADO" ||
+              payload.type === "NUEVA_APELACION" ||
               payload.type === "SANCION_DICTAMINADA" ||
               payload.type === "NUEVO_ACCESO" ||
               payload.type === "SALIDA_REGISTRADA" ||
@@ -1509,10 +1505,10 @@ export default function App() {
 
       if (response.ok) {
         const data = await response.json();
-        const roleMapped: UserRole = 
+        const roleMapped: UserRole =
           data.rol === "admin" ? "admin" :
-          data.rol === "supervisor" ? "supervisor" :
-          data.rol === "proveedor" ? "contratista" : "caseta";
+            data.rol === "supervisor" ? "supervisor" :
+              data.rol === "proveedor" ? "contratista" : "caseta";
 
         const loggedUser: UserAccount = {
           id: String(data.id || data.id_usuario),
@@ -2869,9 +2865,8 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={isSubmittingLogin}
-                  className={`w-full py-3 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 active:scale-[0.98] shadow-md cursor-pointer flex items-center justify-center gap-2 ${
-                    isSubmittingLogin ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
+                  className={`w-full py-3 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 active:scale-[0.98] shadow-md cursor-pointer flex items-center justify-center gap-2 ${isSubmittingLogin ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
                   style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))", fontFamily: "var(--font-display)" }}
                 >
                   {isSubmittingLogin ? (
@@ -3175,9 +3170,8 @@ export default function App() {
                                   type="button"
                                   onClick={() => handleToggleActivoUsuario(sup)}
                                   disabled={Boolean(togglingUserIds[sup.id])}
-                                  className={`cursor-pointer group flex items-center gap-1.5 transition-all ${
-                                    togglingUserIds[sup.id] ? "opacity-50 pointer-events-none" : ""
-                                  }`}
+                                  className={`cursor-pointer group flex items-center gap-1.5 transition-all ${togglingUserIds[sup.id] ? "opacity-50 pointer-events-none" : ""
+                                    }`}
                                   title={sup.activo !== false ? "Clic para desactivar supervisor" : "Clic para activar supervisor"}
                                 >
                                   {sup.activo !== false ? (
@@ -3358,9 +3352,8 @@ export default function App() {
                               <button
                                 onClick={() => handleAprobarInfraccion(inf)}
                                 disabled={Boolean(resolvingInfraccionIds[inf.id])}
-                                className={`flex-1 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm ${
-                                  resolvingInfraccionIds[inf.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                                }`}
+                                className={`flex-1 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm ${resolvingInfraccionIds[inf.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                                  }`}
                               >
                                 {resolvingInfraccionIds[inf.id] ? (
                                   <>
@@ -3377,9 +3370,8 @@ export default function App() {
                               <button
                                 onClick={() => handleRechazarInfraccion(inf)}
                                 disabled={Boolean(resolvingInfraccionIds[inf.id])}
-                                className={`px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all border border-slate-300 cursor-pointer ${
-                                  resolvingInfraccionIds[inf.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                                }`}
+                                className={`px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all border border-slate-300 cursor-pointer ${resolvingInfraccionIds[inf.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                                  }`}
                               >
                                 Desestimar
                               </button>
@@ -3470,9 +3462,8 @@ export default function App() {
                             <button
                               onClick={() => handleAceptarApelacion(s.id, "Apelación procedente. Se levanta la suspensión vehicular y se deja sin efectos la medida.")}
                               disabled={Boolean(resolvingSancionIds[s.id])}
-                              className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm ${
-                                resolvingSancionIds[s.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                              }`}
+                              className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm ${resolvingSancionIds[s.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                                }`}
                             >
                               {resolvingSancionIds[s.id] ? (
                                 <>
@@ -3489,9 +3480,8 @@ export default function App() {
                             <button
                               onClick={() => handleRatificarSancion(s.id, "Apelación improcedente. Se ratifica la suspensión por no aportar elementos suficientes.")}
                               disabled={Boolean(resolvingSancionIds[s.id])}
-                              className={`px-5 py-2.5 rounded-xl text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 border border-red-300 transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                                resolvingSancionIds[s.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                              }`}
+                              className={`px-5 py-2.5 rounded-xl text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 border border-red-300 transition-all flex items-center justify-center gap-2 cursor-pointer ${resolvingSancionIds[s.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                                }`}
                             >
                               {resolvingSancionIds[s.id] ? (
                                 <>
@@ -3653,9 +3643,8 @@ export default function App() {
                                     type="button"
                                     onClick={() => handleToggleActivoUsuario(g)}
                                     disabled={Boolean(togglingUserIds[g.id])}
-                                    className={`cursor-pointer group flex items-center gap-1.5 transition-all ${
-                                      togglingUserIds[g.id] ? "opacity-50 pointer-events-none" : ""
-                                    }`}
+                                    className={`cursor-pointer group flex items-center gap-1.5 transition-all ${togglingUserIds[g.id] ? "opacity-50 pointer-events-none" : ""
+                                      }`}
                                     title={g.activo !== false ? "Clic para desactivar oficial" : "Clic para activar oficial"}
                                   >
                                     {g.activo !== false ? (
@@ -3801,9 +3790,8 @@ export default function App() {
                             setIsSubmittingReglamento(false);
                           }
                         }}
-                        className={`px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 cursor-pointer flex items-center gap-2 ${
-                          isSubmittingReglamento ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                        }`}
+                        className={`px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 cursor-pointer flex items-center gap-2 ${isSubmittingReglamento ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                          }`}
                         style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                       >
                         {isSubmittingReglamento ? (
@@ -3921,9 +3909,8 @@ export default function App() {
                                   <button
                                     onClick={() => handleToggleActivoTrabajador(t)}
                                     disabled={Boolean(togglingTrabajadorIds[t.id_trabajador])}
-                                    className={`cursor-pointer group flex items-center gap-1.5 ${
-                                      togglingTrabajadorIds[t.id_trabajador] ? "opacity-50 pointer-events-none" : ""
-                                    }`}
+                                    className={`cursor-pointer group flex items-center gap-1.5 ${togglingTrabajadorIds[t.id_trabajador] ? "opacity-50 pointer-events-none" : ""
+                                      }`}
                                     title="Clic para cambiar estatus"
                                   >
                                     {t.activo ? (
@@ -4014,9 +4001,8 @@ export default function App() {
                                   type="button"
                                   onClick={() => handleToggleEstatusVehiculo(v)}
                                   disabled={Boolean(togglingVehiculoIds[v.id])}
-                                  className={`cursor-pointer transition-all active:scale-95 group flex items-center ${
-                                    togglingVehiculoIds[v.id] ? "opacity-50 pointer-events-none" : ""
-                                  }`}
+                                  className={`cursor-pointer transition-all active:scale-95 group flex items-center ${togglingVehiculoIds[v.id] ? "opacity-50 pointer-events-none" : ""
+                                    }`}
                                   title={v.status === "Habilitado" ? "Clic para deshabilitar vehículo" : "Clic para habilitar vehículo"}
                                 >
                                   {v.status === "Habilitado" ? (
@@ -4134,9 +4120,8 @@ export default function App() {
                         <button
                           type="submit"
                           disabled={isSubmittingVehiculo}
-                          className={`px-7 py-3 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center gap-2 ${
-                            isSubmittingVehiculo ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                          }`}
+                          className={`px-7 py-3 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingVehiculo ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                            }`}
                           style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                         >
                           {isSubmittingVehiculo ? (
@@ -4339,9 +4324,8 @@ export default function App() {
                                   <button
                                     onClick={() => handleToggleActivoTrabajador(t)}
                                     disabled={Boolean(togglingTrabajadorIds[t.id_trabajador])}
-                                    className={`cursor-pointer group flex items-center gap-1.5 text-left ${
-                                      togglingTrabajadorIds[t.id_trabajador] ? "opacity-50 pointer-events-none" : ""
-                                    }`}
+                                    className={`cursor-pointer group flex items-center gap-1.5 text-left ${togglingTrabajadorIds[t.id_trabajador] ? "opacity-50 pointer-events-none" : ""
+                                      }`}
                                     title="Clic para alternar estatus (Activo / Inactivo)"
                                   >
                                     {t.activo ? (
@@ -4420,9 +4404,8 @@ export default function App() {
                               <button
                                 key={v.id}
                                 onClick={() => setSelectedCorbatinVehicleId(v.id)}
-                                className={`w-full text-left px-5 py-4 transition-all hover:bg-slate-50 cursor-pointer ${
-                                  activeVeh?.id === v.id ? "bg-[#E6F4F1] border-l-4 border-[#0D6E5F]" : ""
-                                }`}
+                                className={`w-full text-left px-5 py-4 transition-all hover:bg-slate-50 cursor-pointer ${activeVeh?.id === v.id ? "bg-[#E6F4F1] border-l-4 border-[#0D6E5F]" : ""
+                                  }`}
                               >
                                 <div className="font-semibold text-sm text-slate-800">{v.marca} {v.modelo}</div>
                                 <div className="text-xs text-slate-500 font-mono mt-0.5">{v.placas} · Corbatín #{v.corbatinNum || "101"}</div>
@@ -4538,43 +4521,40 @@ export default function App() {
                             empresaSanciones.map((s) => (
                               <div
                                 key={s.id}
-                                className={`rounded-2xl border bg-white shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md ${
-                                  s.status === "En Apelación"
-                                    ? "border-sky-300 ring-1 ring-sky-100"
-                                    : s.status === "Ratificada"
+                                className={`rounded-2xl border bg-white shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md ${s.status === "En Apelación"
+                                  ? "border-sky-300 ring-1 ring-sky-100"
+                                  : s.status === "Ratificada"
                                     ? "border-amber-300 ring-1 ring-amber-100"
                                     : s.status === "Aclarada"
-                                    ? "border-emerald-300 ring-1 ring-emerald-100"
-                                    : "border-slate-200"
-                                }`}
+                                      ? "border-emerald-300 ring-1 ring-emerald-100"
+                                      : "border-slate-200"
+                                  }`}
                               >
                                 {/* Cabecera de la Sanción */}
                                 <div
-                                  className={`px-5 py-3.5 border-b flex flex-wrap items-center justify-between gap-3 ${
-                                    s.status === "En Apelación"
-                                      ? "bg-sky-50/70"
-                                      : s.status === "Ratificada"
+                                  className={`px-5 py-3.5 border-b flex flex-wrap items-center justify-between gap-3 ${s.status === "En Apelación"
+                                    ? "bg-sky-50/70"
+                                    : s.status === "Ratificada"
                                       ? "bg-amber-50/70"
                                       : s.status === "Aclarada"
-                                      ? "bg-emerald-50/70"
-                                      : s.status === "Activa"
-                                      ? "bg-red-50/50"
-                                      : "bg-slate-50"
-                                  }`}
+                                        ? "bg-emerald-50/70"
+                                        : s.status === "Activa"
+                                          ? "bg-red-50/50"
+                                          : "bg-slate-50"
+                                    }`}
                                 >
                                   <div className="flex items-center gap-3">
                                     <div
-                                      className={`p-2 rounded-xl text-white shrink-0 ${
-                                        s.status === "En Apelación"
-                                          ? "bg-sky-600"
-                                          : s.status === "Ratificada"
+                                      className={`p-2 rounded-xl text-white shrink-0 ${s.status === "En Apelación"
+                                        ? "bg-sky-600"
+                                        : s.status === "Ratificada"
                                           ? "bg-amber-600"
                                           : s.status === "Aclarada"
-                                          ? "bg-emerald-600"
-                                          : s.status === "Activa"
-                                          ? "bg-red-600"
-                                          : "bg-slate-600"
-                                      }`}
+                                            ? "bg-emerald-600"
+                                            : s.status === "Activa"
+                                              ? "bg-red-600"
+                                              : "bg-slate-600"
+                                        }`}
                                     >
                                       <IconAlertTriangle className="w-4 h-4" />
                                     </div>
@@ -4630,13 +4610,12 @@ export default function App() {
                                   {/* Sección de Apelación y Dictamen */}
                                   {s.apelacion && (
                                     <div
-                                      className={`rounded-xl border p-4 space-y-3 ${
-                                        s.status === "Aclarada"
-                                          ? "bg-emerald-50/50 border-emerald-200"
-                                          : s.status === "Ratificada"
+                                      className={`rounded-xl border p-4 space-y-3 ${s.status === "Aclarada"
+                                        ? "bg-emerald-50/50 border-emerald-200"
+                                        : s.status === "Ratificada"
                                           ? "bg-amber-50/50 border-amber-200"
                                           : "bg-sky-50/60 border-sky-200"
-                                      }`}
+                                        }`}
                                     >
                                       <div
                                         className="flex flex-wrap items-center justify-between gap-2 border-b pb-2.5"
@@ -4654,19 +4633,18 @@ export default function App() {
                                             Firmado por: <strong className="text-slate-700">{s.apelacion.representante}</strong>
                                           </span>
                                           <span
-                                            className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
-                                              s.apelacion.estado === "Aprobada"
-                                                ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                                                : s.apelacion.estado === "Rechazada"
+                                            className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${s.apelacion.estado === "Aprobada"
+                                              ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                              : s.apelacion.estado === "Rechazada"
                                                 ? "bg-amber-100 text-amber-800 border border-amber-300"
                                                 : "bg-sky-100 text-sky-800 border border-sky-300"
-                                            }`}
+                                              }`}
                                           >
                                             {s.apelacion.estado === "Aprobada"
                                               ? "Apelación Procedente"
                                               : s.apelacion.estado === "Rechazada"
-                                              ? "Apelación Rechazada"
-                                              : "Pendiente de Dictamen"}
+                                                ? "Apelación Rechazada"
+                                                : "Pendiente de Dictamen"}
                                           </span>
                                         </div>
                                       </div>
@@ -4682,11 +4660,10 @@ export default function App() {
 
                                       {s.apelacion.dictamenSupervisor && (
                                         <div
-                                          className={`p-3.5 rounded-xl border space-y-1 ${
-                                            s.status === "Aclarada"
-                                              ? "bg-emerald-100/70 border-emerald-300 text-emerald-950"
-                                              : "bg-amber-100/70 border-amber-300 text-amber-950"
-                                          }`}
+                                          className={`p-3.5 rounded-xl border space-y-1 ${s.status === "Aclarada"
+                                            ? "bg-emerald-100/70 border-emerald-300 text-emerald-950"
+                                            : "bg-amber-100/70 border-amber-300 text-amber-950"
+                                            }`}
                                         >
                                           <div className="flex items-center gap-1.5 font-bold text-xs uppercase">
                                             <IconCheckCircle className="w-3.5 h-3.5" />
@@ -4763,7 +4740,7 @@ export default function App() {
                     <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: "var(--color-border)" }}>
                       <div>
                         <h2 className="font-bold text-sm uppercase tracking-wider text-slate-800">
-                          {casetaModoAcceso === "vehicular" ? "Registro de Entrada Vehicular" : "Registro de Entrada Peatonal (A Pie)"}
+                          {casetaModoAcceso === "vehicular" ? "Registro de Entrada Vehicular" : "Registro de Entrada Peatonal"}
                         </h2>
                         <p className="text-xs text-slate-500">
                           {casetaModoAcceso === "vehicular" ? "Control de acceso vehicular y verificación de corbatines" : "Ingreso autorizado a pie de técnicos y contratistas (ej. unidad con sanción)"}
@@ -4798,7 +4775,7 @@ export default function App() {
                           }`}
                       >
                         <IconWalk className="w-4 h-4" />
-                        <span>Acceso Peatonal (A Pie / Sanción)</span>
+                        <span>Acceso Peatonal (Sanción)</span>
                       </button>
                     </div>
 
@@ -4974,9 +4951,8 @@ export default function App() {
                             <button
                               type="submit"
                               disabled={isSubmittingEntrada}
-                              className={`w-full py-3 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 ${
-                                isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                              }`}
+                              className={`w-full py-3 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 ${isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                                }`}
                               style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                             >
                               {isSubmittingEntrada ? (
@@ -5136,9 +5112,8 @@ export default function App() {
                           <button
                             type="submit"
                             disabled={isSubmittingEntrada}
-                            className={`w-full py-3 rounded-xl text-sm font-bold text-white bg-sky-700 hover:bg-sky-800 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md ${
-                              isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                            }`}
+                            className={`w-full py-3 rounded-xl text-sm font-bold text-white bg-sky-700 hover:bg-sky-800 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md ${isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                              }`}
                           >
                             {isSubmittingEntrada ? (
                               <>
@@ -5329,9 +5304,8 @@ export default function App() {
                                     type="button"
                                     onClick={() => handleMarcarSalida(b.id)}
                                     disabled={Boolean(marcandoSalidaIds[b.id])}
-                                    className={`px-3 py-1 text-xs font-bold rounded-lg bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 cursor-pointer flex items-center gap-1.5 ${
-                                      marcandoSalidaIds[b.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                                    }`}
+                                    className={`px-3 py-1 text-xs font-bold rounded-lg bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 cursor-pointer flex items-center gap-1.5 ${marcandoSalidaIds[b.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                                      }`}
                                   >
                                     {marcandoSalidaIds[b.id] ? (
                                       <>
@@ -5445,9 +5419,8 @@ export default function App() {
                   <button
                     type="submit"
                     disabled={isSubmittingPassword}
-                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
-                      isSubmittingPassword ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                    }`}
+                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isSubmittingPassword ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
                   >
                     {isSubmittingPassword ? (
                       <>
@@ -5526,9 +5499,8 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={isSubmittingApelacion}
-                  className={`px-6 py-2 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
-                    isSubmittingApelacion ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
+                  className={`px-6 py-2 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isSubmittingApelacion ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
                 >
                   {isSubmittingApelacion ? (
                     <>
@@ -5575,9 +5547,8 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={isSubmittingSupervisor}
-                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${
-                    isSubmittingSupervisor ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
+                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${isSubmittingSupervisor ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
                 >
                   {isSubmittingSupervisor ? (
                     <>
@@ -5636,9 +5607,8 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={isSubmittingEmpresa}
-                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${
-                    isSubmittingEmpresa ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
+                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${isSubmittingEmpresa ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
                 >
                   {isSubmittingEmpresa ? (
                     <>
@@ -5782,9 +5752,8 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={isSubmittingGuardia}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
-                    isSubmittingGuardia ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isSubmittingGuardia ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
                 >
                   {isSubmittingGuardia ? (
                     <>
@@ -5940,9 +5909,8 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={isSubmittingTrabajador}
-                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${
-                    isSubmittingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
+                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
                   style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                 >
                   {isSubmittingTrabajador ? (
@@ -6102,9 +6070,8 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={isSubmittingTrabajadorEdit}
-                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-2 ${
-                    isSubmittingTrabajadorEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
+                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingTrabajadorEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
                 >
                   {isSubmittingTrabajadorEdit ? (
                     <>
@@ -6158,9 +6125,8 @@ export default function App() {
                 type="button"
                 onClick={handleConfirmarEliminarTrabajador}
                 disabled={isDeletingTrabajador}
-                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
-                  isDeletingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                }`}
+                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                  }`}
               >
                 {isDeletingTrabajador ? (
                   <>
@@ -6216,9 +6182,8 @@ export default function App() {
                 type="button"
                 onClick={handleConfirmarEliminarSupervisor}
                 disabled={isDeletingSupervisor}
-                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
-                  isDeletingSupervisor ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                }`}
+                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingSupervisor ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                  }`}
               >
                 {isDeletingSupervisor ? (
                   <>
