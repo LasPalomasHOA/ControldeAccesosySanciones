@@ -3,10 +3,11 @@ const router = express.Router();
 const db = require('../models/index.cjs');
 const events = require('../events.cjs');
 
-// GET /api/sanciones - Listar todas las sanciones con soporte para apelaciones
+// GET /api/sanciones - Listar todas las sanciones con soporte para apelaciones (limitado a 100)
 router.get('/', async (req, res) => {
   try {
     const sanciones = await db.Sancion.findAll({
+      limit: 100,
       include: [
         { model: db.Vehiculo, as: 'vehiculo' },
         { model: db.Empresa, as: 'empresa' },

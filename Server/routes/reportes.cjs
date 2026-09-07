@@ -34,10 +34,11 @@ router.get('/stream', (req, res) => {
   });
 });
 
-// GET /api/reportes - Listar reportes de infracciones
+// GET /api/reportes - Listar reportes de infracciones (limitado a 100 más recientes)
 router.get('/', async (req, res) => {
   try {
     const reportes = await db.ReporteInfraccion.findAll({
+      limit: 100,
       include: [
         {
           model: db.Vehiculo,

@@ -3,6 +3,7 @@ import QRCode from "qrcode";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { api } from "./services/api";
+import { compressImageClient } from "./utils/imageCompressor";
 
 // ─── SVG Icons (Clean, Modern, Vector) ────────────────────────────────────────
 function IconSpinner({ className = "w-4 h-4" }: { className?: string }) {
@@ -1080,8 +1081,19 @@ export default function App() {
     }
   }, [casetaPeatonalTrabajadorId]);
 
-  // Cargar datos en vivo desde PostgreSQL
-  const loadDatabaseData = async () => {
+  const isFetchingDbRef = useRef(false);
+  const lastFetchTimestampRef = useRef<number>(0);
+
+  // Cargar datos en vivo desde PostgreSQL con protección de concurrencia y caché temporal
+  const loadDatabaseData = async (force: boolean = false) => {
+    if (isFetchingDbRef.current) return;
+    const now = Date.now();
+    // Si no es una llamada forzada (por mutación o evento en tiempo real), omitir si ya se consultó recientemente (<10s)
+    if (!force && now - lastFetchTimestampRef.current < 10000) {
+      return;
+    }
+
+    isFetchingDbRef.current = true;
     try {
       const [resUsers, resEmpresas, resVehicles, resTrabajadores, resSanciones, resBitacora, resReportes] = await Promise.allSettled([
         api.getUsuarios(),
@@ -1092,6 +1104,8 @@ export default function App() {
         api.getBitacora(),
         api.getReportes(),
       ]);
+
+      lastFetchTimestampRef.current = Date.now();
 
       if (resUsers.status === "fulfilled" && Array.isArray(resUsers.value)) {
         const mappedUsers: UserAccount[] = resUsers.value.map((u: any) => ({
@@ -1242,12 +1256,14 @@ export default function App() {
       }
     } catch (err) {
       console.warn("Error cargando base de datos:", err);
+    } finally {
+      isFetchingDbRef.current = false;
     }
   };
 
   useEffect(() => {
     // 1. Carga inicial de base de datos
-    loadDatabaseData();
+    loadDatabaseData(true);
 
     // 2. Conexión a canal Server-Sent Events (SSE) para sincronización en tiempo real
     let eventSource: EventSource | null = null;
@@ -1257,33 +1273,45 @@ export default function App() {
         try {
           const payload = JSON.parse(event.data);
           if (payload.type === "NUEVO_REPORTE") {
-            loadDatabaseData();
+            loadDatabaseData(true);
             playNotificationChime();
             showToast(
               `🚨 Nueva infracción registrada en campo — Folio: FOL-${payload.data?.id_reporte || ""}`,
               "warning",
               "Infracción Detectada en Tiempo Real"
             );
-          } else if (payload.type === "REPORTE_DICTAMINADO" || payload.type === "NUEVA_APELACION" || payload.type === "SANCION_DICTAMINADA") {
-            loadDatabaseData();
+          } else if (
+            payload.type === "REPORTE_DICTAMINADO" || 
+            payload.type === "NUEVA_APELACION" || 
+            payload.type === "SANCION_DICTAMINADA" ||
+            payload.type === "NUEVO_ACCESO" ||
+            payload.type === "SALIDA_REGISTRADA" ||
+            payload.type === "VEHICULO_ACTUALIZADO"
+          ) {
+            loadDatabaseData(true);
           }
         } catch (e) {
           // Ignorar pings de keepalive
         }
       };
     } catch (sseErr) {
-      console.warn("Aviso: SSE no activo, utilizando sondeo continuo:", sseErr);
+      console.warn("Aviso: SSE no activo:", sseErr);
     }
 
-    // 3. Sondeo continuo en segundo plano (cada 3.5s) para reflejar cambios de inmediato
-    const livePollingInterval = setInterval(() => {
-      loadDatabaseData();
-    }, 3500);
+    // 3. Sincronización de respaldo a baja frecuencia (cada 90s) únicamente si la pestaña está visible
+    const backgroundSyncInterval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        loadDatabaseData(false);
+      }
+    }, 90000);
 
-    // 4. Sincronización inmediata cuando el supervisor cambia o regresa a la pestaña
+    // 4. Sincronización inteligente cuando el usuario regresa a la pestaña (si pasaron >30s)
     const handleFocusOrVisibility = () => {
       if (document.visibilityState === "visible") {
-        loadDatabaseData();
+        const now = Date.now();
+        if (now - lastFetchTimestampRef.current > 30000) {
+          loadDatabaseData(false);
+        }
       }
     };
 
@@ -1294,7 +1322,7 @@ export default function App() {
       if (eventSource) {
         eventSource.close();
       }
-      clearInterval(livePollingInterval);
+      clearInterval(backgroundSyncInterval);
       window.removeEventListener("focus", handleFocusOrVisibility);
       document.removeEventListener("visibilitychange", handleFocusOrVisibility);
     };
@@ -2155,130 +2183,58 @@ export default function App() {
     }
   };
 
-  // Image Upload Handler for New Vehicle
-  const handleFotoVehiculoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Image Upload Handler for New Vehicle (con compresión client-side para Base64 ligero)
+  const handleFotoVehiculoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setNuevoVehiculoFotoError("");
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setNuevoVehiculoFotoError("La imagen no debe exceder 5 MB.");
-        return;
+      try {
+        const compressed = await compressImageClient(file, 640, 0.75);
+        setNuevoVehiculoFoto(compressed);
+        setNuevoVehiculoFotoError("");
+      } catch (err) {
+        setNuevoVehiculoFotoError("Error al procesar la fotografía del vehículo.");
       }
-      const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
-        if (uploadEvent.target?.result) {
-          setNuevoVehiculoFoto(uploadEvent.target.result as string);
-        }
-      };
-      reader.readAsDataURL(file);
     }
   };
 
-  // Image Upload Handler for New Guardia (con compresión client-side para Vercel y base de datos)
-  const handleFotoGuardiaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Image Upload Handler for New Guardia (con compresión client-side para Base64 ligero)
+  const handleFotoGuardiaChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setNuevoGuardiaFotoError("");
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 8 * 1024 * 1024) {
-        setNuevoGuardiaFotoError("La fotografía del oficial no debe exceder 8 MB.");
-        return;
+      try {
+        const compressed = await compressImageClient(file, 640, 0.75);
+        setNuevoGuardiaFoto(compressed);
+        setNuevoGuardiaFotoError("");
+      } catch (err) {
+        setNuevoGuardiaFotoError("Error al procesar la fotografía del oficial.");
       }
-      const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
-        const rawData = uploadEvent.target?.result as string;
-        if (!rawData) return;
-
-        // Comprimir en canvas para optimizar tamaño en Base64 (máx 640px, JPEG 0.85)
-        const img = new Image();
-        img.onload = () => {
-          const maxDim = 640;
-          let { width, height } = img;
-          if (width > maxDim || height > maxDim) {
-            if (width > height) {
-              height = Math.round((height * maxDim) / width);
-              width = maxDim;
-            } else {
-              width = Math.round((width * maxDim) / height);
-              height = maxDim;
-            }
-          }
-          const canvas = document.createElement("canvas");
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          if (ctx) {
-            ctx.drawImage(img, 0, 0, width, height);
-            const compressed = canvas.toDataURL("image/jpeg", 0.85);
-            setNuevoGuardiaFoto(compressed);
-          } else {
-            setNuevoGuardiaFoto(rawData);
-          }
-          setNuevoGuardiaFotoError("");
-        };
-        img.onerror = () => {
-          setNuevoGuardiaFoto(rawData);
-          setNuevoGuardiaFotoError("");
-        };
-        img.src = rawData;
-      };
-      reader.readAsDataURL(file);
     }
   };
 
-  // Handler para actualizar la foto de un oficial de caseta directamente a PostgreSQL
+  // Handler para actualizar la foto de un oficial de caseta directamente a PostgreSQL (comprimida)
   const handleUpdateGuardiaFoto = async (guardiaId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 8 * 1024 * 1024) {
-      showToast("La fotografía del oficial no debe exceder 8 MB.", "error", "Tamaño Excedido");
-      return;
+    try {
+      const compressed = await compressImageClient(file, 640, 0.75);
+      const res = await fetch(`/api/usuarios/${guardiaId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ foto_url: compressed })
+      });
+
+      if (!res.ok) throw new Error("Error al guardar la fotografía en el servidor");
+
+      setUsers(prev => prev.map(u => u.id === guardiaId ? { ...u, foto_url: compressed } : u));
+      setSelectedFotoGuardiaPreview(prev => prev && prev.id === guardiaId ? { ...prev, foto_url: compressed } : prev);
+      showToast("Fotografía del oficial guardada exitosamente en la base de datos.", "success", "Fotografía Guardada");
+    } catch (err: any) {
+      console.error("Error al actualizar fotografía:", err);
+      showToast("Error al guardar la fotografía del oficial.", "error", "Error de Guardado");
     }
-
-    const reader = new FileReader();
-    reader.onload = (uploadEvent) => {
-      const rawData = uploadEvent.target?.result as string;
-      if (!rawData) return;
-
-      const img = new Image();
-      img.onload = async () => {
-        const maxDim = 640;
-        let { width, height } = img;
-        if (width > maxDim || height > maxDim) {
-          if (width > height) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          } else {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
-          }
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        const compressed = ctx ? (ctx.drawImage(img, 0, 0, width, height), canvas.toDataURL("image/jpeg", 0.85)) : rawData;
-
-        try {
-          const res = await fetch(`/api/usuarios/${guardiaId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ foto_url: compressed })
-          });
-
-          if (!res.ok) throw new Error("Error al guardar la fotografía en el servidor");
-
-          setUsers(prev => prev.map(u => u.id === guardiaId ? { ...u, foto_url: compressed } : u));
-          setSelectedFotoGuardiaPreview(prev => prev && prev.id === guardiaId ? { ...prev, foto_url: compressed } : prev);
-          showToast("Fotografía del oficial guardada exitosamente en la base de datos.", "success", "Fotografía Guardada");
-        } catch (err: any) {
-          console.error("Error al actualizar fotografía:", err);
-          showToast("Error al guardar la fotografía del oficial.", "error", "Error de Guardado");
-        }
-      };
-      img.src = rawData;
-    };
-    reader.readAsDataURL(file);
   };
 
   // ─── Handlers para Creación de Vehículos, Supervisores, Empresas, Guardias ───
@@ -2686,21 +2642,17 @@ export default function App() {
     }
   };
 
-  const handleFotoTrabajadorUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFotoTrabajadorUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setTrabajadorFormError("");
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setTrabajadorFormError("La fotografía no debe superar los 5 MB.");
-        return;
+      try {
+        const compressed = await compressImageClient(file, 640, 0.75);
+        setTrabajadorFotoUrl(compressed);
+        setTrabajadorFormError("");
+      } catch (err) {
+        setTrabajadorFormError("Error al procesar la fotografía del colaborador.");
       }
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        if (ev.target?.result) {
-          setTrabajadorFotoUrl(ev.target.result as string);
-        }
-      };
-      reader.readAsDataURL(file);
     }
   };
 

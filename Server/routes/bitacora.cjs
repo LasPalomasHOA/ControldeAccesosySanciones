@@ -1,11 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../models/index.cjs');
+const events = require('../events.cjs');
 
-// GET /api/bitacora - Listar accesos de caseta
+// GET /api/bitacora - Listar accesos de caseta (limitado a los 100 más recientes para ahorrar Egress)
 router.get('/', async (req, res) => {
   try {
     const accesos = await db.BitacoraAcceso.findAll({
+      limit: 100,
       include: [
         { model: db.Caseta, as: 'caseta' },
         { 
@@ -100,6 +102,14 @@ router.post('/', async (req, res) => {
       observaciones: observaciones || null
     });
 
+    try {
+      events.broadcastEvent('NUEVO_ACCESO', {
+        id_acceso: nuevoAcceso.id_acceso,
+        id_vehiculo: nuevoAcceso.id_vehiculo,
+        tipo: esSalida ? 'salida' : 'entrada'
+      });
+    } catch (e) {}
+
     res.status(201).json(nuevoAcceso);
   } catch (error) {
     console.error('Error al registrar acceso en bitácora:', error);
@@ -116,6 +126,12 @@ router.put('/:id/salida', async (req, res) => {
     acceso.hora_salida = new Date();
     acceso.estatus_acceso = 'SALIDA';
     await acceso.save();
+
+    try {
+      events.broadcastEvent('SALIDA_REGISTRADA', {
+        id_acceso: acceso.id_acceso
+      });
+    } catch (e) {}
 
     res.json(acceso);
   } catch (error) {
