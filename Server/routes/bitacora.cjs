@@ -40,6 +40,7 @@ router.get('/', async (req, res) => {
       return {
         ...plain,
         id: String(plain.id_acceso),
+        num_pasajeros: plain.num_pasajeros !== undefined && plain.num_pasajeros !== null ? Number(plain.num_pasajeros) : 0,
         placa: plain.vehiculo?.placas || 'PEATONAL',
         empresaNombre: empNombre,
         conductor: conductorNombre,
@@ -75,24 +76,70 @@ router.post('/', async (req, res) => {
       motivo_rechazo, 
       ubicacion_trabajo, 
       observaciones,
+      num_pasajeros,
       tipo // 'entrada' | 'salida'
     } = req.body;
 
     const ahora = new Date();
     const esSalida = tipo === 'salida' || estatus_acceso === 'SALIDA';
 
-    let finalCorbatinId = id_corbatin || null;
-    if (!finalCorbatinId && id_vehiculo) {
-      const corb = await db.Corbatin.findOne({ where: { id_vehiculo, estatus: 'ACTIVO' } });
+    // 1. Validar y resolver id_caseta
+    let finalCasetaId = 1;
+    if (id_caseta && !isNaN(Number(id_caseta))) {
+      const cExists = await db.Caseta.findByPk(Number(id_caseta));
+      if (cExists) {
+        finalCasetaId = Number(id_caseta);
+      } else {
+        const firstCaseta = await db.Caseta.findOne();
+        if (firstCaseta) finalCasetaId = firstCaseta.id_caseta;
+      }
+    } else {
+      const firstCaseta = await db.Caseta.findOne();
+      if (firstCaseta) finalCasetaId = firstCaseta.id_caseta;
+    }
+
+    // 2. Validar y resolver id_usuario (para integridad referencial)
+    let finalUsuarioId = null;
+    if (id_usuario && !isNaN(Number(id_usuario))) {
+      const uExists = await db.Usuario.findByPk(Number(id_usuario));
+      if (uExists) finalUsuarioId = Number(id_usuario);
+    }
+    if (!finalUsuarioId) {
+      const firstUser = (await db.Usuario.findOne({ where: { activo: true } })) || (await db.Usuario.findOne());
+      finalUsuarioId = firstUser ? firstUser.id_usuario : 1;
+    }
+
+    // 3. Validar y resolver id_vehiculo
+    let finalVehiculoId = null;
+    if (id_vehiculo && !isNaN(Number(id_vehiculo))) {
+      const vExists = await db.Vehiculo.findByPk(Number(id_vehiculo));
+      if (vExists) finalVehiculoId = Number(id_vehiculo);
+    }
+
+    // 4. Validar y resolver id_conductor (trabajador)
+    let finalConductorId = null;
+    if (id_conductor && !isNaN(Number(id_conductor))) {
+      const tExists = await db.Trabajador.findByPk(Number(id_conductor));
+      if (tExists) finalConductorId = Number(id_conductor);
+    }
+
+    // 5. Validar y resolver id_corbatin
+    let finalCorbatinId = null;
+    if (id_corbatin && !isNaN(Number(id_corbatin))) {
+      const corbExists = await db.Corbatin.findByPk(Number(id_corbatin));
+      if (corbExists) finalCorbatinId = Number(id_corbatin);
+    } else if (finalVehiculoId) {
+      const corb = await db.Corbatin.findOne({ where: { id_vehiculo: finalVehiculoId, estatus: 'ACTIVO' } });
       if (corb) finalCorbatinId = corb.id_corbatin;
     }
 
     const nuevoAcceso = await db.BitacoraAcceso.create({
-      id_caseta: id_caseta || 1,
-      id_vehiculo: id_vehiculo || null,
+      id_caseta: finalCasetaId,
+      id_vehiculo: finalVehiculoId,
       id_corbatin: finalCorbatinId,
-      id_conductor: id_conductor || null,
-      id_usuario: id_usuario || 4,
+      id_conductor: finalConductorId,
+      id_usuario: finalUsuarioId,
+      num_pasajeros: num_pasajeros !== undefined && num_pasajeros !== null ? Number(num_pasajeros) : 0,
       fecha: ahora.toISOString().split('T')[0],
       hora_entrada: esSalida ? null : ahora,
       hora_salida: esSalida ? ahora : null,

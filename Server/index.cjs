@@ -69,13 +69,24 @@ async function ensureDbInit() {
       await db.sequelize.authenticate();
       console.log('✅ Conexión a base de datos Supabase / PostgreSQL verificada.');
 
-      // Asegurar columna foto_url en usuarios y migrar rutas viejas a Base64
+      // Asegurar estructura de tablas para accesos peatonales y fotografías
       try {
         const schemaName = process.env.DB_SCHEMA || 'control_acceso';
         await db.sequelize.query(`
           ALTER TABLE IF EXISTS "${schemaName}"."usuarios" 
           ADD COLUMN IF NOT EXISTS "foto_url" TEXT;
         `);
+
+        // Permitir que id_vehiculo e id_corbatin sean NULL para accesos peatonales
+        await db.sequelize.query(`
+          ALTER TABLE IF EXISTS "${schemaName}"."bitacora_accesos" 
+          ALTER COLUMN "id_vehiculo" DROP NOT NULL;
+        `).catch(() => {});
+
+        await db.sequelize.query(`
+          ALTER TABLE IF EXISTS "${schemaName}"."bitacora_accesos" 
+          ALTER COLUMN "id_corbatin" DROP NOT NULL;
+        `).catch(() => {});
 
         // Migrar automáticamente registros que contengan rutas '/uploads/' o 'guardia_' a Base64 en PostgreSQL
         const usuariosConRuta = await db.Usuario.findAll({

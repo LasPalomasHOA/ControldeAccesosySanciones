@@ -376,6 +376,7 @@ interface RegistroCaseta {
   estado: "Dentro" | "Salida Registrada";
   tipoAcceso?: "Vehicular" | "Peatonal";
   observaciones?: string;
+  num_pasajeros?: number;
 }
 
 interface InfraccionReporte {
@@ -506,11 +507,13 @@ function StatusBadge({ status }: { status: string }) {
     Rechazada: "bg-slate-100 text-slate-600 border-slate-200",
     Dentro: "bg-emerald-50 text-emerald-700 border-emerald-200",
     "Salida Registrada": "bg-slate-100 text-slate-600 border-slate-200",
+    Salida: "bg-slate-100 text-slate-600 border-slate-200",
   };
+  const label = status === "Salida Registrada" ? "Salida" : status;
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${map[status] ?? "bg-slate-100 text-slate-600 border-slate-200"}`}
+    <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10.5px] font-semibold border whitespace-nowrap ${map[status] ?? "bg-slate-100 text-slate-600 border-slate-200"}`}
       style={{ fontFamily: "var(--font-mono)" }}>
-      {status}
+      {label}
     </span>
   );
 }
@@ -813,27 +816,25 @@ function ToastContainer({ toasts, onClose }: { toasts: ToastNotification[]; onCl
         return (
           <div
             key={toast.id}
-            className={`toast-enter pointer-events-auto relative overflow-hidden rounded-2xl bg-white/95 backdrop-blur-md border p-4 shadow-2xl transition-all ${
-              isSuccess
-                ? "border-emerald-200 shadow-emerald-950/15"
-                : isError
+            className={`toast-enter pointer-events-auto relative overflow-hidden rounded-2xl bg-white/95 backdrop-blur-md border p-4 shadow-2xl transition-all ${isSuccess
+              ? "border-emerald-200 shadow-emerald-950/15"
+              : isError
                 ? "border-red-200 shadow-red-950/15"
                 : isWarning
-                ? "border-amber-200 shadow-amber-950/15"
-                : "border-sky-200 shadow-sky-950/15"
-            }`}
+                  ? "border-amber-200 shadow-amber-950/15"
+                  : "border-sky-200 shadow-sky-950/15"
+              }`}
           >
             <div className="flex items-start gap-3.5">
               <div
-                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                  isSuccess
-                    ? "bg-emerald-100 text-emerald-700"
-                    : isError
+                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isSuccess
+                  ? "bg-emerald-100 text-emerald-700"
+                  : isError
                     ? "bg-red-100 text-red-700"
                     : isWarning
-                    ? "bg-amber-100 text-amber-700"
-                    : "bg-sky-100 text-sky-700"
-                }`}
+                      ? "bg-amber-100 text-amber-700"
+                      : "bg-sky-100 text-sky-700"
+                  }`}
               >
                 {isSuccess && <IconCheckCircle className="w-5 h-5" />}
                 {isError && <IconAlertTriangle className="w-5 h-5" />}
@@ -843,15 +844,14 @@ function ToastContainer({ toasts, onClose }: { toasts: ToastNotification[]; onCl
 
               <div className="flex-1 min-w-0 pr-2">
                 <h4
-                  className={`text-xs font-bold uppercase tracking-wider ${
-                    isSuccess
-                      ? "text-emerald-800"
-                      : isError
+                  className={`text-xs font-bold uppercase tracking-wider ${isSuccess
+                    ? "text-emerald-800"
+                    : isError
                       ? "text-red-800"
                       : isWarning
-                      ? "text-amber-800"
-                      : "text-sky-800"
-                  }`}
+                        ? "text-amber-800"
+                        : "text-sky-800"
+                    }`}
                 >
                   {toast.title}
                 </h4>
@@ -873,15 +873,14 @@ function ToastContainer({ toasts, onClose }: { toasts: ToastNotification[]; onCl
             {/* Progress bar */}
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-100 overflow-hidden">
               <div
-                className={`toast-progress-bar h-full ${
-                  isSuccess
-                    ? "bg-emerald-500"
-                    : isError
+                className={`toast-progress-bar h-full ${isSuccess
+                  ? "bg-emerald-500"
+                  : isError
                     ? "bg-red-500"
                     : isWarning
-                    ? "bg-amber-500"
-                    : "bg-sky-500"
-                }`}
+                      ? "bg-amber-500"
+                      : "bg-sky-500"
+                  }`}
               />
             </div>
           </div>
@@ -902,10 +901,10 @@ export default function App() {
       type === "success"
         ? "Operación Exitosa"
         : type === "error"
-        ? "Error del Sistema"
-        : type === "warning"
-        ? "Atención Requerida"
-        : "Notificación";
+          ? "Error del Sistema"
+          : type === "warning"
+            ? "Atención Requerida"
+            : "Notificación";
     const newToast: ToastNotification = {
       id,
       title: title || defaultTitle,
@@ -1047,6 +1046,7 @@ export default function App() {
   const [casetaCorbatin, setCasetaCorbatin] = useState("");
   const [casetaHoraEntrada, setCasetaHoraEntrada] = useState("");
   const [casetaHoraSalida, setCasetaHoraSalida] = useState("");
+  const [casetaNumPasajeros, setCasetaNumPasajeros] = useState<number | string>("");
   const [casetaTrabajos, setCasetaTrabajos] = useState("");
   const [casetaOverrideActive, setCasetaOverrideActive] = useState(false);
   const [casetaSuccessMsg, setCasetaSuccessMsg] = useState(false);
@@ -1268,7 +1268,8 @@ export default function App() {
           guardiaNombre: b.guardiaNombre || "Oficial de Turno",
           estado: b.hora_salida ? "Salida Registrada" : "Dentro",
           tipoAcceso: (b.tipo || (b.id_vehiculo ? "Vehicular" : "Peatonal")) as "Vehicular" | "Peatonal",
-          observaciones: b.observaciones || undefined
+          observaciones: b.observaciones || undefined,
+          num_pasajeros: b.num_pasajeros !== undefined && b.num_pasajeros !== null ? Number(b.num_pasajeros) : 0
         }));
         setBitacora(mappedBit);
       }
@@ -1321,7 +1322,8 @@ export default function App() {
           guardiaNombre: b.guardiaNombre || "Oficial de Turno",
           estado: b.hora_salida ? "Salida Registrada" : "Dentro",
           tipoAcceso: (b.tipo || (b.id_vehiculo ? "Vehicular" : "Peatonal")) as "Vehicular" | "Peatonal",
-          observaciones: b.observaciones || undefined
+          observaciones: b.observaciones || undefined,
+          num_pasajeros: b.num_pasajeros !== undefined && b.num_pasajeros !== null ? Number(b.num_pasajeros) : 0
         }));
         setBitacora(mappedBit);
       }
@@ -1429,8 +1431,8 @@ export default function App() {
                 "Infracción Detectada en Tiempo Real"
               );
             } else if (
-              payload.type === "REPORTE_DICTAMINADO" || 
-              payload.type === "NUEVA_APELACION" || 
+              payload.type === "REPORTE_DICTAMINADO" ||
+              payload.type === "NUEVA_APELACION" ||
               payload.type === "SANCION_DICTAMINADA" ||
               payload.type === "NUEVO_ACCESO" ||
               payload.type === "SALIDA_REGISTRADA" ||
@@ -1509,10 +1511,10 @@ export default function App() {
 
       if (response.ok) {
         const data = await response.json();
-        const roleMapped: UserRole = 
+        const roleMapped: UserRole =
           data.rol === "admin" ? "admin" :
-          data.rol === "supervisor" ? "supervisor" :
-          data.rol === "proveedor" ? "contratista" : "caseta";
+            data.rol === "supervisor" ? "supervisor" :
+              data.rol === "proveedor" ? "contratista" : "caseta";
 
         const loggedUser: UserAccount = {
           id: String(data.id || data.id_usuario),
@@ -1894,6 +1896,7 @@ export default function App() {
       "Vehículo / Placas / Identificación",
       "Color Unidad",
       "Conductor / Colaborador",
+      "Pasajeros (sin chofer)",
       "Teléfono Celular",
       "Corbatín / Gafete",
       "Hora Entrada",
@@ -1911,6 +1914,7 @@ export default function App() {
       b.placas,
       b.color || "N/A",
       b.conductor,
+      b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? "0" : String(b.num_pasajeros ?? 0),
       b.telefono || "N/A",
       b.corbatinNum ? `#${b.corbatinNum}` : "N/A",
       b.horaEntrada,
@@ -2006,6 +2010,7 @@ export default function App() {
           id_corbatin: null,
           id_conductor: currentTrabajadorPeatonal ? currentTrabajadorPeatonal.id_trabajador : null,
           id_usuario: Number(currentUser?.id) || 4,
+          num_pasajeros: 0,
           ubicacion_trabajo: casetaTrabajos || "Trabajos y labores en instalaciones (Ingreso a pie)",
           estatus_acceso: "AUTORIZADO",
           observaciones: `Peatonal [${nom} - Tel: ${tel}]: ${casetaPeatonalObservaciones || "Ingreso peatonal registrado en caseta."}`,
@@ -2014,6 +2019,7 @@ export default function App() {
 
         await reloadBitacora();
         setCasetaTrabajos("");
+        setCasetaNumPasajeros("");
         setCasetaPeatonalObservaciones("");
         setCasetaSuccessMsg(true);
         setTimeout(() => setCasetaSuccessMsg(false), 4000);
@@ -2033,6 +2039,7 @@ export default function App() {
         id_corbatin: null,
         id_conductor: null,
         id_usuario: Number(currentUser?.id) || 4,
+        num_pasajeros: Math.max(0, Number(casetaNumPasajeros) || 0),
         ubicacion_trabajo: casetaTrabajos || "Mantenimiento general",
         estatus_acceso: casetaOverrideActive ? "AUTORIZADO_OVERRIDE" : "AUTORIZADO",
         observaciones: casetaOverrideActive ? "Acceso vehicular autorizado con anulación de emergencia por Supervisor HOA" : "Ingreso regular vehicular",
@@ -2041,12 +2048,13 @@ export default function App() {
 
       await reloadBitacora();
       setCasetaTrabajos("");
+      setCasetaNumPasajeros("");
       setCasetaOverrideActive(false);
       setCasetaSuccessMsg(true);
       setTimeout(() => setCasetaSuccessMsg(false), 4000);
       showToast(`Entrada autorizada para el vehículo ${currentCasetaVehicle.placas}.`, "success");
     } catch (err: any) {
-      showToast("Error al registrar entrada vehicular: " + (err.message || err), "error");
+      showToast("Error al registrar entrada: " + (err.message || err), "error");
     } finally {
       isSubmittingEntradaRef.current = false;
       setIsSubmittingEntrada(false);
@@ -2869,9 +2877,8 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={isSubmittingLogin}
-                  className={`w-full py-3 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 active:scale-[0.98] shadow-md cursor-pointer flex items-center justify-center gap-2 ${
-                    isSubmittingLogin ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
+                  className={`w-full py-3 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 active:scale-[0.98] shadow-md cursor-pointer flex items-center justify-center gap-2 ${isSubmittingLogin ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
                   style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))", fontFamily: "var(--font-display)" }}
                 >
                   {isSubmittingLogin ? (
@@ -3175,9 +3182,8 @@ export default function App() {
                                   type="button"
                                   onClick={() => handleToggleActivoUsuario(sup)}
                                   disabled={Boolean(togglingUserIds[sup.id])}
-                                  className={`cursor-pointer group flex items-center gap-1.5 transition-all ${
-                                    togglingUserIds[sup.id] ? "opacity-50 pointer-events-none" : ""
-                                  }`}
+                                  className={`cursor-pointer group flex items-center gap-1.5 transition-all ${togglingUserIds[sup.id] ? "opacity-50 pointer-events-none" : ""
+                                    }`}
                                   title={sup.activo !== false ? "Clic para desactivar supervisor" : "Clic para activar supervisor"}
                                 >
                                   {sup.activo !== false ? (
@@ -3358,9 +3364,8 @@ export default function App() {
                               <button
                                 onClick={() => handleAprobarInfraccion(inf)}
                                 disabled={Boolean(resolvingInfraccionIds[inf.id])}
-                                className={`flex-1 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm ${
-                                  resolvingInfraccionIds[inf.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                                }`}
+                                className={`flex-1 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm ${resolvingInfraccionIds[inf.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                                  }`}
                               >
                                 {resolvingInfraccionIds[inf.id] ? (
                                   <>
@@ -3377,9 +3382,8 @@ export default function App() {
                               <button
                                 onClick={() => handleRechazarInfraccion(inf)}
                                 disabled={Boolean(resolvingInfraccionIds[inf.id])}
-                                className={`px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all border border-slate-300 cursor-pointer ${
-                                  resolvingInfraccionIds[inf.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                                }`}
+                                className={`px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all border border-slate-300 cursor-pointer ${resolvingInfraccionIds[inf.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                                  }`}
                               >
                                 Desestimar
                               </button>
@@ -3470,9 +3474,8 @@ export default function App() {
                             <button
                               onClick={() => handleAceptarApelacion(s.id, "Apelación procedente. Se levanta la suspensión vehicular y se deja sin efectos la medida.")}
                               disabled={Boolean(resolvingSancionIds[s.id])}
-                              className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm ${
-                                resolvingSancionIds[s.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                              }`}
+                              className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm ${resolvingSancionIds[s.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                                }`}
                             >
                               {resolvingSancionIds[s.id] ? (
                                 <>
@@ -3489,9 +3492,8 @@ export default function App() {
                             <button
                               onClick={() => handleRatificarSancion(s.id, "Apelación improcedente. Se ratifica la suspensión por no aportar elementos suficientes.")}
                               disabled={Boolean(resolvingSancionIds[s.id])}
-                              className={`px-5 py-2.5 rounded-xl text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 border border-red-300 transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                                resolvingSancionIds[s.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                              }`}
+                              className={`px-5 py-2.5 rounded-xl text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 border border-red-300 transition-all flex items-center justify-center gap-2 cursor-pointer ${resolvingSancionIds[s.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                                }`}
                             >
                               {resolvingSancionIds[s.id] ? (
                                 <>
@@ -3653,9 +3655,8 @@ export default function App() {
                                     type="button"
                                     onClick={() => handleToggleActivoUsuario(g)}
                                     disabled={Boolean(togglingUserIds[g.id])}
-                                    className={`cursor-pointer group flex items-center gap-1.5 transition-all ${
-                                      togglingUserIds[g.id] ? "opacity-50 pointer-events-none" : ""
-                                    }`}
+                                    className={`cursor-pointer group flex items-center gap-1.5 transition-all ${togglingUserIds[g.id] ? "opacity-50 pointer-events-none" : ""
+                                      }`}
                                     title={g.activo !== false ? "Clic para desactivar oficial" : "Clic para activar oficial"}
                                   >
                                     {g.activo !== false ? (
@@ -3801,9 +3802,8 @@ export default function App() {
                             setIsSubmittingReglamento(false);
                           }
                         }}
-                        className={`px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 cursor-pointer flex items-center gap-2 ${
-                          isSubmittingReglamento ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                        }`}
+                        className={`px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 cursor-pointer flex items-center gap-2 ${isSubmittingReglamento ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                          }`}
                         style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                       >
                         {isSubmittingReglamento ? (
@@ -3921,9 +3921,8 @@ export default function App() {
                                   <button
                                     onClick={() => handleToggleActivoTrabajador(t)}
                                     disabled={Boolean(togglingTrabajadorIds[t.id_trabajador])}
-                                    className={`cursor-pointer group flex items-center gap-1.5 ${
-                                      togglingTrabajadorIds[t.id_trabajador] ? "opacity-50 pointer-events-none" : ""
-                                    }`}
+                                    className={`cursor-pointer group flex items-center gap-1.5 ${togglingTrabajadorIds[t.id_trabajador] ? "opacity-50 pointer-events-none" : ""
+                                      }`}
                                     title="Clic para cambiar estatus"
                                   >
                                     {t.activo ? (
@@ -4014,9 +4013,8 @@ export default function App() {
                                   type="button"
                                   onClick={() => handleToggleEstatusVehiculo(v)}
                                   disabled={Boolean(togglingVehiculoIds[v.id])}
-                                  className={`cursor-pointer transition-all active:scale-95 group flex items-center ${
-                                    togglingVehiculoIds[v.id] ? "opacity-50 pointer-events-none" : ""
-                                  }`}
+                                  className={`cursor-pointer transition-all active:scale-95 group flex items-center ${togglingVehiculoIds[v.id] ? "opacity-50 pointer-events-none" : ""
+                                    }`}
                                   title={v.status === "Habilitado" ? "Clic para deshabilitar vehículo" : "Clic para habilitar vehículo"}
                                 >
                                   {v.status === "Habilitado" ? (
@@ -4134,9 +4132,8 @@ export default function App() {
                         <button
                           type="submit"
                           disabled={isSubmittingVehiculo}
-                          className={`px-7 py-3 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center gap-2 ${
-                            isSubmittingVehiculo ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                          }`}
+                          className={`px-7 py-3 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingVehiculo ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                            }`}
                           style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                         >
                           {isSubmittingVehiculo ? (
@@ -4339,9 +4336,8 @@ export default function App() {
                                   <button
                                     onClick={() => handleToggleActivoTrabajador(t)}
                                     disabled={Boolean(togglingTrabajadorIds[t.id_trabajador])}
-                                    className={`cursor-pointer group flex items-center gap-1.5 text-left ${
-                                      togglingTrabajadorIds[t.id_trabajador] ? "opacity-50 pointer-events-none" : ""
-                                    }`}
+                                    className={`cursor-pointer group flex items-center gap-1.5 text-left ${togglingTrabajadorIds[t.id_trabajador] ? "opacity-50 pointer-events-none" : ""
+                                      }`}
                                     title="Clic para alternar estatus (Activo / Inactivo)"
                                   >
                                     {t.activo ? (
@@ -4420,9 +4416,8 @@ export default function App() {
                               <button
                                 key={v.id}
                                 onClick={() => setSelectedCorbatinVehicleId(v.id)}
-                                className={`w-full text-left px-5 py-4 transition-all hover:bg-slate-50 cursor-pointer ${
-                                  activeVeh?.id === v.id ? "bg-[#E6F4F1] border-l-4 border-[#0D6E5F]" : ""
-                                }`}
+                                className={`w-full text-left px-5 py-4 transition-all hover:bg-slate-50 cursor-pointer ${activeVeh?.id === v.id ? "bg-[#E6F4F1] border-l-4 border-[#0D6E5F]" : ""
+                                  }`}
                               >
                                 <div className="font-semibold text-sm text-slate-800">{v.marca} {v.modelo}</div>
                                 <div className="text-xs text-slate-500 font-mono mt-0.5">{v.placas} · Corbatín #{v.corbatinNum || "101"}</div>
@@ -4538,43 +4533,40 @@ export default function App() {
                             empresaSanciones.map((s) => (
                               <div
                                 key={s.id}
-                                className={`rounded-2xl border bg-white shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md ${
-                                  s.status === "En Apelación"
-                                    ? "border-sky-300 ring-1 ring-sky-100"
-                                    : s.status === "Ratificada"
+                                className={`rounded-2xl border bg-white shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md ${s.status === "En Apelación"
+                                  ? "border-sky-300 ring-1 ring-sky-100"
+                                  : s.status === "Ratificada"
                                     ? "border-amber-300 ring-1 ring-amber-100"
                                     : s.status === "Aclarada"
-                                    ? "border-emerald-300 ring-1 ring-emerald-100"
-                                    : "border-slate-200"
-                                }`}
+                                      ? "border-emerald-300 ring-1 ring-emerald-100"
+                                      : "border-slate-200"
+                                  }`}
                               >
                                 {/* Cabecera de la Sanción */}
                                 <div
-                                  className={`px-5 py-3.5 border-b flex flex-wrap items-center justify-between gap-3 ${
-                                    s.status === "En Apelación"
-                                      ? "bg-sky-50/70"
-                                      : s.status === "Ratificada"
+                                  className={`px-5 py-3.5 border-b flex flex-wrap items-center justify-between gap-3 ${s.status === "En Apelación"
+                                    ? "bg-sky-50/70"
+                                    : s.status === "Ratificada"
                                       ? "bg-amber-50/70"
                                       : s.status === "Aclarada"
-                                      ? "bg-emerald-50/70"
-                                      : s.status === "Activa"
-                                      ? "bg-red-50/50"
-                                      : "bg-slate-50"
-                                  }`}
+                                        ? "bg-emerald-50/70"
+                                        : s.status === "Activa"
+                                          ? "bg-red-50/50"
+                                          : "bg-slate-50"
+                                    }`}
                                 >
                                   <div className="flex items-center gap-3">
                                     <div
-                                      className={`p-2 rounded-xl text-white shrink-0 ${
-                                        s.status === "En Apelación"
-                                          ? "bg-sky-600"
-                                          : s.status === "Ratificada"
+                                      className={`p-2 rounded-xl text-white shrink-0 ${s.status === "En Apelación"
+                                        ? "bg-sky-600"
+                                        : s.status === "Ratificada"
                                           ? "bg-amber-600"
                                           : s.status === "Aclarada"
-                                          ? "bg-emerald-600"
-                                          : s.status === "Activa"
-                                          ? "bg-red-600"
-                                          : "bg-slate-600"
-                                      }`}
+                                            ? "bg-emerald-600"
+                                            : s.status === "Activa"
+                                              ? "bg-red-600"
+                                              : "bg-slate-600"
+                                        }`}
                                     >
                                       <IconAlertTriangle className="w-4 h-4" />
                                     </div>
@@ -4630,13 +4622,12 @@ export default function App() {
                                   {/* Sección de Apelación y Dictamen */}
                                   {s.apelacion && (
                                     <div
-                                      className={`rounded-xl border p-4 space-y-3 ${
-                                        s.status === "Aclarada"
-                                          ? "bg-emerald-50/50 border-emerald-200"
-                                          : s.status === "Ratificada"
+                                      className={`rounded-xl border p-4 space-y-3 ${s.status === "Aclarada"
+                                        ? "bg-emerald-50/50 border-emerald-200"
+                                        : s.status === "Ratificada"
                                           ? "bg-amber-50/50 border-amber-200"
                                           : "bg-sky-50/60 border-sky-200"
-                                      }`}
+                                        }`}
                                     >
                                       <div
                                         className="flex flex-wrap items-center justify-between gap-2 border-b pb-2.5"
@@ -4654,19 +4645,18 @@ export default function App() {
                                             Firmado por: <strong className="text-slate-700">{s.apelacion.representante}</strong>
                                           </span>
                                           <span
-                                            className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
-                                              s.apelacion.estado === "Aprobada"
-                                                ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                                                : s.apelacion.estado === "Rechazada"
+                                            className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${s.apelacion.estado === "Aprobada"
+                                              ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                              : s.apelacion.estado === "Rechazada"
                                                 ? "bg-amber-100 text-amber-800 border border-amber-300"
                                                 : "bg-sky-100 text-sky-800 border border-sky-300"
-                                            }`}
+                                              }`}
                                           >
                                             {s.apelacion.estado === "Aprobada"
                                               ? "Apelación Procedente"
                                               : s.apelacion.estado === "Rechazada"
-                                              ? "Apelación Rechazada"
-                                              : "Pendiente de Dictamen"}
+                                                ? "Apelación Rechazada"
+                                                : "Pendiente de Dictamen"}
                                           </span>
                                         </div>
                                       </div>
@@ -4682,11 +4672,10 @@ export default function App() {
 
                                       {s.apelacion.dictamenSupervisor && (
                                         <div
-                                          className={`p-3.5 rounded-xl border space-y-1 ${
-                                            s.status === "Aclarada"
-                                              ? "bg-emerald-100/70 border-emerald-300 text-emerald-950"
-                                              : "bg-amber-100/70 border-amber-300 text-amber-950"
-                                          }`}
+                                          className={`p-3.5 rounded-xl border space-y-1 ${s.status === "Aclarada"
+                                            ? "bg-emerald-100/70 border-emerald-300 text-emerald-950"
+                                            : "bg-amber-100/70 border-amber-300 text-amber-950"
+                                            }`}
                                         >
                                           <div className="flex items-center gap-1.5 font-bold text-xs uppercase">
                                             <IconCheckCircle className="w-3.5 h-3.5" />
@@ -4756,14 +4745,14 @@ export default function App() {
           <main>
             <PageHero img={IMG_GATE} title="Registro de Caseta de Vigilancia (Tablet)" subtitle="Formulario ultrarrápido con validación de suspensiones en tiempo real, acceso peatonal y exportación de bitácora" />
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 min-h-[calc(100vh-16rem)]">
+            <div className={`mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-6 min-h-[calc(100vh-16rem)] ${casetaTab === "bitacora" ? "max-w-[1600px] w-full" : "max-w-7xl"}`}>
               {casetaTab === "registro" && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="lg:col-span-2 rounded-2xl border p-6 bg-white shadow-sm space-y-5" style={{ borderColor: "var(--color-border)" }}>
                     <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: "var(--color-border)" }}>
                       <div>
                         <h2 className="font-bold text-sm uppercase tracking-wider text-slate-800">
-                          {casetaModoAcceso === "vehicular" ? "Registro de Entrada Vehicular" : "Registro de Entrada Peatonal (A Pie)"}
+                          {casetaModoAcceso === "vehicular" ? "Registro de Entrada Vehicular" : "Registro de Entrada Peatonal"}
                         </h2>
                         <p className="text-xs text-slate-500">
                           {casetaModoAcceso === "vehicular" ? "Control de acceso vehicular y verificación de corbatines" : "Ingreso autorizado a pie de técnicos y contratistas (ej. unidad con sanción)"}
@@ -4798,7 +4787,7 @@ export default function App() {
                           }`}
                       >
                         <IconWalk className="w-4 h-4" />
-                        <span>Acceso Peatonal (A Pie / Sanción)</span>
+                        <span>Acceso Peatonal (Sanción)</span>
                       </button>
                     </div>
 
@@ -4876,7 +4865,7 @@ export default function App() {
                           <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                             4. Ingreso a Mano / Clic
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                             <div>
                               <label className="block text-xs font-medium text-slate-600 mb-1"># Corbatín</label>
                               <input
@@ -4885,6 +4874,27 @@ export default function App() {
                                 onChange={(e) => handleCorbatinInputChange(e.target.value)}
                                 placeholder="# Corbatín"
                                 className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono font-bold text-slate-800"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-slate-600 mb-1">Pasajeros (sin chofer)</label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="50"
+                                value={casetaNumPasajeros}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val === "") {
+                                    setCasetaNumPasajeros("");
+                                  } else {
+                                    const parsed = parseInt(val, 10);
+                                    setCasetaNumPasajeros(isNaN(parsed) ? "" : Math.max(0, parsed));
+                                  }
+                                }}
+                                onFocus={(e) => e.target.select()}
+                                placeholder="0"
+                                className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono font-bold text-slate-800 focus:ring-2 focus:ring-emerald-200 outline-none"
                               />
                             </div>
                             <div>
@@ -4974,9 +4984,8 @@ export default function App() {
                             <button
                               type="submit"
                               disabled={isSubmittingEntrada}
-                              className={`w-full py-3 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 ${
-                                isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                              }`}
+                              className={`w-full py-3 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 ${isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                                }`}
                               style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                             >
                               {isSubmittingEntrada ? (
@@ -5136,9 +5145,8 @@ export default function App() {
                           <button
                             type="submit"
                             disabled={isSubmittingEntrada}
-                            className={`w-full py-3 rounded-xl text-sm font-bold text-white bg-sky-700 hover:bg-sky-800 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md ${
-                              isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                            }`}
+                            className={`w-full py-3 rounded-xl text-sm font-bold text-white bg-sky-700 hover:bg-sky-800 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md ${isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                              }`}
                           >
                             {isSubmittingEntrada ? (
                               <>
@@ -5264,90 +5272,132 @@ export default function App() {
                     </div>
                   </div>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table className="w-full table-fixed text-xs">
+                      <colgroup>
+                        <col className="w-[4%]" />
+                        <col className="w-[8%]" />
+                        <col className="w-[14%]" />
+                        <col className="w-[9%]" />
+                        <col className="w-[13%]" />
+                        <col className="w-[7%]" />
+                        <col className="w-[6%]" />
+                        <col className="w-[7%]" />
+                        <col className="w-[7%]" />
+                        <col className="w-[11%]" />
+                        <col className="w-[7%]" />
+                        <col className="w-[7%]" />
+                      </colgroup>
                       <thead>
-                        <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
-                          {["Folio", "Modalidad", "Empresa", "Vehículo / Placas", "Conductor / Colaborador", "Corbatín", "Entrada", "Salida", "Trabajos & Observaciones", "Estatus", "Acción"].map((h) => (
-                            <th key={h} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
-                          ))}
+                        <tr className="border-b bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ borderColor: "var(--color-border)" }}>
+                          <th className="text-center px-1.5 py-3">Folio</th>
+                          <th className="text-center px-1 py-3">Modalidad</th>
+                          <th className="text-left px-2.5 py-3">Empresa</th>
+                          <th className="text-left px-2 py-3">Vehículo / Placas</th>
+                          <th className="text-left px-2.5 py-3">Conductor</th>
+                          <th className="text-center px-1 py-3">Pasajeros</th>
+                          <th className="text-center px-1 py-3">Corbatín</th>
+                          <th className="text-center px-1 py-3">Entrada</th>
+                          <th className="text-center px-1 py-3">Salida</th>
+                          <th className="text-left px-2.5 py-3">Trabajos / Destino</th>
+                          <th className="text-center px-1 py-3">Estatus</th>
+                          <th className="text-center px-1.5 py-3">Acción</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {bitacora.length === 0 ? (
                           <tr>
-                            <td colSpan={11} className="px-5 py-8 text-center text-xs text-slate-500">
+                            <td colSpan={12} className="px-5 py-8 text-center text-xs text-slate-500">
                               <IconShield className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                               No hay registros de accesos en la bitácora de PostgreSQL.
                             </td>
                           </tr>
                         ) : (
-                          bitacora.map((b) => (
-                            <tr key={b.id} className="hover:bg-slate-50 transition-colors">
-                              <td className="px-5 py-3 font-mono text-xs font-bold text-slate-700">{b.id}</td>
-                              <td className="px-5 py-3">
-                                {b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
-                                    <IconWalk className="w-3.5 h-3.5 text-sky-600" />
-                                    <span>Peatonal</span>
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                                    <IconCar className="w-3.5 h-3.5 text-slate-600" />
-                                    <span>Vehicular</span>
-                                  </span>
-                                )}
-                              </td>
-                              <td className="px-5 py-3 text-xs font-semibold text-slate-900">{b.empresaNombre}</td>
-                              <td className="px-5 py-3 text-xs font-mono font-bold text-slate-800">
-                                {b.placas === "PEATONAL (A PIE)" ? (
-                                  <span className="text-sky-700">A Pie (Sin auto)</span>
-                                ) : (
-                                  b.placas
-                                )}
-                              </td>
-                              <td className="px-5 py-3 text-xs text-slate-700 font-medium">
-                                <div>{b.conductor}</div>
-                                {b.telefono && <div className="text-[11px] text-slate-400 font-mono">{b.telefono}</div>}
-                              </td>
-                              <td className="px-5 py-3 text-xs font-mono font-bold" style={{ color: "var(--color-primary)" }}>
-                                {b.corbatinNum && b.corbatinNum !== "—" ? (b.corbatinNum.startsWith("#") ? b.corbatinNum : `#${b.corbatinNum}`) : "—"}
-                              </td>
-                              <td className="px-5 py-3 text-xs text-slate-700">{b.horaEntrada}</td>
-                              <td className="px-5 py-3 text-xs text-slate-500">{b.horaSalida || "—"}</td>
-                              <td className="px-5 py-3 text-xs text-slate-600 max-w-xs">
-                                <div className="font-medium text-slate-800 truncate">{b.trabajos}</div>
-                                {b.observaciones && (
-                                  <div className="text-[11px] text-sky-800 bg-sky-50/70 p-1 rounded mt-0.5 border border-sky-200/50 leading-tight">
-                                    {b.observaciones}
-                                  </div>
-                                )}
-                              </td>
-                              <td className="px-5 py-3"><StatusBadge status={b.estado} /></td>
-                              <td className="px-5 py-3">
-                                {b.estado === "Dentro" ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleMarcarSalida(b.id)}
-                                    disabled={Boolean(marcandoSalidaIds[b.id])}
-                                    className={`px-3 py-1 text-xs font-bold rounded-lg bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 cursor-pointer flex items-center gap-1.5 ${
-                                      marcandoSalidaIds[b.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                                    }`}
-                                  >
-                                    {marcandoSalidaIds[b.id] ? (
-                                      <>
-                                        <IconSpinner className="w-3 h-3" />
-                                        <span>Marcando...</span>
-                                      </>
-                                    ) : (
-                                      <span>Registrar Salida</span>
-                                    )}
-                                  </button>
-                                ) : (
-                                  <span className="text-xs text-slate-400">Completado</span>
-                                )}
-                              </td>
-                            </tr>
-                          ))
+                          bitacora.map((b) => {
+                            const trabajoTexto = (b.trabajos && b.trabajos !== "x") ? b.trabajos : (b.observaciones || "Acceso regular");
+                            const horaEntradaLimpia = (b.horaEntrada || "").replace(/ hrs/i, "");
+                            const horaSalidaLimpia = (b.horaSalida || "").replace(/ hrs/i, "");
+
+                            return (
+                              <tr key={b.id} className="hover:bg-slate-50 transition-colors">
+                                <td className="px-1.5 py-2 font-mono text-xs font-bold text-slate-700 text-center truncate">{b.id}</td>
+                                <td className="px-1 py-2 text-center">
+                                  {b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? (
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                                      <IconWalk className="w-3 h-3 shrink-0" />
+                                      <span>Peatonal</span>
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                      <IconCar className="w-3 h-3 shrink-0" />
+                                      <span>Vehicular</span>
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="px-2.5 py-2 text-xs font-semibold text-slate-900 truncate" title={b.empresaNombre}>
+                                  {b.empresaNombre}
+                                </td>
+                                <td className="px-2 py-2 text-xs font-mono font-bold text-slate-800 truncate" title={b.placas}>
+                                  {b.placas === "PEATONAL (A PIE)" ? (
+                                    <span className="text-sky-700 font-sans font-semibold text-[11px]">A Pie</span>
+                                  ) : (
+                                    b.placas
+                                  )}
+                                </td>
+                                <td className="px-2.5 py-2 text-xs text-slate-700 font-medium">
+                                  <div className="truncate font-semibold text-slate-800" title={b.conductor}>{b.conductor}</div>
+                                  {b.telefono && <div className="text-[10px] text-slate-400 font-mono truncate">{b.telefono}</div>}
+                                </td>
+                                <td className="px-1 py-2 text-center">
+                                  {b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? (
+                                    <span className="text-slate-400 text-xs">—</span>
+                                  ) : (
+                                    <span className={`inline-flex items-center justify-center font-semibold px-1.5 py-0.5 rounded text-[10px] ${
+                                      (b.num_pasajeros || 0) > 0 ? "bg-amber-50 text-amber-800 border border-amber-200" : "text-slate-500 bg-slate-50"
+                                    }`} title={`${b.num_pasajeros || 0} pasajeros adicionales`}>
+                                      {(b.num_pasajeros || 0) > 0 ? `+${b.num_pasajeros} extra` : "0 (Solo)"}
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="px-1 py-2 text-center text-xs font-mono font-bold truncate" style={{ color: "var(--color-primary)" }}>
+                                  {b.corbatinNum && b.corbatinNum !== "—" ? (b.corbatinNum.startsWith("#") ? b.corbatinNum : `#${b.corbatinNum}`) : "—"}
+                                </td>
+                                <td className="px-1 py-2 text-center text-[11px] text-slate-700 font-mono truncate" title={horaEntradaLimpia}>
+                                  {horaEntradaLimpia}
+                                </td>
+                                <td className="px-1 py-2 text-center text-[11px] text-slate-500 font-mono truncate" title={horaSalidaLimpia || "Dentro"}>
+                                  {horaSalidaLimpia || "—"}
+                                </td>
+                                <td className="px-2.5 py-2 text-xs text-slate-600 truncate" title={trabajoTexto}>
+                                  {trabajoTexto}
+                                </td>
+                                <td className="px-1 py-2 text-center">
+                                  <StatusBadge status={b.estado} />
+                                </td>
+                                <td className="px-1.5 py-2 text-center">
+                                  {b.estado === "Dentro" ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleMarcarSalida(b.id)}
+                                      disabled={Boolean(marcandoSalidaIds[b.id])}
+                                      className={`w-full py-1 text-[11px] font-bold rounded-lg bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 cursor-pointer flex items-center justify-center gap-1 shadow-sm transition-all whitespace-nowrap ${marcandoSalidaIds[b.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                                        }`}
+                                    >
+                                      {marcandoSalidaIds[b.id] ? (
+                                        <>
+                                          <IconSpinner className="w-3 h-3" />
+                                          <span>...</span>
+                                        </>
+                                      ) : (
+                                        <span>Salida</span>
+                                      )}
+                                    </button>
+                                  ) : (
+                                    <span className="text-[11px] text-slate-400 font-medium">Completado</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })
                         )}
                       </tbody>
                     </table>
@@ -5445,9 +5495,8 @@ export default function App() {
                   <button
                     type="submit"
                     disabled={isSubmittingPassword}
-                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
-                      isSubmittingPassword ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                    }`}
+                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isSubmittingPassword ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
                   >
                     {isSubmittingPassword ? (
                       <>
@@ -5526,9 +5575,8 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={isSubmittingApelacion}
-                  className={`px-6 py-2 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
-                    isSubmittingApelacion ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
+                  className={`px-6 py-2 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isSubmittingApelacion ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
                 >
                   {isSubmittingApelacion ? (
                     <>
@@ -5575,9 +5623,8 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={isSubmittingSupervisor}
-                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${
-                    isSubmittingSupervisor ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
+                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${isSubmittingSupervisor ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
                 >
                   {isSubmittingSupervisor ? (
                     <>
@@ -5636,9 +5683,8 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={isSubmittingEmpresa}
-                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${
-                    isSubmittingEmpresa ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
+                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${isSubmittingEmpresa ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
                 >
                   {isSubmittingEmpresa ? (
                     <>
@@ -5782,9 +5828,8 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={isSubmittingGuardia}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
-                    isSubmittingGuardia ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isSubmittingGuardia ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
                 >
                   {isSubmittingGuardia ? (
                     <>
@@ -5940,9 +5985,8 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={isSubmittingTrabajador}
-                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${
-                    isSubmittingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
+                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
                   style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                 >
                   {isSubmittingTrabajador ? (
@@ -6102,9 +6146,8 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={isSubmittingTrabajadorEdit}
-                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-2 ${
-                    isSubmittingTrabajadorEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
+                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingTrabajadorEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
                 >
                   {isSubmittingTrabajadorEdit ? (
                     <>
@@ -6158,9 +6201,8 @@ export default function App() {
                 type="button"
                 onClick={handleConfirmarEliminarTrabajador}
                 disabled={isDeletingTrabajador}
-                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
-                  isDeletingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                }`}
+                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                  }`}
               >
                 {isDeletingTrabajador ? (
                   <>
@@ -6216,9 +6258,8 @@ export default function App() {
                 type="button"
                 onClick={handleConfirmarEliminarSupervisor}
                 disabled={isDeletingSupervisor}
-                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
-                  isDeletingSupervisor ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                }`}
+                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingSupervisor ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                  }`}
               >
                 {isDeletingSupervisor ? (
                   <>
