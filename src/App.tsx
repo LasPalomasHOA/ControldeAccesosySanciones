@@ -507,11 +507,13 @@ function StatusBadge({ status }: { status: string }) {
     Rechazada: "bg-slate-100 text-slate-600 border-slate-200",
     Dentro: "bg-emerald-50 text-emerald-700 border-emerald-200",
     "Salida Registrada": "bg-slate-100 text-slate-600 border-slate-200",
+    Salida: "bg-slate-100 text-slate-600 border-slate-200",
   };
+  const label = status === "Salida Registrada" ? "Salida" : status;
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${map[status] ?? "bg-slate-100 text-slate-600 border-slate-200"}`}
+    <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10.5px] font-semibold border whitespace-nowrap ${map[status] ?? "bg-slate-100 text-slate-600 border-slate-200"}`}
       style={{ fontFamily: "var(--font-mono)" }}>
-      {status}
+      {label}
     </span>
   );
 }
@@ -5270,21 +5272,35 @@ export default function App() {
                     </div>
                   </div>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table className="w-full table-fixed text-xs">
+                      <colgroup>
+                        <col className="w-[4%]" />
+                        <col className="w-[8%]" />
+                        <col className="w-[14%]" />
+                        <col className="w-[9%]" />
+                        <col className="w-[13%]" />
+                        <col className="w-[7%]" />
+                        <col className="w-[6%]" />
+                        <col className="w-[7%]" />
+                        <col className="w-[7%]" />
+                        <col className="w-[11%]" />
+                        <col className="w-[7%]" />
+                        <col className="w-[7%]" />
+                      </colgroup>
                       <thead>
                         <tr className="border-b bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ borderColor: "var(--color-border)" }}>
-                          <th className="text-center px-2 py-3 w-12">Folio</th>
-                          <th className="text-center px-2 py-3">Modalidad</th>
-                          <th className="text-left px-3 py-3">Empresa</th>
-                          <th className="text-left px-2.5 py-3">Vehículo / Placas</th>
-                          <th className="text-left px-3 py-3">Conductor / Colaborador</th>
-                          <th className="text-center px-2 py-3">Pasajeros</th>
-                          <th className="text-center px-2 py-3">Corbatín</th>
-                          <th className="text-center px-2.5 py-3">Entrada</th>
-                          <th className="text-center px-2.5 py-3">Salida</th>
-                          <th className="text-left px-3 py-3">Trabajos & Observaciones</th>
-                          <th className="text-center px-2.5 py-3">Estatus</th>
-                          <th className="text-center px-3 py-3">Acción</th>
+                          <th className="text-center px-1.5 py-3">Folio</th>
+                          <th className="text-center px-1 py-3">Modalidad</th>
+                          <th className="text-left px-2.5 py-3">Empresa</th>
+                          <th className="text-left px-2 py-3">Vehículo / Placas</th>
+                          <th className="text-left px-2.5 py-3">Conductor</th>
+                          <th className="text-center px-1 py-3">Pasajeros</th>
+                          <th className="text-center px-1 py-3">Corbatín</th>
+                          <th className="text-center px-1 py-3">Entrada</th>
+                          <th className="text-center px-1 py-3">Salida</th>
+                          <th className="text-left px-2.5 py-3">Trabajos / Destino</th>
+                          <th className="text-center px-1 py-3">Estatus</th>
+                          <th className="text-center px-1.5 py-3">Acción</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -5296,85 +5312,92 @@ export default function App() {
                             </td>
                           </tr>
                         ) : (
-                          bitacora.map((b) => (
-                            <tr key={b.id} className="hover:bg-slate-50 transition-colors">
-                              <td className="px-2 py-2.5 font-mono text-xs font-bold text-slate-700 text-center whitespace-nowrap">{b.id}</td>
-                              <td className="px-2 py-2.5 text-center whitespace-nowrap">
-                                {b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
-                                    <IconWalk className="w-3 h-3 text-sky-600" />
-                                    <span>Peatonal</span>
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                                    <IconCar className="w-3 h-3 text-slate-600" />
-                                    <span>Vehicular</span>
-                                  </span>
-                                )}
-                              </td>
-                              <td className="px-3 py-2.5 text-xs font-semibold text-slate-900 max-w-[150px] truncate" title={b.empresaNombre}>
-                                {b.empresaNombre}
-                              </td>
-                              <td className="px-2.5 py-2.5 text-xs font-mono font-bold text-slate-800 whitespace-nowrap">
-                                {b.placas === "PEATONAL (A PIE)" ? (
-                                  <span className="text-sky-700 font-sans font-semibold">A Pie (Sin auto)</span>
-                                ) : (
-                                  b.placas
-                                )}
-                              </td>
-                              <td className="px-3 py-2.5 text-xs text-slate-700 font-medium max-w-[135px]">
-                                <div className="truncate font-semibold text-slate-800" title={b.conductor}>{b.conductor}</div>
-                                {b.telefono && <div className="text-[10.5px] text-slate-400 font-mono">{b.telefono}</div>}
-                              </td>
-                              <td className="px-2 py-2.5 text-center whitespace-nowrap">
-                                {b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? (
-                                  <span className="text-slate-400 text-xs">—</span>
-                                ) : (
-                                  <span className={`inline-flex items-center gap-0.5 font-semibold px-2 py-0.5 rounded-md text-[11px] ${
-                                    (b.num_pasajeros || 0) > 0 ? "bg-amber-50 text-amber-800 border border-amber-200" : "text-slate-500 bg-slate-50"
-                                  }`}>
-                                    {(b.num_pasajeros || 0) > 0 ? `+${b.num_pasajeros} extra` : "0 (Solo chofer)"}
-                                  </span>
-                                )}
-                              </td>
-                              <td className="px-2 py-2.5 text-center text-xs font-mono font-bold whitespace-nowrap" style={{ color: "var(--color-primary)" }}>
-                                {b.corbatinNum && b.corbatinNum !== "—" ? (b.corbatinNum.startsWith("#") ? b.corbatinNum : `#${b.corbatinNum}`) : "—"}
-                              </td>
-                              <td className="px-2.5 py-2.5 text-center text-xs text-slate-700 whitespace-nowrap font-mono">{b.horaEntrada}</td>
-                              <td className="px-2.5 py-2.5 text-center text-xs text-slate-500 whitespace-nowrap font-mono">{b.horaSalida || "—"}</td>
-                              <td className="px-3 py-2.5 text-xs text-slate-600 max-w-[160px]">
-                                <div className="font-medium text-slate-800 truncate" title={b.trabajos}>{b.trabajos}</div>
-                                {b.observaciones && (
-                                  <div className="text-[10px] text-sky-800 bg-sky-50/80 px-1.5 py-0.5 rounded mt-0.5 border border-sky-200/60 truncate" title={b.observaciones}>
-                                    {b.observaciones}
-                                  </div>
-                                )}
-                              </td>
-                              <td className="px-2.5 py-2.5 text-center whitespace-nowrap"><StatusBadge status={b.estado} /></td>
-                              <td className="px-3 py-2.5 text-center whitespace-nowrap">
-                                {b.estado === "Dentro" ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleMarcarSalida(b.id)}
-                                    disabled={Boolean(marcandoSalidaIds[b.id])}
-                                    className={`px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 cursor-pointer inline-flex items-center gap-1.5 shadow-sm transition-all ${marcandoSalidaIds[b.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                                      }`}
-                                  >
-                                    {marcandoSalidaIds[b.id] ? (
-                                      <>
-                                        <IconSpinner className="w-3 h-3" />
-                                        <span>Marcando...</span>
-                                      </>
-                                    ) : (
-                                      <span>Registrar Salida</span>
-                                    )}
-                                  </button>
-                                ) : (
-                                  <span className="text-xs text-slate-400 font-medium">Completado</span>
-                                )}
-                              </td>
-                            </tr>
-                          ))
+                          bitacora.map((b) => {
+                            const trabajoTexto = (b.trabajos && b.trabajos !== "x") ? b.trabajos : (b.observaciones || "Acceso regular");
+                            const horaEntradaLimpia = (b.horaEntrada || "").replace(/ hrs/i, "");
+                            const horaSalidaLimpia = (b.horaSalida || "").replace(/ hrs/i, "");
+
+                            return (
+                              <tr key={b.id} className="hover:bg-slate-50 transition-colors">
+                                <td className="px-1.5 py-2 font-mono text-xs font-bold text-slate-700 text-center truncate">{b.id}</td>
+                                <td className="px-1 py-2 text-center">
+                                  {b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? (
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                                      <IconWalk className="w-3 h-3 shrink-0" />
+                                      <span>Peatonal</span>
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                      <IconCar className="w-3 h-3 shrink-0" />
+                                      <span>Vehicular</span>
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="px-2.5 py-2 text-xs font-semibold text-slate-900 truncate" title={b.empresaNombre}>
+                                  {b.empresaNombre}
+                                </td>
+                                <td className="px-2 py-2 text-xs font-mono font-bold text-slate-800 truncate" title={b.placas}>
+                                  {b.placas === "PEATONAL (A PIE)" ? (
+                                    <span className="text-sky-700 font-sans font-semibold text-[11px]">A Pie</span>
+                                  ) : (
+                                    b.placas
+                                  )}
+                                </td>
+                                <td className="px-2.5 py-2 text-xs text-slate-700 font-medium">
+                                  <div className="truncate font-semibold text-slate-800" title={b.conductor}>{b.conductor}</div>
+                                  {b.telefono && <div className="text-[10px] text-slate-400 font-mono truncate">{b.telefono}</div>}
+                                </td>
+                                <td className="px-1 py-2 text-center">
+                                  {b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? (
+                                    <span className="text-slate-400 text-xs">—</span>
+                                  ) : (
+                                    <span className={`inline-flex items-center justify-center font-semibold px-1.5 py-0.5 rounded text-[10px] ${
+                                      (b.num_pasajeros || 0) > 0 ? "bg-amber-50 text-amber-800 border border-amber-200" : "text-slate-500 bg-slate-50"
+                                    }`} title={`${b.num_pasajeros || 0} pasajeros adicionales`}>
+                                      {(b.num_pasajeros || 0) > 0 ? `+${b.num_pasajeros} extra` : "0 (Solo)"}
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="px-1 py-2 text-center text-xs font-mono font-bold truncate" style={{ color: "var(--color-primary)" }}>
+                                  {b.corbatinNum && b.corbatinNum !== "—" ? (b.corbatinNum.startsWith("#") ? b.corbatinNum : `#${b.corbatinNum}`) : "—"}
+                                </td>
+                                <td className="px-1 py-2 text-center text-[11px] text-slate-700 font-mono truncate" title={horaEntradaLimpia}>
+                                  {horaEntradaLimpia}
+                                </td>
+                                <td className="px-1 py-2 text-center text-[11px] text-slate-500 font-mono truncate" title={horaSalidaLimpia || "Dentro"}>
+                                  {horaSalidaLimpia || "—"}
+                                </td>
+                                <td className="px-2.5 py-2 text-xs text-slate-600 truncate" title={trabajoTexto}>
+                                  {trabajoTexto}
+                                </td>
+                                <td className="px-1 py-2 text-center">
+                                  <StatusBadge status={b.estado} />
+                                </td>
+                                <td className="px-1.5 py-2 text-center">
+                                  {b.estado === "Dentro" ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleMarcarSalida(b.id)}
+                                      disabled={Boolean(marcandoSalidaIds[b.id])}
+                                      className={`w-full py-1 text-[11px] font-bold rounded-lg bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 cursor-pointer flex items-center justify-center gap-1 shadow-sm transition-all whitespace-nowrap ${marcandoSalidaIds[b.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                                        }`}
+                                    >
+                                      {marcandoSalidaIds[b.id] ? (
+                                        <>
+                                          <IconSpinner className="w-3 h-3" />
+                                          <span>...</span>
+                                        </>
+                                      ) : (
+                                        <span>Salida</span>
+                                      )}
+                                    </button>
+                                  ) : (
+                                    <span className="text-[11px] text-slate-400 font-medium">Completado</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })
                         )}
                       </tbody>
                     </table>
