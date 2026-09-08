@@ -244,6 +244,7 @@ export interface BitacoraAccesoDB {
   estatus_acceso: 'AUTORIZADO' | 'RECHAZADO' | 'PENDIENTE' | 'SALIDA' | string;
   motivo_rechazo?: string | null;
   observaciones?: string | null;
+  num_pasajeros?: number;
   created_at: string;
   updated_at: string;
   // Asociaciones opcionales
@@ -328,6 +329,7 @@ export interface Acceso {
   fechaHora: string;
   agenteNombre: string;
   observaciones?: string;
+  num_pasajeros?: number;
   cabina: string;
 }
 

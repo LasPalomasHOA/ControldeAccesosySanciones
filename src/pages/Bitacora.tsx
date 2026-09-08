@@ -120,6 +120,7 @@ export const Bitacora: React.FC = () => {
                 <th className="py-3 px-4">Fecha / Hora</th>
                 <th className="py-3 px-4">Vehículo (Placa)</th>
                 <th className="py-3 px-4">Conductor Autorizado</th>
+                <th className="py-3 px-4 text-center">Pasajeros</th>
                 <th className="py-3 px-4">Empresa</th>
                 <th className="py-3 px-4">Agente Responsable</th>
                 <th className="py-3 px-4 text-center">Filtro / Cabina</th>
@@ -143,6 +144,13 @@ export const Bitacora: React.FC = () => {
                     </td>
                     <td className="py-3.5 px-4 font-semibold text-slate-800 truncate max-w-[140px]">
                       {acc.trabajadorNombre || 'Sin registro'}
+                    </td>
+                    <td className="py-3.5 px-4 text-center text-xs">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md font-semibold ${
+                        (acc.num_pasajeros || 0) > 0 ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'text-slate-400'
+                      }`}>
+                        {(acc.num_pasajeros || 0) > 0 ? `+${acc.num_pasajeros}` : '0'}
+                      </span>
                     </td>
                     <td className="py-3.5 px-4 text-slate-500 font-semibold truncate max-w-[160px]">
                       {acc.empresaNombre}

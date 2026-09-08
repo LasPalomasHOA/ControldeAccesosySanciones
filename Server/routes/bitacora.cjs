@@ -40,6 +40,7 @@ router.get('/', async (req, res) => {
       return {
         ...plain,
         id: String(plain.id_acceso),
+        num_pasajeros: plain.num_pasajeros !== undefined && plain.num_pasajeros !== null ? Number(plain.num_pasajeros) : 0,
         placa: plain.vehiculo?.placas || 'PEATONAL',
         empresaNombre: empNombre,
         conductor: conductorNombre,
@@ -75,6 +76,7 @@ router.post('/', async (req, res) => {
       motivo_rechazo, 
       ubicacion_trabajo, 
       observaciones,
+      num_pasajeros,
       tipo // 'entrada' | 'salida'
     } = req.body;
 
@@ -137,6 +139,7 @@ router.post('/', async (req, res) => {
       id_corbatin: finalCorbatinId,
       id_conductor: finalConductorId,
       id_usuario: finalUsuarioId,
+      num_pasajeros: num_pasajeros !== undefined && num_pasajeros !== null ? Number(num_pasajeros) : 0,
       fecha: ahora.toISOString().split('T')[0],
       hora_entrada: esSalida ? null : ahora,
       hora_salida: esSalida ? ahora : null,

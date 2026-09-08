@@ -376,6 +376,7 @@ interface RegistroCaseta {
   estado: "Dentro" | "Salida Registrada";
   tipoAcceso?: "Vehicular" | "Peatonal";
   observaciones?: string;
+  num_pasajeros?: number;
 }
 
 interface InfraccionReporte {
@@ -1043,6 +1044,7 @@ export default function App() {
   const [casetaCorbatin, setCasetaCorbatin] = useState("");
   const [casetaHoraEntrada, setCasetaHoraEntrada] = useState("");
   const [casetaHoraSalida, setCasetaHoraSalida] = useState("");
+  const [casetaNumPasajeros, setCasetaNumPasajeros] = useState<number | string>(0);
   const [casetaTrabajos, setCasetaTrabajos] = useState("");
   const [casetaOverrideActive, setCasetaOverrideActive] = useState(false);
   const [casetaSuccessMsg, setCasetaSuccessMsg] = useState(false);
@@ -1264,7 +1266,8 @@ export default function App() {
           guardiaNombre: b.guardiaNombre || "Oficial de Turno",
           estado: b.hora_salida ? "Salida Registrada" : "Dentro",
           tipoAcceso: (b.tipo || (b.id_vehiculo ? "Vehicular" : "Peatonal")) as "Vehicular" | "Peatonal",
-          observaciones: b.observaciones || undefined
+          observaciones: b.observaciones || undefined,
+          num_pasajeros: b.num_pasajeros !== undefined && b.num_pasajeros !== null ? Number(b.num_pasajeros) : 0
         }));
         setBitacora(mappedBit);
       }
@@ -1317,7 +1320,8 @@ export default function App() {
           guardiaNombre: b.guardiaNombre || "Oficial de Turno",
           estado: b.hora_salida ? "Salida Registrada" : "Dentro",
           tipoAcceso: (b.tipo || (b.id_vehiculo ? "Vehicular" : "Peatonal")) as "Vehicular" | "Peatonal",
-          observaciones: b.observaciones || undefined
+          observaciones: b.observaciones || undefined,
+          num_pasajeros: b.num_pasajeros !== undefined && b.num_pasajeros !== null ? Number(b.num_pasajeros) : 0
         }));
         setBitacora(mappedBit);
       }
@@ -1890,6 +1894,7 @@ export default function App() {
       "Vehículo / Placas / Identificación",
       "Color Unidad",
       "Conductor / Colaborador",
+      "Pasajeros (sin chofer)",
       "Teléfono Celular",
       "Corbatín / Gafete",
       "Hora Entrada",
@@ -1907,6 +1912,7 @@ export default function App() {
       b.placas,
       b.color || "N/A",
       b.conductor,
+      b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? "0" : String(b.num_pasajeros ?? 0),
       b.telefono || "N/A",
       b.corbatinNum ? `#${b.corbatinNum}` : "N/A",
       b.horaEntrada,
@@ -2002,6 +2008,7 @@ export default function App() {
           id_corbatin: null,
           id_conductor: currentTrabajadorPeatonal ? currentTrabajadorPeatonal.id_trabajador : null,
           id_usuario: Number(currentUser?.id) || 4,
+          num_pasajeros: 0,
           ubicacion_trabajo: casetaTrabajos || "Trabajos y labores en instalaciones (Ingreso a pie)",
           estatus_acceso: "AUTORIZADO",
           observaciones: `Peatonal [${nom} - Tel: ${tel}]: ${casetaPeatonalObservaciones || "Ingreso peatonal registrado en caseta."}`,
@@ -2010,6 +2017,7 @@ export default function App() {
 
         await reloadBitacora();
         setCasetaTrabajos("");
+        setCasetaNumPasajeros(0);
         setCasetaPeatonalObservaciones("");
         setCasetaSuccessMsg(true);
         setTimeout(() => setCasetaSuccessMsg(false), 4000);
@@ -2029,6 +2037,7 @@ export default function App() {
         id_corbatin: null,
         id_conductor: null,
         id_usuario: Number(currentUser?.id) || 4,
+        num_pasajeros: Math.max(0, Number(casetaNumPasajeros) || 0),
         ubicacion_trabajo: casetaTrabajos || "Mantenimiento general",
         estatus_acceso: casetaOverrideActive ? "AUTORIZADO_OVERRIDE" : "AUTORIZADO",
         observaciones: casetaOverrideActive ? "Acceso vehicular autorizado con anulación de emergencia por Supervisor HOA" : "Ingreso regular vehicular",
@@ -2037,6 +2046,7 @@ export default function App() {
 
       await reloadBitacora();
       setCasetaTrabajos("");
+      setCasetaNumPasajeros(0);
       setCasetaOverrideActive(false);
       setCasetaSuccessMsg(true);
       setTimeout(() => setCasetaSuccessMsg(false), 4000);
@@ -4853,7 +4863,7 @@ export default function App() {
                           <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                             4. Ingreso a Mano / Clic
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                             <div>
                               <label className="block text-xs font-medium text-slate-600 mb-1"># Corbatín</label>
                               <input
@@ -4861,6 +4871,18 @@ export default function App() {
                                 value={casetaCorbatin}
                                 onChange={(e) => handleCorbatinInputChange(e.target.value)}
                                 placeholder="# Corbatín"
+                                className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono font-bold text-slate-800"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-slate-600 mb-1">Pasajeros (sin chofer)</label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="50"
+                                value={casetaNumPasajeros}
+                                onChange={(e) => setCasetaNumPasajeros(e.target.value === "" ? "" : Math.max(0, parseInt(e.target.value) || 0))}
+                                placeholder="0"
                                 className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono font-bold text-slate-800"
                               />
                             </div>
@@ -5242,7 +5264,7 @@ export default function App() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
-                          {["Folio", "Modalidad", "Empresa", "Vehículo / Placas", "Conductor / Colaborador", "Corbatín", "Entrada", "Salida", "Trabajos & Observaciones", "Estatus", "Acción"].map((h) => (
+                          {["Folio", "Modalidad", "Empresa", "Vehículo / Placas", "Conductor / Colaborador", "Pasajeros", "Corbatín", "Entrada", "Salida", "Trabajos & Observaciones", "Estatus", "Acción"].map((h) => (
                             <th key={h} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
                           ))}
                         </tr>
@@ -5250,7 +5272,7 @@ export default function App() {
                       <tbody className="divide-y divide-slate-100">
                         {bitacora.length === 0 ? (
                           <tr>
-                            <td colSpan={11} className="px-5 py-8 text-center text-xs text-slate-500">
+                            <td colSpan={12} className="px-5 py-8 text-center text-xs text-slate-500">
                               <IconShield className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                               No hay registros de accesos en la bitácora de PostgreSQL.
                             </td>
@@ -5283,6 +5305,17 @@ export default function App() {
                               <td className="px-5 py-3 text-xs text-slate-700 font-medium">
                                 <div>{b.conductor}</div>
                                 {b.telefono && <div className="text-[11px] text-slate-400 font-mono">{b.telefono}</div>}
+                              </td>
+                              <td className="px-5 py-3 text-xs">
+                                {b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? (
+                                  <span className="text-slate-400">—</span>
+                                ) : (
+                                  <span className={`inline-flex items-center gap-1 font-semibold px-2 py-0.5 rounded-md ${
+                                    (b.num_pasajeros || 0) > 0 ? "bg-amber-50 text-amber-800 border border-amber-200" : "text-slate-500"
+                                  }`}>
+                                    {(b.num_pasajeros || 0) > 0 ? `+${b.num_pasajeros} extra` : "0 (Solo chofer)"}
+                                  </span>
+                                )}
                               </td>
                               <td className="px-5 py-3 text-xs font-mono font-bold" style={{ color: "var(--color-primary)" }}>
                                 {b.corbatinNum && b.corbatinNum !== "—" ? (b.corbatinNum.startsWith("#") ? b.corbatinNum : `#${b.corbatinNum}`) : "—"}

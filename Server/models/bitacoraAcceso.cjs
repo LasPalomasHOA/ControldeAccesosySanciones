@@ -71,6 +71,12 @@ const BitacoraAcceso = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
       comment: 'Notas adicionales del guardia'
+    },
+    num_pasajeros: {
+      type: DataTypes.SMALLINT,
+      allowNull: false,
+      defaultValue: 0,
+      comment: 'Cantidad de personas que lleva el vehículo sin contar al chofer'
     }
   },
   {
