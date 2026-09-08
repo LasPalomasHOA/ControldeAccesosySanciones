@@ -138,6 +138,15 @@ function IconMessageSquare({ className = "w-4 h-4" }: { className?: string }) {
   );
 }
 
+function IconClock({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  );
+}
+
 function IconKey({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -347,6 +356,8 @@ interface Sancion {
   placas: string;
   tipo: string;
   fecha: string;
+  fecha_inicio?: string;
+  fecha_fin?: string;
   medidaDisciplinaria: string;
   status: "Activa" | "En Apelación" | "Aclarada" | "Ratificada" | "Cumplida";
   descripcion: string;
@@ -1243,6 +1254,8 @@ export default function App() {
             placas: s.placas || s.placa || s.vehiculo?.placas || "",
             tipo: tipoInf,
             fecha: s.fecha_inicio ? s.fecha_inicio.split("T")[0] : (s.fecha || new Date().toISOString().split("T")[0]),
+            fecha_inicio: s.fecha_inicio || undefined,
+            fecha_fin: s.fecha_fin || undefined,
             medidaDisciplinaria: medidaLimpia,
             status: (s.status as any) || (s.estatus === "EN_APELACION" ? "En Apelación" : (s.estatus === "CANCELADA" || s.estatus === "ACLARADA" ? "Aclarada" : (s.estatus === "RATIFICADA" ? "Ratificada" : (s.estatus === "VENCIDA" ? "Cumplida" : "Activa")))),
             descripcion: descClean || "Infracción detectada en campo y documentada por seguridad",
@@ -4692,38 +4705,28 @@ export default function App() {
                                     </div>
                                   )}
 
-                                  {/* Botones de Acción */}
+                                  {/* Información de vigencia y botón de apelación */}
                                   {s.status === "Activa" && (
-                                    <div className="flex flex-wrap gap-2.5 pt-1">
-                                      <button
-                                        onClick={() => setSelectedSancionParaApelar(s)}
-                                        className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
-                                      >
-                                        <IconMessageSquare className="w-3.5 h-3.5" />
-                                        <span>Interponer Apelación / Aclaración</span>
-                                      </button>
-                                      <button
-                                        onClick={async () => {
-                                          try {
-                                            await api.updateSancion(s.id, { estatus: "VENCIDA" });
-                                            await loadDatabaseData();
-                                          } catch (e) {
-                                            setSanciones((prev) =>
-                                              prev.map((item) =>
-                                                item.id === s.id ? { ...item, status: "Cumplida" as const } : item
-                                              )
-                                            );
-                                          }
-                                          showToast(
-                                            "Se ha registrado el cumplimiento formal de la suspensión.",
-                                            "success",
-                                            "Sanción Cumplida"
-                                          );
-                                        }}
-                                        className="px-3.5 py-2 rounded-xl text-xs font-semibold border border-slate-300 text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors"
-                                      >
-                                        Registrar Cumplimiento
-                                      </button>
+                                    <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-slate-100">
+                                      <div className="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
+                                        <IconClock className="w-3.5 h-3.5 text-amber-600" />
+                                        <span>
+                                          {s.fecha_fin ? (
+                                            <>Suspensión temporal vigente hasta: <strong className="text-slate-800 font-mono">{new Date(s.fecha_fin).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })}</strong></>
+                                          ) : (
+                                            "Suspensión administrativa activa"
+                                          )}
+                                        </span>
+                                      </div>
+                                      {!s.apelacion && (
+                                        <button
+                                          onClick={() => setSelectedSancionParaApelar(s)}
+                                          className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                                        >
+                                          <IconMessageSquare className="w-3.5 h-3.5" />
+                                          <span>Interponer Apelación / Aclaración</span>
+                                        </button>
+                                      )}
                                     </div>
                                   )}
                                 </div>

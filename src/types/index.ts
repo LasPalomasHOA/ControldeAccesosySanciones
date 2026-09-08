@@ -363,6 +363,8 @@ export interface Sancion {
   estatus?: string;
   fechaSancion?: string;
   fechaResolucion?: string;
+  fecha_inicio?: string;
+  fecha_fin?: string;
   montoMulta?: number;
   evidenciaUrl?: string;
   comentarios?: string;

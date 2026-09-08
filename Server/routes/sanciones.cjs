@@ -25,6 +25,18 @@ router.get('/', async (req, res) => {
       order: [['created_at', 'DESC']]
     });
 
+    const ahora = new Date();
+    for (const s of sanciones) {
+      if (s.fecha_fin && ahora >= new Date(s.fecha_fin) && (s.estatus === 'ACTIVA' || s.estatus === 'RATIFICADA')) {
+        s.estatus = 'VENCIDA';
+        await s.save().catch(() => {});
+        if (s.vehiculo && s.vehiculo.estatus_acceso === 'SUSPENDIDO') {
+          s.vehiculo.estatus_acceso = 'HABILITADO';
+          await s.vehiculo.save().catch(() => {});
+        }
+      }
+    }
+
     const resultado = sanciones.map(s => {
       const plain = s.get({ plain: true });
       let motivoLimpio = plain.motivo || '';
