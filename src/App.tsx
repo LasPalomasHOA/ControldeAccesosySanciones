@@ -1044,7 +1044,7 @@ export default function App() {
   const [casetaCorbatin, setCasetaCorbatin] = useState("");
   const [casetaHoraEntrada, setCasetaHoraEntrada] = useState("");
   const [casetaHoraSalida, setCasetaHoraSalida] = useState("");
-  const [casetaNumPasajeros, setCasetaNumPasajeros] = useState<number | string>(0);
+  const [casetaNumPasajeros, setCasetaNumPasajeros] = useState<number | string>("");
   const [casetaTrabajos, setCasetaTrabajos] = useState("");
   const [casetaOverrideActive, setCasetaOverrideActive] = useState(false);
   const [casetaSuccessMsg, setCasetaSuccessMsg] = useState(false);
@@ -2017,7 +2017,7 @@ export default function App() {
 
         await reloadBitacora();
         setCasetaTrabajos("");
-        setCasetaNumPasajeros(0);
+        setCasetaNumPasajeros("");
         setCasetaPeatonalObservaciones("");
         setCasetaSuccessMsg(true);
         setTimeout(() => setCasetaSuccessMsg(false), 4000);
@@ -2046,7 +2046,7 @@ export default function App() {
 
       await reloadBitacora();
       setCasetaTrabajos("");
-      setCasetaNumPasajeros(0);
+      setCasetaNumPasajeros("");
       setCasetaOverrideActive(false);
       setCasetaSuccessMsg(true);
       setTimeout(() => setCasetaSuccessMsg(false), 4000);
@@ -4881,9 +4881,18 @@ export default function App() {
                                 min="0"
                                 max="50"
                                 value={casetaNumPasajeros}
-                                onChange={(e) => setCasetaNumPasajeros(e.target.value === "" ? "" : Math.max(0, parseInt(e.target.value) || 0))}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val === "") {
+                                    setCasetaNumPasajeros("");
+                                  } else {
+                                    const parsed = parseInt(val, 10);
+                                    setCasetaNumPasajeros(isNaN(parsed) ? "" : Math.max(0, parsed));
+                                  }
+                                }}
+                                onFocus={(e) => e.target.select()}
                                 placeholder="0"
-                                className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono font-bold text-slate-800"
+                                className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono font-bold text-slate-800 focus:ring-2 focus:ring-emerald-200 outline-none"
                               />
                             </div>
                             <div>
