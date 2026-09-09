@@ -3574,6 +3574,20 @@ export default function App() {
                         </span>
                       </div>
 
+                      {/* Botón Eliminar Empresa (a la izquierda de Editar) */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedEmpresaParaEliminar(emp);
+                        }}
+                        className="p-2 rounded-xl border border-rose-200 bg-white text-rose-600 hover:bg-rose-50 hover:border-rose-300 transition-all flex items-center justify-center cursor-pointer shadow-2xs shrink-0"
+                        title={`Eliminar permanentemente a ${emp.nombre}`}
+                      >
+                        <IconTrash className="w-3.5 h-3.5 text-rose-600" />
+                      </button>
+
+                      {/* Botón Editar Empresa */}
                       <button
                         type="button"
                         onClick={(e) => {
@@ -3712,16 +3726,6 @@ export default function App() {
                               <span>+ Agregar Colaborador a {emp.nombre}</span>
                             </button>
                           )}
-
-                          <button
-                            type="button"
-                            onClick={() => setSelectedEmpresaParaEliminar(emp)}
-                            className="px-3 py-1.5 rounded-lg text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                            title={`Eliminar permanentemente a ${emp.nombre}`}
-                          >
-                            <IconTrash className="w-3.5 h-3.5 text-red-600" />
-                            <span>Eliminar Empresa</span>
-                          </button>
                         </div>
                       </div>
 
