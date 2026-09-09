@@ -14,7 +14,6 @@ export const Empresas: React.FC = () => {
   
   // Form State
   const [nombre, setNombre] = useState('');
-  const [rfc, setRfc] = useState('');
   const [responsable, setResponsable] = useState('');
   const [telefono, setTelefono] = useState('');
   const [correo, setCorreo] = useState('');
@@ -24,7 +23,6 @@ export const Empresas: React.FC = () => {
   const openAddModal = () => {
     setEditingEmpresa(null);
     setNombre('');
-    setRfc('');
     setResponsable('');
     setTelefono('');
     setCorreo('');
@@ -36,7 +34,6 @@ export const Empresas: React.FC = () => {
   const openEditModal = (emp: Empresa) => {
     setEditingEmpresa(emp);
     setNombre(emp.nombre);
-    setRfc(emp.rfc);
     setResponsable(emp.responsable);
     setTelefono(emp.telefono);
     setCorreo(emp.correo);
@@ -47,14 +44,8 @@ export const Empresas: React.FC = () => {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nombre || !rfc || !responsable || !telefono || !correo) {
+    if (!nombre || !responsable || !telefono || !correo) {
       setError('Todos los campos son obligatorios.');
-      return;
-    }
-
-    const rfcRegex = /^[A-Z&Ñ]{3,4}\d{6}[A-Z0-9]{3}$/i;
-    if (!rfcRegex.test(rfc)) {
-      setError('RFC inválido. Debe tener formato oficial (ej. CPU120304AA1).');
       return;
     }
 
@@ -62,7 +53,6 @@ export const Empresas: React.FC = () => {
       editarEmpresa({
         ...editingEmpresa,
         nombre,
-        rfc: rfc.toUpperCase(),
         responsable,
         telefono,
         correo,
@@ -72,7 +62,6 @@ export const Empresas: React.FC = () => {
       agregarEmpresa({
         id: `emp_${Date.now()}`,
         nombre,
-        rfc: rfc.toUpperCase(),
         responsable,
         telefono,
         correo,
@@ -86,7 +75,6 @@ export const Empresas: React.FC = () => {
   const filteredEmpresas = empresas.filter(emp => {
     const matchesSearch =
       emp.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.rfc.toLowerCase().includes(searchTerm.toLowerCase()) ||
       emp.responsable.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || emp.estado === statusFilter;
@@ -120,7 +108,7 @@ export const Empresas: React.FC = () => {
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <input
             type="text"
-            placeholder="Buscar por nombre, RFC o responsable..."
+            placeholder="Buscar por nombre o responsable..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all text-slate-700"
@@ -169,7 +157,7 @@ export const Empresas: React.FC = () => {
           <table className="w-full text-left border-collapse text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 font-semibold bg-slate-50/50">
-                <th className="py-3 px-4">Empresa / RFC</th>
+                <th className="py-3 px-4">Empresa</th>
                 <th className="py-3 px-4">Contacto Responsable</th>
                 <th className="py-3 px-4 text-center">Nómina Autorizada</th>
                 <th className="py-3 px-4 text-center">Vehículos Registrados</th>
@@ -183,7 +171,6 @@ export const Empresas: React.FC = () => {
                   <tr key={emp.id} className="hover:bg-slate-50/50 transition-colors font-medium">
                     <td className="py-3.5 px-4">
                       <div className="font-bold text-slate-800">{emp.nombre}</div>
-                      <div className="text-xs text-slate-400 font-mono mt-0.5">{emp.rfc}</div>
                     </td>
                     <td className="py-3.5 px-4 text-xs">
                       <div className="font-semibold text-slate-800">{emp.responsable}</div>
@@ -267,17 +254,6 @@ export const Empresas: React.FC = () => {
                   onChange={(e) => setNombre(e.target.value)}
                   placeholder="Ej. Construcciones del Puerto S.A."
                   className="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all text-slate-700 bg-slate-50"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">RFC</label>
-                <input
-                  type="text"
-                  value={rfc}
-                  onChange={(e) => setRfc(e.target.value)}
-                  placeholder="Ej. CPU120304AA1"
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all text-slate-700 bg-slate-50"
                 />
               </div>
 

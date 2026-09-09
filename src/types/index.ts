@@ -265,7 +265,7 @@ export interface BitacoraAccesoDB {
 export interface Empresa {
   id: string;
   nombre: string;
-  rfc: string;
+  rfc?: string;
   responsable: string;
   telefono: string;
   correo: string;

@@ -335,7 +335,7 @@ interface UserAccount {
 interface Empresa {
   id: string;
   nombre: string;
-  rfc: string;
+  rfc?: string;
   contacto: string;
   telefono: string;
   email: string;
@@ -1049,7 +1049,6 @@ export default function App() {
   // Edición y Eliminación de Empresa y Rango de Corbatines
   const [selectedEmpresaParaEditar, setSelectedEmpresaParaEditar] = useState<Empresa | null>(null);
   const [empresaEditNombre, setEmpresaEditNombre] = useState("");
-  const [empresaEditRfc, setEmpresaEditRfc] = useState("");
   const [empresaEditContacto, setEmpresaEditContacto] = useState("");
   const [empresaEditTelefono, setEmpresaEditTelefono] = useState("");
   const [empresaEditEmail, setEmpresaEditEmail] = useState("");
@@ -2598,7 +2597,6 @@ export default function App() {
 
     const f = e.currentTarget;
     const empNombre = (f.elements.namedItem("nombre") as HTMLInputElement).value.trim();
-    const rfcVal = (f.elements.namedItem("rfc") as HTMLInputElement).value.trim().toUpperCase();
     const contacto = (f.elements.namedItem("contacto") as HTMLInputElement).value.trim();
     const tel = (f.elements.namedItem("telefono") as HTMLInputElement).value.trim();
     const email = (f.elements.namedItem("email") as HTMLInputElement).value.trim();
@@ -2649,7 +2647,6 @@ export default function App() {
   const handleOpenEditarEmpresa = (emp: Empresa) => {
     setSelectedEmpresaParaEditar(emp);
     setEmpresaEditNombre(emp.nombre || "");
-    setEmpresaEditRfc(emp.rfc || "");
     setEmpresaEditContacto(emp.contacto || "");
     setEmpresaEditTelefono(emp.telefono || "");
     setEmpresaEditEmail(emp.email || "");
@@ -3337,7 +3334,6 @@ export default function App() {
       const q = empresaSearchTerm.toLowerCase();
       return (
         e.nombre.toLowerCase().includes(q) ||
-        e.rfc.toLowerCase().includes(q) ||
         e.contacto.toLowerCase().includes(q) ||
         (e.telefono && e.telefono.toLowerCase().includes(q)) ||
         (e.email && e.email.toLowerCase().includes(q))
@@ -3405,7 +3401,7 @@ export default function App() {
             <IconSearch className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
             <input
               type="text"
-              placeholder="Buscar por Empresa, RFC, Contacto o Teléfono..."
+              placeholder="Buscar por Empresa, Contacto o Teléfono..."
               value={empresaSearchTerm}
               onChange={(e) => setEmpresaSearchTerm(e.target.value)}
               className="w-full rounded-xl pl-10 pr-4 py-2 text-xs border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800"
@@ -3459,9 +3455,6 @@ export default function App() {
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-bold text-sm text-slate-900">{emp.nombre}</h3>
-                          <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
-                            {emp.rfc}
-                          </span>
                         </div>
                         <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-2 flex-wrap">
                           <span>Titular: <strong>{emp.contacto}</strong></span>
@@ -5637,7 +5630,7 @@ export default function App() {
                             className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 bg-white font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-200"
                           >
                             {empresas.map((emp) => (
-                              <option key={emp.id} value={emp.id}>{emp.nombre} ({emp.rfc})</option>
+                              <option key={emp.id} value={emp.id}>{emp.nombre}</option>
                             ))}
                           </select>
                         </div>
@@ -5854,7 +5847,7 @@ export default function App() {
                             className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 bg-white font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-sky-200"
                           >
                             {empresas.map((emp) => (
-                              <option key={emp.id} value={emp.id}>{emp.nombre} ({emp.rfc})</option>
+                              <option key={emp.id} value={emp.id}>{emp.nombre}</option>
                             ))}
                           </select>
                         </div>
@@ -6481,10 +6474,6 @@ export default function App() {
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Razón Social de la Empresa *</label>
                 <input name="nombre" required placeholder="Ej. Climas y Refrigeración Rocky Point" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">RFC Fiscal *</label>
-                <input name="rfc" required placeholder="CRRP950820KL9" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre del Titular / Contacto *</label>
@@ -7608,7 +7597,7 @@ export default function App() {
                     className="w-full rounded-xl px-4 py-2.5 text-xs font-bold border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800"
                   >
                     {empresas.map(e => (
-                      <option key={e.id} value={e.id}>{e.nombre} ({e.rfc})</option>
+                      <option key={e.id} value={e.id}>{e.nombre}</option>
                     ))}
                   </select>
                 </div>
@@ -7763,7 +7752,6 @@ export default function App() {
               <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente esta empresa proveedora?</p>
               <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
                 <div><strong>Empresa:</strong> {selectedEmpresaParaEliminar.nombre}</div>
-                <div><strong>RFC:</strong> <span className="font-mono font-bold text-slate-900">{selectedEmpresaParaEliminar.rfc}</span></div>
                 <div><strong>Contacto:</strong> {selectedEmpresaParaEliminar.contacto}</div>
                 <div><strong>Teléfono:</strong> {selectedEmpresaParaEliminar.telefono || "S/N"}</div>
                 {selectedEmpresaParaEliminar.corbatin_rango_inicio && selectedEmpresaParaEliminar.corbatin_rango_fin && (

@@ -251,7 +251,7 @@ export const ReglamentoProveedor: React.FC = () => {
             <div>
               <div className="text-xs text-slate-400 font-bold uppercase tracking-wider">Empresa Contratista</div>
               <h3 className="text-lg font-black text-slate-800 mt-1">{empresa?.nombre}</h3>
-              <p className="text-xs text-slate-500 font-semibold mt-0.5">RFC: {empresa?.rfc} &bull; Representante: {empresa?.responsable}</p>
+              <p className="text-xs text-slate-500 font-semibold mt-0.5">Representante: {empresa?.responsable}</p>
             </div>
 
             <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
