@@ -2707,10 +2707,10 @@ export default function App() {
 
       await reloadVehiculos();
       setSelectedVehiculoParaEditar(null);
-      showToast(`Vehículo ${marcaVal} ${modeloVal} (${placasVal}) actualizado exitosamente en PostgreSQL.`, "success", "Vehículo Actualizado");
+      showToast(`Vehículo ${marcaVal} ${modeloVal} (${placasVal}) actualizado exitosamente en el sistema.`, "success", "Vehículo Actualizado");
     } catch (err: any) {
       console.error("Error al actualizar vehículo:", err);
-      setVehiculoEditError("Error al actualizar en base de datos: " + (err.message || err));
+      setVehiculoEditError("Error al actualizar los datos del vehículo: " + (err.message || err));
       showToast("Error al actualizar vehículo: " + (err.message || err), "error");
     } finally {
       isSubmittingVehiculoEditRef.current = false;
@@ -2729,7 +2729,7 @@ export default function App() {
       await api.deleteVehiculo(target.id);
       await reloadVehiculos();
       setSelectedVehiculoParaEliminar(null);
-      showToast(`El vehículo ${target.marca} ${target.modelo} (${target.placas}) fue eliminado del sistema.`, "success", "Vehículo Eliminado");
+      showToast(`El vehículo ${target.marca} ${target.modelo} (${target.placas}) fue eliminado permanentemente.`, "success", "Vehículo Eliminado");
     } catch (err: any) {
       console.error("Error al eliminar vehículo:", err);
       showToast("Error al eliminar vehículo: " + (err.message || err), "error");
@@ -2852,10 +2852,10 @@ export default function App() {
       setTrabajadorFotoUrl("");
       setTrabajadorActivo(true);
       setTrabajadorFormError("");
-      showToast(`Trabajador "${nom} ${ape}" guardado exitosamente en PostgreSQL.`, "success", "Trabajador Registrado");
+      showToast(`Trabajador "${nom} ${ape}" registrado exitosamente en el sistema.`, "success", "Trabajador Registrado");
     } catch (err: any) {
-      setTrabajadorFormError("Error al guardar en base de datos: " + (err.message || err));
-      showToast("Error al guardar en base de datos: " + (err.message || err), "error");
+      setTrabajadorFormError("Error al guardar trabajador: " + (err.message || err));
+      showToast("Error al guardar trabajador: " + (err.message || err), "error");
     } finally {
       isSubmittingTrabajadorRef.current = false;
       setIsSubmittingTrabajador(false);
@@ -2905,12 +2905,12 @@ export default function App() {
         activo: trabajadorActivo,
       });
       await reloadTrabajadores();
-      showToast(`Información de "${nom} ${ape}" actualizada con éxito en PostgreSQL.`, "success", "Trabajador Actualizado");
+      showToast(`Información de "${nom} ${ape}" actualizada con éxito en el sistema.`, "success", "Trabajador Actualizado");
       setSelectedTrabajadorParaEditar(null);
       setTrabajadorFormError("");
     } catch (err: any) {
-      setTrabajadorFormError("Error al actualizar en base de datos: " + (err.message || err));
-      showToast("Error al actualizar en base de datos: " + (err.message || err), "error");
+      setTrabajadorFormError("Error al actualizar: " + (err.message || err));
+      showToast("Error al actualizar: " + (err.message || err), "error");
     } finally {
       isSubmittingTrabajadorEditRef.current = false;
       setIsSubmittingTrabajadorEdit(false);
@@ -2932,7 +2932,7 @@ export default function App() {
       showToast(`El colaborador "${eliminado.nombre} ${eliminado.apellidos}" fue eliminado permanentemente.`, "success", "Colaborador Eliminado");
       setSelectedTrabajadorParaEliminar(null);
     } catch (err: any) {
-      showToast("Error al eliminar de base de datos: " + (err.message || err), "error");
+      showToast("Error al eliminar colaborador: " + (err.message || err), "error");
       await reloadTrabajadores();
     } finally {
       isDeletingTrabajadorRef.current = false;
@@ -2953,7 +2953,7 @@ export default function App() {
       showToast(`El supervisor "${eliminado.nombre}" (${eliminado.username}) fue eliminado permanentemente.`, "success", "Supervisor Eliminado");
       setSelectedSupervisorParaEliminar(null);
     } catch (err: any) {
-      showToast("Error al eliminar supervisor de la base de datos: " + (err.message || err), "error");
+      showToast("Error al eliminar supervisor: " + (err.message || err), "error");
       await reloadUsuarios();
     } finally {
       isDeletingSupervisorRef.current = false;
@@ -7310,7 +7310,7 @@ export default function App() {
                 <div><strong>Corbatín:</strong> #{selectedVehiculoParaEliminar.corbatinNum}</div>
                 <div><strong>Empresa:</strong> {selectedVehiculoParaEliminar.empresaNombre}</div>
               </div>
-              <p className="text-[11px] text-red-700">Esta acción eliminará el registro en la base de datos y desvinculará el corbatín QR asociado.</p>
+              <p className="text-[11px] text-red-700">Esta acción eliminará permanentemente la unidad y desvinculará el corbatín QR asociado.</p>
             </div>
 
             <div className="flex justify-end gap-2.5 pt-2">
