@@ -3418,8 +3418,9 @@ export default function App() {
                 >
                   {/* Header / Fila Principal de la Empresa (Dropdown Toggle) */}
                   <div
-                    className={`px-5 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 cursor-pointer transition-colors ${isExpanded ? "bg-slate-50/80 border-b border-slate-200" : "hover:bg-slate-50/50"
-                      }`}
+                    className={`group px-5 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 cursor-pointer transition-colors ${
+                      isExpanded ? "bg-slate-50/80 border-b border-slate-200" : "hover:bg-slate-50/70"
+                    }`}
                     onClick={() => setExpandedEmpresaId(isExpanded ? null : emp.id)}
                   >
                     <div className="flex items-start sm:items-center gap-3.5">
@@ -3485,20 +3486,17 @@ export default function App() {
                         <span>Editar Rango / Empresa</span>
                       </button>
 
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setExpandedEmpresaId(isExpanded ? null : emp.id);
-                        }}
-                        className={`p-2 px-3 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${isExpanded
-                          ? "bg-[#0D6E5F] text-white border-transparent shadow-xs"
-                          : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
-                          }`}
+                      {/* Indicador de Flecha Integrado al Contenedor */}
+                      <div
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
+                          isExpanded
+                            ? "bg-[#0D6E5F] text-white shadow-xs"
+                            : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
+                        }`}
+                        title={isExpanded ? "Contraer" : "Desplegar"}
                       >
-                        <span>{isExpanded ? "Ocultar Flota & Personal" : "Desplegar Flota & Personal"}</span>
-                        {isExpanded ? <IconChevronUp className="w-3.5 h-3.5" /> : <IconChevronDown className="w-3.5 h-3.5" />}
-                      </button>
+                        {isExpanded ? <IconChevronUp className="w-4 h-4" /> : <IconChevronDown className="w-4 h-4" />}
+                      </div>
                     </div>
                   </div>
 
