@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { Op } = require('sequelize');
 const db = require('../models/index.cjs');
 
 // GET /api/empresas - Listar empresas con conteos de trabajadores y vehículos
@@ -88,8 +89,28 @@ router.post('/', async (req, res) => {
     const inicioParsed = rangoInicio != null && String(rangoInicio).trim() !== '' ? parseInt(rangoInicio, 10) : null;
     const finParsed = rangoFin != null && String(rangoFin).trim() !== '' ? parseInt(rangoFin, 10) : null;
 
-    if (inicioParsed !== null && finParsed !== null && inicioParsed > finParsed) {
-      return res.status(400).json({ error: 'El corbatín inicial no puede ser mayor al corbatín final.' });
+    if (inicioParsed !== null && finParsed !== null) {
+      if (inicioParsed > finParsed) {
+        return res.status(400).json({ error: 'El corbatín inicial no puede ser mayor al corbatín final.' });
+      }
+
+      // Validar que el rango no se empalme con otra empresa
+      const empalme = await db.Empresa.findOne({
+        where: {
+          corbatin_rango_inicio: { [Op.ne]: null },
+          corbatin_rango_fin: { [Op.ne]: null },
+          [Op.and]: [
+            { corbatin_rango_inicio: { [Op.lte]: finParsed } },
+            { corbatin_rango_fin: { [Op.gte]: inicioParsed } }
+          ]
+        }
+      });
+
+      if (empalme) {
+        return res.status(400).json({
+          error: `El rango #${inicioParsed} al #${finParsed} se traslapa con la empresa "${empalme.razon_social}" (Rango: #${empalme.corbatin_rango_inicio} al #${empalme.corbatin_rango_fin}). Cada empresa debe tener un rango único.`
+        });
+      }
     }
 
     const nueva = await db.Empresa.create({
@@ -147,15 +168,36 @@ router.put('/:id', async (req, res) => {
       empresa.corbatin_rango_fin = rangoFin != null && String(rangoFin).trim() !== '' ? parseInt(rangoFin, 10) : null;
     }
 
-    if (empresa.corbatin_rango_inicio && empresa.corbatin_rango_fin && empresa.corbatin_rango_inicio > empresa.corbatin_rango_fin) {
-      return res.status(400).json({ error: 'El corbatín inicial no puede ser mayor al corbatín final.' });
+    if (empresa.corbatin_rango_inicio != null && empresa.corbatin_rango_fin != null) {
+      if (empresa.corbatin_rango_inicio > empresa.corbatin_rango_fin) {
+        return res.status(400).json({ error: 'El corbatín inicial no puede ser mayor al corbatín final.' });
+      }
+
+      // Validar que el rango no se empalme con otra empresa (excluyendo la actual)
+      const empalme = await db.Empresa.findOne({
+        where: {
+          id_empresa: { [Op.ne]: req.params.id },
+          corbatin_rango_inicio: { [Op.ne]: null },
+          corbatin_rango_fin: { [Op.ne]: null },
+          [Op.and]: [
+            { corbatin_rango_inicio: { [Op.lte]: empresa.corbatin_rango_fin } },
+            { corbatin_rango_fin: { [Op.gte]: empresa.corbatin_rango_inicio } }
+          ]
+        }
+      });
+
+      if (empalme) {
+        return res.status(400).json({
+          error: `El rango #${empresa.corbatin_rango_inicio} al #${empresa.corbatin_rango_fin} se traslapa con la empresa "${empalme.razon_social}" (Rango: #${empalme.corbatin_rango_inicio} al #${empalme.corbatin_rango_fin}). Cada empresa debe tener un rango único.`
+        });
+      }
     }
 
     await empresa.save();
     res.json(empresa);
   } catch (error) {
     console.error('Error al actualizar empresa:', error);
-    res.status(500).json({ error: 'Error al actualizar empresa' });
+    res.status(500).json({ error: 'Error al actualizar empresa', details: error.message });
   }
 });
 

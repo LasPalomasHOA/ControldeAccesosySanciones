@@ -109,6 +109,15 @@ function IconAlertTriangle({ className = "w-5 h-5" }: { className?: string }) {
   );
 }
 
+function IconMail({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="20" height="16" x="2" y="4" rx="2" />
+      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+    </svg>
+  );
+}
+
 function IconUserPlus({ className = "w-5 h-5" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -997,6 +1006,7 @@ export default function App() {
   // Modals
   const [showCreateSupervisorModal, setShowCreateSupervisorModal] = useState(false);
   const [showCreateEmpresaModal, setShowCreateEmpresaModal] = useState(false);
+  const [empresaCreateError, setEmpresaCreateError] = useState("");
   const [showCreateGuardiaModal, setShowCreateGuardiaModal] = useState(false);
   const [selectedSancionParaApelar, setSelectedSancionParaApelar] = useState<Sancion | null>(null);
   const [apelacionArgumentos, setApelacionArgumentos] = useState("");
@@ -2594,6 +2604,7 @@ export default function App() {
     if (isSubmittingEmpresaRef.current) return;
     isSubmittingEmpresaRef.current = true;
     setIsSubmittingEmpresa(true);
+    setEmpresaCreateError("");
 
     const f = e.currentTarget;
     const empNombre = (f.elements.namedItem("nombre") as HTMLInputElement).value.trim();
@@ -2606,11 +2617,50 @@ export default function App() {
     const rInicio = rInicioInput !== undefined && rInicioInput !== "" ? parseInt(rInicioInput, 10) : null;
     const rFin = rFinInput !== undefined && rFinInput !== "" ? parseInt(rFinInput, 10) : null;
 
-    if (rInicio !== null && rFin !== null && rInicio > rFin) {
-      showToast("El número de corbatín inicial no puede ser mayor que el final.", "error", "Rango Inválido");
+    if ((rInicio !== null && rFin === null) || (rInicio === null && rFin !== null)) {
+      const msg = "Debes ingresar ambos valores del rango de corbatines (inicial y final), o dejar ambos en blanco.";
+      setEmpresaCreateError(msg);
+      showToast(msg, "error", "Rango Incompleto");
       isSubmittingEmpresaRef.current = false;
       setIsSubmittingEmpresa(false);
       return;
+    }
+
+    if (rInicio !== null && rFin !== null) {
+      if (rInicio < 1 || rFin < 1) {
+        const msg = "Los números de corbatín deben ser iguales o mayores a 1.";
+        setEmpresaCreateError(msg);
+        showToast(msg, "error", "Rango Inválido");
+        isSubmittingEmpresaRef.current = false;
+        setIsSubmittingEmpresa(false);
+        return;
+      }
+
+      if (rInicio > rFin) {
+        const msg = "El número de corbatín inicial no puede ser mayor que el final.";
+        setEmpresaCreateError(msg);
+        showToast(msg, "error", "Rango Inválido");
+        isSubmittingEmpresaRef.current = false;
+        setIsSubmittingEmpresa(false);
+        return;
+      }
+
+      // Validar solapamiento con cualquier otra empresa
+      const overlapping = empresas.find((other) => {
+        if (other.corbatin_rango_inicio == null || other.corbatin_rango_fin == null) return false;
+        const oIni = Number(other.corbatin_rango_inicio);
+        const oFin = Number(other.corbatin_rango_fin);
+        return rInicio <= oFin && rFin >= oIni;
+      });
+
+      if (overlapping) {
+        const msg = `El rango #${rInicio} al #${rFin} se traslapa con la empresa "${overlapping.nombre}" (Rango: #${overlapping.corbatin_rango_inicio} al #${overlapping.corbatin_rango_fin}). Cada empresa debe tener un rango único.`;
+        setEmpresaCreateError(msg);
+        showToast(msg, "error", "Rango Duplicado / Traslapado");
+        isSubmittingEmpresaRef.current = false;
+        setIsSubmittingEmpresa(false);
+        return;
+      }
     }
 
     try {
@@ -2637,7 +2687,9 @@ export default function App() {
       setShowCreateEmpresaModal(false);
       showToast(`Empresa "${empNombre}" y cuenta "${email}" creadas exitosamente.`, "success", "Proveedor Creado");
     } catch (err: any) {
-      showToast("Error al registrar proveedor: " + (err.message || err), "error");
+      const errMsg = err.message || err;
+      setEmpresaCreateError(errMsg);
+      showToast("Error al registrar proveedor: " + errMsg, "error");
     } finally {
       isSubmittingEmpresaRef.current = false;
       setIsSubmittingEmpresa(false);
@@ -2666,11 +2718,45 @@ export default function App() {
     const rInicio = empresaEditRangoInicio !== "" ? parseInt(empresaEditRangoInicio, 10) : null;
     const rFin = empresaEditRangoFin !== "" ? parseInt(empresaEditRangoFin, 10) : null;
 
-    if (rInicio !== null && rFin !== null && rInicio > rFin) {
-      setEmpresaEditError("El número inicial de corbatín no puede ser mayor que el final.");
+    if ((rInicio !== null && rFin === null) || (rInicio === null && rFin !== null)) {
+      setEmpresaEditError("Debes ingresar ambos valores del rango de corbatines (inicial y final), o dejar ambos en blanco.");
       isSubmittingEmpresaEditRef.current = false;
       setIsSubmittingEmpresaEdit(false);
       return;
+    }
+
+    if (rInicio !== null && rFin !== null) {
+      if (rInicio < 1 || rFin < 1) {
+        setEmpresaEditError("Los números de corbatín deben ser iguales o mayores a 1.");
+        isSubmittingEmpresaEditRef.current = false;
+        setIsSubmittingEmpresaEdit(false);
+        return;
+      }
+
+      if (rInicio > rFin) {
+        setEmpresaEditError("El número inicial de corbatín no puede ser mayor que el final.");
+        isSubmittingEmpresaEditRef.current = false;
+        setIsSubmittingEmpresaEdit(false);
+        return;
+      }
+
+      // Validar solapamiento con otras empresas
+      const overlapping = empresas.find((other) => {
+        if (other.id === selectedEmpresaParaEditar.id) return false;
+        if (other.corbatin_rango_inicio == null || other.corbatin_rango_fin == null) return false;
+        const oIni = Number(other.corbatin_rango_inicio);
+        const oFin = Number(other.corbatin_rango_fin);
+        return rInicio <= oFin && rFin >= oIni;
+      });
+
+      if (overlapping) {
+        const msg = `El rango #${rInicio} al #${rFin} se traslapa con la empresa "${overlapping.nombre}" (Rango: #${overlapping.corbatin_rango_inicio} al #${overlapping.corbatin_rango_fin}). Cada empresa debe tener un rango único.`;
+        setEmpresaEditError(msg);
+        showToast(msg, "error", "Rango Duplicado / Traslapado");
+        isSubmittingEmpresaEditRef.current = false;
+        setIsSubmittingEmpresaEdit(false);
+        return;
+      }
     }
 
     try {
@@ -3410,7 +3496,10 @@ export default function App() {
 
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             <button
-              onClick={() => setShowCreateEmpresaModal(true)}
+              onClick={() => {
+                setEmpresaCreateError("");
+                setShowCreateEmpresaModal(true);
+              }}
               className="px-4 py-2 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer shadow-sm"
               style={{ background: "var(--color-primary)" }}
             >
@@ -3443,37 +3532,27 @@ export default function App() {
                 >
                   {/* Header / Fila Principal de la Empresa (Dropdown Toggle) */}
                   <div
-                    className={`group px-5 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 cursor-pointer transition-colors ${
+                    className={`group px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer transition-colors ${
                       isExpanded ? "bg-slate-50/80 border-b border-slate-200" : "hover:bg-slate-50/70"
                     }`}
                     onClick={() => setExpandedEmpresaId(isExpanded ? null : emp.id)}
                   >
-                    <div className="flex items-start sm:items-center gap-3.5">
+                    <div className="flex items-center gap-3.5 min-w-0">
                       <div className="w-11 h-11 rounded-xl bg-emerald-100/70 border border-emerald-200 flex items-center justify-center font-bold text-emerald-900 text-sm shrink-0">
                         {emp.nombre.substring(0, 2).toUpperCase()}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-bold text-sm text-slate-900">{emp.nombre}</h3>
-                        </div>
-                        <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-2 flex-wrap">
-                          <span>Titular: <strong>{emp.contacto}</strong></span>
-                          <span>·</span>
-                          <span>Tel: {emp.telefono || "S/N"}</span>
-                          {emp.email && (
-                            <>
-                              <span>·</span>
-                              <span>{emp.email}</span>
-                            </>
-                          )}
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-sm text-slate-900 truncate">{emp.nombre}</h3>
+                        <p className="text-xs text-slate-500 mt-0.5 truncate">
+                          Titular: <span className="font-semibold text-slate-700">{emp.contacto || "No especificado"}</span>
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 self-end lg:self-center flex-wrap justify-end">
-                      <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center flex-wrap sm:flex-nowrap justify-end">
+                      <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                         {emp.corbatin_rango_inicio !== null && emp.corbatin_rango_inicio !== undefined && emp.corbatin_rango_fin !== null && emp.corbatin_rango_fin !== undefined ? (
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold border ${
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold border shrink-0 ${
                             empVehicles.length >= (emp.cuposTotales || (emp.corbatin_rango_fin - emp.corbatin_rango_inicio + 1))
                               ? "bg-amber-50 text-amber-800 border-amber-300"
                               : "bg-teal-50 text-teal-800 border-teal-300"
@@ -3481,15 +3560,15 @@ export default function App() {
                             <span>🏷️ Corbatines #{emp.corbatin_rango_inicio} al #{emp.corbatin_rango_fin} ({empVehicles.length}/{emp.cuposTotales || (emp.corbatin_rango_fin - emp.corbatin_rango_inicio + 1)} cupos)</span>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
                             <span>🏷️ Sin Rango Asignado</span>
                           </span>
                         )}
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
                           <IconCar className="w-3.5 h-3.5" />
                           <span>{empVehicles.length} Vehículos</span>
                         </span>
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
                           <IconUsers className="w-3.5 h-3.5" />
                           <span>{empTrabajadores.length} Trabajadores</span>
                         </span>
@@ -3501,7 +3580,7 @@ export default function App() {
                           e.stopPropagation();
                           handleOpenEditarEmpresa(emp);
                         }}
-                        className="p-2 rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
+                        className="p-2 rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 transition-all flex items-center justify-center cursor-pointer shadow-2xs shrink-0"
                         title="Editar Datos de Empresa y Rango de Corbatines"
                       >
                         <IconEdit className="w-3.5 h-3.5 text-slate-500" />
@@ -3509,7 +3588,7 @@ export default function App() {
 
                       {/* Indicador de Flecha Integrado al Contenedor */}
                       <div
-                        className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all shrink-0 ${
                           isExpanded
                             ? "bg-[#0D6E5F] text-white shadow-xs"
                             : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
@@ -3524,6 +3603,51 @@ export default function App() {
                   {/* Cuerpo Desplegable (Dropdown / Acordeón) */}
                   {isExpanded && (
                     <div className="p-5 sm:p-6 bg-slate-50/40 space-y-5">
+                      {/* Tarjeta de Información y Contacto de la Empresa */}
+                      <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 shrink-0">
+                            <IconUsers className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Titular / Responsable</span>
+                            <span className="font-semibold text-slate-800 truncate block">{emp.contacto || "No especificado"}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-teal-50 flex items-center justify-center text-teal-700 shrink-0">
+                            <IconPhone className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Teléfono de Contacto</span>
+                            {emp.telefono ? (
+                              <a href={`tel:${emp.telefono}`} onClick={(e) => e.stopPropagation()} className="font-semibold text-teal-700 hover:underline truncate block font-mono">
+                                {emp.telefono}
+                              </a>
+                            ) : (
+                              <span className="text-slate-400">Sin teléfono</span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-700 shrink-0">
+                            <IconMail className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Correo Electrónico</span>
+                            {emp.email ? (
+                              <a href={`mailto:${emp.email}`} onClick={(e) => e.stopPropagation()} className="font-semibold text-blue-700 hover:underline truncate block">
+                                {emp.email}
+                              </a>
+                            ) : (
+                              <span className="text-slate-400">Sin correo</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
                       {/* Pestañas de Navegación Interna */}
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3" style={{ borderColor: "var(--color-border)" }}>
                         <div className="flex gap-2">
@@ -6465,8 +6589,16 @@ export default function App() {
           <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b pb-3">
               <h3 className="text-sm font-bold text-slate-900 uppercase">Registrar Empresa Proveedora</h3>
-              <button onClick={() => setShowCreateEmpresaModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">✕</button>
+              <button onClick={() => { setShowCreateEmpresaModal(false); setEmpresaCreateError(""); }} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">✕</button>
             </div>
+
+            {empresaCreateError && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                <span>{empresaCreateError}</span>
+              </div>
+            )}
+
             <form
               onSubmit={handleGuardarNuevaEmpresa}
               className="space-y-3"
@@ -6515,7 +6647,7 @@ export default function App() {
               </div>
 
               <div className="flex justify-end gap-2 pt-3">
-                <button type="button" onClick={() => setShowCreateEmpresaModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>
+                <button type="button" onClick={() => { setShowCreateEmpresaModal(false); setEmpresaCreateError(""); }} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>
                 <button
                   type="submit"
                   disabled={isSubmittingEmpresa}
