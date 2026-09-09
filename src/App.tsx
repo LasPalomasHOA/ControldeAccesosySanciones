@@ -278,12 +278,28 @@ function IconDownload({ className = "w-4 h-4" }: { className?: string }) {
   );
 }
 
+function IconChevronDown({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
+function IconChevronUp({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="18 15 12 9 6 15" />
+    </svg>
+  );
+}
+
 // ─── Types & Roles ────────────────────────────────────────────────────────────
 
 type UserRole = "admin" | "supervisor" | "contratista" | "caseta";
 type PortalScreen = "reglamento" | "dashboard" | "alta" | "trabajadores" | "corbatin" | "sanciones";
 type SupervisorTab = "bandeja" | "apelaciones" | "proveedores" | "guardias" | "historial";
-type AdminTab = "supervisores" | "auditoria";
+type AdminTab = "supervisores" | "proveedores" | "auditoria";
 type CasetaTab = "registro" | "bitacora";
 
 interface Trabajador {
@@ -996,6 +1012,36 @@ export default function App() {
   const [nuevoGuardiaFoto, setNuevoGuardiaFoto] = useState<string>("");
   const [nuevoGuardiaFotoError, setNuevoGuardiaFotoError] = useState<string>("");
   const [selectedFotoGuardiaPreview, setSelectedFotoGuardiaPreview] = useState<UserAccount | null>(null);
+
+  // Estados para Administrador / Supervisor: Gestión de Flotilla y Trabajadores por Empresa
+  const [expandedEmpresaId, setExpandedEmpresaId] = useState<string | null>(null);
+  const [empresaSearchTerm, setEmpresaSearchTerm] = useState("");
+  const [empresaSubTabMap, setEmpresaSubTabMap] = useState<Record<string, "vehiculos" | "trabajadores">>({});
+
+  // Edición y Eliminación de Vehículos
+  const [selectedVehiculoParaEditar, setSelectedVehiculoParaEditar] = useState<Vehicle | null>(null);
+  const [vehiculoEditMarca, setVehiculoEditMarca] = useState("");
+  const [vehiculoEditModelo, setVehiculoEditModelo] = useState("");
+  const [vehiculoEditAnio, setVehiculoEditAnio] = useState("");
+  const [vehiculoEditPlacas, setVehiculoEditPlacas] = useState("");
+  const [vehiculoEditColor, setVehiculoEditColor] = useState("");
+  const [vehiculoEditTelefono, setVehiculoEditTelefono] = useState("");
+  const [vehiculoEditEstatus, setVehiculoEditEstatus] = useState<"HABILITADO" | "DESHABILITADO" | "SUSPENDIDO" | "RESTRINGIDO">("HABILITADO");
+  const [vehiculoEditFoto, setVehiculoEditFoto] = useState("");
+  const [vehiculoEditError, setVehiculoEditError] = useState("");
+  const [isSubmittingVehiculoEdit, setIsSubmittingVehiculoEdit] = useState(false);
+  const isSubmittingVehiculoEditRef = useRef(false);
+
+  const [selectedVehiculoParaEliminar, setSelectedVehiculoParaEliminar] = useState<Vehicle | null>(null);
+  const [isDeletingVehiculo, setIsDeletingVehiculo] = useState(false);
+  const isDeletingVehiculoRef = useRef(false);
+
+  const [selectedFotoVehiculoPreview, setSelectedFotoVehiculoPreview] = useState<Vehicle | null>(null);
+
+  // Creación de Vehículos / Trabajadores dirigida a Empresa específica por Supervisor / Admin
+  const [targetEmpresaParaNuevoVehiculo, setTargetEmpresaParaNuevoVehiculo] = useState<Empresa | null>(null);
+  const [targetEmpresaParaNuevoTrabajador, setTargetEmpresaParaNuevoTrabajador] = useState<Empresa | null>(null);
+  const [showCreateVehiculoModalAdmin, setShowCreateVehiculoModalAdmin] = useState(false);
 
   // ─── Estados y Refs de Bloqueo para Prevención de Doble Clic y Envíos Duplicados ───
   const [isSubmittingTrabajador, setIsSubmittingTrabajador] = useState(false);
@@ -2590,6 +2636,168 @@ export default function App() {
     setTrabajadorFormError("");
   };
 
+  // ─── Handlers para Edición y Eliminación de Vehículos por Supervisor / Admin ───
+  const handleFotoVehiculoUpload = async (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean = false) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const compressed = await compressImageClient(file, 800, 0.75);
+      if (isEdit) {
+        setVehiculoEditFoto(compressed);
+        setVehiculoEditError("");
+      } else {
+        setNuevoVehiculoFoto(compressed);
+        setNuevoVehiculoFotoError("");
+      }
+    } catch (err) {
+      console.error("Error al procesar fotografía del vehículo:", err);
+      if (isEdit) setVehiculoEditError("Error al procesar la fotografía.");
+      else setNuevoVehiculoFotoError("Error al procesar la fotografía.");
+    }
+  };
+
+  const handleOpenEditarVehiculo = (v: Vehicle) => {
+    setSelectedVehiculoParaEditar(v);
+    setVehiculoEditMarca(v.marca || "");
+    setVehiculoEditModelo(v.modelo || "");
+    setVehiculoEditAnio(v.año || v.anio || "");
+    setVehiculoEditPlacas(v.placas || "");
+    setVehiculoEditColor(v.color || "");
+    setVehiculoEditTelefono(v.telefono || "");
+    setVehiculoEditEstatus(
+      v.status === "Habilitado" ? "HABILITADO" :
+      v.status === "Suspendido" ? "SUSPENDIDO" :
+      v.status === "Restringido" ? "RESTRINGIDO" : "DESHABILITADO"
+    );
+    setVehiculoEditFoto(v.foto || "");
+    setVehiculoEditError("");
+  };
+
+  const handleGuardarEdicionVehiculo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmittingVehiculoEditRef.current || !selectedVehiculoParaEditar) return;
+    setVehiculoEditError("");
+
+    const marcaVal = vehiculoEditMarca.trim();
+    const modeloVal = vehiculoEditModelo.trim();
+    const anioVal = vehiculoEditAnio.trim();
+    const placasVal = vehiculoEditPlacas.trim().toUpperCase();
+    const colorVal = vehiculoEditColor.trim();
+
+    if (!marcaVal || !modeloVal || !placasVal) {
+      setVehiculoEditError("Marca, modelo y placas son campos obligatorios.");
+      return;
+    }
+
+    isSubmittingVehiculoEditRef.current = true;
+    setIsSubmittingVehiculoEdit(true);
+
+    try {
+      await api.updateVehiculo(selectedVehiculoParaEditar.id, {
+        marca: marcaVal,
+        modelo: modeloVal,
+        año: anioVal || null,
+        anio: anioVal || null,
+        placas: placasVal,
+        color: colorVal,
+        estatus_acceso: vehiculoEditEstatus,
+        foto_url: vehiculoEditFoto || undefined,
+      });
+
+      await reloadVehiculos();
+      setSelectedVehiculoParaEditar(null);
+      showToast(`Vehículo ${marcaVal} ${modeloVal} (${placasVal}) actualizado exitosamente en PostgreSQL.`, "success", "Vehículo Actualizado");
+    } catch (err: any) {
+      console.error("Error al actualizar vehículo:", err);
+      setVehiculoEditError("Error al actualizar en base de datos: " + (err.message || err));
+      showToast("Error al actualizar vehículo: " + (err.message || err), "error");
+    } finally {
+      isSubmittingVehiculoEditRef.current = false;
+      setIsSubmittingVehiculoEdit(false);
+    }
+  };
+
+  const handleConfirmarEliminarVehiculo = async () => {
+    if (!selectedVehiculoParaEliminar || isDeletingVehiculoRef.current) return;
+    const target = selectedVehiculoParaEliminar;
+    isDeletingVehiculoRef.current = true;
+    setIsDeletingVehiculo(true);
+
+    try {
+      setVehicles(prev => prev.filter(v => v.id !== target.id));
+      await api.deleteVehiculo(target.id);
+      await reloadVehiculos();
+      setSelectedVehiculoParaEliminar(null);
+      showToast(`El vehículo ${target.marca} ${target.modelo} (${target.placas}) fue eliminado del sistema.`, "success", "Vehículo Eliminado");
+    } catch (err: any) {
+      console.error("Error al eliminar vehículo:", err);
+      showToast("Error al eliminar vehículo: " + (err.message || err), "error");
+      await reloadVehiculos();
+    } finally {
+      isDeletingVehiculoRef.current = false;
+      setIsDeletingVehiculo(false);
+    }
+  };
+
+  const handleGuardarNuevoVehiculoPorSupervisor = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (isSubmittingVehiculoRef.current) return;
+
+    if (!nuevoVehiculoFoto) {
+      setNuevoVehiculoFotoError("Es obligatorio adjuntar una fotografía oficial del vehículo.");
+      return;
+    }
+
+    isSubmittingVehiculoRef.current = true;
+    setIsSubmittingVehiculo(true);
+
+    const form = e.currentTarget;
+    const empId = targetEmpresaParaNuevoVehiculo?.id || (form.elements.namedItem("empresaId") as HTMLSelectElement)?.value || empresas[0]?.id;
+    const marcaVal = (form.elements.namedItem("marca") as HTMLInputElement)?.value || "";
+    const modeloVal = (form.elements.namedItem("modelo") as HTMLInputElement)?.value || "";
+    const anioVal = (form.elements.namedItem("año") as HTMLInputElement || form.elements.namedItem("anio") as HTMLInputElement)?.value || "";
+    const placasVal = ((form.elements.namedItem("placas") as HTMLInputElement)?.value || "").toUpperCase();
+    const colorVal = (form.elements.namedItem("color") as HTMLInputElement)?.value || "";
+    const estatusVal = (form.elements.namedItem("estatus_acceso") as HTMLSelectElement)?.value || "HABILITADO";
+
+    try {
+      await api.createVehiculo({
+        id_empresa: empId,
+        marca: marcaVal,
+        modelo: modeloVal,
+        año: anioVal || null,
+        placas: placasVal,
+        color: colorVal,
+        foto_url: nuevoVehiculoFoto,
+        estatus_acceso: estatusVal,
+      });
+
+      await reloadVehiculos();
+      form.reset();
+      setNuevoVehiculoFoto("");
+      setNuevoVehiculoFotoError("");
+      setShowCreateVehiculoModalAdmin(false);
+      setTargetEmpresaParaNuevoVehiculo(null);
+      showToast("Vehículo registrado exitosamente con fotografía oficial y corbatín QR.", "success", "Vehículo Registrado");
+    } catch (err: any) {
+      showToast("Error al registrar vehículo: " + (err.message || err), "error");
+    } finally {
+      isSubmittingVehiculoRef.current = false;
+      setIsSubmittingVehiculo(false);
+    }
+  };
+
+  const handleOpenEditarTrabajador = (t: Trabajador) => {
+    setSelectedTrabajadorParaEditar(t);
+    setTrabajadorNombre(t.nombre || "");
+    setTrabajadorApellidos(t.apellidos || "");
+    setTrabajadorTelefono(t.telefono || "");
+    setTrabajadorFotoUrl(t.foto_url || "");
+    setTrabajadorActivo(t.activo);
+    setTrabajadorFormError("");
+  };
+
   const handleGuardarNuevoTrabajador = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmittingTrabajadorRef.current) return;
@@ -2623,7 +2831,7 @@ export default function App() {
     isSubmittingTrabajadorRef.current = true;
     setIsSubmittingTrabajador(true);
 
-    const currentEmpresaObj = empresas.find(emp => emp.nombre === currentUser?.empresaNombre) || empresas[0];
+    const currentEmpresaObj = targetEmpresaParaNuevoTrabajador || empresas.find(emp => emp.nombre === currentUser?.empresaNombre) || empresas[0];
     const defaultFoto = trabajadorFotoUrl || `https://images.unsplash.com/photo-${Math.floor(Math.random() * 100) + 1500000000000}?auto=format&fit=crop&q=80&w=250`;
 
     try {
@@ -2637,6 +2845,7 @@ export default function App() {
       });
       await reloadTrabajadores();
       setShowCreateTrabajadorModal(false);
+      setTargetEmpresaParaNuevoTrabajador(null);
       setTrabajadorNombre("");
       setTrabajadorApellidos("");
       setTrabajadorTelefono("");
@@ -2976,6 +3185,474 @@ export default function App() {
 
   const apelacionesPendientesCount = sanciones.filter(s => s.status === "En Apelación").length;
 
+  const renderEmpresasManagementView = () => {
+    const filteredEmpresas = empresas.filter((e) => {
+      const q = empresaSearchTerm.toLowerCase();
+      return (
+        e.nombre.toLowerCase().includes(q) ||
+        e.rfc.toLowerCase().includes(q) ||
+        e.contacto.toLowerCase().includes(q) ||
+        (e.telefono && e.telefono.toLowerCase().includes(q)) ||
+        (e.email && e.email.toLowerCase().includes(q))
+      );
+    });
+
+    const totalVehiclesCount = vehicles.length;
+    const totalVehiclesHabilitados = vehicles.filter((v) => v.status === "Habilitado").length;
+    const totalVehiclesSuspendidos = vehicles.filter((v) => v.status === "Suspendido").length;
+    const totalTrabajadoresCount = trabajadores.length;
+    const totalTrabajadoresActivos = trabajadores.filter((t) => t.activo).length;
+
+    return (
+      <div className="space-y-6">
+        {/* Resumen de Métricas Globales */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 rounded-2xl bg-white border shadow-xs flex items-center gap-3.5" style={{ borderColor: "var(--color-border)" }}>
+            <div className="p-3 rounded-xl bg-emerald-50 text-emerald-700">
+              <IconBuilding className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Empresas Proveedoras</div>
+              <div className="text-xl font-black text-slate-900">{empresas.length}</div>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white border shadow-xs flex items-center gap-3.5" style={{ borderColor: "var(--color-border)" }}>
+            <div className="p-3 rounded-xl bg-blue-50 text-blue-700">
+              <IconCar className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Flotilla Total</div>
+              <div className="text-xl font-black text-slate-900">
+                {totalVehiclesCount} <span className="text-xs font-medium text-emerald-600">({totalVehiclesHabilitados} hab.)</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white border shadow-xs flex items-center gap-3.5" style={{ borderColor: "var(--color-border)" }}>
+            <div className="p-3 rounded-xl bg-indigo-50 text-indigo-700">
+              <IconUsers className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Plantilla Laboral</div>
+              <div className="text-xl font-black text-slate-900">
+                {totalTrabajadoresCount} <span className="text-xs font-medium text-emerald-600">({totalTrabajadoresActivos} act.)</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white border shadow-xs flex items-center gap-3.5" style={{ borderColor: "var(--color-border)" }}>
+            <div className="p-3 rounded-xl bg-red-50 text-red-700">
+              <IconAlertTriangle className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Unidades Suspendidas</div>
+              <div className="text-xl font-black text-slate-900">{totalVehiclesSuspendidos}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Barra de Filtros, Búsqueda y Creación */}
+        <div className="p-4 rounded-2xl bg-white border shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3" style={{ borderColor: "var(--color-border)" }}>
+          <div className="relative w-full sm:w-96">
+            <IconSearch className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+            <input
+              type="text"
+              placeholder="Buscar por Empresa, RFC, Contacto o Teléfono..."
+              value={empresaSearchTerm}
+              onChange={(e) => setEmpresaSearchTerm(e.target.value)}
+              className="w-full rounded-xl pl-10 pr-4 py-2 text-xs border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button
+              onClick={() => setShowCreateEmpresaModal(true)}
+              className="px-4 py-2 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer shadow-sm"
+              style={{ background: "var(--color-primary)" }}
+            >
+              <IconUserPlus className="w-4 h-4" />
+              <span>+ Registrar Empresa Proveedora</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Listado de Empresas con Dropdown / Acordeón Individual */}
+        <div className="space-y-4">
+          {filteredEmpresas.length === 0 ? (
+            <div className="rounded-2xl border p-12 text-center bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
+              <IconBuilding className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+              <h3 className="font-bold text-slate-800">No se encontraron empresas proveedoras</h3>
+              <p className="text-xs text-slate-500 mt-1">Prueba cambiando el término de búsqueda o registra una nueva empresa.</p>
+            </div>
+          ) : (
+            filteredEmpresas.map((emp) => {
+              const isExpanded = expandedEmpresaId === emp.id;
+              const empVehicles = vehicles.filter((v) => v.empresaId === emp.id);
+              const empTrabajadores = trabajadores.filter((t) => t.id_empresa === emp.id || t.empresaNombre === emp.nombre);
+              const activeSubTab = empresaSubTabMap[emp.id] || "vehiculos";
+
+              return (
+                <div
+                  key={emp.id}
+                  className="rounded-2xl border bg-white shadow-xs overflow-hidden transition-all"
+                  style={{ borderColor: isExpanded ? "var(--color-primary)" : "var(--color-border)" }}
+                >
+                  {/* Header / Fila Principal de la Empresa (Dropdown Toggle) */}
+                  <div
+                    className={`px-5 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 cursor-pointer transition-colors ${
+                      isExpanded ? "bg-slate-50/80 border-b border-slate-200" : "hover:bg-slate-50/50"
+                    }`}
+                    onClick={() => setExpandedEmpresaId(isExpanded ? null : emp.id)}
+                  >
+                    <div className="flex items-start sm:items-center gap-3.5">
+                      <div className="w-11 h-11 rounded-xl bg-emerald-100/70 border border-emerald-200 flex items-center justify-center font-bold text-emerald-900 text-sm shrink-0">
+                        {emp.nombre.substring(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-bold text-sm text-slate-900">{emp.nombre}</h3>
+                          <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                            {emp.rfc}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-2 flex-wrap">
+                          <span>Titular: <strong>{emp.contacto}</strong></span>
+                          <span>·</span>
+                          <span>Tel: {emp.telefono || "S/N"}</span>
+                          {emp.email && (
+                            <>
+                              <span>·</span>
+                              <span>{emp.email}</span>
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 self-end lg:self-center">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                          <IconCar className="w-3.5 h-3.5" />
+                          <span>{empVehicles.length} Vehículos</span>
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                          <IconUsers className="w-3.5 h-3.5" />
+                          <span>{empTrabajadores.length} Trabajadores</span>
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExpandedEmpresaId(isExpanded ? null : emp.id);
+                        }}
+                        className={`p-2 px-3 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                          isExpanded
+                            ? "bg-[#0D6E5F] text-white border-transparent shadow-xs"
+                            : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
+                        }`}
+                      >
+                        <span>{isExpanded ? "Ocultar Flota & Personal" : "Desplegar Flota & Personal"}</span>
+                        {isExpanded ? <IconChevronUp className="w-3.5 h-3.5" /> : <IconChevronDown className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Cuerpo Desplegable (Dropdown / Acordeón) */}
+                  {isExpanded && (
+                    <div className="p-5 sm:p-6 bg-slate-50/40 space-y-5">
+                      {/* Pestañas de Navegación Interna */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3" style={{ borderColor: "var(--color-border)" }}>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setEmpresaSubTabMap((prev) => ({ ...prev, [emp.id]: "vehiculos" }))}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                              activeSubTab === "vehiculos"
+                                ? "bg-[#0D6E5F] text-white shadow-xs"
+                                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
+                            }`}
+                          >
+                            <IconCar className="w-4 h-4" />
+                            <span>Flotilla Vehicular ({empVehicles.length})</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setEmpresaSubTabMap((prev) => ({ ...prev, [emp.id]: "trabajadores" }))}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                              activeSubTab === "trabajadores"
+                                ? "bg-[#0D6E5F] text-white shadow-xs"
+                                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
+                            }`}
+                          >
+                            <IconUsers className="w-4 h-4" />
+                            <span>Plantilla de Trabajadores ({empTrabajadores.length})</span>
+                          </button>
+                        </div>
+
+                        <div>
+                          {activeSubTab === "vehiculos" ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTargetEmpresaParaNuevoVehiculo(emp);
+                                setNuevoVehiculoFoto("");
+                                setNuevoVehiculoFotoError("");
+                                setShowCreateVehiculoModalAdmin(true);
+                              }}
+                              className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer shadow-xs"
+                              style={{ background: "var(--color-primary)" }}
+                            >
+                              <IconCar className="w-3.5 h-3.5" />
+                              <span>+ Agregar Vehículo a {emp.nombre}</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTargetEmpresaParaNuevoTrabajador(emp);
+                                setTrabajadorNombre("");
+                                setTrabajadorApellidos("");
+                                setTrabajadorTelefono("");
+                                setTrabajadorFotoUrl("");
+                                setTrabajadorActivo(true);
+                                setTrabajadorFormError("");
+                                setShowCreateTrabajadorModal(true);
+                              }}
+                              className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer shadow-xs"
+                              style={{ background: "var(--color-primary)" }}
+                            >
+                              <IconUserPlus className="w-3.5 h-3.5" />
+                              <span>+ Agregar Colaborador a {emp.nombre}</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* SUB-TAB 1: FLOTILLA VEHICULAR */}
+                      {activeSubTab === "vehiculos" && (
+                        <div className="space-y-3">
+                          {empVehicles.length === 0 ? (
+                            <div className="p-8 text-center rounded-2xl bg-white border border-slate-200">
+                              <IconCar className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                              <p className="text-xs font-semibold text-slate-700">Esta empresa no tiene vehículos registrados</p>
+                              <p className="text-[11px] text-slate-400 mt-0.5">Haz clic en "+ Agregar Vehículo" para registrar la primera unidad autorizada.</p>
+                            </div>
+                          ) : (
+                            <div className="overflow-x-auto rounded-2xl border bg-white" style={{ borderColor: "var(--color-border)" }}>
+                              <table className="w-full text-sm">
+                                <thead>
+                                  <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
+                                    {["Foto", "Vehículo", "Placas", "Color", "Corbatín", "Teléfono", "Estatus Acceso", "Acciones (Supervisor)"].map((h) => (
+                                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                  {empVehicles.map((v) => (
+                                    <tr key={v.id} className="hover:bg-slate-50/70 transition-colors">
+                                      <td className="px-4 py-2.5">
+                                        {v.foto ? (
+                                          <button
+                                            type="button"
+                                            onClick={() => setSelectedFotoVehiculoPreview(v)}
+                                            className="cursor-pointer group block relative"
+                                            title="Clic para ver fotografía ampliada"
+                                          >
+                                            <img
+                                              src={normalizeFotoUrl(v.foto)}
+                                              alt={`${v.marca} ${v.modelo}`}
+                                              className="w-12 h-9 object-cover rounded-lg border border-slate-200 group-hover:border-[#0D6E5F] shadow-2xs group-hover:scale-105 transition-all"
+                                              onError={(e) => {
+                                                e.currentTarget.style.display = "none";
+                                              }}
+                                            />
+                                          </button>
+                                        ) : (
+                                          <div className="w-12 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                                            <IconCar className="w-4 h-4" />
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="px-4 py-2.5 font-semibold text-slate-900 text-xs">
+                                        {v.marca} {v.modelo} <span className="text-slate-400 font-normal">({v.anio || v.año || "N/A"})</span>
+                                      </td>
+                                      <td className="px-4 py-2.5 font-mono font-bold text-xs text-slate-800">{v.placas}</td>
+                                      <td className="px-4 py-2.5 text-xs text-slate-600">{v.color}</td>
+                                      <td className="px-4 py-2.5 font-mono font-bold text-xs" style={{ color: "var(--color-primary)" }}>#{v.corbatinNum}</td>
+                                      <td className="px-4 py-2.5 font-mono text-xs text-slate-500">{v.telefono || "—"}</td>
+                                      <td className="px-4 py-2.5">
+                                        {v.status === "Habilitado" ? (
+                                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 shadow-2xs">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                            <span>Habilitado</span>
+                                          </span>
+                                        ) : v.status === "Suspendido" ? (
+                                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-300 shadow-2xs">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                            <span>Suspendido</span>
+                                          </span>
+                                        ) : v.status === "Restringido" ? (
+                                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-300 shadow-2xs">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                            <span>Restringido</span>
+                                          </span>
+                                        ) : (
+                                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-300 shadow-2xs">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                            <span>Deshabilitado</span>
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td className="px-4 py-2.5">
+                                        <div className="flex items-center gap-1.5">
+                                          <button
+                                            type="button"
+                                            onClick={() => handleOpenEditarVehiculo(v)}
+                                            className="px-2.5 py-1 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white border border-blue-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                            title="Editar datos y cambiar estatus de acceso"
+                                          >
+                                            <IconEdit className="w-3.5 h-3.5" />
+                                            <span>Editar</span>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => setSelectedVehiculoParaEliminar(v)}
+                                            className="p-1 px-2 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-600 hover:text-white border border-red-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                            title="Eliminar vehículo"
+                                          >
+                                            <IconTrash className="w-3.5 h-3.5" />
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* SUB-TAB 2: PLANTILLA DE TRABAJADORES */}
+                      {activeSubTab === "trabajadores" && (
+                        <div className="space-y-3">
+                          {empTrabajadores.length === 0 ? (
+                            <div className="p-8 text-center rounded-2xl bg-white border border-slate-200">
+                              <IconUsers className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                              <p className="text-xs font-semibold text-slate-700">Esta empresa no tiene trabajadores registrados</p>
+                              <p className="text-[11px] text-slate-400 mt-0.5">Haz clic en "+ Agregar Colaborador" para dar de alta al personal autorizado.</p>
+                            </div>
+                          ) : (
+                            <div className="overflow-x-auto rounded-2xl border bg-white" style={{ borderColor: "var(--color-border)" }}>
+                              <table className="w-full text-sm">
+                                <thead>
+                                  <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
+                                    {["Foto", "Nombre Completo", "Teléfono", "Fecha Registro", "Estatus Acceso", "Acciones (Supervisor)"].map((h) => (
+                                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                  {empTrabajadores.map((t) => (
+                                    <tr key={t.id_trabajador} className="hover:bg-slate-50/70 transition-colors">
+                                      <td className="px-4 py-2.5">
+                                        {t.foto_url ? (
+                                          <button
+                                            type="button"
+                                            onClick={() => setSelectedFotoTrabajadorPreview(t)}
+                                            className="cursor-pointer group block relative"
+                                            title="Clic para ver credencial ampliada"
+                                          >
+                                            <img
+                                              src={t.foto_url}
+                                              alt={`${t.nombre} ${t.apellidos}`}
+                                              className="w-10 h-10 object-cover rounded-xl border border-slate-200 group-hover:border-[#0D6E5F] shadow-2xs group-hover:scale-105 transition-all"
+                                              onError={(e) => {
+                                                e.currentTarget.style.display = "none";
+                                              }}
+                                            />
+                                          </button>
+                                        ) : (
+                                          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs border border-slate-200">
+                                            {t.nombre.charAt(0)}
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="px-4 py-2.5">
+                                        <div className="font-bold text-xs text-slate-900">{t.nombre} {t.apellidos}</div>
+                                        <div className="text-[11px] text-slate-400 font-mono">ID: #{t.id_trabajador}</div>
+                                      </td>
+                                      <td className="px-4 py-2.5 font-mono text-xs text-slate-600">{t.telefono || "—"}</td>
+                                      <td className="px-4 py-2.5 text-xs text-slate-500">
+                                        {t.created_at ? new Date(t.created_at).toISOString().split("T")[0] : "2026-02-01"}
+                                      </td>
+                                      <td className="px-4 py-2.5">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleToggleActivoTrabajador(t)}
+                                          disabled={Boolean(togglingTrabajadorIds[t.id_trabajador])}
+                                          className={`cursor-pointer group flex items-center gap-1.5 transition-all ${
+                                            togglingTrabajadorIds[t.id_trabajador] ? "opacity-50 pointer-events-none" : ""
+                                          }`}
+                                          title={t.activo ? "Clic para desactivar acceso" : "Clic para activar acceso"}
+                                        >
+                                          {t.activo ? (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 shadow-2xs transition-all">
+                                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                              <span>Autorizado</span>
+                                            </span>
+                                          ) : (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-300 hover:bg-red-100 hover:border-red-400 shadow-2xs transition-all">
+                                              <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                                              <span>Inactivo</span>
+                                            </span>
+                                          )}
+                                        </button>
+                                      </td>
+                                      <td className="px-4 py-2.5">
+                                        <div className="flex items-center gap-1.5">
+                                          <button
+                                            type="button"
+                                            onClick={() => handleOpenEditarTrabajador(t)}
+                                            className="px-2.5 py-1 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white border border-blue-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                            title="Modificar datos del trabajador"
+                                          >
+                                            <IconEdit className="w-3.5 h-3.5" />
+                                            <span>Editar</span>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => setSelectedTrabajadorParaEliminar(t)}
+                                            className="p-1 px-2 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-600 hover:text-white border border-red-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                            title="Eliminar trabajador"
+                                          >
+                                            <IconTrash className="w-3.5 h-3.5" />
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col justify-between w-full max-w-full overflow-x-hidden min-h-screen" style={{ background: "var(--color-bg)", fontFamily: "var(--font-body)" }}>
       <div className="w-full max-w-full">
@@ -2993,6 +3670,12 @@ export default function App() {
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${adminTab === "supervisores" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     Supervisores HOA ({users.filter(u => u.role === "supervisor").length})
+                  </button>
+                  <button
+                    onClick={() => setAdminTab("proveedores")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${adminTab === "proveedores" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                  >
+                    Proveedores & Flotilla ({empresas.length})
                   </button>
                   <button
                     onClick={() => setAdminTab("auditoria")}
@@ -3231,6 +3914,8 @@ export default function App() {
                   </div>
                 </div>
               )}
+
+              {adminTab === "proveedores" && renderEmpresasManagementView()}
 
               {adminTab === "auditoria" && (
                 <div className="rounded-2xl border bg-white shadow-sm overflow-hidden" style={{ borderColor: "var(--color-border)" }}>
@@ -3528,61 +4213,7 @@ export default function App() {
                 </div>
               )}
 
-              {supervisorTab === "proveedores" && (
-                <div className="space-y-4">
-                  <div className="rounded-2xl border bg-white shadow-sm overflow-hidden" style={{ borderColor: "var(--color-border)" }}>
-                    <div className="px-5 py-4 border-b bg-slate-50 flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
-                      <div>
-                        <h2 className="font-bold text-sm text-slate-800">Catálogo de Proveedores y Empresas Externas</h2>
-                        <p className="text-xs text-slate-500">Crea las cuentas de acceso para que los contratistas gestionen su flotilla y corbatines.</p>
-                      </div>
-                      <button
-                        onClick={() => setShowCreateEmpresaModal(true)}
-                        className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer"
-                        style={{ background: "var(--color-primary)" }}
-                      >
-                        <IconUserPlus className="w-3.5 h-3.5" />
-                        <span>+ Registrar Empresa Proveedora</span>
-                      </button>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
-                            {["ID", "Empresa", "RFC", "Contacto Titular", "Teléfono", "Vehículos", "Creado Por"].map((h) => (
-                              <th key={h} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {empresas.length === 0 ? (
-                            <tr>
-                              <td colSpan={7} className="px-5 py-8 text-center text-xs text-slate-500">
-                                <IconBuilding className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                                No hay empresas proveedoras registradas. Haz clic en "+ Registrar Empresa Proveedora" para dar de alta una nueva.
-                              </td>
-                            </tr>
-                          ) : (
-                            empresas.map((emp) => (
-                              <tr key={emp.id} className="hover:bg-slate-50">
-                                <td className="px-5 py-3 font-mono text-xs font-bold text-slate-700">{emp.id}</td>
-                                <td className="px-5 py-3 font-bold text-xs text-slate-900">{emp.nombre}</td>
-                                <td className="px-5 py-3 font-mono text-xs text-slate-600">{emp.rfc}</td>
-                                <td className="px-5 py-3 text-xs text-slate-800">{emp.contacto}</td>
-                                <td className="px-5 py-3 text-xs font-mono text-slate-600">{emp.telefono}</td>
-                                <td className="px-5 py-3 font-mono font-bold" style={{ color: "var(--color-primary)" }}>
-                                  {vehicles.filter(v => v.empresaId === emp.id).length} unidades
-                                </td>
-                                <td className="px-5 py-3 text-xs text-slate-500">{emp.creadoPor}</td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
+              {supervisorTab === "proveedores" && renderEmpresasManagementView()}
 
               {supervisorTab === "guardias" && (
                 <div className="space-y-4">
@@ -6366,6 +6997,455 @@ export default function App() {
                   onChange={(e) => handleUpdateGuardiaFoto(selectedFotoGuardiaPreview.id, e)}
                 />
               </label>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL EDITAR VEHÍCULO (SUPERVISOR / ADMIN) ─── */}
+      {selectedVehiculoParaEditar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b pb-3.5">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-blue-50 text-blue-700">
+                  <IconEdit className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 uppercase">Modificar Unidad Vehicular</h3>
+                  <p className="text-xs text-slate-500">ID: #{selectedVehiculoParaEditar.id} · {selectedVehiculoParaEditar.empresaNombre}</p>
+                </div>
+              </div>
+              <button onClick={() => setSelectedVehiculoParaEditar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+            </div>
+
+            {vehiculoEditError && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                <span>{vehiculoEditError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleGuardarEdicionVehiculo} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Marca *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={vehiculoEditMarca}
+                    onChange={(e) => setVehiculoEditMarca(e.target.value)}
+                    placeholder="Ej. Toyota, Nissan, Ford"
+                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Modelo *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={vehiculoEditModelo}
+                    onChange={(e) => setVehiculoEditModelo(e.target.value)}
+                    placeholder="Ej. Hilux, NP300, Transit"
+                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Año
+                  </label>
+                  <input
+                    type="text"
+                    value={vehiculoEditAnio}
+                    onChange={(e) => setVehiculoEditAnio(e.target.value)}
+                    placeholder="Ej. 2024"
+                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Placas Oficiales *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={vehiculoEditPlacas}
+                    onChange={(e) => setVehiculoEditPlacas(e.target.value.toUpperCase())}
+                    placeholder="Ej. MTY-1234"
+                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-mono font-bold text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Color
+                  </label>
+                  <input
+                    type="text"
+                    value={vehiculoEditColor}
+                    onChange={(e) => setVehiculoEditColor(e.target.value)}
+                    placeholder="Ej. Blanco, Gris"
+                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
+                  />
+                </div>
+              </div>
+
+              {/* Control de Estatus de Acceso Exclusivo para Supervisor / Administrador */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  Estatus de Acceso en Casetas (Supervisor / Admin) *
+                </label>
+                <select
+                  value={vehiculoEditEstatus}
+                  onChange={(e) => setVehiculoEditEstatus(e.target.value as any)}
+                  className="w-full rounded-xl px-4 py-2.5 text-xs font-bold border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-blue-200 text-slate-800 cursor-pointer"
+                >
+                  <option value="HABILITADO">✅ HABILITADO - Acceso vehicular autorizado en casetas</option>
+                  <option value="DESHABILITADO">⚪ DESHABILITADO - Inactivo o en mantenimiento</option>
+                  <option value="SUSPENDIDO">⛔ SUSPENDIDO - Suspensión por sanción disciplinaria</option>
+                  <option value="RESTRINGIDO">🚫 RESTRINGIDO - Bloqueo definitivo de acceso</option>
+                </select>
+                <p className="text-[11px] text-slate-500">
+                  Como supervisor o administrador, el cambio de estatus se refleja de forma instantánea en todas las casetas de control.
+                </p>
+              </div>
+
+              {/* Actualizar Fotografía del Vehículo */}
+              <div className="space-y-2 pt-1 border-t border-slate-100">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Fotografía de la Unidad Vehicular
+                </label>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                  <div className="sm:col-span-2 space-y-2">
+                    <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                      <IconCamera className="w-4 h-4 text-blue-600" />
+                      <span>Cambiar Fotografía</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleFotoVehiculoUpload(e, true)}
+                      />
+                    </label>
+                    <p className="text-[11px] text-slate-400">
+                      Fotografía clara donde se aprecien las placas y características del vehículo.
+                    </p>
+                  </div>
+
+                  <div className="h-24 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
+                    {vehiculoEditFoto ? (
+                      <div className="relative w-full h-full group">
+                        <img src={normalizeFotoUrl(vehiculoEditFoto)} alt="Preview" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
+                          Foto Cargada ✓
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center p-2 text-slate-400">
+                        <IconCar className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                        <span className="text-[10px] block">Sin foto</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setSelectedVehiculoParaEditar(null)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingVehiculoEdit}
+                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${
+                    isSubmittingVehiculoEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                  }`}
+                  style={{ background: "linear-gradient(135deg, #2563EB, #1D4ED8)" }}
+                >
+                  {isSubmittingVehiculoEdit ? (
+                    <>
+                      <IconSpinner className="w-3.5 h-3.5" />
+                      <span>Guardando Cambios...</span>
+                    </>
+                  ) : (
+                    <span>Guardar Cambios →</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL ALTA DE VEHÍCULO POR SUPERVISOR / ADMIN ─── */}
+      {showCreateVehiculoModalAdmin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b pb-3.5">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
+                  <IconCar className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 uppercase">Alta de Vehículo Autorizado</h3>
+                  <p className="text-xs text-slate-500">
+                    Empresa: {targetEmpresaParaNuevoVehiculo?.nombre || "Seleccionar Empresa"}
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => { setShowCreateVehiculoModalAdmin(false); setTargetEmpresaParaNuevoVehiculo(null); }} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+            </div>
+
+            {nuevoVehiculoFotoError && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                <span>{nuevoVehiculoFotoError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleGuardarNuevoVehiculoPorSupervisor} className="space-y-4">
+              {!targetEmpresaParaNuevoVehiculo && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Empresa Proveedora *
+                  </label>
+                  <select
+                    name="empresaId"
+                    required
+                    className="w-full rounded-xl px-4 py-2.5 text-xs font-bold border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800"
+                  >
+                    {empresas.map(e => (
+                      <option key={e.id} value={e.id}>{e.nombre} ({e.rfc})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Marca *</label>
+                  <input name="marca" required placeholder="Ej. Toyota, Nissan" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Modelo *</label>
+                  <input name="modelo" required placeholder="Ej. Hilux, NP300" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Año</label>
+                  <input name="año" placeholder="Ej. 2024" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Placas *</label>
+                  <input name="placas" required placeholder="Ej. MTY-0001" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-mono font-bold text-slate-800" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Color *</label>
+                  <input name="color" required placeholder="Ej. Blanco" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Estatus Inicial
+                </label>
+                <select
+                  name="estatus_acceso"
+                  defaultValue="HABILITADO"
+                  className="w-full rounded-xl px-4 py-2.5 text-xs font-bold border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800"
+                >
+                  <option value="HABILITADO">✅ HABILITADO - Acceso vehicular autorizado</option>
+                  <option value="DESHABILITADO">⚪ DESHABILITADO - Inactivo o en mantenimiento</option>
+                  <option value="SUSPENDIDO">⛔ SUSPENDIDO - Suspensión preventiva</option>
+                </select>
+              </div>
+
+              {/* Fotografía Obligatoria del Vehículo */}
+              <div className="space-y-2 pt-1 border-t border-slate-100">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Fotografía Oficial del Vehículo *
+                </label>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                  <div className="sm:col-span-2 space-y-2">
+                    <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                      <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
+                      <span>Subir Foto desde Dispositivo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleFotoVehiculoUpload(e, false)}
+                      />
+                    </label>
+                    <p className="text-[11px] text-slate-400">
+                      Fotografía nítida del vehículo para verificación en caseta.
+                    </p>
+                  </div>
+
+                  <div className="h-24 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
+                    {nuevoVehiculoFoto ? (
+                      <div className="relative w-full h-full group">
+                        <img src={nuevoVehiculoFoto} alt="Preview" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
+                          Foto Cargada ✓
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center p-2 text-slate-400">
+                        <IconCar className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                        <span className="text-[10px] block">Sin foto</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => { setShowCreateVehiculoModalAdmin(false); setTargetEmpresaParaNuevoVehiculo(null); }}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingVehiculo}
+                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${
+                    isSubmittingVehiculo ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                  }`}
+                  style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
+                >
+                  {isSubmittingVehiculo ? (
+                    <>
+                      <IconSpinner className="w-3.5 h-3.5" />
+                      <span>Registrando Unidad...</span>
+                    </>
+                  ) : (
+                    <span>Registrar Vehículo →</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL ELIMINAR VEHÍCULO ─── */}
+      {selectedVehiculoParaEliminar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2 text-red-600">
+                <div className="p-2 rounded-xl bg-red-50">
+                  <IconTrash className="w-5 h-5" />
+                </div>
+                <h3 className="text-sm font-bold uppercase">Eliminar Vehículo</h3>
+              </div>
+              <button onClick={() => setSelectedVehiculoParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
+              <p className="font-semibold">¿Estás seguro de que deseas dar de baja y eliminar esta unidad vehicular?</p>
+              <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
+                <div><strong>Vehículo:</strong> {selectedVehiculoParaEliminar.marca} {selectedVehiculoParaEliminar.modelo} ({selectedVehiculoParaEliminar.anio || selectedVehiculoParaEliminar.año || "N/A"})</div>
+                <div><strong>Placas:</strong> <span className="font-mono font-bold text-slate-900">{selectedVehiculoParaEliminar.placas}</span></div>
+                <div><strong>Corbatín:</strong> #{selectedVehiculoParaEliminar.corbatinNum}</div>
+                <div><strong>Empresa:</strong> {selectedVehiculoParaEliminar.empresaNombre}</div>
+              </div>
+              <p className="text-[11px] text-red-700">Esta acción eliminará el registro en la base de datos y desvinculará el corbatín QR asociado.</p>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setSelectedVehiculoParaEliminar(null)}
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmarEliminarVehiculo}
+                disabled={isDeletingVehiculo}
+                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
+                  isDeletingVehiculo ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                }`}
+              >
+                {isDeletingVehiculo ? (
+                  <>
+                    <IconSpinner className="w-4 h-4" />
+                    <span>Eliminando...</span>
+                  </>
+                ) : (
+                  <>
+                    <IconTrash className="w-4 h-4" />
+                    <span>Eliminar Vehículo</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL VISTA PREVIA DE FOTOGRAFÍA DE VEHÍCULO ─── */}
+      {selectedFotoVehiculoPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" onClick={() => setSelectedFotoVehiculoPreview(null)}>
+          <div className="max-w-md w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
+                  <IconCar className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-slate-900">{selectedFotoVehiculoPreview.marca} {selectedFotoVehiculoPreview.modelo}</h4>
+                  <p className="text-xs text-slate-500 font-mono">Placas: {selectedFotoVehiculoPreview.placas} · Corbatín #{selectedFotoVehiculoPreview.corbatinNum}</p>
+                </div>
+              </div>
+              <button onClick={() => setSelectedFotoVehiculoPreview(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer text-sm p-1">✕</button>
+            </div>
+
+            <div className="w-full h-72 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center relative">
+              {selectedFotoVehiculoPreview.foto ? (
+                <img
+                  src={normalizeFotoUrl(selectedFotoVehiculoPreview.foto)}
+                  alt={`${selectedFotoVehiculoPreview.marca} ${selectedFotoVehiculoPreview.modelo}`}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <IconCar className="w-16 h-16 text-slate-300" />
+              )}
+            </div>
+
+            <div className="flex justify-between items-center text-xs">
+              <span className="font-semibold text-slate-700">{selectedFotoVehiculoPreview.empresaNombre}</span>
+              <span className={`px-2.5 py-0.5 rounded-full font-bold ${
+                selectedFotoVehiculoPreview.status === "Habilitado"
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  : selectedFotoVehiculoPreview.status === "Suspendido"
+                  ? "bg-red-50 text-red-700 border border-red-200"
+                  : "bg-slate-100 text-slate-600 border border-slate-200"
+              }`}>
+                {selectedFotoVehiculoPreview.status}
+              </span>
             </div>
           </div>
         </div>
