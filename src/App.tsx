@@ -3532,9 +3532,8 @@ export default function App() {
                 >
                   {/* Header / Fila Principal de la Empresa (Dropdown Toggle) */}
                   <div
-                    className={`group px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer transition-colors ${
-                      isExpanded ? "bg-slate-50/80 border-b border-slate-200" : "hover:bg-slate-50/70"
-                    }`}
+                    className={`group px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer transition-colors ${isExpanded ? "bg-slate-50/80 border-b border-slate-200" : "hover:bg-slate-50/70"
+                      }`}
                     onClick={() => setExpandedEmpresaId(isExpanded ? null : emp.id)}
                   >
                     <div className="flex items-center gap-3.5 min-w-0">
@@ -3552,11 +3551,10 @@ export default function App() {
                     <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center flex-wrap sm:flex-nowrap justify-end">
                       <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                         {emp.corbatin_rango_inicio !== null && emp.corbatin_rango_inicio !== undefined && emp.corbatin_rango_fin !== null && emp.corbatin_rango_fin !== undefined ? (
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold border shrink-0 ${
-                            empVehicles.length >= (emp.cuposTotales || (emp.corbatin_rango_fin - emp.corbatin_rango_inicio + 1))
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold border shrink-0 ${empVehicles.length >= (emp.cuposTotales || (emp.corbatin_rango_fin - emp.corbatin_rango_inicio + 1))
                               ? "bg-amber-50 text-amber-800 border-amber-300"
                               : "bg-teal-50 text-teal-800 border-teal-300"
-                          }`}>
+                            }`}>
                             <span>🏷️ Corbatines #{emp.corbatin_rango_inicio} al #{emp.corbatin_rango_fin} ({empVehicles.length}/{emp.cuposTotales || (emp.corbatin_rango_fin - emp.corbatin_rango_inicio + 1)} cupos)</span>
                           </span>
                         ) : (
@@ -3602,11 +3600,10 @@ export default function App() {
 
                       {/* Indicador de Flecha Integrado al Contenedor */}
                       <div
-                        className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all shrink-0 ${
-                          isExpanded
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all shrink-0 ${isExpanded
                             ? "bg-[#0D6E5F] text-white shadow-xs"
                             : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
-                        }`}
+                          }`}
                         title={isExpanded ? "Contraer" : "Desplegar"}
                       >
                         {isExpanded ? <IconChevronUp className="w-4 h-4" /> : <IconChevronDown className="w-4 h-4" />}
@@ -4641,7 +4638,7 @@ export default function App() {
                           <tr>
                             <td colSpan={7} className="px-5 py-8 text-center text-xs text-slate-500">
                               <IconCheckCircle className="w-8 h-8 text-emerald-300 mx-auto mb-2" />
-                              Sin historial de sanciones o resoluciones registradas en PostgreSQL.
+                              Sin historial de sanciones o resoluciones registradas.
                             </td>
                           </tr>
                         ) : (
@@ -4977,11 +4974,10 @@ export default function App() {
                       return (
                         <div className="mb-5 space-y-3">
                           {hasRange ? (
-                            <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                              isQuotaFull
+                            <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${isQuotaFull
                                 ? "bg-amber-50/90 border-amber-300 text-amber-900"
                                 : "bg-teal-50/90 border-teal-300 text-teal-900"
-                            }`}>
+                              }`}>
                               <div className="space-y-0.5">
                                 <div className="text-xs font-bold flex items-center gap-1.5 uppercase tracking-wider">
                                   <span>🏷️ Rango de Corbatines Asignado</span>
@@ -5104,8 +5100,7 @@ export default function App() {
                             const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
                             return Boolean(hasRange && totalCupos !== null && empVehiculosList.length >= totalCupos);
                           })()}
-                          className={`px-7 py-3 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center gap-2 ${
-                            isSubmittingVehiculo || (() => {
+                          className={`px-7 py-3 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingVehiculo || (() => {
                               const empUser = empresas.find(e => e.nombre === currentUser?.empresaNombre) || empresas[0];
                               const empVehiculosList = vehicles.filter(v => v.empresaNombre === currentUser?.empresaNombre || v.empresaId === empUser?.id);
                               const rInicio = empUser?.corbatin_rango_inicio;
@@ -5116,7 +5111,7 @@ export default function App() {
                             })()
                               ? "opacity-60 cursor-not-allowed pointer-events-none"
                               : ""
-                          }`}
+                            }`}
                           style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                         >
                           {isSubmittingVehiculo ? (
@@ -6779,9 +6774,8 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={isSubmittingEmpresaEdit}
-                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${
-                    isSubmittingEmpresaEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
+                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${isSubmittingEmpresaEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
                 >
                   {isSubmittingEmpresaEdit ? (
                     <>
@@ -7687,9 +7681,8 @@ export default function App() {
               const isQuotaFull = hasRange && totalCupos !== null && cuposOcupados >= totalCupos;
 
               return (
-                <div className={`p-3.5 rounded-2xl border text-xs space-y-1 ${
-                  isQuotaFull ? "bg-amber-50/90 border-amber-300 text-amber-900" : "bg-slate-50 border-slate-200 text-slate-700"
-                }`}>
+                <div className={`p-3.5 rounded-2xl border text-xs space-y-1 ${isQuotaFull ? "bg-amber-50/90 border-amber-300 text-amber-900" : "bg-slate-50 border-slate-200 text-slate-700"
+                  }`}>
                   <div className="flex items-center justify-between font-bold">
                     <span>🏷️ Control de Corbatines de la Empresa:</span>
                     {hasRange ? (
@@ -7840,8 +7833,7 @@ export default function App() {
                     const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
                     return Boolean(hasRange && totalCupos !== null && empVehs.length >= totalCupos);
                   })()}
-                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${
-                    isSubmittingVehiculo || (() => {
+                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingVehiculo || (() => {
                       if (!targetEmpresaParaNuevoVehiculo) return false;
                       const empVehs = vehicles.filter(v => v.empresaId === targetEmpresaParaNuevoVehiculo.id);
                       const rInicio = targetEmpresaParaNuevoVehiculo.corbatin_rango_inicio;
@@ -7852,7 +7844,7 @@ export default function App() {
                     })()
                       ? "opacity-60 cursor-not-allowed pointer-events-none"
                       : ""
-                  }`}
+                    }`}
                   style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                 >
                   {isSubmittingVehiculo ? (
@@ -7909,9 +7901,8 @@ export default function App() {
                 type="button"
                 onClick={handleConfirmarEliminarEmpresa}
                 disabled={isDeletingEmpresa}
-                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
-                  isDeletingEmpresa ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                }`}
+                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingEmpresa ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                  }`}
               >
                 {isDeletingEmpresa ? (
                   <>
