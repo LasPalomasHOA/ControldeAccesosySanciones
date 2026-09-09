@@ -1046,7 +1046,7 @@ export default function App() {
   const [targetEmpresaParaNuevoTrabajador, setTargetEmpresaParaNuevoTrabajador] = useState<Empresa | null>(null);
   const [showCreateVehiculoModalAdmin, setShowCreateVehiculoModalAdmin] = useState(false);
 
-  // Edición de Empresa y Rango de Corbatines
+  // Edición y Eliminación de Empresa y Rango de Corbatines
   const [selectedEmpresaParaEditar, setSelectedEmpresaParaEditar] = useState<Empresa | null>(null);
   const [empresaEditNombre, setEmpresaEditNombre] = useState("");
   const [empresaEditRfc, setEmpresaEditRfc] = useState("");
@@ -1058,6 +1058,10 @@ export default function App() {
   const [empresaEditError, setEmpresaEditError] = useState("");
   const [isSubmittingEmpresaEdit, setIsSubmittingEmpresaEdit] = useState(false);
   const isSubmittingEmpresaEditRef = useRef(false);
+
+  const [selectedEmpresaParaEliminar, setSelectedEmpresaParaEliminar] = useState<Empresa | null>(null);
+  const [isDeletingEmpresa, setIsDeletingEmpresa] = useState(false);
+  const isDeletingEmpresaRef = useRef(false);
 
   // ─── Estados y Refs de Bloqueo para Prevención de Doble Clic y Envíos Duplicados ───
   const [isSubmittingTrabajador, setIsSubmittingTrabajador] = useState(false);
@@ -2693,6 +2697,31 @@ export default function App() {
     }
   };
 
+  const handleConfirmarEliminarEmpresa = async () => {
+    if (!selectedEmpresaParaEliminar || isDeletingEmpresaRef.current) return;
+    const target = selectedEmpresaParaEliminar;
+    isDeletingEmpresaRef.current = true;
+    setIsDeletingEmpresa(true);
+
+    try {
+      setEmpresas(prev => prev.filter(e => e.id !== target.id));
+      await api.deleteEmpresa(target.id);
+      await loadDatabaseData();
+      setSelectedEmpresaParaEliminar(null);
+      if (expandedEmpresaId === target.id) {
+        setExpandedEmpresaId(null);
+      }
+      showToast(`La empresa proveedora "${target.nombre}" fue eliminada permanentemente.`, "success", "Empresa Eliminada");
+    } catch (err: any) {
+      console.error("Error al eliminar empresa:", err);
+      showToast("Error al eliminar empresa: " + (err.message || err), "error");
+      await loadDatabaseData();
+    } finally {
+      isDeletingEmpresaRef.current = false;
+      setIsDeletingEmpresa(false);
+    }
+  };
+
   const handleGuardarNuevoGuardia = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isSubmittingGuardiaRef.current) return;
@@ -3530,7 +3559,7 @@ export default function App() {
                           </button>
                         </div>
 
-                        <div>
+                        <div className="flex items-center gap-2 flex-wrap justify-end">
                           {activeSubTab === "vehiculos" ? (
                             <button
                               type="button"
@@ -3566,6 +3595,16 @@ export default function App() {
                               <span>+ Agregar Colaborador a {emp.nombre}</span>
                             </button>
                           )}
+
+                          <button
+                            type="button"
+                            onClick={() => setSelectedEmpresaParaEliminar(emp)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                            title={`Eliminar permanentemente a ${emp.nombre}`}
+                          >
+                            <IconTrash className="w-3.5 h-3.5 text-red-600" />
+                            <span>Eliminar Empresa</span>
+                          </button>
                         </div>
                       </div>
 
@@ -7702,6 +7741,67 @@ export default function App() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL ELIMINAR EMPRESA PROVEEDORA ─── */}
+      {selectedEmpresaParaEliminar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2 text-red-600">
+                <div className="p-2 rounded-xl bg-red-50">
+                  <IconTrash className="w-5 h-5" />
+                </div>
+                <h3 className="text-sm font-bold uppercase">Eliminar Empresa Proveedora</h3>
+              </div>
+              <button onClick={() => setSelectedEmpresaParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
+              <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente esta empresa proveedora?</p>
+              <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
+                <div><strong>Empresa:</strong> {selectedEmpresaParaEliminar.nombre}</div>
+                <div><strong>RFC:</strong> <span className="font-mono font-bold text-slate-900">{selectedEmpresaParaEliminar.rfc}</span></div>
+                <div><strong>Contacto:</strong> {selectedEmpresaParaEliminar.contacto}</div>
+                <div><strong>Teléfono:</strong> {selectedEmpresaParaEliminar.telefono || "S/N"}</div>
+                {selectedEmpresaParaEliminar.corbatin_rango_inicio && selectedEmpresaParaEliminar.corbatin_rango_fin && (
+                  <div><strong>Rango Corbatines:</strong> #{selectedEmpresaParaEliminar.corbatin_rango_inicio} - #{selectedEmpresaParaEliminar.corbatin_rango_fin}</div>
+                )}
+              </div>
+              <p className="text-[11px] text-red-700">Esta acción eliminará permanentemente la empresa, su cuenta de acceso al portal y todos sus vehículos y trabajadores vinculados.</p>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setSelectedEmpresaParaEliminar(null)}
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmarEliminarEmpresa}
+                disabled={isDeletingEmpresa}
+                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
+                  isDeletingEmpresa ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                }`}
+              >
+                {isDeletingEmpresa ? (
+                  <>
+                    <IconSpinner className="w-4 h-4" />
+                    <span>Eliminando...</span>
+                  </>
+                ) : (
+                  <>
+                    <IconTrash className="w-4 h-4" />
+                    <span>Eliminar Empresa</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

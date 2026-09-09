@@ -159,16 +159,96 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/empresas/:id - Eliminar empresa
+// DELETE /api/empresas/:id - Eliminar empresa permanentemente (con cascada limpia)
 router.delete('/:id', async (req, res) => {
   try {
-    const empresa = await db.Empresa.findByPk(req.params.id);
-    if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
+    const idEmp = req.params.id;
+    const empresa = await db.Empresa.findByPk(idEmp);
+    if (!empresa) return res.json({ message: 'Empresa ya no existe o fue eliminada previamente', id_empresa: idEmp });
+
+    // 1. Obtener todos los vehículos de la empresa
+    const vehiculos = await db.Vehiculo.findAll({ where: { id_empresa: idEmp }, attributes: ['id_vehiculo'] }).catch(() => []);
+    const vehiculoIds = vehiculos.map(v => v.id_vehiculo);
+
+    // 2. Obtener todos los trabajadores de la empresa
+    const trabajadores = await db.Trabajador.findAll({ where: { id_empresa: idEmp }, attributes: ['id_trabajador'] }).catch(() => []);
+    const trabajadorIds = trabajadores.map(t => t.id_trabajador);
+
+    // 3. Limpiar corbatines asociados a los vehículos
+    if (vehiculoIds.length > 0 && db.Corbatin) {
+      await db.BitacoraAcceso.update({ id_corbatin: null }, { where: { id_vehiculo: vehiculoIds } }).catch(() => {});
+      await db.Corbatin.destroy({ where: { id_vehiculo: vehiculoIds } }).catch(() => {});
+    }
+
+    // 4. Limpiar conductores de vehículos
+    if (db.ConductorVehiculo) {
+      if (vehiculoIds.length > 0) {
+        await db.ConductorVehiculo.destroy({ where: { id_vehiculo: vehiculoIds } }).catch(() => {});
+      }
+      if (trabajadorIds.length > 0) {
+        await db.ConductorVehiculo.destroy({ where: { id_trabajador: trabajadorIds } }).catch(() => {});
+      }
+    }
+
+    // 5. Desvincular bitácora de acceso histórica (poner id_empresa, id_vehiculo, id_trabajador a NULL para conservar el historial)
+    if (db.BitacoraAcceso) {
+      await db.BitacoraAcceso.update(
+        { id_empresa: null, id_vehiculo: null, id_trabajador: null, id_corbatin: null },
+        { where: { id_empresa: idEmp } }
+      ).catch(() => {});
+      if (vehiculoIds.length > 0) {
+        await db.BitacoraAcceso.update({ id_vehiculo: null }, { where: { id_vehiculo: vehiculoIds } }).catch(() => {});
+      }
+      if (trabajadorIds.length > 0) {
+        await db.BitacoraAcceso.update({ id_trabajador: null }, { where: { id_trabajador: trabajadorIds } }).catch(() => {});
+      }
+    }
+
+    // 6. Eliminar sanciones, revisiones, evidencias y reportes
+    if (db.Sancion) {
+      await db.Sancion.destroy({ where: { id_empresa: idEmp } }).catch(() => {});
+      if (vehiculoIds.length > 0) {
+        await db.Sancion.destroy({ where: { id_vehiculo: vehiculoIds } }).catch(() => {});
+      }
+    }
+
+    const reportes = await db.ReporteInfraccion.findAll({ where: { id_empresa: idEmp }, attributes: ['id_reporte'] }).catch(() => []);
+    const reporteIds = reportes.map(r => r.id_reporte);
+    if (reporteIds.length > 0) {
+      if (db.RevisionReporte) {
+        await db.RevisionReporte.destroy({ where: { id_reporte: reporteIds } }).catch(() => {});
+      }
+      if (db.Evidencia) {
+        await db.Evidencia.destroy({ where: { id_reporte: reporteIds } }).catch(() => {});
+      }
+      await db.ReporteInfraccion.destroy({ where: { id_reporte: reporteIds } }).catch(() => {});
+    }
+
+    // 7. Eliminar vehículos y trabajadores de la empresa
+    if (vehiculoIds.length > 0) {
+      await db.Vehiculo.destroy({ where: { id_vehiculo: vehiculoIds } }).catch(() => {});
+    }
+    if (trabajadorIds.length > 0) {
+      await db.Trabajador.destroy({ where: { id_trabajador: trabajadorIds } }).catch(() => {});
+    }
+
+    // 8. Eliminar aceptaciones de reglamento
+    if (db.AceptacionReglamento) {
+      await db.AceptacionReglamento.destroy({ where: { id_empresa: idEmp } }).catch(() => {});
+    }
+
+    // 9. Eliminar usuarios de la empresa
+    if (db.Usuario) {
+      await db.Usuario.destroy({ where: { id_empresa: idEmp } }).catch(() => {});
+    }
+
+    // 10. Eliminar la empresa
     await empresa.destroy();
-    res.json({ message: 'Empresa eliminada correctamente' });
+
+    res.json({ message: 'Empresa y registros asociados eliminados correctamente', id_empresa: idEmp });
   } catch (error) {
     console.error('Error al eliminar empresa:', error);
-    res.status(500).json({ error: 'Error al eliminar empresa' });
+    res.status(500).json({ error: 'Error al eliminar empresa', details: error.message });
   }
 });
 
