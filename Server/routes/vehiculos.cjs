@@ -209,7 +209,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/vehiculos/:id - Eliminar vehículo permanentemente
+// DELETE /api/vehiculos/:id - Eliminar vehículo permanentemente (Hard Delete con cascada limpia)
 router.delete('/:id', async (req, res) => {
   try {
     const vehiculo = await db.Vehiculo.findByPk(req.params.id);
@@ -217,11 +217,15 @@ router.delete('/:id', async (req, res) => {
     
     const idVeh = req.params.id;
 
-    // Obtener IDs de corbatines asociados
+    // 1. Obtener IDs de corbatines asociados
     const corbatines = await db.Corbatin.findAll({ where: { id_vehiculo: idVeh }, attributes: ['id_corbatin'] }).catch(() => []);
     const corbatinIds = corbatines.map(c => c.id_corbatin);
 
-    // 1. Desvincular en bitácora de accesos
+    // 2. Obtener IDs de reportes de infracción vinculados a este vehículo
+    const reportes = await db.ReporteInfraccion.findAll({ where: { id_vehiculo: idVeh }, attributes: ['id_reporte'] }).catch(() => []);
+    const reporteIds = reportes.map(r => r.id_reporte);
+
+    // 3. Desvincular en bitácora de accesos histórica (poner a NULL para no perder el histórico de entradas)
     await db.BitacoraAcceso.update(
       { id_vehiculo: null, id_corbatin: null },
       { where: { id_vehiculo: idVeh } }
@@ -233,50 +237,43 @@ router.delete('/:id', async (req, res) => {
       ).catch(() => {});
     }
 
-    // 2. Desvincular en reportes de infracciones
-    if (db.ReporteInfraccion) {
-      await db.ReporteInfraccion.update(
-        { id_vehiculo: null, id_corbatin: null },
-        { where: { id_vehiculo: idVeh } }
-      ).catch(() => {});
-      if (corbatinIds.length > 0) {
-        await db.ReporteInfraccion.update(
-          { id_corbatin: null },
-          { where: { id_corbatin: corbatinIds } }
-        ).catch(() => {});
-      }
-    }
-
-    // 3. Desvincular en sanciones
+    // 4. Eliminar sanciones asociadas al vehículo o a los reportes de infracción
     if (db.Sancion) {
-      await db.Sancion.update(
-        { id_vehiculo: null, id_corbatin: null },
-        { where: { id_vehiculo: idVeh } }
-      ).catch(() => {});
-      if (corbatinIds.length > 0) {
-        await db.Sancion.update(
-          { id_corbatin: null },
-          { where: { id_corbatin: corbatinIds } }
-        ).catch(() => {});
+      await db.Sancion.destroy({ where: { id_vehiculo: idVeh } }).catch(() => {});
+      if (reporteIds.length > 0) {
+        await db.Sancion.destroy({ where: { id_reporte: reporteIds } }).catch(() => {});
       }
     }
 
-    // 4. Eliminar asignaciones conductor-vehículo
-    await db.ConductorVehiculo.destroy({ where: { id_vehiculo: idVeh } }).catch(() => {});
-
-    // 5. Eliminar corbatines asociados
-    await db.Corbatin.destroy({ where: { id_vehiculo: idVeh } }).catch(() => {});
-
-    // 6. Eliminar vehículo (hard delete con fallback a soft delete si es necesario)
-    try {
-      await vehiculo.destroy();
-      res.json({ message: 'Vehículo eliminado permanentemente', id_vehiculo: idVeh });
-    } catch (destroyErr) {
-      console.warn('No se pudo hacer hard delete del vehículo por restricción referencial, aplicando estatus DESHABILITADO:', destroyErr.message);
-      vehiculo.estatus_acceso = 'DESHABILITADO';
-      await vehiculo.save();
-      res.json({ message: 'Vehículo deshabilitado permanentemente', id_vehiculo: idVeh });
+    // 5. Eliminar revisiones de reportes y evidencias fotográficas
+    if (reporteIds.length > 0) {
+      if (db.RevisionReporte) {
+        await db.RevisionReporte.destroy({ where: { id_reporte: reporteIds } }).catch(() => {});
+      }
+      if (db.Evidencia) {
+        await db.Evidencia.destroy({ where: { id_reporte: reporteIds } }).catch(() => {});
+      }
     }
+
+    // 6. Eliminar reportes de infracción del vehículo
+    if (db.ReporteInfraccion) {
+      await db.ReporteInfraccion.destroy({ where: { id_vehiculo: idVeh } }).catch(() => {});
+    }
+
+    // 7. Eliminar asignaciones conductor-vehículo
+    if (db.ConductorVehiculo) {
+      await db.ConductorVehiculo.destroy({ where: { id_vehiculo: idVeh } }).catch(() => {});
+    }
+
+    // 8. Eliminar corbatines asociados
+    if (db.Corbatin) {
+      await db.Corbatin.destroy({ where: { id_vehiculo: idVeh } }).catch(() => {});
+    }
+
+    // 9. Eliminar permanentemente el registro del vehículo de la base de datos
+    await vehiculo.destroy();
+
+    res.json({ message: 'Vehículo eliminado permanentemente', id_vehiculo: idVeh });
   } catch (error) {
     console.error('Error al eliminar vehículo:', error);
     res.status(500).json({ error: 'Error al eliminar vehículo', details: error.message });
