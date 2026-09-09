@@ -4022,31 +4022,27 @@ export default function App() {
                               <td className="px-5 py-3 text-slate-500 font-mono text-xs">{v.telefono}</td>
                               <td className="px-5 py-3 font-mono font-bold" style={{ color: "var(--color-primary)" }}>#{v.corbatinNum}</td>
                               <td className="px-5 py-3">
-                                <button
-                                  type="button"
-                                  onClick={() => handleToggleEstatusVehiculo(v)}
-                                  disabled={Boolean(togglingVehiculoIds[v.id])}
-                                  className={`cursor-pointer transition-all active:scale-95 group flex items-center ${togglingVehiculoIds[v.id] ? "opacity-50 pointer-events-none" : ""
-                                    }`}
-                                  title={v.status === "Habilitado" ? "Clic para deshabilitar vehículo" : "Clic para habilitar vehículo"}
-                                >
-                                  {v.status === "Habilitado" ? (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 shadow-sm transition-all">
-                                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                      <span>Habilitado</span>
-                                    </span>
-                                  ) : v.status === "Suspendido" ? (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-300 hover:bg-red-100 hover:border-red-400 shadow-sm transition-all">
-                                      <span className="w-2 h-2 rounded-full bg-red-500" />
-                                      <span>Suspendido</span>
-                                    </span>
-                                  ) : (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-300 hover:bg-slate-200 hover:border-slate-400 shadow-sm transition-all">
-                                      <span className="w-2 h-2 rounded-full bg-slate-400" />
-                                      <span>Deshabilitado</span>
-                                    </span>
-                                  )}
-                                </button>
+                                {v.status === "Habilitado" ? (
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 shadow-sm">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                    <span>Habilitado</span>
+                                  </span>
+                                ) : v.status === "Suspendido" ? (
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-300 shadow-sm">
+                                    <span className="w-2 h-2 rounded-full bg-red-500" />
+                                    <span>Suspendido</span>
+                                  </span>
+                                ) : v.status === "Restringido" ? (
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-300 shadow-sm">
+                                    <span className="w-2 h-2 rounded-full bg-rose-500" />
+                                    <span>Restringido</span>
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-300 shadow-sm">
+                                    <span className="w-2 h-2 rounded-full bg-slate-400" />
+                                    <span>Deshabilitado</span>
+                                  </span>
+                                )}
                               </td>
                             </tr>
                           ))}
