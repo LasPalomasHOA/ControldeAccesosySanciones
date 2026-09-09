@@ -126,6 +126,53 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Empresa, marca, modelo, placas y color son obligatorios' });
     }
 
+    const empresa = await db.Empresa.findByPk(empId);
+    if (!empresa) {
+      return res.status(404).json({ error: 'La empresa especificada no existe' });
+    }
+
+    // Calcular el número de corbatín según el rango asignado a la empresa
+    let corbatinNum;
+    const rangoInicio = empresa.corbatin_rango_inicio != null ? parseInt(empresa.corbatin_rango_inicio, 10) : null;
+    const rangoFin = empresa.corbatin_rango_fin != null ? parseInt(empresa.corbatin_rango_fin, 10) : null;
+
+    if (rangoInicio !== null && rangoFin !== null && rangoFin >= rangoInicio) {
+      // Buscar corbatines activos actualmente asignados
+      const corbatinesOcupados = await db.Corbatin.findAll({
+        where: { estatus: 'ACTIVO' },
+        attributes: ['numero']
+      });
+      const numerosOcupados = new Set(corbatinesOcupados.map(c => Number(c.numero)));
+
+      let numeroLibre = null;
+      for (let n = rangoInicio; n <= rangoFin; n++) {
+        if (!numerosOcupados.has(n)) {
+          numeroLibre = n;
+          break;
+        }
+      }
+
+      if (numeroLibre === null) {
+        return res.status(400).json({
+          error: `La empresa "${empresa.razon_social}" ha completado su cupo de corbatines autorizados (#${rangoInicio} al #${rangoFin}). Solicite una ampliación de rango con la administración de Las Palomas para registrar más unidades.`
+        });
+      }
+
+      corbatinNum = numeroLibre;
+    } else {
+      // Fallback si la empresa no tiene rango configurado aún
+      const corbatinesOcupados = await db.Corbatin.findAll({
+        where: { estatus: 'ACTIVO' },
+        attributes: ['numero']
+      });
+      const numerosOcupados = new Set(corbatinesOcupados.map(c => Number(c.numero)));
+      let n = 1;
+      while (numerosOcupados.has(n)) {
+        n++;
+      }
+      corbatinNum = n;
+    }
+
     const rawFoto = foto_url || foto || null;
     const optimizedFoto = rawFoto ? await saveBase64Image(rawFoto) : null;
 
@@ -140,9 +187,7 @@ router.post('/', async (req, res) => {
       estatus_acceso: estatus_acceso || 'HABILITADO'
     });
 
-    // Generar corbatín inicial automáticamente
-    const countCorbatines = await db.Corbatin.count();
-    const corbatinNum = 100 + countCorbatines + 1;
+    // Generar corbatín oficial con el número asignado del rango
     const nuevoCorbatin = await db.Corbatin.create({
       id_vehiculo: nuevoVehiculo.id_vehiculo,
       numero: corbatinNum,

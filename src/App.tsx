@@ -341,6 +341,9 @@ interface Empresa {
   email: string;
   fechaRegistro: string;
   creadoPor: string;
+  corbatin_rango_inicio?: number | null;
+  corbatin_rango_fin?: number | null;
+  cuposTotales?: number | null;
 }
 
 interface Vehicle {
@@ -1043,6 +1046,19 @@ export default function App() {
   const [targetEmpresaParaNuevoTrabajador, setTargetEmpresaParaNuevoTrabajador] = useState<Empresa | null>(null);
   const [showCreateVehiculoModalAdmin, setShowCreateVehiculoModalAdmin] = useState(false);
 
+  // Edición de Empresa y Rango de Corbatines
+  const [selectedEmpresaParaEditar, setSelectedEmpresaParaEditar] = useState<Empresa | null>(null);
+  const [empresaEditNombre, setEmpresaEditNombre] = useState("");
+  const [empresaEditRfc, setEmpresaEditRfc] = useState("");
+  const [empresaEditContacto, setEmpresaEditContacto] = useState("");
+  const [empresaEditTelefono, setEmpresaEditTelefono] = useState("");
+  const [empresaEditEmail, setEmpresaEditEmail] = useState("");
+  const [empresaEditRangoInicio, setEmpresaEditRangoInicio] = useState<string>("");
+  const [empresaEditRangoFin, setEmpresaEditRangoFin] = useState<string>("");
+  const [empresaEditError, setEmpresaEditError] = useState("");
+  const [isSubmittingEmpresaEdit, setIsSubmittingEmpresaEdit] = useState(false);
+  const isSubmittingEmpresaEditRef = useRef(false);
+
   // ─── Estados y Refs de Bloqueo para Prevención de Doble Clic y Envíos Duplicados ───
   const [isSubmittingTrabajador, setIsSubmittingTrabajador] = useState(false);
   const isSubmittingTrabajadorRef = useRef(false);
@@ -1222,16 +1238,24 @@ export default function App() {
       }
 
       if (resEmpresas.status === "fulfilled" && Array.isArray(resEmpresas.value)) {
-        const mappedEmp: Empresa[] = resEmpresas.value.map((e: any) => ({
-          id: String(e.id_empresa || e.id),
-          nombre: e.razon_social || e.nombre,
-          rfc: e.rfc || "XAXX010101000",
-          contacto: e.responsable_nombre || e.responsable || "Contacto Principal",
-          telefono: e.telefono || "",
-          email: e.correo || "",
-          fechaRegistro: e.created_at ? new Date(e.created_at).toISOString().split("T")[0] : "2026-02-01",
-          creadoPor: "Supervisor HOA",
-        }));
+        const mappedEmp: Empresa[] = resEmpresas.value.map((e: any) => {
+          const rInicio = e.corbatin_rango_inicio !== undefined && e.corbatin_rango_inicio !== null ? Number(e.corbatin_rango_inicio) : null;
+          const rFin = e.corbatin_rango_fin !== undefined && e.corbatin_rango_fin !== null ? Number(e.corbatin_rango_fin) : null;
+          const cupos = (rInicio !== null && rFin !== null && rFin >= rInicio) ? (rFin - rInicio + 1) : null;
+          return {
+            id: String(e.id_empresa || e.id),
+            nombre: e.razon_social || e.nombre,
+            rfc: e.rfc || "XAXX010101000",
+            contacto: e.responsable_nombre || e.responsable || "Contacto Principal",
+            telefono: e.telefono || "",
+            email: e.correo || "",
+            fechaRegistro: e.created_at ? new Date(e.created_at).toISOString().split("T")[0] : "2026-02-01",
+            creadoPor: "Supervisor HOA",
+            corbatin_rango_inicio: rInicio,
+            corbatin_rango_fin: rFin,
+            cuposTotales: cupos,
+          };
+        });
         setEmpresas(mappedEmp);
       }
 
@@ -1440,6 +1464,36 @@ export default function App() {
       }
     } catch (e) {
       console.warn("Error al recargar trabajadores:", e);
+    }
+  };
+
+  // Recarga granular de Empresas
+  const reloadEmpresas = async () => {
+    try {
+      const res = await api.getEmpresas();
+      if (Array.isArray(res)) {
+        const mappedEmp: Empresa[] = res.map((e: any) => {
+          const rInicio = e.corbatin_rango_inicio !== undefined && e.corbatin_rango_inicio !== null ? Number(e.corbatin_rango_inicio) : null;
+          const rFin = e.corbatin_rango_fin !== undefined && e.corbatin_rango_fin !== null ? Number(e.corbatin_rango_fin) : null;
+          const cupos = (rInicio !== null && rFin !== null && rFin >= rInicio) ? (rFin - rInicio + 1) : null;
+          return {
+            id: String(e.id_empresa || e.id),
+            nombre: e.razon_social || e.nombre,
+            rfc: e.rfc || "XAXX010101000",
+            contacto: e.responsable_nombre || e.responsable || "Contacto Principal",
+            telefono: e.telefono || "",
+            email: e.correo || "",
+            fechaRegistro: e.created_at ? new Date(e.created_at).toISOString().split("T")[0] : "2026-02-01",
+            creadoPor: "Supervisor HOA",
+            corbatin_rango_inicio: rInicio,
+            corbatin_rango_fin: rFin,
+            cuposTotales: cupos,
+          };
+        });
+        setEmpresas(mappedEmp);
+      }
+    } catch (e) {
+      console.warn("Error al recargar empresas:", e);
     }
   };
 
@@ -2545,6 +2599,17 @@ export default function App() {
     const tel = (f.elements.namedItem("telefono") as HTMLInputElement).value.trim();
     const email = (f.elements.namedItem("email") as HTMLInputElement).value.trim();
     const passVal = (f.elements.namedItem("password") as HTMLInputElement).value.trim();
+    const rInicioInput = (f.elements.namedItem("corbatin_rango_inicio") as HTMLInputElement)?.value;
+    const rFinInput = (f.elements.namedItem("corbatin_rango_fin") as HTMLInputElement)?.value;
+    const rInicio = rInicioInput !== undefined && rInicioInput !== "" ? parseInt(rInicioInput, 10) : null;
+    const rFin = rFinInput !== undefined && rFinInput !== "" ? parseInt(rFinInput, 10) : null;
+
+    if (rInicio !== null && rFin !== null && rInicio > rFin) {
+      showToast("El número de corbatín inicial no puede ser mayor que el final.", "error", "Rango Inválido");
+      isSubmittingEmpresaRef.current = false;
+      setIsSubmittingEmpresa(false);
+      return;
+    }
 
     try {
       const empRes = await api.createEmpresa({
@@ -2553,6 +2618,8 @@ export default function App() {
         telefono: tel,
         correo: email,
         estatus: "ACTIVA",
+        corbatin_rango_inicio: rInicio,
+        corbatin_rango_fin: rFin,
       });
 
       await api.createUsuario({
@@ -2568,10 +2635,61 @@ export default function App() {
       setShowCreateEmpresaModal(false);
       showToast(`Empresa "${empNombre}" y cuenta "${email}" creadas exitosamente.`, "success", "Proveedor Creado");
     } catch (err: any) {
-      showToast("Error al registrar proveedor en la base de datos: " + (err.message || err), "error");
+      showToast("Error al registrar proveedor: " + (err.message || err), "error");
     } finally {
       isSubmittingEmpresaRef.current = false;
       setIsSubmittingEmpresa(false);
+    }
+  };
+
+  const handleOpenEditarEmpresa = (emp: Empresa) => {
+    setSelectedEmpresaParaEditar(emp);
+    setEmpresaEditNombre(emp.nombre || "");
+    setEmpresaEditRfc(emp.rfc || "");
+    setEmpresaEditContacto(emp.contacto || "");
+    setEmpresaEditTelefono(emp.telefono || "");
+    setEmpresaEditEmail(emp.email || "");
+    setEmpresaEditRangoInicio(emp.corbatin_rango_inicio !== null && emp.corbatin_rango_inicio !== undefined ? String(emp.corbatin_rango_inicio) : "");
+    setEmpresaEditRangoFin(emp.corbatin_rango_fin !== null && emp.corbatin_rango_fin !== undefined ? String(emp.corbatin_rango_fin) : "");
+    setEmpresaEditError("");
+  };
+
+  const handleGuardarEditarEmpresa = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEmpresaParaEditar) return;
+    if (isSubmittingEmpresaEditRef.current) return;
+    isSubmittingEmpresaEditRef.current = true;
+    setIsSubmittingEmpresaEdit(true);
+    setEmpresaEditError("");
+
+    const rInicio = empresaEditRangoInicio !== "" ? parseInt(empresaEditRangoInicio, 10) : null;
+    const rFin = empresaEditRangoFin !== "" ? parseInt(empresaEditRangoFin, 10) : null;
+
+    if (rInicio !== null && rFin !== null && rInicio > rFin) {
+      setEmpresaEditError("El número inicial de corbatín no puede ser mayor que el final.");
+      isSubmittingEmpresaEditRef.current = false;
+      setIsSubmittingEmpresaEdit(false);
+      return;
+    }
+
+    try {
+      await api.updateEmpresa(selectedEmpresaParaEditar.id, {
+        razon_social: empresaEditNombre.trim(),
+        responsable_nombre: empresaEditContacto.trim(),
+        telefono: empresaEditTelefono.trim(),
+        correo: empresaEditEmail.trim(),
+        corbatin_rango_inicio: rInicio,
+        corbatin_rango_fin: rFin,
+      });
+
+      await reloadEmpresas();
+      setSelectedEmpresaParaEditar(null);
+      showToast("Empresa y rango de corbatines actualizados exitosamente.", "success", "Empresa Actualizada");
+    } catch (err: any) {
+      setEmpresaEditError(err.message || "Error al actualizar empresa.");
+    } finally {
+      isSubmittingEmpresaEditRef.current = false;
+      setIsSubmittingEmpresaEdit(false);
     }
   };
 
@@ -3329,8 +3447,21 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 self-end lg:self-center">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3 self-end lg:self-center flex-wrap justify-end">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {emp.corbatin_rango_inicio !== null && emp.corbatin_rango_inicio !== undefined && emp.corbatin_rango_fin !== null && emp.corbatin_rango_fin !== undefined ? (
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold border ${
+                            empVehicles.length >= (emp.cuposTotales || (emp.corbatin_rango_fin - emp.corbatin_rango_inicio + 1))
+                              ? "bg-amber-50 text-amber-800 border-amber-300"
+                              : "bg-teal-50 text-teal-800 border-teal-300"
+                          }`}>
+                            <span>🏷️ Corbatines #{emp.corbatin_rango_inicio} al #{emp.corbatin_rango_fin} ({empVehicles.length}/{emp.cuposTotales || (emp.corbatin_rango_fin - emp.corbatin_rango_inicio + 1)} cupos)</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                            <span>🏷️ Sin Rango Asignado</span>
+                          </span>
+                        )}
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
                           <IconCar className="w-3.5 h-3.5" />
                           <span>{empVehicles.length} Vehículos</span>
@@ -3340,6 +3471,19 @@ export default function App() {
                           <span>{empTrabajadores.length} Trabajadores</span>
                         </span>
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenEditarEmpresa(emp);
+                        }}
+                        className="p-2 px-3 rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                        title="Editar Datos de Empresa y Rango de Corbatines"
+                      >
+                        <IconEdit className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Editar Rango / Empresa</span>
+                      </button>
 
                       <button
                         type="button"
@@ -4659,9 +4803,63 @@ export default function App() {
                 <PageHero img={IMG_GATE} title="Registro de Unidades Vehiculares" subtitle="Registra los vehículos autorizados de tu empresa con fotografía y datos oficiales" />
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
                   <div className="rounded-2xl border p-6 sm:p-7 bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
-                    <h2 className="font-bold text-sm mb-5 uppercase tracking-wider text-slate-800">
+                    <h2 className="font-bold text-sm mb-4 uppercase tracking-wider text-slate-800">
                       Datos del Nuevo Vehículo
                     </h2>
+
+                    {(() => {
+                      const empUser = empresas.find(e => e.nombre === currentUser?.empresaNombre) || empresas[0];
+                      const empVehiculosList = vehicles.filter(v => v.empresaNombre === currentUser?.empresaNombre || v.empresaId === empUser?.id);
+                      const rInicio = empUser?.corbatin_rango_inicio;
+                      const rFin = empUser?.corbatin_rango_fin;
+                      const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
+                      const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
+                      const cuposOcupados = empVehiculosList.length;
+                      const isQuotaFull = hasRange && totalCupos !== null && cuposOcupados >= totalCupos;
+
+                      return (
+                        <div className="mb-5 space-y-3">
+                          {hasRange ? (
+                            <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                              isQuotaFull
+                                ? "bg-amber-50/90 border-amber-300 text-amber-900"
+                                : "bg-teal-50/90 border-teal-300 text-teal-900"
+                            }`}>
+                              <div className="space-y-0.5">
+                                <div className="text-xs font-bold flex items-center gap-1.5 uppercase tracking-wider">
+                                  <span>🏷️ Rango de Corbatines Asignado</span>
+                                </div>
+                                <p className="text-xs">
+                                  Números autorizados: <strong>#{rInicio}</strong> al <strong>#{rFin}</strong>. El sistema asignará el siguiente número disponible automáticamente.
+                                </p>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <div className={`text-base font-black font-mono ${isQuotaFull ? "text-amber-700" : "text-teal-700"}`}>
+                                  {cuposOcupados} / {totalCupos} cupos
+                                </div>
+                                <div className="text-[10px] font-semibold opacity-80">
+                                  {isQuotaFull ? "⚠️ Límite Alcanzado" : `${(totalCupos ?? 0) - cuposOcupados} disponibles`}
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 text-xs">
+                              ℹ️ <strong>Nota:</strong> Tu empresa aún no tiene un rango delimitado de corbatines por administración. El sistema asignará un número correlativo libre.
+                            </div>
+                          )}
+
+                          {isQuotaFull && (
+                            <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2.5">
+                              <IconAlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
+                              <span>
+                                Has alcanzado el límite máximo de corbatines autorizados ({totalCupos} unidades) asignados a tu empresa. Si requieres registrar más unidades, solicita una ampliación de rango a la administración.
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
                     <form
                       onSubmit={handleGuardarNuevoVehiculo}
                       className="space-y-5"
@@ -4740,9 +4938,28 @@ export default function App() {
                       <div className="flex justify-end pt-3">
                         <button
                           type="submit"
-                          disabled={isSubmittingVehiculo}
-                          className={`px-7 py-3 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingVehiculo ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                            }`}
+                          disabled={isSubmittingVehiculo || (() => {
+                            const empUser = empresas.find(e => e.nombre === currentUser?.empresaNombre) || empresas[0];
+                            const empVehiculosList = vehicles.filter(v => v.empresaNombre === currentUser?.empresaNombre || v.empresaId === empUser?.id);
+                            const rInicio = empUser?.corbatin_rango_inicio;
+                            const rFin = empUser?.corbatin_rango_fin;
+                            const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
+                            const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
+                            return Boolean(hasRange && totalCupos !== null && empVehiculosList.length >= totalCupos);
+                          })()}
+                          className={`px-7 py-3 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center gap-2 ${
+                            isSubmittingVehiculo || (() => {
+                              const empUser = empresas.find(e => e.nombre === currentUser?.empresaNombre) || empresas[0];
+                              const empVehiculosList = vehicles.filter(v => v.empresaNombre === currentUser?.empresaNombre || v.empresaId === empUser?.id);
+                              const rInicio = empUser?.corbatin_rango_inicio;
+                              const rFin = empUser?.corbatin_rango_fin;
+                              const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
+                              const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
+                              return Boolean(hasRange && totalCupos !== null && empVehiculosList.length >= totalCupos);
+                            })()
+                              ? "opacity-60 cursor-not-allowed pointer-events-none"
+                              : ""
+                          }`}
                           style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                         >
                           {isSubmittingVehiculo ? (
@@ -6216,7 +6433,7 @@ export default function App() {
       {/* ─── MODAL 2: SUPERVISOR CREATES PROVEEDOR EMPRESA ─── */}
       {showCreateEmpresaModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200">
+          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b pb-3">
               <h3 className="text-sm font-bold text-slate-900 uppercase">Registrar Empresa Proveedora</h3>
               <button onClick={() => setShowCreateEmpresaModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">✕</button>
@@ -6237,19 +6454,41 @@ export default function App() {
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre del Titular / Contacto *</label>
                 <input name="contacto" required placeholder="Ej. Ing. Daniel Vázquez" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Teléfono Celular *</label>
-                <input name="telefono" required placeholder="+52 638 000 0000" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico *</label>
-                <input name="email" type="email" required placeholder="contacto@empresa.com" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Teléfono Celular *</label>
+                  <input name="telefono" required placeholder="+52 638 000 0000" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico *</label>
+                  <input name="email" type="email" required placeholder="contacto@empresa.com" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Contraseña de Acceso al Portal *</label>
                 <input name="password" type="password" required placeholder="Mínimo 6 caracteres" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
                 <p className="text-[10px] text-slate-400 mt-1">El contratista usará esta contraseña para ingresar al portal.</p>
               </div>
+
+              {/* Rango de Corbatines */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-800">Rango de Corbatines Asignados</label>
+                  <span className="text-[10px] bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded-full">Control de Cupos</span>
+                </div>
+                <p className="text-[11px] text-slate-500">Define los números de corbatines autorizados para esta empresa (ej. del 1 al 5). Al registrar vehículos, se asignarán números dentro de este intervalo.</p>
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Corbatín Inicial</label>
+                    <input name="corbatin_rango_inicio" type="number" min="1" placeholder="Ej. 1" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono" />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Corbatín Final</label>
+                    <input name="corbatin_rango_fin" type="number" min="1" placeholder="Ej. 5" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono" />
+                  </div>
+                </div>
+              </div>
+
               <div className="flex justify-end gap-2 pt-3">
                 <button type="button" onClick={() => setShowCreateEmpresaModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>
                 <button
@@ -6265,6 +6504,131 @@ export default function App() {
                     </>
                   ) : (
                     <span>Crear Proveedor</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL EDITAR EMPRESA Y RANGO DE CORBATINES ─── */}
+      {selectedEmpresaParaEditar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 uppercase">Editar Empresa / Rango de Corbatines</h3>
+                <p className="text-xs text-slate-500">{selectedEmpresaParaEditar.nombre}</p>
+              </div>
+              <button onClick={() => setSelectedEmpresaParaEditar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+            </div>
+
+            {empresaEditError && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                <span>{empresaEditError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleGuardarEditarEmpresa} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Razón Social *</label>
+                <input
+                  value={empresaEditNombre}
+                  onChange={(e) => setEmpresaEditNombre(e.target.value)}
+                  required
+                  className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre del Titular / Contacto *</label>
+                <input
+                  value={empresaEditContacto}
+                  onChange={(e) => setEmpresaEditContacto(e.target.value)}
+                  required
+                  className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300"
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Teléfono</label>
+                  <input
+                    value={empresaEditTelefono}
+                    onChange={(e) => setEmpresaEditTelefono(e.target.value)}
+                    className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico</label>
+                  <input
+                    type="email"
+                    value={empresaEditEmail}
+                    onChange={(e) => setEmpresaEditEmail(e.target.value)}
+                    className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-800">Rango de Corbatines Asignados</label>
+                  <span className="text-[10px] bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded-full">Control de Cupo</span>
+                </div>
+                <p className="text-[11px] text-slate-500">Define los números de corbatín autorizados para esta empresa. El sistema asignará automáticamente números dentro de este intervalo al registrar vehículos.</p>
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Corbatín Inicial</label>
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="Ej. 1"
+                      value={empresaEditRangoInicio}
+                      onChange={(e) => setEmpresaEditRangoInicio(e.target.value)}
+                      className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Corbatín Final</label>
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="Ej. 5"
+                      value={empresaEditRangoFin}
+                      onChange={(e) => setEmpresaEditRangoFin(e.target.value)}
+                      className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono"
+                    />
+                  </div>
+                </div>
+                {empresaEditRangoInicio && empresaEditRangoFin && parseInt(empresaEditRangoFin, 10) >= parseInt(empresaEditRangoInicio, 10) && (
+                  <p className="text-[11px] font-bold text-teal-700 mt-1">
+                    ✓ Capacidad total: {parseInt(empresaEditRangoFin, 10) - parseInt(empresaEditRangoInicio, 10) + 1} vehículos autorizados
+                  </p>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedEmpresaParaEditar(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer hover:bg-slate-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingEmpresaEdit}
+                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${
+                    isSubmittingEmpresaEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                  }`}
+                >
+                  {isSubmittingEmpresaEdit ? (
+                    <>
+                      <IconSpinner className="w-3.5 h-3.5" />
+                      <span>Guardando Cambios...</span>
+                    </>
+                  ) : (
+                    <span>Guardar Cambios</span>
                   )}
                 </button>
               </div>
@@ -7151,6 +7515,44 @@ export default function App() {
               <button onClick={() => { setShowCreateVehiculoModalAdmin(false); setTargetEmpresaParaNuevoVehiculo(null); }} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
             </div>
 
+            {targetEmpresaParaNuevoVehiculo && (() => {
+              const currentEmp = targetEmpresaParaNuevoVehiculo;
+              const empVehs = vehicles.filter(v => v.empresaId === currentEmp.id);
+              const rInicio = currentEmp.corbatin_rango_inicio;
+              const rFin = currentEmp.corbatin_rango_fin;
+              const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
+              const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
+              const cuposOcupados = empVehs.length;
+              const isQuotaFull = hasRange && totalCupos !== null && cuposOcupados >= totalCupos;
+
+              return (
+                <div className={`p-3.5 rounded-2xl border text-xs space-y-1 ${
+                  isQuotaFull ? "bg-amber-50/90 border-amber-300 text-amber-900" : "bg-slate-50 border-slate-200 text-slate-700"
+                }`}>
+                  <div className="flex items-center justify-between font-bold">
+                    <span>🏷️ Control de Corbatines de la Empresa:</span>
+                    {hasRange ? (
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${isQuotaFull ? "bg-amber-200 text-amber-900" : "bg-teal-100 text-teal-800"}`}>
+                        {cuposOcupados} / {totalCupos} cupos ocupados
+                      </span>
+                    ) : (
+                      <span className="text-slate-500 font-normal">Sin rango asignado</span>
+                    )}
+                  </div>
+                  {hasRange && (
+                    <p className="text-[11px] text-slate-500">
+                      Rango asignado: <strong>#{rInicio} al #{rFin}</strong>. El sistema asignará automáticamente el primer corbatín disponible.
+                    </p>
+                  )}
+                  {isQuotaFull && (
+                    <p className="text-[11px] font-bold text-red-600 pt-1">
+                      ⚠️ Atención: La empresa ha completado el total de cupos asignados ({totalCupos} corbatines). Puedes ampliar el rango en "Editar Rango / Empresa".
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
+
             {nuevoVehiculoFotoError && (
               <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
                 <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
@@ -7268,9 +7670,28 @@ export default function App() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmittingVehiculo}
-                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingVehiculo ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                    }`}
+                  disabled={isSubmittingVehiculo || (() => {
+                    if (!targetEmpresaParaNuevoVehiculo) return false;
+                    const empVehs = vehicles.filter(v => v.empresaId === targetEmpresaParaNuevoVehiculo.id);
+                    const rInicio = targetEmpresaParaNuevoVehiculo.corbatin_rango_inicio;
+                    const rFin = targetEmpresaParaNuevoVehiculo.corbatin_rango_fin;
+                    const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
+                    const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
+                    return Boolean(hasRange && totalCupos !== null && empVehs.length >= totalCupos);
+                  })()}
+                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${
+                    isSubmittingVehiculo || (() => {
+                      if (!targetEmpresaParaNuevoVehiculo) return false;
+                      const empVehs = vehicles.filter(v => v.empresaId === targetEmpresaParaNuevoVehiculo.id);
+                      const rInicio = targetEmpresaParaNuevoVehiculo.corbatin_rango_inicio;
+                      const rFin = targetEmpresaParaNuevoVehiculo.corbatin_rango_fin;
+                      const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
+                      const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
+                      return Boolean(hasRange && totalCupos !== null && empVehs.length >= totalCupos);
+                    })()
+                      ? "opacity-60 cursor-not-allowed pointer-events-none"
+                      : ""
+                  }`}
                   style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                 >
                   {isSubmittingVehiculo ? (

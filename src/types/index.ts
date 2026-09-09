@@ -18,6 +18,8 @@ export interface EmpresaDB {
   telefono: string;
   correo?: string | null;
   estatus: 'ACTIVA' | 'SUSPENDIDA' | 'RESTRINGIDA' | string;
+  corbatin_rango_inicio?: number | null;
+  corbatin_rango_fin?: number | null;
   created_at: string;
   updated_at: string;
 }

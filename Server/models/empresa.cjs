@@ -36,6 +36,16 @@ const Empresa = sequelize.define(
       allowNull: false,
       defaultValue: 'ACTIVA',
       comment: 'ACTIVA, SUSPENDIDA o RESTRINGIDA'
+    },
+    corbatin_rango_inicio: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: 'Número de corbatín inicial asignado a la empresa (ej. 1)'
+    },
+    corbatin_rango_fin: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: 'Número de corbatín final asignado a la empresa (ej. 5)'
     }
   },
   {
