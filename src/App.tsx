@@ -3479,11 +3479,10 @@ export default function App() {
                           e.stopPropagation();
                           handleOpenEditarEmpresa(emp);
                         }}
-                        className="p-2 px-3 rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                        className="p-2 rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
                         title="Editar Datos de Empresa y Rango de Corbatines"
                       >
                         <IconEdit className="w-3.5 h-3.5 text-slate-500" />
-                        <span>Editar Rango / Empresa</span>
                       </button>
 
                       {/* Indicador de Flecha Integrado al Contenedor */}
