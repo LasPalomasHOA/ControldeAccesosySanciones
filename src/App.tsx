@@ -4522,7 +4522,7 @@ export default function App() {
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
-                            {["Fotografía", "Nombre Completo", "Teléfono Celular", "Estatus Acceso", "Fecha de Registro", "Acciones"].map((h) => (
+                            {["Fotografía", "Nombre Completo", "Teléfono Celular", "Estatus Acceso", "Fecha de Registro"].map((h) => (
                               <th key={h} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
                             ))}
                           </tr>
@@ -4533,7 +4533,7 @@ export default function App() {
                             if (empTrabajadores.length === 0) {
                               return (
                                 <tr>
-                                  <td colSpan={6} className="py-8 text-center text-slate-400">
+                                  <td colSpan={5} className="py-8 text-center text-slate-400">
                                     <IconUsers className="w-8 h-8 mx-auto mb-1 opacity-30" />
                                     <span>No hay trabajadores registrados para {currentUser.empresaNombre}.</span>
                                   </td>
@@ -4562,46 +4562,20 @@ export default function App() {
                                   {t.telefono || "—"}
                                 </td>
                                 <td className="px-5 py-3">
-                                  <button
-                                    onClick={() => handleToggleActivoTrabajador(t)}
-                                    disabled={Boolean(togglingTrabajadorIds[t.id_trabajador])}
-                                    className={`cursor-pointer group flex items-center gap-1.5 ${togglingTrabajadorIds[t.id_trabajador] ? "opacity-50 pointer-events-none" : ""
-                                      }`}
-                                    title="Clic para cambiar estatus"
-                                  >
-                                    {t.activo ? (
-                                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                        Autorizado
-                                      </span>
-                                    ) : (
-                                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                                        Inactivo
-                                      </span>
-                                    )}
-                                  </button>
+                                  {t.activo ? (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                      Autorizado
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                                      Inactivo
+                                    </span>
+                                  )}
                                 </td>
                                 <td className="px-5 py-3 text-xs font-mono text-slate-500">
                                   {t.created_at}
-                                </td>
-                                <td className="px-5 py-3">
-                                  <div className="flex items-center gap-1.5">
-                                    <button
-                                      onClick={() => handleAbrirEditarTrabajador(t)}
-                                      className="p-1.5 rounded-lg text-slate-600 bg-slate-100 hover:bg-[#0D6E5F] hover:text-white transition-colors cursor-pointer"
-                                      title="Modificar trabajador"
-                                    >
-                                      <IconEdit className="w-3.5 h-3.5" />
-                                    </button>
-                                    <button
-                                      onClick={() => setSelectedTrabajadorParaEliminar(t)}
-                                      className="p-1.5 rounded-lg text-red-600 bg-red-50 hover:bg-red-600 hover:text-white transition-colors cursor-pointer border border-red-100"
-                                      title="Eliminar trabajador"
-                                    >
-                                      <IconTrash className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
                                 </td>
                               </tr>
                             ));
@@ -4798,7 +4772,7 @@ export default function App() {
                 <PageHero
                   img={IMG_GATE}
                   title={`Plantilla de Trabajadores — ${currentUser.empresaNombre}`}
-                  subtitle="Acreditación, consulta, modificación y control de acceso del personal de la empresa"
+                  subtitle="Acreditación, consulta y control de acceso del personal de la empresa"
                 />
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 min-h-[calc(100vh-16rem)]">
@@ -4886,7 +4860,7 @@ export default function App() {
                     <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b bg-slate-50" style={{ borderColor: "var(--color-border)" }}>
                       <div>
                         <h2 className="font-bold text-base text-slate-800">Nómina de Personal Acreditado</h2>
-                        <p className="text-xs text-slate-500">Consulta los colaboradores dados de alta, modifica sus datos o elimina registros</p>
+                        <p className="text-xs text-slate-500">Consulta los colaboradores acreditados dados de alta en el sistema</p>
                       </div>
                       <span className="text-xs font-mono font-bold text-slate-500">
                         {trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre).length} registros
@@ -4897,7 +4871,7 @@ export default function App() {
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
-                            {["Fotografía", "Nombre Completo", "Teléfono Celular", "Empresa", "Estatus Acceso", "Auditoría (Registro / Modif.)", "Acciones"].map((h) => (
+                            {["Fotografía", "Nombre Completo", "Teléfono Celular", "Empresa", "Estatus Acceso", "Auditoría (Registro / Modif.)"].map((h) => (
                               <th key={h} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
                             ))}
                           </tr>
@@ -4920,7 +4894,7 @@ export default function App() {
                             if (filtered.length === 0) {
                               return (
                                 <tr>
-                                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                                  <td colSpan={6} className="py-12 text-center text-slate-400">
                                     <IconUsers className="w-10 h-10 mx-auto mb-2 opacity-30" />
                                     <div className="font-bold text-slate-700">No se encontraron trabajadores</div>
                                     <p className="text-xs text-slate-400 mt-1">
@@ -4973,47 +4947,21 @@ export default function App() {
                                   {t.empresaNombre}
                                 </td>
                                 <td className="px-5 py-3.5">
-                                  <button
-                                    onClick={() => handleToggleActivoTrabajador(t)}
-                                    disabled={Boolean(togglingTrabajadorIds[t.id_trabajador])}
-                                    className={`cursor-pointer group flex items-center gap-1.5 text-left ${togglingTrabajadorIds[t.id_trabajador] ? "opacity-50 pointer-events-none" : ""
-                                      }`}
-                                    title="Clic para alternar estatus (Activo / Inactivo)"
-                                  >
-                                    {t.activo ? (
-                                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 group-hover:bg-emerald-100 transition-colors">
-                                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                        Autorizado (Activo)
-                                      </span>
-                                    ) : (
-                                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200 group-hover:bg-red-100 transition-colors">
-                                        <span className="w-2 h-2 rounded-full bg-red-400" />
-                                        Inactivo (Sin Acceso)
-                                      </span>
-                                    )}
-                                  </button>
+                                  {t.activo ? (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                      Autorizado (Activo)
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
+                                      <span className="w-2 h-2 rounded-full bg-red-400" />
+                                      Inactivo (Sin Acceso)
+                                    </span>
+                                  )}
                                 </td>
                                 <td className="px-5 py-3.5 text-xs text-slate-500 font-mono">
                                   <div><strong className="text-slate-400 font-sans font-semibold">Alta:</strong> {t.created_at}</div>
                                   <div><strong className="text-slate-400 font-sans font-semibold">Modif:</strong> {t.updated_at}</div>
-                                </td>
-                                <td className="px-5 py-3.5 text-right">
-                                  <div className="flex items-center justify-end gap-1.5">
-                                    <button
-                                      onClick={() => handleAbrirEditarTrabajador(t)}
-                                      className="p-2 rounded-xl text-slate-600 bg-slate-100 hover:bg-[#0D6E5F] hover:text-white transition-colors cursor-pointer"
-                                      title="Modificar datos del trabajador"
-                                    >
-                                      <IconEdit className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => setSelectedTrabajadorParaEliminar(t)}
-                                      className="p-2 rounded-xl text-red-600 bg-red-50 hover:bg-red-600 hover:text-white transition-colors cursor-pointer border border-red-100"
-                                      title="Eliminar trabajador del sistema"
-                                    >
-                                      <IconTrash className="w-4 h-4" />
-                                    </button>
-                                  </div>
                                 </td>
                               </tr>
                             ));
