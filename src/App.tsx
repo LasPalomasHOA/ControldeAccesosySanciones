@@ -6016,9 +6016,7 @@ export default function App() {
                                   className="w-full rounded-xl pl-8 pr-4 py-2.5 text-base font-bold font-mono text-slate-900 bg-white border-2 border-emerald-400 shadow-xs outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-600 transition-all placeholder:text-slate-400 placeholder:font-sans placeholder:text-xs"
                                 />
                               </div>
-                              <span className="text-[10px] text-slate-500 block mt-1">
-                                Escribe el número del corbatín y la empresa y vehículo se seleccionarán automáticamente.
-                              </span>
+
                             </div>
 
                             <div className="sm:col-span-6">
