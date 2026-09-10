@@ -6063,172 +6063,133 @@ export default function App() {
                             </span>
                           </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
-                            {/* Input Buscador con Dropdown / Combobox */}
-                            <div className="sm:col-span-6 relative" ref={corbatinDropdownRef}>
-                              <div className="relative">
-                                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-base font-black font-mono text-emerald-700 pointer-events-none">
-                                  #
-                                </span>
-                                <input
-                                  type="text"
-                                  value={casetaCorbatin}
-                                  onChange={(e) => handleCorbatinInputChange(e.target.value)}
-                                  onKeyDown={handleCorbatinInputKeyDown}
-                                  onFocus={() => setIsCorbatinDropdownOpen(true)}
-                                  placeholder="Escribe # corbatín o placas (ej. MTY-0001-A)..."
-                                  className="w-full rounded-xl pl-8 pr-16 py-2.5 text-sm sm:text-base font-bold font-mono text-slate-900 bg-white border-2 border-emerald-400 shadow-xs outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-600 transition-all placeholder:text-slate-400 placeholder:font-sans placeholder:text-xs"
-                                />
-                                <div className="absolute inset-y-0 right-0 flex items-center pr-2 gap-0.5">
-                                  {casetaCorbatin && (
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setCasetaCorbatin("");
-                                        setIsCorbatinDropdownOpen(true);
-                                      }}
-                                      title="Limpiar búsqueda"
-                                      className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                                    >
-                                      <IconX className="w-4 h-4" />
-                                    </button>
-                                  )}
+                          {/* Input Buscador con Dropdown / Combobox de Ancho Completo */}
+                          <div className="relative" ref={corbatinDropdownRef}>
+                            <div className="relative">
+                              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-base font-black font-mono text-emerald-700 pointer-events-none">
+                                #
+                              </span>
+                              <input
+                                type="text"
+                                value={casetaCorbatin}
+                                onChange={(e) => handleCorbatinInputChange(e.target.value)}
+                                onKeyDown={handleCorbatinInputKeyDown}
+                                onFocus={() => setIsCorbatinDropdownOpen(true)}
+                                placeholder="Escribe # corbatín, placas, marca o modelo (ej. MTY-0001-A)..."
+                                className="w-full rounded-xl pl-8 pr-16 py-2.5 text-sm sm:text-base font-bold font-mono text-slate-900 bg-white border-2 border-emerald-400 shadow-xs outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-600 transition-all placeholder:text-slate-400 placeholder:font-sans placeholder:text-xs"
+                              />
+                              <div className="absolute inset-y-0 right-0 flex items-center pr-2 gap-0.5">
+                                {casetaCorbatin && (
                                   <button
                                     type="button"
-                                    onClick={() => setIsCorbatinDropdownOpen(!isCorbatinDropdownOpen)}
-                                    title="Desplegar lista de vehículos"
-                                    className="p-1 rounded-md text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100/60 transition-colors"
+                                    onClick={() => {
+                                      setCasetaCorbatin("");
+                                      setIsCorbatinDropdownOpen(true);
+                                    }}
+                                    title="Limpiar búsqueda"
+                                    className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
                                   >
-                                    {isCorbatinDropdownOpen ? (
-                                      <IconChevronUp className="w-4 h-4" />
-                                    ) : (
-                                      <IconChevronDown className="w-4 h-4" />
-                                    )}
+                                    <IconX className="w-4 h-4" />
                                   </button>
-                                </div>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => setIsCorbatinDropdownOpen(!isCorbatinDropdownOpen)}
+                                  title="Desplegar lista de vehículos"
+                                  className="p-1 rounded-md text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100/60 transition-colors cursor-pointer"
+                                >
+                                  {isCorbatinDropdownOpen ? (
+                                    <IconChevronUp className="w-4 h-4" />
+                                  ) : (
+                                    <IconChevronDown className="w-4 h-4" />
+                                  )}
+                                </button>
                               </div>
+                            </div>
 
-                              {/* MENÚ DESPLEGABLE / DROPDOWN FLOTANTE */}
-                              {isCorbatinDropdownOpen && (
-                                <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border-2 border-emerald-400 shadow-2xl overflow-hidden max-h-72 overflow-y-auto">
-                                  {/* Encabezado del dropdown */}
-                                  <div className="px-3 py-1.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-[11px] font-semibold text-slate-600 sticky top-0 z-10">
-                                    <span>
-                                      {casetaCorbatin.trim()
-                                        ? `${filteredCasetaVehicles.length} ${filteredCasetaVehicles.length === 1 ? "unidad encontrada" : "unidades encontradas"}`
-                                        : `Vehículos registrados (${vehicles.length})`}
-                                    </span>
-                                    <span className="text-[10px] text-slate-400 hidden sm:inline">
-                                      Usa ↑ ↓ y Enter para elegir
-                                    </span>
-                                  </div>
+                            {/* MENÚ DESPLEGABLE / DROPDOWN FLOTANTE */}
+                            {isCorbatinDropdownOpen && (
+                              <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border-2 border-emerald-400 shadow-2xl overflow-hidden max-h-72 overflow-y-auto">
+                                {/* Encabezado del dropdown */}
+                                <div className="px-3 py-1.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-[11px] font-semibold text-slate-600 sticky top-0 z-10">
+                                  <span>
+                                    {casetaCorbatin.trim()
+                                      ? `${filteredCasetaVehicles.length} ${filteredCasetaVehicles.length === 1 ? "unidad encontrada" : "unidades encontradas"}`
+                                      : `Vehículos registrados (${vehicles.length})`}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 hidden sm:inline">
+                                    Usa ↑ ↓ y Enter para elegir
+                                  </span>
+                                </div>
 
-                                  {/* Lista de vehículos filtrados */}
-                                  {filteredCasetaVehicles.length > 0 ? (
-                                    <div className="divide-y divide-slate-100">
-                                      {filteredCasetaVehicles.map((v, idx) => {
-                                        const isSelected = selectedVehicleId === v.id;
-                                        const isHighlighted = corbatinHighlightedIndex === idx;
-                                        return (
-                                          <div
-                                            key={v.id}
-                                            onClick={() => handleSelectVehicleFromDropdown(v)}
-                                            onMouseEnter={() => setCorbatinHighlightedIndex(idx)}
-                                            className={`p-2.5 cursor-pointer transition-colors border-l-4 ${
-                                              isSelected
-                                                ? "bg-emerald-100/70 border-l-emerald-600"
-                                                : isHighlighted
-                                                ? "bg-emerald-50/80 border-l-emerald-400"
-                                                : "hover:bg-slate-50 border-l-transparent"
-                                            }`}
-                                          >
-                                            <div className="flex items-center justify-between gap-2">
-                                              <div className="flex items-center gap-1.5 flex-wrap">
-                                                <span className="px-1.5 py-0.5 rounded-md bg-emerald-700 text-white font-mono font-bold text-xs">
-                                                  #{v.corbatinNum}
-                                                </span>
-                                                <span className="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-900 font-mono font-bold text-xs tracking-wider">
-                                                  {v.placas}
-                                                </span>
-                                                <span className="font-bold text-slate-900 text-xs sm:text-sm">
-                                                  {v.marca} {v.modelo}
-                                                </span>
-                                                {v.color && (
-                                                  <span className="text-slate-500 text-xs">({v.color})</span>
-                                                )}
-                                              </div>
-                                              <span
-                                                className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                                                  v.status === "Habilitado"
-                                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                                    : "bg-rose-50 text-rose-700 border-rose-200"
-                                                }`}
-                                              >
-                                                {v.status === "Habilitado" ? "✓ Habilitado" : v.status}
+                                {/* Lista de vehículos filtrados */}
+                                {filteredCasetaVehicles.length > 0 ? (
+                                  <div className="divide-y divide-slate-100">
+                                    {filteredCasetaVehicles.map((v, idx) => {
+                                      const isSelected = selectedVehicleId === v.id;
+                                      const isHighlighted = corbatinHighlightedIndex === idx;
+                                      return (
+                                        <div
+                                          key={v.id}
+                                          onClick={() => handleSelectVehicleFromDropdown(v)}
+                                          onMouseEnter={() => setCorbatinHighlightedIndex(idx)}
+                                          className={`p-2.5 cursor-pointer transition-colors border-l-4 ${
+                                            isSelected
+                                              ? "bg-emerald-100/70 border-l-emerald-600"
+                                              : isHighlighted
+                                              ? "bg-emerald-50/80 border-l-emerald-400"
+                                              : "hover:bg-slate-50 border-l-transparent"
+                                          }`}
+                                        >
+                                          <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                              <span className="px-1.5 py-0.5 rounded-md bg-emerald-700 text-white font-mono font-bold text-xs">
+                                                #{v.corbatinNum}
                                               </span>
-                                            </div>
-
-                                            <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
-                                              <span className="truncate font-medium flex items-center gap-1">
-                                                <IconBuilding className="w-3 h-3 text-slate-400 shrink-0" />
-                                                {v.empresaNombre || "Empresa registrada"}
+                                              <span className="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-900 font-mono font-bold text-xs tracking-wider">
+                                                {v.placas}
                                               </span>
-                                              {v.conductor && (
-                                                <span className="truncate text-slate-400 text-[10px]">
-                                                  Chofer: {v.conductor}
-                                                </span>
+                                              <span className="font-bold text-slate-900 text-xs sm:text-sm">
+                                                {v.marca} {v.modelo}
+                                              </span>
+                                              {v.color && (
+                                                <span className="text-slate-500 text-xs">({v.color})</span>
                                               )}
                                             </div>
+                                            <span
+                                              className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                                v.status === "Habilitado"
+                                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                                  : "bg-rose-50 text-rose-700 border-rose-200"
+                                              }`}
+                                            >
+                                              {v.status === "Habilitado" ? "✓ Habilitado" : v.status}
+                                            </span>
                                           </div>
-                                        );
-                                      })}
-                                    </div>
-                                  ) : (
-                                    <div className="p-4 text-center text-xs text-slate-500 space-y-1">
-                                      <p className="font-bold text-slate-700">No se encontraron vehículos con "{casetaCorbatin}"</p>
-                                      <p className="text-[11px] text-slate-400">Verifica el número de corbatín o las placas ingresadas.</p>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
 
-                            {/* Tarjeta de Unidad Detectada */}
-                            <div className="sm:col-span-6">
-                              {currentCasetaVehicle ? (
-                                <div className="p-2.5 rounded-xl bg-white border border-emerald-300 flex items-center justify-between gap-2 shadow-2xs">
-                                  <div className="min-w-0">
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Unidad Detectada</span>
-                                    <span className="text-xs font-bold text-slate-900 truncate block">
-                                      {currentCasetaVehicle.marca} {currentCasetaVehicle.modelo} · <span className="font-mono text-emerald-700 font-bold">#{currentCasetaVehicle.corbatinNum}</span> · <span className="font-mono text-slate-700">{currentCasetaVehicle.placas}</span>
-                                    </span>
-                                    <span className="text-[10px] text-slate-500 truncate block">
-                                      {currentCasetaVehicle.empresaNombre}
-                                    </span>
+                                          <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
+                                            <span className="truncate font-medium flex items-center gap-1">
+                                              <IconBuilding className="w-3 h-3 text-slate-400 shrink-0" />
+                                              {v.empresaNombre || "Empresa registrada"}
+                                            </span>
+                                            {v.conductor && (
+                                              <span className="truncate text-slate-400 text-[10px]">
+                                                Chofer: {v.conductor}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
                                   </div>
-                                  <div className="flex flex-col items-end gap-1 shrink-0">
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                                      currentCasetaVehicle.status === "Habilitado"
-                                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                        : "bg-rose-50 text-rose-700 border-rose-200"
-                                    }`}>
-                                      {currentCasetaVehicle.status === "Habilitado" ? "✓ Habilitado" : currentCasetaVehicle.status}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() => setIsCorbatinDropdownOpen(true)}
-                                      className="text-[10px] font-bold text-emerald-700 hover:underline"
-                                    >
-                                      Cambiar ▾
-                                    </button>
+                                ) : (
+                                  <div className="p-4 text-center text-xs text-slate-500 space-y-1">
+                                    <p className="font-bold text-slate-700">No se encontraron vehículos con "{casetaCorbatin}"</p>
+                                    <p className="text-[11px] text-slate-400">Verifica el número de corbatín o las placas ingresadas.</p>
                                   </div>
-                                </div>
-                              ) : (
-                                <div className="p-2.5 rounded-xl bg-white/70 border border-slate-200 text-[11px] text-slate-400 italic">
-                                  Escribe el corbatín/placas o selecciona de la lista desplegable.
-                                </div>
-                              )}
-                            </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
 
