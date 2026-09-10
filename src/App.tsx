@@ -831,6 +831,217 @@ function IconInfo({ className = "w-4 h-4" }: { className?: string }) {
   );
 }
 
+function IconCopy({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+    </svg>
+  );
+}
+
+function IconCheckSimple({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
+// ─── Clipboard Helper Function ───────────────────────────────────────────────
+async function copyTextToClipboard(text: string): Promise<boolean> {
+  if (!text) return false;
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (err) {
+    console.warn("Clipboard API failed, using fallback:", err);
+  }
+
+  try {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    textArea.setAttribute("readonly", "");
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    const successful = document.execCommand("copy");
+    textArea.remove();
+    return successful;
+  } catch (err) {
+    console.error("Fallback copy failed:", err);
+    return false;
+  }
+}
+
+// ─── Copyable UI Components ──────────────────────────────────────────────────
+function CopyableContactCardField({
+  icon,
+  label,
+  value,
+  fallback = "No especificado",
+  colorTheme = "slate",
+  onCopyToast,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value?: string | null;
+  fallback?: string;
+  colorTheme?: "teal" | "blue" | "slate";
+  onCopyToast?: (msg: string, type?: "success" | "error" | "warning" | "info", title?: string) => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!value) return;
+
+    const ok = await copyTextToClipboard(value);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      if (onCopyToast) {
+        onCopyToast(`${label} copiado al portapapeles: "${value}"`, "success", "¡Copiado!");
+      }
+    } else {
+      if (onCopyToast) {
+        onCopyToast(`No se pudo copiar al portapapeles`, "error", "Error al copiar");
+      }
+    }
+  };
+
+  const bgIconClasses = {
+    teal: "bg-teal-50 text-teal-700 group-hover:bg-teal-100 group-hover:scale-105",
+    blue: "bg-blue-50 text-blue-700 group-hover:bg-blue-100 group-hover:scale-105",
+    slate: "bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:scale-105",
+  }[colorTheme];
+
+  const textClasses = {
+    teal: "text-teal-700 group-hover:text-teal-800 font-mono",
+    blue: "text-blue-700 group-hover:text-blue-800",
+    slate: "text-slate-800 group-hover:text-slate-900",
+  }[colorTheme];
+
+  if (!value) {
+    return (
+      <div className="flex items-center gap-2.5 opacity-60 select-none">
+        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${bgIconClasses}`}>
+          {icon}
+        </div>
+        <div className="min-w-0">
+          <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">{label}</span>
+          <span className="text-slate-400 italic text-xs">{fallback}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={handleCopy}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleCopy(e as any);
+        }
+      }}
+      title={`Clic para copiar ${label.toLowerCase()} al portapapeles`}
+      className="group flex items-center gap-2.5 text-left p-1.5 -m-1.5 rounded-xl transition-all hover:bg-slate-100/80 active:scale-[0.98] cursor-pointer relative"
+    >
+      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all ${copied ? "bg-emerald-100 text-emerald-700 scale-105 shadow-xs" : bgIconClasses}`}>
+        {copied ? <IconCheckSimple className="w-4 h-4 text-emerald-700" /> : icon}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-1">
+          <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">{label}</span>
+          {copied ? (
+            <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/90 border border-emerald-300 px-1.5 py-0.2 rounded-md flex items-center gap-1 animate-pulse">
+              <IconCheckSimple className="w-2.5 h-2.5" /> Copiado
+            </span>
+          ) : (
+            <span className="text-[9px] font-medium text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-slate-200/70 px-1.5 py-0.2 rounded-md">
+              <IconCopy className="w-2.5 h-2.5" /> Copiar
+            </span>
+          )}
+        </div>
+        <span className={`font-semibold truncate block text-xs transition-colors ${copied ? "text-emerald-700 font-bold" : textClasses}`}>
+          {value}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function CopyableInlineText({
+  text,
+  label = "Dato",
+  icon,
+  className = "",
+  onCopyToast,
+}: {
+  text?: string | null;
+  label?: string;
+  icon?: React.ReactNode;
+  className?: string;
+  onCopyToast?: (msg: string, type?: "success" | "error" | "warning" | "info", title?: string) => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!text || text === "—" || text === "N/A" || text === "Sin registrar" || text === "S/N") return;
+
+    const ok = await copyTextToClipboard(text);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      if (onCopyToast) {
+        onCopyToast(`${label} copiado al portapapeles: "${text}"`, "success", "¡Copiado!");
+      }
+    } else {
+      if (onCopyToast) {
+        onCopyToast(`No se pudo copiar al portapapeles`, "error", "Error al copiar");
+      }
+    }
+  };
+
+  if (!text || text === "—" || text === "N/A" || text === "Sin registrar" || text === "S/N") {
+    return <span className="text-slate-400 italic">{text || "—"}</span>;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      title={`Clic para copiar ${label.toLowerCase()} al portapapeles`}
+      className={`group inline-flex items-center gap-1.5 px-1.5 py-0.5 -mx-1.5 -my-0.5 rounded-md hover:bg-slate-100 active:scale-95 transition-all cursor-pointer text-left ${className}`}
+    >
+      {icon && (
+        <span className="shrink-0 transition-transform group-hover:scale-110">
+          {copied ? <IconCheckSimple className="w-3.5 h-3.5 text-emerald-600" /> : icon}
+        </span>
+      )}
+      <span className={copied ? "text-emerald-700 font-bold" : ""}>{text}</span>
+      {copied ? (
+        <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1 rounded flex items-center gap-0.5">
+          <IconCheckSimple className="w-2.5 h-2.5" /> Copiado
+        </span>
+      ) : (
+        <IconCopy className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-0.5" />
+      )}
+    </button>
+  );
+}
+
 // ─── Toast Notifications System ───────────────────────────────────────────────
 
 interface ToastNotification {
@@ -3552,8 +3763,8 @@ export default function App() {
                       <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                         {emp.corbatin_rango_inicio !== null && emp.corbatin_rango_inicio !== undefined && emp.corbatin_rango_fin !== null && emp.corbatin_rango_fin !== undefined ? (
                           <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold border shrink-0 ${empVehicles.length >= (emp.cuposTotales || (emp.corbatin_rango_fin - emp.corbatin_rango_inicio + 1))
-                              ? "bg-amber-50 text-amber-800 border-amber-300"
-                              : "bg-teal-50 text-teal-800 border-teal-300"
+                            ? "bg-amber-50 text-amber-800 border-amber-300"
+                            : "bg-teal-50 text-teal-800 border-teal-300"
                             }`}>
                             <span>🏷️ Corbatines #{emp.corbatin_rango_inicio} al #{emp.corbatin_rango_fin} ({empVehicles.length}/{emp.cuposTotales || (emp.corbatin_rango_fin - emp.corbatin_rango_inicio + 1)} cupos)</span>
                           </span>
@@ -3601,8 +3812,8 @@ export default function App() {
                       {/* Indicador de Flecha Integrado al Contenedor */}
                       <div
                         className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all shrink-0 ${isExpanded
-                            ? "bg-[#0D6E5F] text-white shadow-xs"
-                            : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
+                          ? "bg-[#0D6E5F] text-white shadow-xs"
+                          : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
                           }`}
                         title={isExpanded ? "Contraer" : "Desplegar"}
                       >
@@ -3616,47 +3827,32 @@ export default function App() {
                     <div className="p-5 sm:p-6 bg-slate-50/40 space-y-5">
                       {/* Tarjeta de Información y Contacto de la Empresa */}
                       <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 shrink-0">
-                            <IconUsers className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Titular / Responsable</span>
-                            <span className="font-semibold text-slate-800 truncate block">{emp.contacto || "No especificado"}</span>
-                          </div>
-                        </div>
+                        <CopyableContactCardField
+                          icon={<IconUsers className="w-4 h-4" />}
+                          label="Titular / Responsable"
+                          value={emp.contacto}
+                          fallback="No especificado"
+                          colorTheme="slate"
+                          onCopyToast={showToast}
+                        />
 
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-xl bg-teal-50 flex items-center justify-center text-teal-700 shrink-0">
-                            <IconPhone className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Teléfono de Contacto</span>
-                            {emp.telefono ? (
-                              <a href={`tel:${emp.telefono}`} onClick={(e) => e.stopPropagation()} className="font-semibold text-teal-700 hover:underline truncate block font-mono">
-                                {emp.telefono}
-                              </a>
-                            ) : (
-                              <span className="text-slate-400">Sin teléfono</span>
-                            )}
-                          </div>
-                        </div>
+                        <CopyableContactCardField
+                          icon={<IconPhone className="w-4 h-4" />}
+                          label="Teléfono de Contacto"
+                          value={emp.telefono}
+                          fallback="Sin teléfono"
+                          colorTheme="teal"
+                          onCopyToast={showToast}
+                        />
 
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-700 shrink-0">
-                            <IconMail className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Correo Electrónico</span>
-                            {emp.email ? (
-                              <a href={`mailto:${emp.email}`} onClick={(e) => e.stopPropagation()} className="font-semibold text-blue-700 hover:underline truncate block">
-                                {emp.email}
-                              </a>
-                            ) : (
-                              <span className="text-slate-400">Sin correo</span>
-                            )}
-                          </div>
-                        </div>
+                        <CopyableContactCardField
+                          icon={<IconMail className="w-4 h-4" />}
+                          label="Correo Electrónico"
+                          value={emp.email}
+                          fallback="Sin correo"
+                          colorTheme="blue"
+                          onCopyToast={showToast}
+                        />
                       </div>
 
                       {/* Pestañas de Navegación Interna */}
@@ -3777,7 +3973,9 @@ export default function App() {
                                       <td className="px-4 py-2.5 font-mono font-bold text-xs text-slate-800">{v.placas}</td>
                                       <td className="px-4 py-2.5 text-xs text-slate-600">{v.color}</td>
                                       <td className="px-4 py-2.5 font-mono font-bold text-xs" style={{ color: "var(--color-primary)" }}>#{v.corbatinNum}</td>
-                                      <td className="px-4 py-2.5 font-mono text-xs text-slate-500">{v.telefono || "—"}</td>
+                                      <td className="px-4 py-2.5 font-mono text-xs text-slate-500">
+                                        <CopyableInlineText text={v.telefono} label="Teléfono" onCopyToast={showToast} />
+                                      </td>
                                       <td className="px-4 py-2.5">
                                         {v.status === "Habilitado" ? (
                                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 shadow-2xs">
@@ -3880,7 +4078,9 @@ export default function App() {
                                         <div className="font-bold text-xs text-slate-900">{t.nombre} {t.apellidos}</div>
                                         <div className="text-[11px] text-slate-400 font-mono">ID: #{t.id_trabajador}</div>
                                       </td>
-                                      <td className="px-4 py-2.5 font-mono text-xs text-slate-600">{t.telefono || "—"}</td>
+                                      <td className="px-4 py-2.5 font-mono text-xs text-slate-600">
+                                        <CopyableInlineText text={t.telefono} label="Teléfono" onCopyToast={showToast} />
+                                      </td>
                                       <td className="px-4 py-2.5 text-xs text-slate-500">
                                         {t.created_at ? new Date(t.created_at).toISOString().split("T")[0] : "2026-02-01"}
                                       </td>
@@ -4852,7 +5052,7 @@ export default function App() {
                                   <div className="text-[11px] font-mono text-slate-400">ID: #{t.id_trabajador}</div>
                                 </td>
                                 <td className="px-5 py-3 font-mono text-xs text-slate-600">
-                                  {t.telefono || "—"}
+                                  <CopyableInlineText text={t.telefono} label="Teléfono" onCopyToast={showToast} />
                                 </td>
                                 <td className="px-5 py-3">
                                   {t.activo ? (
@@ -4917,7 +5117,9 @@ export default function App() {
                               <td className="px-5 py-3 font-medium text-slate-900">{v.marca} {v.modelo} <span className="text-slate-400 font-normal">({v.anio})</span></td>
                               <td className="px-5 py-3 font-mono font-bold text-slate-800">{v.placas}</td>
                               <td className="px-5 py-3 text-slate-500">{v.color}</td>
-                              <td className="px-5 py-3 text-slate-500 font-mono text-xs">{v.telefono}</td>
+                              <td className="px-5 py-3 text-slate-500 font-mono text-xs">
+                                <CopyableInlineText text={v.telefono} label="Teléfono" onCopyToast={showToast} />
+                              </td>
                               <td className="px-5 py-3 font-mono font-bold" style={{ color: "var(--color-primary)" }}>#{v.corbatinNum}</td>
                               <td className="px-5 py-3">
                                 {v.status === "Habilitado" ? (
@@ -4975,8 +5177,8 @@ export default function App() {
                         <div className="mb-5 space-y-3">
                           {hasRange ? (
                             <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${isQuotaFull
-                                ? "bg-amber-50/90 border-amber-300 text-amber-900"
-                                : "bg-teal-50/90 border-teal-300 text-teal-900"
+                              ? "bg-amber-50/90 border-amber-300 text-amber-900"
+                              : "bg-teal-50/90 border-teal-300 text-teal-900"
                               }`}>
                               <div className="space-y-0.5">
                                 <div className="text-xs font-bold flex items-center gap-1.5 uppercase tracking-wider">
@@ -5101,16 +5303,16 @@ export default function App() {
                             return Boolean(hasRange && totalCupos !== null && empVehiculosList.length >= totalCupos);
                           })()}
                           className={`px-7 py-3 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingVehiculo || (() => {
-                              const empUser = empresas.find(e => e.nombre === currentUser?.empresaNombre) || empresas[0];
-                              const empVehiculosList = vehicles.filter(v => v.empresaNombre === currentUser?.empresaNombre || v.empresaId === empUser?.id);
-                              const rInicio = empUser?.corbatin_rango_inicio;
-                              const rFin = empUser?.corbatin_rango_fin;
-                              const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
-                              const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
-                              return Boolean(hasRange && totalCupos !== null && empVehiculosList.length >= totalCupos);
-                            })()
-                              ? "opacity-60 cursor-not-allowed pointer-events-none"
-                              : ""
+                            const empUser = empresas.find(e => e.nombre === currentUser?.empresaNombre) || empresas[0];
+                            const empVehiculosList = vehicles.filter(v => v.empresaNombre === currentUser?.empresaNombre || v.empresaId === empUser?.id);
+                            const rInicio = empUser?.corbatin_rango_inicio;
+                            const rFin = empUser?.corbatin_rango_fin;
+                            const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
+                            const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
+                            return Boolean(hasRange && totalCupos !== null && empVehiculosList.length >= totalCupos);
+                          })()
+                            ? "opacity-60 cursor-not-allowed pointer-events-none"
+                            : ""
                             }`}
                           style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                         >
@@ -5299,10 +5501,13 @@ export default function App() {
                                 </td>
                                 <td className="px-5 py-3.5 font-mono text-xs">
                                   {t.telefono ? (
-                                    <span className="flex items-center gap-1.5 text-slate-700 font-semibold">
-                                      <IconPhone className="w-3.5 h-3.5 text-slate-400" />
-                                      {t.telefono}
-                                    </span>
+                                    <CopyableInlineText
+                                      text={t.telefono}
+                                      label="Teléfono"
+                                      icon={<IconPhone className="w-3.5 h-3.5 text-slate-400" />}
+                                      className="text-slate-700 font-semibold"
+                                      onCopyToast={showToast}
+                                    />
                                   ) : (
                                     <span className="text-slate-400 italic">Sin registrar</span>
                                   )}
@@ -5798,7 +6003,12 @@ export default function App() {
                             </div>
                             <div>
                               <span className="text-slate-400 block">Teléfono:</span>
-                              <span className="font-mono text-slate-800">{currentCasetaVehicle?.telefono || "N/A"}</span>
+                              <CopyableInlineText
+                                text={currentCasetaVehicle?.telefono || ""}
+                                label="Teléfono"
+                                className="font-mono text-slate-800 font-semibold"
+                                onCopyToast={showToast}
+                              />
                             </div>
                           </div>
                         </div>
@@ -6287,7 +6497,11 @@ export default function App() {
                                 </td>
                                 <td className="px-2.5 py-2 text-xs text-slate-700 font-medium">
                                   <div className="truncate font-semibold text-slate-800" title={b.conductor}>{b.conductor}</div>
-                                  {b.telefono && <div className="text-[10px] text-slate-400 font-mono truncate">{b.telefono}</div>}
+                                  {b.telefono && (
+                                    <div className="text-[10px] text-slate-400 font-mono truncate">
+                                      <CopyableInlineText text={b.telefono} label="Teléfono" onCopyToast={showToast} />
+                                    </div>
+                                  )}
                                 </td>
                                 <td className="px-1 py-2 text-center">
                                   {b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? (
@@ -7834,16 +8048,16 @@ export default function App() {
                     return Boolean(hasRange && totalCupos !== null && empVehs.length >= totalCupos);
                   })()}
                   className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingVehiculo || (() => {
-                      if (!targetEmpresaParaNuevoVehiculo) return false;
-                      const empVehs = vehicles.filter(v => v.empresaId === targetEmpresaParaNuevoVehiculo.id);
-                      const rInicio = targetEmpresaParaNuevoVehiculo.corbatin_rango_inicio;
-                      const rFin = targetEmpresaParaNuevoVehiculo.corbatin_rango_fin;
-                      const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
-                      const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
-                      return Boolean(hasRange && totalCupos !== null && empVehs.length >= totalCupos);
-                    })()
-                      ? "opacity-60 cursor-not-allowed pointer-events-none"
-                      : ""
+                    if (!targetEmpresaParaNuevoVehiculo) return false;
+                    const empVehs = vehicles.filter(v => v.empresaId === targetEmpresaParaNuevoVehiculo.id);
+                    const rInicio = targetEmpresaParaNuevoVehiculo.corbatin_rango_inicio;
+                    const rFin = targetEmpresaParaNuevoVehiculo.corbatin_rango_fin;
+                    const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
+                    const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
+                    return Boolean(hasRange && totalCupos !== null && empVehs.length >= totalCupos);
+                  })()
+                    ? "opacity-60 cursor-not-allowed pointer-events-none"
+                    : ""
                     }`}
                   style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                 >
@@ -8025,7 +8239,7 @@ export default function App() {
       <footer className="mt-16 border-t py-6 px-6 text-center bg-white no-print" style={{ borderColor: "var(--color-border)" }}>
 
         <p className="text-xs text-slate-500">
-          © 2026 Las Palomas Rocky Point HOA, A.C. · Ecosistema Integral de Control y Seguridad Vehicular · v2.6
+          © 2026 Las Palomas Rocky Point HOA, A.C. · Ecosistema Integral de Control y Seguridad Vehicular
         </p>
       </footer>
 

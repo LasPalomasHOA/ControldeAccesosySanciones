@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useHOA } from '../context/HOAContext';
-import { Plus, Search, Edit2, X, AlertCircle } from 'lucide-react';
+import { Plus, Search, Edit2, X, AlertCircle, Copy, Check } from 'lucide-react';
 import { Empresa } from '../types';
 
 export const Empresas: React.FC = () => {
@@ -174,7 +174,29 @@ export const Empresas: React.FC = () => {
                     </td>
                     <td className="py-3.5 px-4 text-xs">
                       <div className="font-semibold text-slate-800">{emp.responsable}</div>
-                      <div className="text-slate-400 mt-0.5">{emp.telefono} &bull; {emp.correo}</div>
+                      <div className="text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(emp.telefono);
+                          }}
+                          title="Clic para copiar teléfono"
+                          className="hover:text-teal-700 hover:underline cursor-pointer transition-colors"
+                        >
+                          {emp.telefono}
+                        </button>
+                        <span>&bull;</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(emp.correo);
+                          }}
+                          title="Clic para copiar correo"
+                          className="hover:text-blue-700 hover:underline cursor-pointer transition-colors"
+                        >
+                          {emp.correo}
+                        </button>
+                      </div>
                     </td>
                     <td className="py-3.5 px-4 text-center">
                       <span className="bg-indigo-50 text-indigo-600 font-bold px-2 py-0.5 rounded-full text-xs">

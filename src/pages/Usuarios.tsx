@@ -153,7 +153,16 @@ export const Usuarios: React.FC = () => {
                         </div>
                       </td>
                       <td className="py-3.5 px-4 font-semibold text-slate-600 font-mono text-xs">
-                        {u.correo}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(u.correo);
+                          }}
+                          title="Clic para copiar correo"
+                          className="hover:text-blue-700 hover:underline cursor-pointer transition-colors"
+                        >
+                          {u.correo}
+                        </button>
                       </td>
                       <td className="py-3.5 px-4 text-center">
                         {getRoleBadge(u.rol)}
