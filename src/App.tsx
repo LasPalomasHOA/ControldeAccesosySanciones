@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import QRCode from "qrcode";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -1371,6 +1371,9 @@ export default function App() {
   const [casetaPeatonalTelefono, setCasetaPeatonalTelefono] = useState("");
   const [casetaPeatonalObservaciones, setCasetaPeatonalObservaciones] = useState("");
   const [casetaCorbatin, setCasetaCorbatin] = useState("");
+  const [isCorbatinDropdownOpen, setIsCorbatinDropdownOpen] = useState(false);
+  const [corbatinHighlightedIndex, setCorbatinHighlightedIndex] = useState(0);
+  const corbatinDropdownRef = useRef<HTMLDivElement>(null);
   const [casetaHoraEntrada, setCasetaHoraEntrada] = useState("");
   const [casetaHoraSalida, setCasetaHoraSalida] = useState("");
   const [casetaNumPasajeros, setCasetaNumPasajeros] = useState<number | string>("");
@@ -1384,6 +1387,21 @@ export default function App() {
   const empresaTrabajadores = trabajadores.filter((t) => t.id_empresa === selectedEmpresaId || t.empresaNombre === currentEmpresa?.nombre);
   const currentTrabajadorPeatonal = empresaTrabajadores.find((t) => String(t.id_trabajador) === String(casetaPeatonalTrabajadorId));
 
+  // Cerrar menú desplegable de corbatín al hacer clic fuera del componente
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (corbatinDropdownRef.current && !corbatinDropdownRef.current.contains(event.target as Node)) {
+        setIsCorbatinDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, []);
+
   // Asegurar que selectedEmpresaId siempre apunte a una empresa válida de la base de datos
   useEffect(() => {
     if (empresas.length > 0 && (!selectedEmpresaId || !empresas.some((e) => e.id === selectedEmpresaId))) {
@@ -1392,39 +1410,90 @@ export default function App() {
     }
   }, [empresas, vehicles, selectedEmpresaId]);
 
-  // Búsqueda inteligente y autocompletado al ingresar un número de corbatín o placas
-  const handleCorbatinInputChange = (val: string) => {
-    setCasetaCorbatin(val);
-    const clean = val.trim();
-    if (!clean) return;
+  // Lista filtrada para el buscador / dropdown inteligente de corbatín y placas
+  const filteredCasetaVehicles = useMemo(() => {
+    const raw = casetaCorbatin.trim();
+    if (!raw) {
+      return vehicles;
+    }
+    const q = raw.toLowerCase();
+    const qNoHash = q.replace(/#/g, "").trim();
+    const qAlphaNum = q.replace(/[^a-z0-9]/gi, "");
 
-    const cleanLower = clean.toLowerCase().replace(/#/g, "").trim();
-    const digitsOnly = clean.replace(/\D/g, "");
-    const cleanPlacas = clean.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+    return vehicles.filter((v) => {
+      const vCorb = String(v.corbatinNum || "").toLowerCase().replace(/#/g, "").trim();
+      const vPlacas = String(v.placas || "").toLowerCase();
+      const vPlacasAlpha = vPlacas.replace(/[^a-z0-9]/gi, "");
+      const vMarca = String(v.marca || "").toLowerCase();
+      const vModelo = String(v.modelo || "").toLowerCase();
+      const vEmp = String(v.empresaNombre || "").toLowerCase();
+      const vConductor = String(v.conductor || "").toLowerCase();
+      const vColor = String(v.color || "").toLowerCase();
 
-    const matched = vehicles.find((v) => {
-      const vNum = String(v.corbatinNum || "").trim().toLowerCase().replace(/#/g, "");
-      const vDigits = vNum.replace(/\D/g, "");
-      const vPlacas = String(v.placas || "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+      // 1. Coincidencia por número de corbatín (exacto o parcial)
+      if (qNoHash && (vCorb === qNoHash || vCorb.includes(qNoHash))) return true;
+      // 2. Coincidencia por placas (con o sin guiones)
+      if (vPlacas.includes(q) || (qAlphaNum.length >= 2 && vPlacasAlpha.includes(qAlphaNum))) return true;
+      // 3. Coincidencia por marca, modelo o color
+      if (vMarca.includes(q) || vModelo.includes(q) || `${vMarca} ${vModelo}`.toLowerCase().includes(q) || vColor.includes(q)) return true;
+      // 4. Coincidencia por empresa contratista
+      if (vEmp.includes(q)) return true;
+      // 5. Coincidencia por conductor
+      if (vConductor.includes(q)) return true;
 
-      if (vNum === cleanLower) return true;
-      if (digitsOnly && vDigits === digitsOnly) return true;
-      if (cleanPlacas.length >= 3 && vPlacas.includes(cleanPlacas)) return true;
       return false;
     });
+  }, [vehicles, casetaCorbatin]);
 
-    if (matched) {
-      if (matched.empresaId && matched.empresaId !== selectedEmpresaId) {
-        setSelectedEmpresaId(matched.empresaId);
-      }
-      setSelectedVehicleId(matched.id);
+  // Selección explícita de un vehículo desde el dropdown / autocompletado
+  const handleSelectVehicleFromDropdown = (v: Vehicle) => {
+    if (v.empresaId) {
+      setSelectedEmpresaId(v.empresaId);
+    }
+    setSelectedVehicleId(v.id);
+    setCasetaCorbatin(v.corbatinNum ? `#${v.corbatinNum}` : (v.placas || ""));
+    setIsCorbatinDropdownOpen(false);
+    setCorbatinHighlightedIndex(0);
 
-      if (!casetaHoraEntrada) {
-        const now = new Date();
-        const hh = String(now.getHours()).padStart(2, "0");
-        const mm = String(now.getMinutes()).padStart(2, "0");
-        setCasetaHoraEntrada(`${hh}:${mm} hrs`);
+    if (!casetaHoraEntrada) {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mm = String(now.getMinutes()).padStart(2, "0");
+      setCasetaHoraEntrada(`${hh}:${mm} hrs`);
+    }
+  };
+
+  // Cambio de texto en el buscador de corbatín / placas
+  const handleCorbatinInputChange = (val: string) => {
+    setCasetaCorbatin(val);
+    setIsCorbatinDropdownOpen(true);
+    setCorbatinHighlightedIndex(0);
+  };
+
+  // Navegación por teclado (Flecha Arriba/Abajo, Enter, Escape)
+  const handleCorbatinInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isCorbatinDropdownOpen && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+      setIsCorbatinDropdownOpen(true);
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setCorbatinHighlightedIndex((prev) =>
+        filteredCasetaVehicles.length > 0 ? (prev + 1) % filteredCasetaVehicles.length : 0
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setCorbatinHighlightedIndex((prev) =>
+        filteredCasetaVehicles.length > 0 ? (prev - 1 + filteredCasetaVehicles.length) % filteredCasetaVehicles.length : 0
+      );
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (filteredCasetaVehicles.length > 0) {
+        const itemToSelect = filteredCasetaVehicles[corbatinHighlightedIndex] || filteredCasetaVehicles[0];
+        handleSelectVehicleFromDropdown(itemToSelect);
       }
+    } else if (e.key === "Escape") {
+      setIsCorbatinDropdownOpen(false);
     }
   };
 
@@ -1432,18 +1501,10 @@ export default function App() {
     if (empresaVehicles.length > 0 && (!selectedVehicleId || !empresaVehicles.some((v) => v.id === selectedVehicleId))) {
       const first = empresaVehicles[0];
       setSelectedVehicleId(first.id);
-      setCasetaCorbatin(first.corbatinNum);
     } else if (empresaVehicles.length === 0) {
       setSelectedVehicleId("");
-      setCasetaCorbatin("");
     }
   }, [selectedEmpresaId, vehicles]);
-
-  useEffect(() => {
-    if (currentCasetaVehicle) {
-      setCasetaCorbatin(currentCasetaVehicle.corbatinNum);
-    }
-  }, [selectedVehicleId]);
 
   useEffect(() => {
     if (currentTrabajadorPeatonal) {
@@ -5990,7 +6051,7 @@ export default function App() {
                     {/* FORMULARIO DE ACCESO VEHICULAR */}
                     {casetaModoAcceso === "vehicular" && (
                       <form onSubmit={handleRegistrarEntrada} className="space-y-4">
-                        {/* 1. INGRESO RÁPIDO POR CORBATÍN O PLACAS (AL TOPE) */}
+                        {/* 1. INGRESO RÁPIDO POR CORBATÍN O PLACAS (CON COMBOBOX / DROPDOWN INTELIGENTE) */}
                         <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50/90 via-teal-50/50 to-slate-50 border-2 border-emerald-300 shadow-2xs space-y-2.5">
                           <div className="flex items-center justify-between">
                             <label className="text-xs font-extrabold uppercase tracking-wider text-[#0D6E5F] flex items-center gap-1.5">
@@ -5998,12 +6059,13 @@ export default function App() {
                               <span>1. Ingreso por # Corbatín o Placas</span>
                             </label>
                             <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-300/60">
-                              ⚡ Búsqueda Rápida
+                              ⚡ Búsqueda Rápida & Desplegable
                             </span>
                           </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
-                            <div className="sm:col-span-6">
+                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
+                            {/* Input Buscador con Dropdown / Combobox */}
+                            <div className="sm:col-span-6 relative" ref={corbatinDropdownRef}>
                               <div className="relative">
                                 <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-base font-black font-mono text-emerald-700 pointer-events-none">
                                   #
@@ -6012,29 +6074,158 @@ export default function App() {
                                   type="text"
                                   value={casetaCorbatin}
                                   onChange={(e) => handleCorbatinInputChange(e.target.value)}
-                                  placeholder="Escribe # de corbatín o placas..."
-                                  className="w-full rounded-xl pl-8 pr-4 py-2.5 text-base font-bold font-mono text-slate-900 bg-white border-2 border-emerald-400 shadow-xs outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-600 transition-all placeholder:text-slate-400 placeholder:font-sans placeholder:text-xs"
+                                  onKeyDown={handleCorbatinInputKeyDown}
+                                  onFocus={() => setIsCorbatinDropdownOpen(true)}
+                                  placeholder="Escribe # corbatín o placas (ej. MTY-0001-A)..."
+                                  className="w-full rounded-xl pl-8 pr-16 py-2.5 text-sm sm:text-base font-bold font-mono text-slate-900 bg-white border-2 border-emerald-400 shadow-xs outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-600 transition-all placeholder:text-slate-400 placeholder:font-sans placeholder:text-xs"
                                 />
+                                <div className="absolute inset-y-0 right-0 flex items-center pr-2 gap-0.5">
+                                  {casetaCorbatin && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setCasetaCorbatin("");
+                                        setIsCorbatinDropdownOpen(true);
+                                      }}
+                                      title="Limpiar búsqueda"
+                                      className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                                    >
+                                      <IconX className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => setIsCorbatinDropdownOpen(!isCorbatinDropdownOpen)}
+                                    title="Desplegar lista de vehículos"
+                                    className="p-1 rounded-md text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100/60 transition-colors"
+                                  >
+                                    {isCorbatinDropdownOpen ? (
+                                      <IconChevronUp className="w-4 h-4" />
+                                    ) : (
+                                      <IconChevronDown className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                </div>
                               </div>
 
+                              {/* MENÚ DESPLEGABLE / DROPDOWN FLOTANTE */}
+                              {isCorbatinDropdownOpen && (
+                                <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border-2 border-emerald-400 shadow-2xl overflow-hidden max-h-72 overflow-y-auto">
+                                  {/* Encabezado del dropdown */}
+                                  <div className="px-3 py-1.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-[11px] font-semibold text-slate-600 sticky top-0 z-10">
+                                    <span>
+                                      {casetaCorbatin.trim()
+                                        ? `${filteredCasetaVehicles.length} ${filteredCasetaVehicles.length === 1 ? "unidad encontrada" : "unidades encontradas"}`
+                                        : `Vehículos registrados (${vehicles.length})`}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 hidden sm:inline">
+                                      Usa ↑ ↓ y Enter para elegir
+                                    </span>
+                                  </div>
+
+                                  {/* Lista de vehículos filtrados */}
+                                  {filteredCasetaVehicles.length > 0 ? (
+                                    <div className="divide-y divide-slate-100">
+                                      {filteredCasetaVehicles.map((v, idx) => {
+                                        const isSelected = selectedVehicleId === v.id;
+                                        const isHighlighted = corbatinHighlightedIndex === idx;
+                                        return (
+                                          <div
+                                            key={v.id}
+                                            onClick={() => handleSelectVehicleFromDropdown(v)}
+                                            onMouseEnter={() => setCorbatinHighlightedIndex(idx)}
+                                            className={`p-2.5 cursor-pointer transition-colors border-l-4 ${
+                                              isSelected
+                                                ? "bg-emerald-100/70 border-l-emerald-600"
+                                                : isHighlighted
+                                                ? "bg-emerald-50/80 border-l-emerald-400"
+                                                : "hover:bg-slate-50 border-l-transparent"
+                                            }`}
+                                          >
+                                            <div className="flex items-center justify-between gap-2">
+                                              <div className="flex items-center gap-1.5 flex-wrap">
+                                                <span className="px-1.5 py-0.5 rounded-md bg-emerald-700 text-white font-mono font-bold text-xs">
+                                                  #{v.corbatinNum}
+                                                </span>
+                                                <span className="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-900 font-mono font-bold text-xs tracking-wider">
+                                                  {v.placas}
+                                                </span>
+                                                <span className="font-bold text-slate-900 text-xs sm:text-sm">
+                                                  {v.marca} {v.modelo}
+                                                </span>
+                                                {v.color && (
+                                                  <span className="text-slate-500 text-xs">({v.color})</span>
+                                                )}
+                                              </div>
+                                              <span
+                                                className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                                  v.status === "Habilitado"
+                                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                                    : "bg-rose-50 text-rose-700 border-rose-200"
+                                                }`}
+                                              >
+                                                {v.status === "Habilitado" ? "✓ Habilitado" : v.status}
+                                              </span>
+                                            </div>
+
+                                            <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
+                                              <span className="truncate font-medium flex items-center gap-1">
+                                                <IconBuilding className="w-3 h-3 text-slate-400 shrink-0" />
+                                                {v.empresaNombre || "Empresa registrada"}
+                                              </span>
+                                              {v.conductor && (
+                                                <span className="truncate text-slate-400 text-[10px]">
+                                                  Chofer: {v.conductor}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  ) : (
+                                    <div className="p-4 text-center text-xs text-slate-500 space-y-1">
+                                      <p className="font-bold text-slate-700">No se encontraron vehículos con "{casetaCorbatin}"</p>
+                                      <p className="text-[11px] text-slate-400">Verifica el número de corbatín o las placas ingresadas.</p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
 
+                            {/* Tarjeta de Unidad Detectada */}
                             <div className="sm:col-span-6">
                               {currentCasetaVehicle ? (
                                 <div className="p-2.5 rounded-xl bg-white border border-emerald-300 flex items-center justify-between gap-2 shadow-2xs">
                                   <div className="min-w-0">
                                     <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Unidad Detectada</span>
                                     <span className="text-xs font-bold text-slate-900 truncate block">
-                                      {currentCasetaVehicle.marca} {currentCasetaVehicle.modelo} · <span className="font-mono text-emerald-700 font-bold">#{currentCasetaVehicle.corbatinNum}</span>
+                                      {currentCasetaVehicle.marca} {currentCasetaVehicle.modelo} · <span className="font-mono text-emerald-700 font-bold">#{currentCasetaVehicle.corbatinNum}</span> · <span className="font-mono text-slate-700">{currentCasetaVehicle.placas}</span>
+                                    </span>
+                                    <span className="text-[10px] text-slate-500 truncate block">
+                                      {currentCasetaVehicle.empresaNombre}
                                     </span>
                                   </div>
-                                  <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    ✓ Habilitado
-                                  </span>
+                                  <div className="flex flex-col items-end gap-1 shrink-0">
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                      currentCasetaVehicle.status === "Habilitado"
+                                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                        : "bg-rose-50 text-rose-700 border-rose-200"
+                                    }`}>
+                                      {currentCasetaVehicle.status === "Habilitado" ? "✓ Habilitado" : currentCasetaVehicle.status}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setIsCorbatinDropdownOpen(true)}
+                                      className="text-[10px] font-bold text-emerald-700 hover:underline"
+                                    >
+                                      Cambiar ▾
+                                    </button>
+                                  </div>
                                 </div>
                               ) : (
                                 <div className="p-2.5 rounded-xl bg-white/70 border border-slate-200 text-[11px] text-slate-400 italic">
-                                  Escribe el número de corbatín o selecciona abajo de la lista.
+                                  Escribe el corbatín/placas o selecciona de la lista desplegable.
                                 </div>
                               )}
                             </div>
@@ -6049,7 +6240,18 @@ export default function App() {
                             </label>
                             <select
                               value={selectedEmpresaId}
-                              onChange={(e) => setSelectedEmpresaId(e.target.value)}
+                              onChange={(e) => {
+                                const newEmpId = e.target.value;
+                                setSelectedEmpresaId(newEmpId);
+                                const firstVeh = vehicles.find((v) => v.empresaId === newEmpId && v.status === "Habilitado");
+                                if (firstVeh) {
+                                  setSelectedVehicleId(firstVeh.id);
+                                  setCasetaCorbatin(firstVeh.corbatinNum ? `#${firstVeh.corbatinNum}` : (firstVeh.placas || ""));
+                                } else {
+                                  setSelectedVehicleId("");
+                                  setCasetaCorbatin("");
+                                }
+                              }}
                               className="w-full rounded-xl px-3.5 py-2 text-xs sm:text-sm border border-slate-300 bg-white font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-200"
                             >
                               {empresas.map((emp) => (
@@ -6064,7 +6266,14 @@ export default function App() {
                             </label>
                             <select
                               value={selectedVehicleId}
-                              onChange={(e) => setSelectedVehicleId(e.target.value)}
+                              onChange={(e) => {
+                                const newVehId = e.target.value;
+                                setSelectedVehicleId(newVehId);
+                                const foundVeh = vehicles.find((v) => v.id === newVehId);
+                                if (foundVeh) {
+                                  setCasetaCorbatin(foundVeh.corbatinNum ? `#${foundVeh.corbatinNum}` : (foundVeh.placas || ""));
+                                }
+                              }}
                               className="w-full rounded-xl px-3.5 py-2 text-xs sm:text-sm border border-slate-300 bg-white font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-200"
                             >
                               {empresaVehicles.length === 0 ? (
