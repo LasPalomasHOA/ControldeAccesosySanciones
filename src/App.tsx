@@ -1392,20 +1392,24 @@ export default function App() {
     }
   }, [empresas, vehicles, selectedEmpresaId]);
 
-  // Búsqueda inteligente y autocompletado al ingresar un número de corbatín
+  // Búsqueda inteligente y autocompletado al ingresar un número de corbatín o placas
   const handleCorbatinInputChange = (val: string) => {
     setCasetaCorbatin(val);
     const clean = val.trim();
     if (!clean) return;
 
-    const cleanLower = clean.toLowerCase();
+    const cleanLower = clean.toLowerCase().replace(/#/g, "").trim();
     const digitsOnly = clean.replace(/\D/g, "");
+    const cleanPlacas = clean.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
 
     const matched = vehicles.find((v) => {
-      const vNum = String(v.corbatinNum || "").trim();
+      const vNum = String(v.corbatinNum || "").trim().toLowerCase().replace(/#/g, "");
       const vDigits = vNum.replace(/\D/g, "");
-      if (vNum.toLowerCase() === cleanLower) return true;
+      const vPlacas = String(v.placas || "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+
+      if (vNum === cleanLower) return true;
       if (digitsOnly && vDigits === digitsOnly) return true;
+      if (cleanPlacas.length >= 3 && vPlacas.includes(cleanPlacas)) return true;
       return false;
     });
 
@@ -5986,61 +5990,119 @@ export default function App() {
                     {/* FORMULARIO DE ACCESO VEHICULAR */}
                     {casetaModoAcceso === "vehicular" && (
                       <form onSubmit={handleRegistrarEntrada} className="space-y-4">
-                        <div>
-                          <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                            1. Seleccionar Empresa Contratista
-                          </label>
-                          <select
-                            value={selectedEmpresaId}
-                            onChange={(e) => setSelectedEmpresaId(e.target.value)}
-                            className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 bg-white font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-200"
-                          >
-                            {empresas.map((emp) => (
-                              <option key={emp.id} value={emp.id}>{emp.nombre}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                            2. Seleccionar Vehículo Habilitado
-                          </label>
-                          <select
-                            value={selectedVehicleId}
-                            onChange={(e) => setSelectedVehicleId(e.target.value)}
-                            className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 bg-white font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-200"
-                          >
-                            {empresaVehicles.length === 0 ? (
-                              <option value="">(Sin vehículos habilitados para esta empresa)</option>
-                            ) : (
-                              empresaVehicles.map((v) => (
-                                <option key={v.id} value={v.id}>
-                                  {v.marca} {v.modelo} · Placas: {v.placas} · Corbatín #{v.corbatinNum}
-                                </option>
-                              ))
-                            )}
-                          </select>
-                        </div>
-
-                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-                          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                            3. Datos Autocompletados de la Unidad
+                        {/* 1. INGRESO RÁPIDO POR CORBATÍN O PLACAS (AL TOPE) */}
+                        <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50/90 via-teal-50/50 to-slate-50 border-2 border-emerald-300 shadow-2xs space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-extrabold uppercase tracking-wider text-[#0D6E5F] flex items-center gap-1.5">
+                              <IconSearch className="w-4 h-4 text-emerald-600" />
+                              <span>1. Ingreso por # Corbatín o Placas</span>
+                            </label>
+                            <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-300/60">
+                              ⚡ Búsqueda Rápida
+                            </span>
                           </div>
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+
+                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                            <div className="sm:col-span-6">
+                              <div className="relative">
+                                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-base font-black font-mono text-emerald-700 pointer-events-none">
+                                  #
+                                </span>
+                                <input
+                                  type="text"
+                                  value={casetaCorbatin}
+                                  onChange={(e) => handleCorbatinInputChange(e.target.value)}
+                                  placeholder="Escribe # de corbatín o placas..."
+                                  className="w-full rounded-xl pl-8 pr-4 py-2.5 text-base font-bold font-mono text-slate-900 bg-white border-2 border-emerald-400 shadow-xs outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-600 transition-all placeholder:text-slate-400 placeholder:font-sans placeholder:text-xs"
+                                />
+                              </div>
+                              <span className="text-[10px] text-slate-500 block mt-1">
+                                Escribe el número del corbatín y la empresa y vehículo se seleccionarán automáticamente.
+                              </span>
+                            </div>
+
+                            <div className="sm:col-span-6">
+                              {currentCasetaVehicle ? (
+                                <div className="p-2.5 rounded-xl bg-white border border-emerald-300 flex items-center justify-between gap-2 shadow-2xs">
+                                  <div className="min-w-0">
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Unidad Detectada</span>
+                                    <span className="text-xs font-bold text-slate-900 truncate block">
+                                      {currentCasetaVehicle.marca} {currentCasetaVehicle.modelo} · <span className="font-mono text-emerald-700 font-bold">#{currentCasetaVehicle.corbatinNum}</span>
+                                    </span>
+                                  </div>
+                                  <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    ✓ Habilitado
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="p-2.5 rounded-xl bg-white/70 border border-slate-200 text-[11px] text-slate-400 italic">
+                                  Escribe el número de corbatín o selecciona abajo de la lista.
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 2. SELECCIÓN DE EMPRESA Y VEHÍCULO */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                              2. Empresa Contratista
+                            </label>
+                            <select
+                              value={selectedEmpresaId}
+                              onChange={(e) => setSelectedEmpresaId(e.target.value)}
+                              className="w-full rounded-xl px-3.5 py-2 text-xs sm:text-sm border border-slate-300 bg-white font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-200"
+                            >
+                              {empresas.map((emp) => (
+                                <option key={emp.id} value={emp.id}>{emp.nombre}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                              3. Vehículo Asignado
+                            </label>
+                            <select
+                              value={selectedVehicleId}
+                              onChange={(e) => setSelectedVehicleId(e.target.value)}
+                              className="w-full rounded-xl px-3.5 py-2 text-xs sm:text-sm border border-slate-300 bg-white font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-200"
+                            >
+                              {empresaVehicles.length === 0 ? (
+                                <option value="">(Sin vehículos habilitados para esta empresa)</option>
+                              ) : (
+                                empresaVehicles.map((v) => (
+                                  <option key={v.id} value={v.id}>
+                                    {v.marca} {v.modelo} · Placas: {v.placas} · Corbatín #{v.corbatinNum}
+                                  </option>
+                                ))
+                              )}
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* 3. DATOS AUTOCOMPLETADOS DE LA UNIDAD */}
+                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                            <span>Datos Autocompletados de la Unidad</span>
+                            <span className="font-mono text-emerald-700 font-bold">Corbatín #{currentCasetaVehicle?.corbatinNum || casetaCorbatin || "—"}</span>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
                             <div>
-                              <span className="text-slate-400 block">Placas:</span>
+                              <span className="text-slate-400 block text-[10px] uppercase font-bold">Placas:</span>
                               <span className="font-mono font-bold text-slate-800">{currentCasetaVehicle?.placas || "N/A"}</span>
                             </div>
                             <div>
-                              <span className="text-slate-400 block">Color:</span>
+                              <span className="text-slate-400 block text-[10px] uppercase font-bold">Color:</span>
                               <span className="font-semibold text-slate-800">{currentCasetaVehicle?.color || "N/A"}</span>
                             </div>
                             <div>
-                              <span className="text-slate-400 block">Conductor:</span>
-                              <span className="font-semibold text-slate-800">{currentCasetaVehicle?.conductor || "N/A"}</span>
+                              <span className="text-slate-400 block text-[10px] uppercase font-bold">Conductor:</span>
+                              <span className="font-semibold text-slate-800 truncate block">{currentCasetaVehicle?.conductor || "N/A"}</span>
                             </div>
                             <div>
-                              <span className="text-slate-400 block">Teléfono:</span>
+                              <span className="text-slate-400 block text-[10px] uppercase font-bold">Teléfono:</span>
                               <CopyableInlineText
                                 text={currentCasetaVehicle?.telefono || ""}
                                 label="Teléfono"
@@ -6051,21 +6113,12 @@ export default function App() {
                           </div>
                         </div>
 
-                        <div className="space-y-3">
+                        {/* 4. DETALLES DEL INGRESO */}
+                        <div className="space-y-3 pt-1">
                           <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                            4. Ingreso a Mano / Clic
+                            4. Datos del Ingreso
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                            <div>
-                              <label className="block text-xs font-medium text-slate-600 mb-1"># Corbatín</label>
-                              <input
-                                type="text"
-                                value={casetaCorbatin}
-                                onChange={(e) => handleCorbatinInputChange(e.target.value)}
-                                placeholder="# Corbatín"
-                                className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono font-bold text-slate-800"
-                              />
-                            </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div>
                               <label className="block text-xs font-medium text-slate-600 mb-1">Pasajeros (sin chofer)</label>
                               <input
@@ -6126,7 +6179,7 @@ export default function App() {
                               value={casetaTrabajos}
                               onChange={(e) => setCasetaTrabajos(e.target.value)}
                               placeholder="Ej. Pintura de fachada exterior Torre 1"
-                              className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 text-slate-800"
+                              className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 text-slate-800 focus:ring-2 focus:ring-emerald-200 outline-none"
                             />
                           </div>
                         </div>
