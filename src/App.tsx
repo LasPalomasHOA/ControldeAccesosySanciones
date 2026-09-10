@@ -1374,6 +1374,13 @@ export default function App() {
   const [isCorbatinDropdownOpen, setIsCorbatinDropdownOpen] = useState(false);
   const [corbatinHighlightedIndex, setCorbatinHighlightedIndex] = useState(0);
   const corbatinDropdownRef = useRef<HTMLDivElement>(null);
+
+  const [casetaConductorId, setCasetaConductorId] = useState<string>("");
+  const [casetaConductorQuery, setCasetaConductorQuery] = useState<string>("");
+  const [isConductorDropdownOpen, setIsConductorDropdownOpen] = useState(false);
+  const [conductorHighlightedIndex, setConductorHighlightedIndex] = useState(0);
+  const conductorDropdownRef = useRef<HTMLDivElement>(null);
+
   const [casetaHoraEntrada, setCasetaHoraEntrada] = useState("");
   const [casetaHoraSalida, setCasetaHoraSalida] = useState("");
   const [casetaNumPasajeros, setCasetaNumPasajeros] = useState<number | string>("");
@@ -1384,14 +1391,20 @@ export default function App() {
   const currentEmpresa = empresas.find((e) => e.id === selectedEmpresaId) || empresas[0];
   const empresaVehicles = vehicles.filter((v) => v.empresaId === selectedEmpresaId && v.status === "Habilitado");
   const currentCasetaVehicle = vehicles.find((v) => v.id === selectedVehicleId) || empresaVehicles.find((v) => v.id === selectedVehicleId) || (empresaVehicles.length > 0 ? empresaVehicles[0] : undefined);
-  const empresaTrabajadores = trabajadores.filter((t) => t.id_empresa === selectedEmpresaId || t.empresaNombre === currentEmpresa?.nombre);
+  const empresaTrabajadores = trabajadores.filter(
+    (t) => (t.id_empresa === selectedEmpresaId || t.empresaNombre === currentEmpresa?.nombre) && t.activo !== false
+  );
   const currentTrabajadorPeatonal = empresaTrabajadores.find((t) => String(t.id_trabajador) === String(casetaPeatonalTrabajadorId));
+  const currentConductorVehicular = empresaTrabajadores.find((t) => String(t.id_trabajador) === String(casetaConductorId));
 
-  // Cerrar menú desplegable de corbatín al hacer clic fuera del componente
+  // Cerrar menú desplegable al hacer clic fuera del componente
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (corbatinDropdownRef.current && !corbatinDropdownRef.current.contains(event.target as Node)) {
         setIsCorbatinDropdownOpen(false);
+      }
+      if (conductorDropdownRef.current && !conductorDropdownRef.current.contains(event.target as Node)) {
+        setIsConductorDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -1409,6 +1422,20 @@ export default function App() {
       setSelectedEmpresaId(empConVehiculos ? empConVehiculos.id : empresas[0].id);
     }
   }, [empresas, vehicles, selectedEmpresaId]);
+
+  // Sincronizar conductor al cambiar de empresa si no hay conductor seleccionado
+  useEffect(() => {
+    if (selectedEmpresaId) {
+      const empTrab = trabajadores.filter((t) => t.id_empresa === selectedEmpresaId && t.activo !== false);
+      if (empTrab.length > 0 && (!casetaConductorId || !empTrab.some((t) => String(t.id_trabajador) === String(casetaConductorId)))) {
+        setCasetaConductorId(String(empTrab[0].id_trabajador));
+        setCasetaConductorQuery(`${empTrab[0].nombre} ${empTrab[0].apellidos}`);
+      } else if (empTrab.length === 0) {
+        setCasetaConductorId("");
+        setCasetaConductorQuery("");
+      }
+    }
+  }, [selectedEmpresaId, trabajadores]);
 
   // Lista filtrada para el buscador / dropdown inteligente de corbatín y placas
   const filteredCasetaVehicles = useMemo(() => {
@@ -1445,6 +1472,20 @@ export default function App() {
     });
   }, [vehicles, casetaCorbatin]);
 
+  // Lista filtrada de trabajadores de la empresa seleccionada para el buscador de chofer
+  const filteredEmpresaTrabajadores = useMemo(() => {
+    const raw = casetaConductorQuery.trim();
+    if (!raw) {
+      return empresaTrabajadores;
+    }
+    const q = raw.toLowerCase();
+    return empresaTrabajadores.filter((t) => {
+      const nom = `${t.nombre} ${t.apellidos}`.toLowerCase();
+      const tel = (t.telefono || "").toLowerCase();
+      return nom.includes(q) || tel.includes(q);
+    });
+  }, [empresaTrabajadores, casetaConductorQuery]);
+
   // Selección explícita de un vehículo desde el dropdown / autocompletado
   const handleSelectVehicleFromDropdown = (v: Vehicle) => {
     if (v.empresaId) {
@@ -1454,6 +1495,27 @@ export default function App() {
     setCasetaCorbatin(v.corbatinNum ? `#${v.corbatinNum}` : (v.placas || ""));
     setIsCorbatinDropdownOpen(false);
     setCorbatinHighlightedIndex(0);
+
+    // Sincronizar conductor para la empresa del vehículo
+    const empTrab = trabajadores.filter((t) => t.id_empresa === v.empresaId && t.activo !== false);
+    if (v.conductor && v.conductor !== "N/A") {
+      const matchTrab = empTrab.find(
+        (t) => `${t.nombre} ${t.apellidos}`.toLowerCase() === v.conductor?.toLowerCase()
+      );
+      if (matchTrab) {
+        setCasetaConductorId(String(matchTrab.id_trabajador));
+        setCasetaConductorQuery(`${matchTrab.nombre} ${matchTrab.apellidos}`);
+      } else {
+        setCasetaConductorId("");
+        setCasetaConductorQuery(v.conductor);
+      }
+    } else if (empTrab.length > 0) {
+      setCasetaConductorId(String(empTrab[0].id_trabajador));
+      setCasetaConductorQuery(`${empTrab[0].nombre} ${empTrab[0].apellidos}`);
+    } else {
+      setCasetaConductorId("");
+      setCasetaConductorQuery("");
+    }
 
     if (!casetaHoraEntrada) {
       const now = new Date();
@@ -1470,7 +1532,7 @@ export default function App() {
     setCorbatinHighlightedIndex(0);
   };
 
-  // Navegación por teclado (Flecha Arriba/Abajo, Enter, Escape)
+  // Navegación por teclado para vehículo (Flecha Arriba/Abajo, Enter, Escape)
   const handleCorbatinInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!isCorbatinDropdownOpen && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
       setIsCorbatinDropdownOpen(true);
@@ -1494,6 +1556,49 @@ export default function App() {
       }
     } else if (e.key === "Escape") {
       setIsCorbatinDropdownOpen(false);
+    }
+  };
+
+  // Selección explícita de un conductor desde el dropdown
+  const handleSelectConductorFromDropdown = (t: Trabajador) => {
+    setCasetaConductorId(String(t.id_trabajador));
+    setCasetaConductorQuery(`${t.nombre} ${t.apellidos}`);
+    setIsConductorDropdownOpen(false);
+    setConductorHighlightedIndex(0);
+  };
+
+  // Cambio de texto en el buscador de conductor
+  const handleConductorInputChange = (val: string) => {
+    setCasetaConductorQuery(val);
+    setCasetaConductorId("");
+    setIsConductorDropdownOpen(true);
+    setConductorHighlightedIndex(0);
+  };
+
+  // Navegación por teclado para conductor
+  const handleConductorInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isConductorDropdownOpen && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+      setIsConductorDropdownOpen(true);
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setConductorHighlightedIndex((prev) =>
+        filteredEmpresaTrabajadores.length > 0 ? (prev + 1) % filteredEmpresaTrabajadores.length : 0
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setConductorHighlightedIndex((prev) =>
+        filteredEmpresaTrabajadores.length > 0 ? (prev - 1 + filteredEmpresaTrabajadores.length) % filteredEmpresaTrabajadores.length : 0
+      );
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (filteredEmpresaTrabajadores.length > 0) {
+        const itemToSelect = filteredEmpresaTrabajadores[conductorHighlightedIndex] || filteredEmpresaTrabajadores[0];
+        handleSelectConductorFromDropdown(itemToSelect);
+      }
+    } else if (e.key === "Escape") {
+      setIsConductorDropdownOpen(false);
     }
   };
 
@@ -2465,16 +2570,21 @@ export default function App() {
         return;
       }
 
+      const conductorFinalId = currentConductorVehicular ? Number(currentConductorVehicular.id_trabajador) : null;
+      const conductorFinalNombre = currentConductorVehicular 
+        ? `${currentConductorVehicular.nombre} ${currentConductorVehicular.apellidos}`
+        : (casetaConductorQuery || currentCasetaVehicle.conductor || "Chofer General");
+
       await api.registrarAcceso({
         id_caseta: 1,
         id_vehiculo: Number(currentCasetaVehicle.id),
         id_corbatin: null,
-        id_conductor: null,
+        id_conductor: conductorFinalId,
         id_usuario: Number(currentUser?.id) || 4,
         num_pasajeros: Math.max(0, Number(casetaNumPasajeros) || 0),
         ubicacion_trabajo: casetaTrabajos || "Mantenimiento general",
         estatus_acceso: casetaOverrideActive ? "AUTORIZADO_OVERRIDE" : "AUTORIZADO",
-        observaciones: casetaOverrideActive ? "Acceso vehicular autorizado con anulación de emergencia por Supervisor HOA" : "Ingreso regular vehicular",
+        observaciones: `Chofer [${conductorFinalNombre}]: ${casetaOverrideActive ? "Acceso vehicular autorizado con anulación de emergencia por Supervisor HOA" : "Ingreso regular vehicular"}`,
         tipo: 'entrada'
       });
 
@@ -2484,7 +2594,7 @@ export default function App() {
       setCasetaOverrideActive(false);
       setCasetaSuccessMsg(true);
       setTimeout(() => setCasetaSuccessMsg(false), 4000);
-      showToast(`Entrada autorizada para el vehículo ${currentCasetaVehicle.placas}.`, "success");
+      showToast(`Entrada autorizada para ${conductorFinalNombre} (${currentCasetaVehicle.placas}).`, "success");
     } catch (err: any) {
       showToast("Error al registrar entrada: " + (err.message || err), "error");
     } finally {
@@ -6051,145 +6161,252 @@ export default function App() {
                     {/* FORMULARIO DE ACCESO VEHICULAR */}
                     {casetaModoAcceso === "vehicular" && (
                       <form onSubmit={handleRegistrarEntrada} className="space-y-4">
-                        {/* 1. INGRESO RÁPIDO POR CORBATÍN O PLACAS (CON COMBOBOX / DROPDOWN INTELIGENTE) */}
+                        {/* 1. INGRESO RÁPIDO: CORBATÍN/PLACAS Y CONDUCTOR (LADO A LADO) */}
                         <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50/90 via-teal-50/50 to-slate-50 border-2 border-emerald-300 shadow-2xs space-y-2.5">
                           <div className="flex items-center justify-between">
                             <label className="text-xs font-extrabold uppercase tracking-wider text-[#0D6E5F] flex items-center gap-1.5">
                               <IconSearch className="w-4 h-4 text-emerald-600" />
-                              <span>1. Ingreso por # Corbatín o Placas</span>
+                              <span>1. Ingreso Vehicular: Corbatín / Placas y Conductor</span>
                             </label>
                             <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-300/60">
-                              ⚡ Búsqueda Rápida & Desplegable
+                              ⚡ Búsqueda & Desplegables
                             </span>
                           </div>
 
-                          {/* Input Buscador con Dropdown / Combobox de Ancho Completo */}
-                          <div className="relative" ref={corbatinDropdownRef}>
-                            <div className="relative">
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-base font-black font-mono text-emerald-700 pointer-events-none">
-                                #
-                              </span>
-                              <input
-                                type="text"
-                                value={casetaCorbatin}
-                                onChange={(e) => handleCorbatinInputChange(e.target.value)}
-                                onKeyDown={handleCorbatinInputKeyDown}
-                                onFocus={() => setIsCorbatinDropdownOpen(true)}
-                                placeholder="Escribe # corbatín, placas, marca o modelo (ej. MTY-0001-A)..."
-                                className="w-full rounded-xl pl-8 pr-16 py-2.5 text-sm sm:text-base font-bold font-mono text-slate-900 bg-white border-2 border-emerald-400 shadow-xs outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-600 transition-all placeholder:text-slate-400 placeholder:font-sans placeholder:text-xs"
-                              />
-                              <div className="absolute inset-y-0 right-0 flex items-center pr-2 gap-0.5">
-                                {casetaCorbatin && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
+                            {/* CAMPO 1: # CORBATÍN O PLACAS CON DROPDOWN */}
+                            <div className="relative" ref={corbatinDropdownRef}>
+                              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                                # Corbatín o Placas
+                              </label>
+                              <div className="relative">
+                                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-base font-black font-mono text-emerald-700 pointer-events-none">
+                                  #
+                                </span>
+                                <input
+                                  type="text"
+                                  value={casetaCorbatin}
+                                  onChange={(e) => handleCorbatinInputChange(e.target.value)}
+                                  onKeyDown={handleCorbatinInputKeyDown}
+                                  onFocus={() => setIsCorbatinDropdownOpen(true)}
+                                  placeholder="Escribe # corbatín o placas..."
+                                  className="w-full rounded-xl pl-8 pr-16 py-2.5 text-sm font-bold font-mono text-slate-900 bg-white border-2 border-emerald-400 shadow-xs outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-600 transition-all placeholder:text-slate-400 placeholder:font-sans placeholder:text-xs"
+                                />
+                                <div className="absolute inset-y-0 right-0 flex items-center pr-2 gap-0.5">
+                                  {casetaCorbatin && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setCasetaCorbatin("");
+                                        setIsCorbatinDropdownOpen(true);
+                                      }}
+                                      title="Limpiar búsqueda"
+                                      className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                                    >
+                                      <IconX className="w-4 h-4" />
+                                    </button>
+                                  )}
                                   <button
                                     type="button"
-                                    onClick={() => {
-                                      setCasetaCorbatin("");
-                                      setIsCorbatinDropdownOpen(true);
-                                    }}
-                                    title="Limpiar búsqueda"
-                                    className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                                    onClick={() => setIsCorbatinDropdownOpen(!isCorbatinDropdownOpen)}
+                                    title="Desplegar lista de vehículos"
+                                    className="p-1 rounded-md text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100/60 transition-colors cursor-pointer"
                                   >
-                                    <IconX className="w-4 h-4" />
+                                    {isCorbatinDropdownOpen ? (
+                                      <IconChevronUp className="w-4 h-4" />
+                                    ) : (
+                                      <IconChevronDown className="w-4 h-4" />
+                                    )}
                                   </button>
-                                )}
-                                <button
-                                  type="button"
-                                  onClick={() => setIsCorbatinDropdownOpen(!isCorbatinDropdownOpen)}
-                                  title="Desplegar lista de vehículos"
-                                  className="p-1 rounded-md text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100/60 transition-colors cursor-pointer"
-                                >
-                                  {isCorbatinDropdownOpen ? (
-                                    <IconChevronUp className="w-4 h-4" />
-                                  ) : (
-                                    <IconChevronDown className="w-4 h-4" />
-                                  )}
-                                </button>
+                                </div>
                               </div>
+
+                              {/* MENÚ DESPLEGABLE DE VEHÍCULOS */}
+                              {isCorbatinDropdownOpen && (
+                                <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border-2 border-emerald-400 shadow-2xl overflow-hidden max-h-64 overflow-y-auto">
+                                  <div className="px-3 py-1.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-[11px] font-semibold text-slate-600 sticky top-0 z-10">
+                                    <span>
+                                      {casetaCorbatin.trim()
+                                        ? `${filteredCasetaVehicles.length} ${filteredCasetaVehicles.length === 1 ? "unidad encontrada" : "unidades encontradas"}`
+                                        : `Vehículos registrados (${vehicles.length})`}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 hidden sm:inline">
+                                      Usa ↑ ↓ y Enter
+                                    </span>
+                                  </div>
+
+                                  {filteredCasetaVehicles.length > 0 ? (
+                                    <div className="divide-y divide-slate-100">
+                                      {filteredCasetaVehicles.map((v, idx) => {
+                                        const isSelected = selectedVehicleId === v.id;
+                                        const isHighlighted = corbatinHighlightedIndex === idx;
+                                        return (
+                                          <div
+                                            key={v.id}
+                                            onClick={() => handleSelectVehicleFromDropdown(v)}
+                                            onMouseEnter={() => setCorbatinHighlightedIndex(idx)}
+                                            className={`p-2.5 cursor-pointer transition-colors border-l-4 ${
+                                              isSelected
+                                                ? "bg-emerald-100/70 border-l-emerald-600"
+                                                : isHighlighted
+                                                ? "bg-emerald-50/80 border-l-emerald-400"
+                                                : "hover:bg-slate-50 border-l-transparent"
+                                            }`}
+                                          >
+                                            <div className="flex items-center justify-between gap-2">
+                                              <div className="flex items-center gap-1.5 flex-wrap">
+                                                <span className="px-1.5 py-0.5 rounded-md bg-emerald-700 text-white font-mono font-bold text-xs">
+                                                  #{v.corbatinNum}
+                                                </span>
+                                                <span className="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-900 font-mono font-bold text-xs tracking-wider">
+                                                  {v.placas}
+                                                </span>
+                                                <span className="font-bold text-slate-900 text-xs truncate max-w-[130px]">
+                                                  {v.marca} {v.modelo}
+                                                </span>
+                                              </div>
+                                              <span
+                                                className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${
+                                                  v.status === "Habilitado"
+                                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                                    : "bg-rose-50 text-rose-700 border-rose-200"
+                                                }`}
+                                              >
+                                                {v.status === "Habilitado" ? "✓" : "⛔"}
+                                              </span>
+                                            </div>
+                                            <div className="mt-0.5 text-[11px] text-slate-500 truncate flex items-center gap-1">
+                                              <IconBuilding className="w-3 h-3 text-slate-400 shrink-0" />
+                                              {v.empresaNombre}
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  ) : (
+                                    <div className="p-3 text-center text-xs text-slate-500">
+                                      No hay vehículos con "{casetaCorbatin}"
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
 
-                            {/* MENÚ DESPLEGABLE / DROPDOWN FLOTANTE */}
-                            {isCorbatinDropdownOpen && (
-                              <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border-2 border-emerald-400 shadow-2xl overflow-hidden max-h-72 overflow-y-auto">
-                                {/* Encabezado del dropdown */}
-                                <div className="px-3 py-1.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-[11px] font-semibold text-slate-600 sticky top-0 z-10">
-                                  <span>
-                                    {casetaCorbatin.trim()
-                                      ? `${filteredCasetaVehicles.length} ${filteredCasetaVehicles.length === 1 ? "unidad encontrada" : "unidades encontradas"}`
-                                      : `Vehículos registrados (${vehicles.length})`}
-                                  </span>
-                                  <span className="text-[10px] text-slate-400 hidden sm:inline">
-                                    Usa ↑ ↓ y Enter para elegir
-                                  </span>
-                                </div>
-
-                                {/* Lista de vehículos filtrados */}
-                                {filteredCasetaVehicles.length > 0 ? (
-                                  <div className="divide-y divide-slate-100">
-                                    {filteredCasetaVehicles.map((v, idx) => {
-                                      const isSelected = selectedVehicleId === v.id;
-                                      const isHighlighted = corbatinHighlightedIndex === idx;
-                                      return (
-                                        <div
-                                          key={v.id}
-                                          onClick={() => handleSelectVehicleFromDropdown(v)}
-                                          onMouseEnter={() => setCorbatinHighlightedIndex(idx)}
-                                          className={`p-2.5 cursor-pointer transition-colors border-l-4 ${
-                                            isSelected
-                                              ? "bg-emerald-100/70 border-l-emerald-600"
-                                              : isHighlighted
-                                              ? "bg-emerald-50/80 border-l-emerald-400"
-                                              : "hover:bg-slate-50 border-l-transparent"
-                                          }`}
-                                        >
-                                          <div className="flex items-center justify-between gap-2">
-                                            <div className="flex items-center gap-1.5 flex-wrap">
-                                              <span className="px-1.5 py-0.5 rounded-md bg-emerald-700 text-white font-mono font-bold text-xs">
-                                                #{v.corbatinNum}
-                                              </span>
-                                              <span className="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-900 font-mono font-bold text-xs tracking-wider">
-                                                {v.placas}
-                                              </span>
-                                              <span className="font-bold text-slate-900 text-xs sm:text-sm">
-                                                {v.marca} {v.modelo}
-                                              </span>
-                                              {v.color && (
-                                                <span className="text-slate-500 text-xs">({v.color})</span>
-                                              )}
-                                            </div>
-                                            <span
-                                              className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                                                v.status === "Habilitado"
-                                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                                  : "bg-rose-50 text-rose-700 border-rose-200"
-                                              }`}
-                                            >
-                                              {v.status === "Habilitado" ? "✓ Habilitado" : v.status}
-                                            </span>
-                                          </div>
-
-                                          <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
-                                            <span className="truncate font-medium flex items-center gap-1">
-                                              <IconBuilding className="w-3 h-3 text-slate-400 shrink-0" />
-                                              {v.empresaNombre || "Empresa registrada"}
-                                            </span>
-                                            {v.conductor && (
-                                              <span className="truncate text-slate-400 text-[10px]">
-                                                Chofer: {v.conductor}
-                                              </span>
-                                            )}
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                ) : (
-                                  <div className="p-4 text-center text-xs text-slate-500 space-y-1">
-                                    <p className="font-bold text-slate-700">No se encontraron vehículos con "{casetaCorbatin}"</p>
-                                    <p className="text-[11px] text-slate-400">Verifica el número de corbatín o las placas ingresadas.</p>
-                                  </div>
-                                )}
+                            {/* CAMPO 2: CONDUCTOR / CHOFER CON DROPDOWN (SOLO DE LA EMPRESA SELECCIONADA) */}
+                            <div className="relative" ref={conductorDropdownRef}>
+                              <div className="flex items-center justify-between mb-1">
+                                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1">
+                                  <IconUsers className="w-3.5 h-3.5 text-emerald-700" />
+                                  <span>Conductor / Chofer</span>
+                                </label>
+                                <span className="text-[10px] text-slate-400 truncate max-w-[140px]">
+                                  {currentEmpresa?.nombre ? currentEmpresa.nombre.split(" ")[0] : "Empresa"} ({empresaTrabajadores.length})
+                                </span>
                               </div>
-                            )}
+
+                              <div className="relative">
+                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
+                                  <IconUsers className="w-4 h-4 text-emerald-600" />
+                                </span>
+                                <input
+                                  type="text"
+                                  value={casetaConductorQuery}
+                                  onChange={(e) => handleConductorInputChange(e.target.value)}
+                                  onKeyDown={handleConductorInputKeyDown}
+                                  onFocus={() => setIsConductorDropdownOpen(true)}
+                                  placeholder={empresaTrabajadores.length > 0 ? "Escribe o selecciona el chofer..." : "Sin colaboradores registrados"}
+                                  className="w-full rounded-xl pl-9 pr-16 py-2.5 text-sm font-bold text-slate-900 bg-white border-2 border-emerald-400 shadow-xs outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-600 transition-all placeholder:text-slate-400 placeholder:font-normal placeholder:text-xs"
+                                />
+                                <div className="absolute inset-y-0 right-0 flex items-center pr-2 gap-0.5">
+                                  {casetaConductorQuery && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setCasetaConductorQuery("");
+                                        setCasetaConductorId("");
+                                        setIsConductorDropdownOpen(true);
+                                      }}
+                                      title="Limpiar chofer"
+                                      className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                                    >
+                                      <IconX className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => setIsConductorDropdownOpen(!isConductorDropdownOpen)}
+                                    title="Desplegar choferes de la empresa"
+                                    className="p-1 rounded-md text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100/60 transition-colors cursor-pointer"
+                                  >
+                                    {isConductorDropdownOpen ? (
+                                      <IconChevronUp className="w-4 h-4" />
+                                    ) : (
+                                      <IconChevronDown className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* MENÚ DESPLEGABLE DE CONDUCTORES */}
+                              {isConductorDropdownOpen && (
+                                <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border-2 border-emerald-400 shadow-2xl overflow-hidden max-h-64 overflow-y-auto">
+                                  <div className="px-3 py-1.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-[11px] font-semibold text-slate-600 sticky top-0 z-10">
+                                    <span className="truncate">
+                                      Colaboradores de {currentEmpresa?.nombre || "la empresa"} ({filteredEmpresaTrabajadores.length})
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 hidden sm:inline shrink-0">
+                                      Usa ↑ ↓ y Enter
+                                    </span>
+                                  </div>
+
+                                  {filteredEmpresaTrabajadores.length > 0 ? (
+                                    <div className="divide-y divide-slate-100">
+                                      {filteredEmpresaTrabajadores.map((t, idx) => {
+                                        const isSelected = String(casetaConductorId) === String(t.id_trabajador);
+                                        const isHighlighted = conductorHighlightedIndex === idx;
+                                        return (
+                                          <div
+                                            key={t.id_trabajador}
+                                            onClick={() => handleSelectConductorFromDropdown(t)}
+                                            onMouseEnter={() => setConductorHighlightedIndex(idx)}
+                                            className={`p-2.5 cursor-pointer transition-colors border-l-4 ${
+                                              isSelected
+                                                ? "bg-emerald-100/70 border-l-emerald-600"
+                                                : isHighlighted
+                                                ? "bg-emerald-50/80 border-l-emerald-400"
+                                                : "hover:bg-slate-50 border-l-transparent"
+                                            }`}
+                                          >
+                                            <div className="flex items-center justify-between gap-2">
+                                              <div className="min-w-0">
+                                                <span className="font-bold text-slate-900 text-xs sm:text-sm block truncate">
+                                                  {t.nombre} {t.apellidos}
+                                                </span>
+                                                <span className="text-[11px] text-slate-500 font-mono block">
+                                                  📞 {t.telefono || "Sin teléfono"}
+                                                </span>
+                                              </div>
+                                              <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                Acreditado
+                                              </span>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  ) : (
+                                    <div className="p-3 text-center text-xs text-slate-500 space-y-1">
+                                      <p className="font-bold text-slate-700">No hay colaboradores con "{casetaConductorQuery}"</p>
+                                      <p className="text-[11px] text-slate-400">
+                                        {empresaTrabajadores.length === 0 
+                                          ? `No hay colaboradores registrados para ${currentEmpresa?.nombre || "esta empresa"}.` 
+                                          : "Puedes escribir el nombre manualmente si cuenta con autorización especial."}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
 
@@ -6267,12 +6484,16 @@ export default function App() {
                             </div>
                             <div>
                               <span className="text-slate-400 block text-[10px] uppercase font-bold">Conductor:</span>
-                              <span className="font-semibold text-slate-800 truncate block">{currentCasetaVehicle?.conductor || "N/A"}</span>
+                              <span className="font-semibold text-slate-800 truncate block">
+                                {currentConductorVehicular
+                                  ? `${currentConductorVehicular.nombre} ${currentConductorVehicular.apellidos}`
+                                  : (casetaConductorQuery || currentCasetaVehicle?.conductor || "N/A")}
+                              </span>
                             </div>
                             <div>
                               <span className="text-slate-400 block text-[10px] uppercase font-bold">Teléfono:</span>
                               <CopyableInlineText
-                                text={currentCasetaVehicle?.telefono || ""}
+                                text={currentConductorVehicular?.telefono || currentCasetaVehicle?.telefono || currentEmpresa?.telefono || ""}
                                 label="Teléfono"
                                 className="font-mono text-slate-800 font-semibold"
                                 onCopyToast={showToast}
