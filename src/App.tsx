@@ -1388,12 +1388,14 @@ export default function App() {
   const [casetaOverrideActive, setCasetaOverrideActive] = useState(false);
   const [casetaSuccessMsg, setCasetaSuccessMsg] = useState(false);
 
-  const currentEmpresa = empresas.find((e) => e.id === selectedEmpresaId) || empresas[0];
-  const empresaVehicles = vehicles.filter((v) => v.empresaId === selectedEmpresaId && v.status === "Habilitado");
-  const currentCasetaVehicle = vehicles.find((v) => v.id === selectedVehicleId) || empresaVehicles.find((v) => v.id === selectedVehicleId) || (empresaVehicles.length > 0 ? empresaVehicles[0] : undefined);
-  const empresaTrabajadores = trabajadores.filter(
-    (t) => (t.id_empresa === selectedEmpresaId || t.empresaNombre === currentEmpresa?.nombre) && t.activo !== false
-  );
+  const currentEmpresa = selectedEmpresaId ? empresas.find((e) => e.id === selectedEmpresaId) : undefined;
+  const empresaVehicles = selectedEmpresaId ? vehicles.filter((v) => v.empresaId === selectedEmpresaId && v.status === "Habilitado") : [];
+  const currentCasetaVehicle = selectedVehicleId
+    ? (vehicles.find((v) => v.id === selectedVehicleId) || empresaVehicles.find((v) => v.id === selectedVehicleId))
+    : undefined;
+  const empresaTrabajadores = selectedEmpresaId
+    ? trabajadores.filter((t) => (t.id_empresa === selectedEmpresaId || t.empresaNombre === currentEmpresa?.nombre) && t.activo !== false)
+    : trabajadores.filter((t) => t.activo !== false);
   const currentTrabajadorPeatonal = empresaTrabajadores.find((t) => String(t.id_trabajador) === String(casetaPeatonalTrabajadorId));
   const currentConductorVehicular = empresaTrabajadores.find((t) => String(t.id_trabajador) === String(casetaConductorId));
 
@@ -1415,27 +1417,15 @@ export default function App() {
     };
   }, []);
 
-  // Asegurar que selectedEmpresaId siempre apunte a una empresa válida de la base de datos
+  // Si la empresa seleccionada deja de existir en el catálogo, limpiar selección
   useEffect(() => {
-    if (empresas.length > 0 && (!selectedEmpresaId || !empresas.some((e) => e.id === selectedEmpresaId))) {
-      const empConVehiculos = empresas.find((e) => vehicles.some((v) => v.empresaId === e.id));
-      setSelectedEmpresaId(empConVehiculos ? empConVehiculos.id : empresas[0].id);
+    if (selectedEmpresaId && !empresas.some((e) => e.id === selectedEmpresaId)) {
+      setSelectedEmpresaId("");
+      setSelectedVehicleId("");
+      setCasetaConductorId("");
+      setCasetaConductorQuery("");
     }
-  }, [empresas, vehicles, selectedEmpresaId]);
-
-  // Sincronizar conductor al cambiar de empresa si no hay conductor seleccionado
-  useEffect(() => {
-    if (selectedEmpresaId) {
-      const empTrab = trabajadores.filter((t) => t.id_empresa === selectedEmpresaId && t.activo !== false);
-      if (empTrab.length > 0 && (!casetaConductorId || !empTrab.some((t) => String(t.id_trabajador) === String(casetaConductorId)))) {
-        setCasetaConductorId(String(empTrab[0].id_trabajador));
-        setCasetaConductorQuery(`${empTrab[0].nombre} ${empTrab[0].apellidos}`);
-      } else if (empTrab.length === 0) {
-        setCasetaConductorId("");
-        setCasetaConductorQuery("");
-      }
-    }
-  }, [selectedEmpresaId, trabajadores]);
+  }, [empresas, selectedEmpresaId]);
 
   // Lista filtrada para el buscador / dropdown inteligente de corbatín y placas
   const filteredCasetaVehicles = useMemo(() => {
@@ -1496,9 +1486,9 @@ export default function App() {
     setIsCorbatinDropdownOpen(false);
     setCorbatinHighlightedIndex(0);
 
-    // Sincronizar conductor para la empresa del vehículo
+    // Sincronizar conductor para la empresa del vehículo si tiene conductor asignado específico
     const empTrab = trabajadores.filter((t) => t.id_empresa === v.empresaId && t.activo !== false);
-    if (v.conductor && v.conductor !== "N/A") {
+    if (v.conductor && v.conductor !== "N/A" && v.conductor.trim()) {
       const matchTrab = empTrab.find(
         (t) => `${t.nombre} ${t.apellidos}`.toLowerCase() === v.conductor?.toLowerCase()
       );
@@ -1509,9 +1499,6 @@ export default function App() {
         setCasetaConductorId("");
         setCasetaConductorQuery(v.conductor);
       }
-    } else if (empTrab.length > 0) {
-      setCasetaConductorId(String(empTrab[0].id_trabajador));
-      setCasetaConductorQuery(`${empTrab[0].nombre} ${empTrab[0].apellidos}`);
     } else {
       setCasetaConductorId("");
       setCasetaConductorQuery("");
@@ -1563,6 +1550,9 @@ export default function App() {
   const handleSelectConductorFromDropdown = (t: Trabajador) => {
     setCasetaConductorId(String(t.id_trabajador));
     setCasetaConductorQuery(`${t.nombre} ${t.apellidos}`);
+    if (t.id_empresa && !selectedEmpresaId) {
+      setSelectedEmpresaId(t.id_empresa);
+    }
     setIsConductorDropdownOpen(false);
     setConductorHighlightedIndex(0);
   };
@@ -1602,14 +1592,13 @@ export default function App() {
     }
   };
 
+  // Si el vehículo seleccionado ya no existe en el catálogo, limpiar selección
   useEffect(() => {
-    if (empresaVehicles.length > 0 && (!selectedVehicleId || !empresaVehicles.some((v) => v.id === selectedVehicleId))) {
-      const first = empresaVehicles[0];
-      setSelectedVehicleId(first.id);
-    } else if (empresaVehicles.length === 0) {
+    if (selectedVehicleId && !vehicles.some((v) => v.id === selectedVehicleId)) {
       setSelectedVehicleId("");
+      setCasetaCorbatin("");
     }
-  }, [selectedEmpresaId, vehicles]);
+  }, [vehicles, selectedVehicleId]);
 
   useEffect(() => {
     if (currentTrabajadorPeatonal) {
@@ -2555,9 +2544,23 @@ export default function App() {
         });
 
         await reloadBitacora();
+        // Reset completo del formulario
+        setSelectedEmpresaId("");
+        setSelectedVehicleId("");
+        setCasetaCorbatin("");
+        setCasetaConductorId("");
+        setCasetaConductorQuery("");
+        setCasetaHoraEntrada("");
+        setCasetaHoraSalida("");
         setCasetaTrabajos("");
         setCasetaNumPasajeros("");
+        setCasetaPeatonalTrabajadorId("");
+        setCasetaPeatonalNombre("");
+        setCasetaPeatonalTelefono("");
         setCasetaPeatonalObservaciones("");
+        setCasetaOverrideActive(false);
+        setIsCorbatinDropdownOpen(false);
+        setIsConductorDropdownOpen(false);
         setCasetaSuccessMsg(true);
         setTimeout(() => setCasetaSuccessMsg(false), 4000);
         showToast(`Ingreso peatonal de ${nom} registrado en caseta.`, "success");
@@ -2589,9 +2592,23 @@ export default function App() {
       });
 
       await reloadBitacora();
+      // Reset completo del formulario
+      setSelectedEmpresaId("");
+      setSelectedVehicleId("");
+      setCasetaCorbatin("");
+      setCasetaConductorId("");
+      setCasetaConductorQuery("");
+      setCasetaHoraEntrada("");
+      setCasetaHoraSalida("");
       setCasetaTrabajos("");
       setCasetaNumPasajeros("");
+      setCasetaPeatonalTrabajadorId("");
+      setCasetaPeatonalNombre("");
+      setCasetaPeatonalTelefono("");
+      setCasetaPeatonalObservaciones("");
       setCasetaOverrideActive(false);
+      setIsCorbatinDropdownOpen(false);
+      setIsConductorDropdownOpen(false);
       setCasetaSuccessMsg(true);
       setTimeout(() => setCasetaSuccessMsg(false), 4000);
       showToast(`Entrada autorizada para ${conductorFinalNombre} (${currentCasetaVehicle.placas}).`, "success");
@@ -6198,6 +6215,7 @@ export default function App() {
                                       type="button"
                                       onClick={() => {
                                         setCasetaCorbatin("");
+                                        setSelectedVehicleId("");
                                         setIsCorbatinDropdownOpen(true);
                                       }}
                                       title="Limpiar búsqueda"
@@ -6300,7 +6318,9 @@ export default function App() {
                                   <span>Conductor / Chofer</span>
                                 </label>
                                 <span className="text-[10px] text-slate-400 truncate max-w-[140px]">
-                                  {currentEmpresa?.nombre ? currentEmpresa.nombre.split(" ")[0] : "Empresa"} ({empresaTrabajadores.length})
+                                  {selectedEmpresaId
+                                    ? `${currentEmpresa?.nombre ? currentEmpresa.nombre.split(" ")[0] : "Empresa"} (${empresaTrabajadores.length})`
+                                    : `Todos (${empresaTrabajadores.length})`}
                                 </span>
                               </div>
 
@@ -6314,7 +6334,11 @@ export default function App() {
                                   onChange={(e) => handleConductorInputChange(e.target.value)}
                                   onKeyDown={handleConductorInputKeyDown}
                                   onFocus={() => setIsConductorDropdownOpen(true)}
-                                  placeholder={empresaTrabajadores.length > 0 ? "Escribe o selecciona el chofer..." : "Sin colaboradores registrados"}
+                                  placeholder={
+                                    selectedEmpresaId
+                                      ? (empresaTrabajadores.length > 0 ? "Escribe o selecciona el chofer..." : "Sin colaboradores registrados")
+                                      : "Escribe o busca conductor..."
+                                  }
                                   className="w-full rounded-xl pl-9 pr-16 py-2.5 text-sm font-bold text-slate-900 bg-white border-2 border-emerald-400 shadow-xs outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-600 transition-all placeholder:text-slate-400 placeholder:font-normal placeholder:text-xs"
                                 />
                                 <div className="absolute inset-y-0 right-0 flex items-center pr-2 gap-0.5">
@@ -6421,17 +6445,14 @@ export default function App() {
                               onChange={(e) => {
                                 const newEmpId = e.target.value;
                                 setSelectedEmpresaId(newEmpId);
-                                const firstVeh = vehicles.find((v) => v.empresaId === newEmpId && v.status === "Habilitado");
-                                if (firstVeh) {
-                                  setSelectedVehicleId(firstVeh.id);
-                                  setCasetaCorbatin(firstVeh.corbatinNum ? `#${firstVeh.corbatinNum}` : (firstVeh.placas || ""));
-                                } else {
-                                  setSelectedVehicleId("");
-                                  setCasetaCorbatin("");
-                                }
+                                setSelectedVehicleId("");
+                                setCasetaCorbatin("");
+                                setCasetaConductorId("");
+                                setCasetaConductorQuery("");
                               }}
                               className="w-full rounded-xl px-3.5 py-2 text-xs sm:text-sm border border-slate-300 bg-white font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-200"
                             >
+                              <option value="">-- Seleccionar Empresa Contratista --</option>
                               {empresas.map((emp) => (
                                 <option key={emp.id} value={emp.id}>{emp.nombre}</option>
                               ))}
@@ -6450,12 +6471,25 @@ export default function App() {
                                 const foundVeh = vehicles.find((v) => v.id === newVehId);
                                 if (foundVeh) {
                                   setCasetaCorbatin(foundVeh.corbatinNum ? `#${foundVeh.corbatinNum}` : (foundVeh.placas || ""));
+                                  if (foundVeh.conductor && foundVeh.conductor !== "N/A" && foundVeh.conductor.trim()) {
+                                    setCasetaConductorQuery(foundVeh.conductor);
+                                    const match = empresaTrabajadores.find((t) => `${t.nombre} ${t.apellidos}`.toLowerCase() === foundVeh.conductor?.toLowerCase());
+                                    setCasetaConductorId(match ? String(match.id_trabajador) : "");
+                                  } else {
+                                    setCasetaConductorId("");
+                                    setCasetaConductorQuery("");
+                                  }
+                                } else {
+                                  setCasetaCorbatin("");
+                                  setCasetaConductorId("");
+                                  setCasetaConductorQuery("");
                                 }
                               }}
                               className="w-full rounded-xl px-3.5 py-2 text-xs sm:text-sm border border-slate-300 bg-white font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-200"
                             >
-                              {empresaVehicles.length === 0 ? (
-                                <option value="">(Sin vehículos habilitados para esta empresa)</option>
+                              <option value="">-- Seleccionar Vehículo Asignado --</option>
+                              {empresaVehicles.length === 0 && selectedEmpresaId ? (
+                                <option value="" disabled>(Sin vehículos habilitados para esta empresa)</option>
                               ) : (
                                 empresaVehicles.map((v) => (
                                   <option key={v.id} value={v.id}>
@@ -6471,35 +6505,43 @@ export default function App() {
                         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                           <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
                             <span>Datos Autocompletados de la Unidad</span>
-                            <span className="font-mono text-emerald-700 font-bold">Corbatín #{currentCasetaVehicle?.corbatinNum || casetaCorbatin || "—"}</span>
+                            <span className="font-mono text-emerald-700 font-bold">
+                              {currentCasetaVehicle?.corbatinNum ? `Corbatín #${currentCasetaVehicle.corbatinNum}` : (casetaCorbatin ? `Corbatín ${casetaCorbatin}` : "—")}
+                            </span>
                           </div>
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-                            <div>
-                              <span className="text-slate-400 block text-[10px] uppercase font-bold">Placas:</span>
-                              <span className="font-mono font-bold text-slate-800">{currentCasetaVehicle?.placas || "N/A"}</span>
+                          {currentCasetaVehicle ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                              <div>
+                                <span className="text-slate-400 block text-[10px] uppercase font-bold">Placas:</span>
+                                <span className="font-mono font-bold text-slate-800">{currentCasetaVehicle.placas || "N/A"}</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 block text-[10px] uppercase font-bold">Color:</span>
+                                <span className="font-semibold text-slate-800">{currentCasetaVehicle.color || "N/A"}</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 block text-[10px] uppercase font-bold">Conductor:</span>
+                                <span className="font-semibold text-slate-800 truncate block">
+                                  {currentConductorVehicular
+                                    ? `${currentConductorVehicular.nombre} ${currentConductorVehicular.apellidos}`
+                                    : (casetaConductorQuery || currentCasetaVehicle.conductor || "N/A")}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 block text-[10px] uppercase font-bold">Teléfono:</span>
+                                <CopyableInlineText
+                                  text={currentConductorVehicular?.telefono || currentCasetaVehicle.telefono || currentEmpresa?.telefono || ""}
+                                  label="Teléfono"
+                                  className="font-mono text-slate-800 font-semibold"
+                                  onCopyToast={showToast}
+                                />
+                              </div>
                             </div>
-                            <div>
-                              <span className="text-slate-400 block text-[10px] uppercase font-bold">Color:</span>
-                              <span className="font-semibold text-slate-800">{currentCasetaVehicle?.color || "N/A"}</span>
+                          ) : (
+                            <div className="text-center py-2 text-xs text-slate-400">
+                              Selecciona un vehículo o escribe corbatín / placas para autocompletar la información.
                             </div>
-                            <div>
-                              <span className="text-slate-400 block text-[10px] uppercase font-bold">Conductor:</span>
-                              <span className="font-semibold text-slate-800 truncate block">
-                                {currentConductorVehicular
-                                  ? `${currentConductorVehicular.nombre} ${currentConductorVehicular.apellidos}`
-                                  : (casetaConductorQuery || currentCasetaVehicle?.conductor || "N/A")}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-slate-400 block text-[10px] uppercase font-bold">Teléfono:</span>
-                              <CopyableInlineText
-                                text={currentConductorVehicular?.telefono || currentCasetaVehicle?.telefono || currentEmpresa?.telefono || ""}
-                                label="Teléfono"
-                                className="font-mono text-slate-800 font-semibold"
-                                onCopyToast={showToast}
-                              />
-                            </div>
-                          </div>
+                          )}
                         </div>
 
                         {/* 4. DETALLES DEL INGRESO */}
@@ -6659,6 +6701,7 @@ export default function App() {
                             }}
                             className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 bg-white font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-sky-200"
                           >
+                            <option value="">-- Seleccionar Empresa Contratista --</option>
                             {empresas.map((emp) => (
                               <option key={emp.id} value={emp.id}>{emp.nombre}</option>
                             ))}
