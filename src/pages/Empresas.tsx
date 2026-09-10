@@ -159,7 +159,7 @@ export const Empresas: React.FC = () => {
               <tr className="border-b border-slate-200 text-slate-400 font-semibold bg-slate-50/50">
                 <th className="py-3 px-4">Empresa</th>
                 <th className="py-3 px-4">Contacto Responsable</th>
-                <th className="py-3 px-4 text-center">Nómina Autorizada</th>
+                <th className="py-3 px-4 text-center">Personal Registrado</th>
                 <th className="py-3 px-4 text-center">Vehículos Registrados</th>
                 <th className="py-3 px-4 text-center">Estado</th>
                 <th className="py-3 px-4 text-right">Acción</th>

@@ -131,9 +131,9 @@ export const Trabajadores: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-800">Nómina de Trabajadores</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-800">Personal Registrado</h2>
           <p className="text-slate-500 text-sm mt-0.5">
-            Registro, acreditación y estatus de ingreso para personal obrero de contratistas.
+            Registro y estatus de ingreso para colaboradores de contratistas.
           </p>
         </div>
         <button

@@ -879,6 +879,36 @@ async function copyTextToClipboard(text: string): Promise<boolean> {
   }
 }
 
+// ─── Format Date Helper ───────────────────────────────────────────────────────
+function formatFechaLegible(dateStr?: string | null, includeTime = true): string {
+  if (!dateStr || dateStr === "—" || dateStr === "N/A" || dateStr === "S/N") return "—";
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return String(dateStr);
+
+    const day = String(d.getDate()).padStart(2, "0");
+    const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    const month = months[d.getMonth()];
+    const year = d.getFullYear();
+
+    const hasTime = typeof dateStr === "string" && (dateStr.includes("T") || dateStr.includes(":"));
+    if (!includeTime || !hasTime) {
+      return `${day} ${month} ${year}`;
+    }
+
+    let hours = d.getHours();
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const strHours = String(hours).padStart(2, "0");
+
+    return `${day} ${month} ${year}, ${strHours}:${minutes} ${ampm}`;
+  } catch {
+    return String(dateStr);
+  }
+}
+
 // ─── Copyable UI Components ──────────────────────────────────────────────────
 function CopyableContactCardField({
   icon,
@@ -5068,7 +5098,7 @@ export default function App() {
                                   )}
                                 </td>
                                 <td className="px-5 py-3 text-xs font-mono text-slate-500">
-                                  {t.created_at}
+                                  {formatFechaLegible(t.created_at, false)}
                                 </td>
                               </tr>
                             ));
@@ -5425,8 +5455,8 @@ export default function App() {
                   <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
                     <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b bg-slate-50" style={{ borderColor: "var(--color-border)" }}>
                       <div>
-                        <h2 className="font-bold text-base text-slate-800">Nómina de Personal Acreditado</h2>
-                        <p className="text-xs text-slate-500">Consulta los colaboradores acreditados dados de alta en el sistema</p>
+                        <h2 className="font-bold text-base text-slate-800">Colaboradores Registrados</h2>
+                        <p className="text-xs text-slate-500">Personal autorizado para acceso vehicular y peatonal</p>
                       </div>
                       <span className="text-xs font-mono font-bold text-slate-500">
                         {trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre).length} registros
@@ -5437,7 +5467,7 @@ export default function App() {
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
-                            {["Fotografía", "Nombre Completo", "Teléfono Celular", "Empresa", "Estatus Acceso", "Auditoría (Registro / Modif.)"].map((h) => (
+                            {["Fotografía", "Nombre Completo", "Teléfono Celular", "Empresa", "Estatus Acceso", "Fecha de Registro"].map((h) => (
                               <th key={h} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
                             ))}
                           </tr>
@@ -5528,9 +5558,17 @@ export default function App() {
                                     </span>
                                   )}
                                 </td>
-                                <td className="px-5 py-3.5 text-xs text-slate-500 font-mono">
-                                  <div><strong className="text-slate-400 font-sans font-semibold">Alta:</strong> {t.created_at}</div>
-                                  <div><strong className="text-slate-400 font-sans font-semibold">Modif:</strong> {t.updated_at}</div>
+                                <td className="px-5 py-3.5 text-xs text-slate-600 font-mono">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 font-sans">Alta:</span>
+                                    <span className="text-slate-700">{formatFechaLegible(t.created_at)}</span>
+                                  </div>
+                                  {t.updated_at && (
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                      <span className="text-[10px] uppercase font-bold text-slate-400 font-sans">Modif:</span>
+                                      <span className="text-slate-500">{formatFechaLegible(t.updated_at)}</span>
+                                    </div>
+                                  )}
                                 </td>
                               </tr>
                             ));
@@ -7435,9 +7473,9 @@ export default function App() {
                 </label>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 font-mono flex justify-between">
-                <span>Fecha de Alta: {selectedTrabajadorParaEditar.created_at}</span>
-                <span>Última modif: {selectedTrabajadorParaEditar.updated_at}</span>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 font-mono flex flex-col sm:flex-row justify-between gap-1">
+                <span>Fecha de Alta: {formatFechaLegible(selectedTrabajadorParaEditar.created_at)}</span>
+                <span>Última modif: {formatFechaLegible(selectedTrabajadorParaEditar.updated_at)}</span>
               </div>
 
               <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
@@ -7484,7 +7522,7 @@ export default function App() {
             </div>
 
             <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
-              <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este colaborador de la nómina?</p>
+              <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este colaborador?</p>
               <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
                 <div><strong>Nombre:</strong> {selectedTrabajadorParaEliminar.nombre} {selectedTrabajadorParaEliminar.apellidos}</div>
                 <div><strong>ID:</strong> <span className="font-mono">#{selectedTrabajadorParaEliminar.id_trabajador}</span></div>
