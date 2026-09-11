@@ -4,6 +4,7 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { api } from "./services/api";
 import { compressImageClient } from "./utils/imageCompressor";
+import SupervisorHistorial from "./components/SupervisorHistorial";
 
 // ─── SVG Icons (Clean, Modern, Vector) ────────────────────────────────────────
 function IconSpinner({ className = "w-4 h-4" }: { className?: string }) {
@@ -408,6 +409,10 @@ interface RegistroCaseta {
   conductor: string;
   telefono: string;
   corbatinNum: string;
+  fecha?: string;
+  created_at?: string;
+  raw_hora_entrada?: string;
+  raw_hora_salida?: string;
   horaEntrada: string;
   horaSalida?: string;
   trabajos: string;
@@ -1758,6 +1763,10 @@ export default function App() {
           conductor: b.conductor || "",
           telefono: b.vehiculo?.empresa?.telefono || "",
           corbatinNum: b.corbatinNumero || "—",
+          fecha: b.fecha || (b.created_at ? new Date(b.created_at).toISOString().split("T")[0] : undefined),
+          created_at: b.created_at,
+          raw_hora_entrada: b.raw_hora_entrada || b.hora_entrada,
+          raw_hora_salida: b.raw_hora_salida || b.hora_salida,
           horaEntrada: b.hora_entrada || "00:00 hrs",
           horaSalida: b.hora_salida || undefined,
           trabajos: b.ubicacion_trabajo || b.observaciones || "Acceso regular",
@@ -1812,6 +1821,10 @@ export default function App() {
           conductor: b.conductor || "",
           telefono: b.vehiculo?.empresa?.telefono || "",
           corbatinNum: b.corbatinNumero || "—",
+          fecha: b.fecha || (b.created_at ? new Date(b.created_at).toISOString().split("T")[0] : undefined),
+          created_at: b.created_at,
+          raw_hora_entrada: b.raw_hora_entrada || b.hora_entrada,
+          raw_hora_salida: b.raw_hora_salida || b.hora_salida,
           horaEntrada: b.hora_entrada || "00:00 hrs",
           horaSalida: b.hora_salida || undefined,
           trabajos: b.ubicacion_trabajo || b.observaciones || "Acceso regular",
@@ -5042,46 +5055,11 @@ export default function App() {
               )}
 
               {supervisorTab === "historial" && (
-                <div className="rounded-2xl border bg-white shadow-sm overflow-hidden" style={{ borderColor: "var(--color-border)" }}>
-                  <div className="px-5 py-4 border-b bg-slate-50 flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
-                    <h2 className="font-bold text-sm text-slate-800">Historial de Resoluciones y Medidas Disciplinarias</h2>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
-                          {["Folio", "Fecha", "Empresa", "Placas", "Falta", "Resolución / Dictamen", "Estatus"].map((h) => (
-                            <th key={h} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {sanciones.length === 0 ? (
-                          <tr>
-                            <td colSpan={7} className="px-5 py-8 text-center text-xs text-slate-500">
-                              <IconCheckCircle className="w-8 h-8 text-emerald-300 mx-auto mb-2" />
-                              Sin historial de sanciones o resoluciones registradas.
-                            </td>
-                          </tr>
-                        ) : (
-                          sanciones.map((s) => (
-                            <tr key={s.id} className="hover:bg-slate-50">
-                              <td className="px-5 py-3 font-mono font-bold text-xs">{s.id}</td>
-                              <td className="px-5 py-3 text-xs text-slate-500">{s.fecha}</td>
-                              <td className="px-5 py-3 text-xs font-semibold text-slate-800">{s.empresaNombre}</td>
-                              <td className="px-5 py-3 text-xs font-mono font-bold">{s.placas}</td>
-                              <td className="px-5 py-3 text-xs text-slate-700">{s.tipo}</td>
-                              <td className="px-5 py-3 text-xs text-slate-600">
-                                {s.apelacion?.dictamenSupervisor || s.medidaDisciplinaria}
-                              </td>
-                              <td className="px-5 py-3"><StatusBadge status={s.status} /></td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                <SupervisorHistorial
+                  bitacora={bitacora}
+                  sanciones={sanciones as any}
+                  onRefresh={reloadBitacora}
+                />
               )}
             </div>
           </main>
