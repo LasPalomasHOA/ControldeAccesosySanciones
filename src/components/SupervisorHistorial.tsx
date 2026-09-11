@@ -37,6 +37,7 @@ import {
   Calendar,
   Layers
 } from 'lucide-react';
+import { exportSupervisorReportToExcel } from '../utils/excelReportExporter';
 
 export interface BitacoraItem {
   id: string;
@@ -113,6 +114,7 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('graficas');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isExportingExcel, setIsExportingExcel] = useState(false);
 
   // Filtros de tiempo para la gráfica
   const [periodo, setPeriodo] = useState<PeriodFilter>('dia');
@@ -645,154 +647,80 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
     });
   }, [sanciones, searchSanciones, filtroEstatusSancion]);
 
-  // Función para exportar a formato Excel (.CSV compatible con Microsoft Excel)
-  const handleExportarExcel = () => {
-    const today = new Date().toISOString().split('T')[0];
+  // Exportación Ejecutiva a Excel con Plantilla Corporativa y Gráficas
+  const handleExportarExcel = async () => {
+    if (isExportingExcel) return;
+    setIsExportingExcel(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const periodoNombre = chartAnalytics.title || `Periodo: ${periodo.toUpperCase()}`;
 
-    if (activeSubTab === 'graficas') {
-      const dataset = allAccesosDataset;
-      if (dataset.length === 0) {
-        alert("No hay registros en la base de datos para exportar.");
-        return;
-      }
+      const mappedBitacora = allAccesosDataset.map((b) => ({
+        id: String(b.id),
+        fecha: b.fecha || getRecordDate(b) || today,
+        tipoAcceso: b.tipoAcceso || (b.vehicleId === "PEATONAL" ? "Peatonal" : "Vehicular"),
+        empresaNombre: b.empresaNombre || '—',
+        placas: b.placas || 'PEATONAL',
+        color: b.color || 'N/A',
+        conductor: b.conductor || 'Personal Acreditado',
+        telefono: b.telefono || 'N/A',
+        corbatinNum: b.corbatinNum || '—',
+        num_pasajeros: Number(b.num_pasajeros) || 0,
+        horaEntrada: formatHoraVisual(b.horaEntrada || b.raw_hora_entrada),
+        horaSalida: b.horaSalida ? formatHoraVisual(b.horaSalida || b.raw_hora_salida) : 'Dentro',
+        trabajos: b.trabajos || 'Mantenimiento / Acceso regular',
+        guardiaNombre: b.guardiaNombre || 'Oficial en Caseta',
+        estado: b.estado || (b.horaSalida ? 'Salida Registrada' : 'Dentro'),
+        observaciones: b.observaciones || 'Sin observaciones'
+      }));
 
-      const headers = [
-        "Folio",
-        "Fecha",
-        "Modalidad de Acceso",
-        "Empresa Contratista",
-        "Vehículo / Placas",
-        "Color Unidad",
-        "Conductor / Colaborador",
-        "Teléfono Celular",
-        "Corbatín / Gafete",
-        "Pasajeros Extra",
-        "Hora Entrada",
-        "Hora Salida",
-        "Destino / Motivo de Acceso",
-        "Oficial en Caseta",
-        "Estatus",
-        "Observaciones"
-      ];
+      const mappedSanciones = (sancionesFiltradas || []).map((s) => ({
+        id: String(s.id),
+        fecha: s.fecha || today,
+        empresaNombre: s.empresaNombre || '—',
+        placas: s.placas || 'N/A',
+        tipo: s.tipo || 'Infracción al Reglamento',
+        medidaDisciplinaria: s.medidaDisciplinaria || 'Sanción oficial',
+        dictamen: s.apelacion?.dictamenSupervisor || 'Resolución aprobada por comité de supervisión',
+        status: s.status || 'Activa'
+      }));
 
-      const rows = dataset.map((b) => [
-        b.id,
-        b.fecha || getRecordDate(b) || today,
-        b.tipoAcceso || (b.vehicleId === "PEATONAL" ? "Peatonal (A pie)" : "Vehicular"),
-        b.empresaNombre,
-        b.placas,
-        b.color || "N/A",
-        b.conductor,
-        b.telefono || "N/A",
-        b.corbatinNum || "N/A",
-        String(b.num_pasajeros ?? 0),
-        formatHoraVisual(b.horaEntrada || b.raw_hora_entrada),
-        b.horaSalida ? formatHoraVisual(b.horaSalida || b.raw_hora_salida) : "Dentro (Sin salida aún)",
-        b.trabajos,
-        b.guardiaNombre,
-        b.estado,
-        b.observaciones || "Sin observaciones"
-      ]);
-
-      const csvContent = "\uFEFF" + [
-        headers.map((h) => `"${h.replace(/"/g, '""')}"`).join(","),
-        ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
-      ].join("\r\n");
-
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", `Bitacora_Accesos_LasPalomas_${periodo.toUpperCase()}_${today}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else if (activeSubTab === 'ultimos10') {
-      if (movimientosFiltrados.length === 0) {
-        alert("No hay movimientos para exportar.");
-        return;
-      }
-
-      const headers = [
-        "#",
-        "Tipo de Movimiento",
-        "Fecha",
-        "Hora",
-        "Empresa Contratista",
-        "Conductor / Colaborador",
-        "Placas / Modalidad",
-        "Corbatín",
-        "Pasajeros",
-        "Destino / Trabajos",
-        "Oficial en Caseta"
-      ];
-
-      const rows = movimientosFiltrados.map((m, idx) => [
-        String(idx + 1),
-        m.tipoMovimiento,
-        m.fecha,
-        m.hora,
-        m.empresaNombre,
-        m.conductor,
-        m.placas,
-        m.corbatinNum,
-        String(m.num_pasajeros),
-        m.trabajos,
-        m.guardiaNombre
-      ]);
-
-      const csvContent = "\uFEFF" + [
-        headers.map((h) => `"${h.replace(/"/g, '""')}"`).join(","),
-        ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
-      ].join("\r\n");
-
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", `Movimientos_Caseta_${today}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      if (sancionesFiltradas.length === 0) {
-        alert("No hay resoluciones o sanciones para exportar.");
-        return;
-      }
-
-      const headers = [
-        "Folio",
-        "Fecha",
-        "Empresa",
-        "Placas",
-        "Falta / Infracción",
-        "Resolución / Dictamen",
-        "Estatus"
-      ];
-
-      const rows = sancionesFiltradas.map((s) => [
-        s.id,
-        s.fecha,
-        s.empresaNombre,
-        s.placas,
-        s.tipo,
-        s.apelacion?.dictamenSupervisor || s.medidaDisciplinaria || "Dictamen oficial",
-        s.status
-      ]);
-
-      const csvContent = "\uFEFF" + [
-        headers.map((h) => `"${h.replace(/"/g, '""')}"`).join(","),
-        ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
-      ].join("\r\n");
-
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", `Historial_Sanciones_Resoluciones_${today}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      await exportSupervisorReportToExcel({
+        periodoNombre,
+        fechaReporte: new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        empresaFiltro: selectedEmpresa === 'todas' ? 'Todas las Empresas' : selectedEmpresa,
+        usuarioSupervisor: 'Supervisor de Seguridad HOA',
+        kpis: {
+          totalEntradas: chartAnalytics.totalEntradas,
+          totalSalidas: chartAnalytics.totalSalidas,
+          totalMovimientos: chartAnalytics.totalMovimientos,
+          balanceDentro: chartAnalytics.balanceDentro,
+          picoTraficoTexto: chartAnalytics.peakLabel ? `${chartAnalytics.peakLabel} (${chartAnalytics.peakValue} accesos)` : 'N/A',
+          totalSanciones: sancionesFiltradas.length,
+        },
+        chartData: chartAnalytics.chartData.map((d) => ({
+          hora: d.label,
+          entradas: d.entradas,
+          salidas: d.salidas,
+          movimientos: d.total
+        })),
+        dataModalidad: chartAnalytics.dataPieTipo.map((m) => ({
+          name: m.name,
+          value: m.value,
+          color: m.color
+        })),
+        topEmpresas: chartAnalytics.topEmpresasData.map((e) => ({
+          name: e.name,
+          accesos: e.count
+        })),
+        bitacora: mappedBitacora,
+        sanciones: mappedSanciones
+      });
+    } catch (err) {
+      console.error('Error al generar Excel ejecutivo:', err);
+      alert('Hubo un error al generar el archivo Excel. Por favor intente nuevamente.');
+    } finally {
+      setIsExportingExcel(false);
     }
   };
 
@@ -888,11 +816,21 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
 
             <button
               onClick={handleExportarExcel}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-[#0D6E5F] hover:bg-[#095247] text-white shadow-xs transition-all duration-150 cursor-pointer whitespace-nowrap"
-              title="Exportar reporte en formato Microsoft Excel (.CSV con codificación UTF-8)"
+              disabled={isExportingExcel}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-[#0D6E5F] hover:bg-[#095247] text-white shadow-xs transition-all duration-150 cursor-pointer whitespace-nowrap disabled:opacity-60"
+              title="Exportar informe ejecutivo con métricas, bitácora y gráficas en formato Microsoft Excel (.XLSX)"
             >
-              <FileSpreadsheet className="w-4 h-4 text-emerald-200" />
-              <span>Exportar a Excel</span>
+              {isExportingExcel ? (
+                <>
+                  <RefreshCw className="w-4 h-4 text-emerald-200 animate-spin" />
+                  <span>Generando Excel...</span>
+                </>
+              ) : (
+                <>
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-200" />
+                  <span>Exportar a Excel</span>
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -1236,7 +1174,11 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
           </div>
 
           {/* Gráfica Principal: Entradas vs Salidas */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div
+            id="chart-flujo-accesos"
+            data-chart-title="Flujo de Accesos por Intervalo"
+            className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4"
+          >
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-100 gap-2">
               <div>
                 <h3 className="font-bold text-slate-900 text-base">{chartAnalytics.title}</h3>
@@ -1369,7 +1311,11 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
           {/* Gráficas Complementarias: Distribución Vehicular vs Peatonal & Top Empresas */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Donut Chart: Tipo de Acceso */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+            <div
+              id="chart-modalidad-accesos"
+              data-chart-title="Modalidad de Acceso"
+              className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between"
+            >
               <div>
                 <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
                   <PieChartIcon className="w-4 h-4 text-[#0D6E5F]" />
@@ -1421,7 +1367,11 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
             </div>
 
             {/* Top 5 Empresas con Mayor Volumen */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs lg:col-span-2 flex flex-col justify-between">
+            <div
+              id="chart-top-empresas"
+              data-chart-title="Top Empresas con Mayor Actividad"
+              className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs lg:col-span-2 flex flex-col justify-between"
+            >
               <div>
                 <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
                   <Building2 className="w-4 h-4 text-[#0D6E5F]" />

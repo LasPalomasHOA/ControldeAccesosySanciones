@@ -54,8 +54,12 @@ router.get('/', async (req, res) => {
         {
           model: db.Vehiculo,
           as: 'vehiculo',
-          include: [{ model: db.Empresa, as: 'empresa' }]
+          include: [
+            { model: db.Empresa, as: 'empresa' },
+            { model: db.Corbatin, as: 'corbatines' }
+          ]
         },
+        { model: db.Corbatin, as: 'corbatin' },
         { model: db.CatalogoInfraccion, as: 'infraccion' },
         { model: db.Usuario, as: 'agente', attributes: ['id_usuario', 'nombre', 'correo'] },
         { model: db.Evidencia, as: 'evidencias' },
@@ -101,9 +105,20 @@ router.post('/', async (req, res) => {
       });
     }
 
+    // Auto-vincular corbatín activo del vehículo si no fue especificado directamente
+    let finalIdCorbatin = id_corbatin || null;
+    if (!finalIdCorbatin && id_vehiculo) {
+      const corbActivo = await db.Corbatin.findOne({
+        where: { id_vehiculo, estatus: 'ACTIVO' }
+      });
+      if (corbActivo) {
+        finalIdCorbatin = corbActivo.id_corbatin;
+      }
+    }
+
     const nuevoReporte = await db.ReporteInfraccion.create({
       id_vehiculo,
-      id_corbatin: id_corbatin || null,
+      id_corbatin: finalIdCorbatin,
       id_infraccion,
       id_usuario,
       fecha_hora: new Date(),
@@ -191,9 +206,12 @@ router.post('/:id/revisar', async (req, res) => {
       if (uExiste) usuarioValidoId = Number(id_usuario);
     }
 
-    // 5. Cargar vehículo asociado
+    // 5. Cargar vehículo asociado con su empresa
     const vehiculo = reporte.id_vehiculo
-      ? await db.Vehiculo.findByPk(reporte.id_vehiculo, { transaction })
+      ? await db.Vehiculo.findByPk(reporte.id_vehiculo, {
+          include: [{ model: db.Empresa, as: 'empresa' }],
+          transaction
+        })
       : null;
 
     // 6. Actualizar estatus del reporte
@@ -264,7 +282,11 @@ router.post('/:id/revisar', async (req, res) => {
         id_reporte: reporte.id_reporte,
         decision,
         estatus_revision: reporte.estatus_revision,
-        id_vehiculo: reporte.id_vehiculo
+        id_vehiculo: reporte.id_vehiculo,
+        id_empresa: vehiculo?.id_empresa,
+        empresaNombre: vehiculo?.empresa?.razon_social || '',
+        placas: vehiculo?.placas || '',
+        id_sancion: sancion?.id_sancion
       });
     } catch (e) {}
 

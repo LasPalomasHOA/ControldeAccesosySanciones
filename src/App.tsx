@@ -1341,6 +1341,39 @@ export default function App() {
 
   const [selectedFotoVehiculoPreview, setSelectedFotoVehiculoPreview] = useState<Vehicle | null>(null);
 
+  // Alertas flotantes de sanciones/infracciones aprobadas dirigidas al Contratista/Proveedor
+  const [activeSancionAlertIndex, setActiveSancionAlertIndex] = useState<number>(0);
+  const [dismissedSancionAlertIds, setDismissedSancionAlertIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("las_palomas_dismissed_sancion_alerts");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const handleDismissSancionAlert = (sancionId: string) => {
+    setDismissedSancionAlertIds((prev) => {
+      const updated = prev.includes(sancionId) ? prev : [...prev, sancionId];
+      try {
+        localStorage.setItem("las_palomas_dismissed_sancion_alerts", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+    setActiveSancionAlertIndex(0);
+  };
+
+  const handleDismissAllSancionAlerts = (ids: string[]) => {
+    setDismissedSancionAlertIds((prev) => {
+      const updated = Array.from(new Set([...prev, ...ids]));
+      try {
+        localStorage.setItem("las_palomas_dismissed_sancion_alerts", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+    setActiveSancionAlertIndex(0);
+  };
+
   // Creación de Vehículos / Trabajadores dirigida a Empresa específica por Supervisor / Admin
   const [targetEmpresaParaNuevoVehiculo, setTargetEmpresaParaNuevoVehiculo] = useState<Empresa | null>(null);
   const [targetEmpresaParaNuevoTrabajador, setTargetEmpresaParaNuevoTrabajador] = useState<Empresa | null>(null);
@@ -1725,6 +1758,10 @@ export default function App() {
         const empList = resEmpresas.status === "fulfilled" && Array.isArray(resEmpresas.value) ? resEmpresas.value : [];
         const mappedVeh: Vehicle[] = resVehicles.value.map((v: any) => {
           const empMatch = empList.find((e: any) => String(e.id_empresa || e.id) === String(v.id_empresa || v.empresaId));
+          const corbNum = v.corbatinNumero
+            || (v.corbatin?.numero ? String(v.corbatin.numero) : (v.corbatines?.find((c: any) => c.estatus === "ACTIVO")?.numero ? String(v.corbatines.find((c: any) => c.estatus === "ACTIVO").numero) : (v.corbatines?.[0]?.numero ? String(v.corbatines[0].numero) : "")))
+            || "";
+
           return {
             id: String(v.id_vehiculo || v.id),
             empresaId: String(v.id_empresa || v.empresaId),
@@ -1739,7 +1776,7 @@ export default function App() {
             telefono: v.empresa?.telefono || empMatch?.telefono || v.telefono || "",
             foto: normalizeFotoUrl(v.foto_url || v.foto),
             status: (v.estatus_acceso === "HABILITADO" ? "Habilitado" : (v.estatus_acceso === "DESHABILITADO" ? "Deshabilitado" : (v.estatus_acceso === "SUSPENDIDO" ? "Suspendido" : "Restringido"))) as "Habilitado" | "Deshabilitado" | "Suspendido" | "Restringido",
-            corbatinNum: v.corbatinNumero || "101",
+            corbatinNum: corbNum,
           };
         });
         setVehicles(mappedVeh);
@@ -1839,24 +1876,37 @@ export default function App() {
       }
 
       if (resReportes.status === "fulfilled" && Array.isArray(resReportes.value)) {
-        const mappedInf: InfraccionReporte[] = resReportes.value.map((r: any) => ({
-          id: String(r.id_reporte || r.id),
-          folio: `FOL-${r.id_reporte}`,
-          fecha: r.fecha_hora ? r.fecha_hora.split("T")[0] : new Date().toISOString().split("T")[0],
-          hora: r.fecha_hora ? r.fecha_hora.split("T")[1]?.substring(0, 5) : "12:00",
-          agenteNombre: r.guardia_reporta?.nombre || "Guardia en Caseta",
-          empresaNombre: r.vehiculo?.empresa?.razon_social || "",
-          placas: r.vehiculo?.placas || "",
-          corbatinNum: "101",
-          infraccionCodigo: r.infraccion?.codigo || "INF-01",
-          infraccionNombre: r.infraccion?.nombre || "Falta al reglamento",
-          lugar: r.ubicacion_texto || "Vialidad interna",
-          descripcion: r.descripcion_hechos || "",
-          evidencias: r.evidencias?.map((e: any) => e.archivo) || [],
-          gravedad: (r.infraccion?.gravedad?.toLowerCase() === "grave" ? "grave" : (r.infraccion?.gravedad?.toLowerCase() === "leve" ? "leve" : "moderada")) as "leve" | "moderada" | "grave",
-          medidaSugerida: "Revisión por comité de supervisión",
-          estado: (r.estatus_revision === "PENDIENTE" ? "Pendiente" : (r.estatus_revision === "APROBADO" ? "Aprobada" : (r.estatus_revision === "RECHAZADO" ? "Rechazada" : "Desestimada"))) as "Pendiente" | "Aprobada" | "Rechazada" | "Desestimada"
-        }));
+        const rawVehs = resVehicles.status === "fulfilled" && Array.isArray(resVehicles.value) ? resVehicles.value : [];
+        const mappedInf: InfraccionReporte[] = resReportes.value.map((r: any) => {
+          const matchedVeh = rawVehs.find((v: any) => String(v.id_vehiculo || v.id) === String(r.id_vehiculo || r.vehiculo?.id_vehiculo));
+          const corbNum = r.corbatin?.numero
+            || r.corbatinNumero
+            || r.vehiculo?.corbatines?.find((c: any) => c.estatus === "ACTIVO")?.numero
+            || r.vehiculo?.corbatines?.[0]?.numero
+            || matchedVeh?.corbatinNumero
+            || (matchedVeh?.corbatin?.numero ? String(matchedVeh.corbatin.numero) : (matchedVeh?.corbatines?.find((c: any) => c.estatus === "ACTIVO")?.numero ? String(matchedVeh.corbatines.find((c: any) => c.estatus === "ACTIVO").numero) : (matchedVeh?.corbatines?.[0]?.numero ? String(matchedVeh.corbatines[0].numero) : "")))
+            || (r.id_corbatin ? String(r.id_corbatin) : "")
+            || "—";
+
+          return {
+            id: String(r.id_reporte || r.id),
+            folio: `FOL-${r.id_reporte}`,
+            fecha: r.fecha_hora ? r.fecha_hora.split("T")[0] : new Date().toISOString().split("T")[0],
+            hora: r.fecha_hora ? r.fecha_hora.split("T")[1]?.substring(0, 5) : "12:00",
+            agenteNombre: r.agente?.nombre || r.guardia_reporta?.nombre || "Guardia en Caseta",
+            empresaNombre: r.vehiculo?.empresa?.razon_social || matchedVeh?.empresaNombre || matchedVeh?.empresa?.razon_social || "",
+            placas: r.vehiculo?.placas || matchedVeh?.placas || "",
+            corbatinNum: String(corbNum).replace(/^#/, ""),
+            infraccionCodigo: r.infraccion?.codigo || "INF-01",
+            infraccionNombre: r.infraccion?.nombre || "Falta al reglamento",
+            lugar: r.ubicacion_texto || "Vialidad interna",
+            descripcion: r.descripcion_hechos || "",
+            evidencias: r.evidencias?.map((e: any) => e.archivo) || [],
+            gravedad: (r.infraccion?.gravedad?.toLowerCase() === "grave" ? "grave" : (r.infraccion?.gravedad?.toLowerCase() === "leve" ? "leve" : "moderada")) as "leve" | "moderada" | "grave",
+            medidaSugerida: "Revisión por comité de supervisión",
+            estado: (r.estatus_revision === "PENDIENTE" ? "Pendiente" : (r.estatus_revision === "APROBADO" ? "Aprobada" : (r.estatus_revision === "RECHAZADO" ? "Rechazada" : "Desestimada"))) as "Pendiente" | "Aprobada" | "Rechazada" | "Desestimada"
+          };
+        });
         setInfraccionesPendientes(mappedInf);
       }
     } catch (err) {
@@ -1920,22 +1970,28 @@ export default function App() {
     try {
       const res = await api.getVehiculos();
       if (Array.isArray(res)) {
-        const mappedVeh: Vehicle[] = res.map((v: any) => ({
-          id: String(v.id_vehiculo || v.id),
-          empresaId: String(v.id_empresa || v.empresaId),
-          empresaNombre: v.empresaNombre || v.empresa?.razon_social || "",
-          marca: v.marca,
-          modelo: v.modelo,
-          año: String(v.año || v.anio || ""),
-          anio: String(v.año || v.anio || ""),
-          placas: v.placas || v.placa,
-          color: v.color,
-          conductor: v.conductor || "",
-          telefono: v.empresa?.telefono || v.telefono || "",
-          foto: normalizeFotoUrl(v.foto_url || v.foto),
-          status: (v.estatus_acceso === "HABILITADO" ? "Habilitado" : (v.estatus_acceso === "DESHABILITADO" ? "Deshabilitado" : (v.estatus_acceso === "SUSPENDIDO" ? "Suspendido" : "Restringido"))) as "Habilitado" | "Deshabilitado" | "Suspendido" | "Restringido",
-          corbatinNum: v.corbatinNumero || "101",
-        }));
+        const mappedVeh: Vehicle[] = res.map((v: any) => {
+          const corbNum = v.corbatinNumero
+            || (v.corbatin?.numero ? String(v.corbatin.numero) : (v.corbatines?.find((c: any) => c.estatus === "ACTIVO")?.numero ? String(v.corbatines.find((c: any) => c.estatus === "ACTIVO").numero) : (v.corbatines?.[0]?.numero ? String(v.corbatines[0].numero) : "")))
+            || "";
+
+          return {
+            id: String(v.id_vehiculo || v.id),
+            empresaId: String(v.id_empresa || v.empresaId),
+            empresaNombre: v.empresaNombre || v.empresa?.razon_social || "",
+            marca: v.marca,
+            modelo: v.modelo,
+            año: String(v.año || v.anio || ""),
+            anio: String(v.año || v.anio || ""),
+            placas: v.placas || v.placa,
+            color: v.color,
+            conductor: v.conductor || "",
+            telefono: v.empresa?.telefono || v.telefono || "",
+            foto: normalizeFotoUrl(v.foto_url || v.foto),
+            status: (v.estatus_acceso === "HABILITADO" ? "Habilitado" : (v.estatus_acceso === "DESHABILITADO" ? "Deshabilitado" : (v.estatus_acceso === "SUSPENDIDO" ? "Suspendido" : "Restringido"))) as "Habilitado" | "Deshabilitado" | "Suspendido" | "Restringido",
+            corbatinNum: corbNum,
+          };
+        });
         setVehicles(mappedVeh);
       }
     } catch (e) {
@@ -2043,8 +2099,19 @@ export default function App() {
                 "warning",
                 "Infracción Detectada en Tiempo Real"
               );
+            } else if (payload.type === "REPORTE_DICTAMINADO") {
+              loadDatabaseData(true);
+              if (payload.decision === "APROBADO") {
+                playNotificationChime();
+                if (currentUser?.role === "contratista" && (!payload.empresaNombre || payload.empresaNombre === currentUser.empresaNombre)) {
+                  showToast(
+                    `⚠️ Medida disciplinaria dictaminada y aprobada para tu empresa (Vehículo ${payload.placas || ""}).`,
+                    "error",
+                    "Suspensión Vehicular Aplicada"
+                  );
+                }
+              }
             } else if (
-              payload.type === "REPORTE_DICTAMINADO" ||
               payload.type === "NUEVA_APELACION" ||
               payload.type === "SANCION_DICTAMINADA" ||
               payload.type === "NUEVO_ACCESO" ||
@@ -2090,7 +2157,18 @@ export default function App() {
       window.removeEventListener("focus", handleFocusOrVisibility);
       document.removeEventListener("visibilitychange", handleFocusOrVisibility);
     };
-  }, []);
+  }, [currentUser]);
+
+  // Sanciones activas o ratificadas no vistas para la empresa del proveedor actual
+  const sancionesAlertaParaProveedor = useMemo(() => {
+    if (!currentUser || currentUser.role !== "contratista") return [];
+    return sanciones.filter(
+      (s) =>
+        s.empresaNombre === currentUser.empresaNombre &&
+        (s.status === "Activa" || s.status === "Ratificada") &&
+        !dismissedSancionAlertIds.includes(String(s.id))
+    );
+  }, [currentUser, sanciones, dismissedSancionAlertIds]);
 
   const setHoraActual = () => {
     const now = new Date();
@@ -5859,7 +5937,7 @@ export default function App() {
                                   }`}
                               >
                                 <div className="font-semibold text-sm text-slate-800">{v.marca} {v.modelo}</div>
-                                <div className="text-xs text-slate-500 font-mono mt-0.5">{v.placas} · Corbatín #{v.corbatinNum || "101"}</div>
+                                <div className="text-xs text-slate-500 font-mono mt-0.5">{v.placas} · Corbatín #{v.corbatinNum || v.id}</div>
                                 <div className="mt-1.5"><StatusBadge status={v.status} /></div>
                               </button>
                             ));
@@ -5891,7 +5969,7 @@ export default function App() {
                             <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" id="corbatin-container" style={{ borderColor: "var(--color-border)" }}>
                               <div className="px-5 py-4 border-b bg-slate-50 flex items-center justify-between no-print" style={{ borderColor: "var(--color-border)" }}>
                                 <div>
-                                  <h2 className="font-bold text-sm text-slate-800">Vista Previa — Corbatín #{veh.corbatinNum || "101"}</h2>
+                                  <h2 className="font-bold text-sm text-slate-800">Vista Previa — Corbatín #{veh.corbatinNum || veh.id}</h2>
                                   <p className="text-xs text-slate-500">{veh.marca} {veh.modelo} · {veh.placas}</p>
                                 </div>
                                 <StatusBadge status={veh.status} />
@@ -8814,6 +8892,142 @@ export default function App() {
           © 2026 Las Palomas Rocky Point HOA, A.C. · Ecosistema Integral de Control y Seguridad Vehicular
         </p>
       </footer>
+
+      {/* ─── VENTANA FLOTANTE DE ALERTA DE INFRACCIÓN/SANCIÓN PARA PROVEEDOR ─── */}
+      {currentUser?.role === "contratista" && sancionesAlertaParaProveedor.length > 0 && (() => {
+        const safeIdx = Math.min(activeSancionAlertIndex, sancionesAlertaParaProveedor.length - 1);
+        const alertItem = sancionesAlertaParaProveedor[safeIdx] || sancionesAlertaParaProveedor[0];
+        if (!alertItem) return null;
+
+        return (
+          <div
+            key={alertItem.id}
+            className="fixed bottom-6 right-6 z-[9990] w-[calc(100vw-2rem)] max-w-md bg-white/95 text-slate-800 backdrop-blur-xl border border-rose-200 shadow-2xl rounded-3xl p-5 ring-1 ring-black/5 animate-in fade-in slide-in-from-bottom-5 duration-300 transition-all font-sans"
+            style={{ boxShadow: "0 20px 45px -10px rgba(225, 29, 72, 0.18), 0 8px 20px -6px rgba(0, 0, 0, 0.08)" }}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-600"></span>
+                </span>
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-rose-700 flex items-center gap-1.5">
+                    <span>🚨 Infracción Aprobada</span>
+                    {sancionesAlertaParaProveedor.length > 1 && (
+                      <span className="bg-rose-100 text-rose-800 border border-rose-200 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        {safeIdx + 1} de {sancionesAlertaParaProveedor.length}
+                      </span>
+                    )}
+                  </h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Notificación oficial de resolución de Supervisión HOA
+                  </p>
+                </div>
+              </div>
+
+              {/* Botón cerrar / descartar individual */}
+              <button
+                type="button"
+                onClick={() => handleDismissSancionAlert(alertItem.id)}
+                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer text-xs"
+                title="Quitar notificación"
+                aria-label="Cerrar notificación"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Contenido de la sanción */}
+            <div className="mt-3.5 space-y-2.5 text-xs">
+              <div className="bg-rose-50/40 rounded-2xl p-3.5 border border-rose-100 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-md text-[11px]">
+                    Placas: {alertItem.placas || "N/A"}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    Folio: #{alertItem.id}
+                  </span>
+                </div>
+
+                <div>
+                  <p className="text-slate-900 font-bold text-xs leading-snug">
+                    {alertItem.tipo}
+                  </p>
+                  {alertItem.descripcion && alertItem.descripcion !== alertItem.tipo && (
+                    <p className="text-[11px] text-slate-600 mt-1 line-clamp-2">
+                      {alertItem.descripcion}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 pt-1 border-t border-rose-100/80">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Medida:</span>
+                  <span className="text-xs font-bold text-rose-800 bg-rose-100/90 border border-rose-200 px-2.5 py-0.5 rounded-md">
+                    {alertItem.medidaDisciplinaria || "Amonestación / Suspensión"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Controles de paginación si hay múltiples */}
+              {sancionesAlertaParaProveedor.length > 1 && (
+                <div className="flex items-center justify-between text-[11px] text-slate-500 px-1 pt-1">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      disabled={safeIdx === 0}
+                      onClick={() => setActiveSancionAlertIndex(Math.max(0, safeIdx - 1))}
+                      className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-40 font-medium cursor-pointer disabled:cursor-not-allowed text-[11px]"
+                    >
+                      ← Anterior
+                    </button>
+                    <button
+                      type="button"
+                      disabled={safeIdx >= sancionesAlertaParaProveedor.length - 1}
+                      onClick={() => setActiveSancionAlertIndex(Math.min(sancionesAlertaParaProveedor.length - 1, safeIdx + 1))}
+                      className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-40 font-medium cursor-pointer disabled:cursor-not-allowed text-[11px]"
+                    >
+                      Siguiente →
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDismissAllSancionAlerts(sancionesAlertaParaProveedor.map((s) => s.id))}
+                    className="text-[11px] text-slate-500 hover:text-slate-800 underline cursor-pointer"
+                  >
+                    Quitar todas ({sancionesAlertaParaProveedor.length})
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Acciones principales */}
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedSancionParaApelar(alertItem);
+                  setPortalScreen("sanciones");
+                  handleDismissSancionAlert(alertItem.id);
+                }}
+                className="flex-1 py-2.5 px-3.5 rounded-xl bg-[#0D6E5F] hover:bg-[#0a574b] text-white font-bold text-xs shadow-md shadow-emerald-900/10 flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-[0.98]"
+              >
+                <IconMessageSquare className="w-3.5 h-3.5" />
+                <span>Interponer Apelación</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDismissSancionAlert(alertItem.id)}
+                className="py-2.5 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 font-semibold text-xs border border-slate-200 transition-colors cursor-pointer"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ─── TOAST NOTIFICATIONS OVERLAY ─── */}
       <ToastContainer toasts={toasts} onClose={removeToast} />
