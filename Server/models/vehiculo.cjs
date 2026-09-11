@@ -52,6 +52,12 @@ const Vehiculo = sequelize.define(
       allowNull: false,
       defaultValue: 'HABILITADO',
       comment: 'HABILITADO, SUSPENDIDO o RESTRINGIDO'
+    },
+    eliminado: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      comment: 'Indica si el vehículo fue eliminado lógicamente del sistema'
     }
   },
   {

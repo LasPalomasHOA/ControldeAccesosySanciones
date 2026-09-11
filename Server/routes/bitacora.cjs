@@ -37,6 +37,19 @@ router.get('/', async (req, res) => {
         ? String(plain.corbatin.numero) 
         : (plain.vehiculo?.corbatines?.[0]?.numero ? String(plain.vehiculo.corbatines[0].numero) : '');
 
+      const rawHoraEntrada = plain.hora_entrada
+        ? (plain.hora_entrada instanceof Date ? plain.hora_entrada.toISOString() : new Date(plain.hora_entrada).toISOString())
+        : null;
+      const rawHoraSalida = plain.hora_salida
+        ? (plain.hora_salida instanceof Date ? plain.hora_salida.toISOString() : new Date(plain.hora_salida).toISOString())
+        : null;
+
+      const trabajoLimpio = (plain.ubicacion_trabajo && plain.ubicacion_trabajo.trim() !== 'x')
+        ? plain.ubicacion_trabajo.trim()
+        : (plain.observaciones && plain.observaciones.trim() !== 'x' && !plain.observaciones.startsWith('Chofer [') && !plain.observaciones.startsWith('Peatonal [')
+          ? plain.observaciones.trim()
+          : (plain.id_vehiculo ? 'Mantenimiento / Acceso regular' : 'Labores y mantenimiento a pie'));
+
       return {
         ...plain,
         id: String(plain.id_acceso),
@@ -46,15 +59,20 @@ router.get('/', async (req, res) => {
         conductor: conductorNombre,
         trabajadorNombre: conductorNombre,
         telefono: plain.vehiculo?.empresa?.telefono || plain.conductor?.telefono || '',
-        corbatinNumero: corbatinNum,
-        raw_hora_entrada: plain.hora_entrada,
-        raw_hora_salida: plain.hora_salida,
-        fecha: plain.fecha || (plain.created_at ? new Date(plain.created_at).toISOString().split('T')[0] : null),
-        hora_entrada: plain.hora_entrada ? new Date(plain.hora_entrada).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' hrs' : '',
-        hora_salida: plain.hora_salida ? new Date(plain.hora_salida).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' hrs' : null,
+        corbatinNumero: corbatinNum || '—',
+        corbatinNum: corbatinNum || '—',
+        ubicacion_trabajo: trabajoLimpio,
+        trabajos: trabajoLimpio,
+        raw_hora_entrada: rawHoraEntrada || plain.hora_entrada,
+        raw_hora_salida: rawHoraSalida || plain.hora_salida,
+        fecha: plain.fecha || (rawHoraEntrada ? rawHoraEntrada.split('T')[0] : (plain.created_at ? new Date(plain.created_at).toISOString().split('T')[0] : null)),
+        hora_entrada: rawHoraEntrada || (plain.hora_entrada ? new Date(plain.hora_entrada).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' hrs' : ''),
+        hora_salida: rawHoraSalida || (plain.hora_salida ? new Date(plain.hora_salida).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' hrs' : null),
+        fechaHora: rawHoraEntrada || (plain.created_at ? new Date(plain.created_at).toISOString() : new Date().toISOString()),
         tipo: plain.id_vehiculo ? 'Vehicular' : 'Peatonal',
         estado: plain.hora_salida ? 'Salida Registrada' : 'Dentro',
         agenteNombre: plain.guardia?.nombre || 'Oficial en Caseta',
+        guardiaNombre: plain.guardia?.nombre || 'Oficial de Turno',
         cabina: plain.caseta?.nombre || 'Caseta Principal'
       };
     });

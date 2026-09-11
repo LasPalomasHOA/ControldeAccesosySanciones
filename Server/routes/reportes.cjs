@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { Op } = require('sequelize');
 const db = require('../models/index.cjs');
 
 const events = require('../events.cjs');
@@ -86,7 +87,7 @@ router.post('/', async (req, res) => {
         id_infraccion,
         estatus_revision: 'PENDIENTE',
         fecha_hora: {
-          [db.Sequelize.Op.gte]: haceDosMinutos
+          [Op.gte]: haceDosMinutos
         }
       },
       include: [{ model: db.Evidencia, as: 'evidencias' }]

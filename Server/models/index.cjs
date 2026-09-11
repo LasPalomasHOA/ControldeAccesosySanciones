@@ -132,7 +132,11 @@ BitacoraAcceso.belongsTo(Trabajador, { foreignKey: 'id_conductor', as: 'conducto
 Usuario.hasMany(BitacoraAcceso, { foreignKey: 'id_usuario', as: 'accesos_registrados' });
 BitacoraAcceso.belongsTo(Usuario, { foreignKey: 'id_usuario', as: 'guardia' });
 
+const { Sequelize, Op } = require('sequelize');
+
 const db = {
+  Sequelize,
+  Op,
   sequelize,
   Rol,
   Empresa,

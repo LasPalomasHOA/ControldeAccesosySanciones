@@ -88,6 +88,12 @@ async function ensureDbInit() {
           ALTER COLUMN "id_corbatin" DROP NOT NULL;
         `).catch(() => {});
 
+        // Campo eliminado (Soft Delete) para conservar historial en bitácoras
+        await db.sequelize.query(`
+          ALTER TABLE IF EXISTS "${schemaName}"."vehiculos" 
+          ADD COLUMN IF NOT EXISTS "eliminado" BOOLEAN DEFAULT FALSE;
+        `).catch(() => {});
+
         // Migrar automáticamente registros que contengan rutas '/uploads/' o 'guardia_' a Base64 en PostgreSQL
         const usuariosConRuta = await db.Usuario.findAll({
           where: {

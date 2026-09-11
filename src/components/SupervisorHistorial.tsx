@@ -32,7 +32,10 @@ import {
   FileCheck2,
   CheckCircle2,
   FileSpreadsheet,
-  Download
+  Download,
+  RefreshCw,
+  Calendar,
+  Layers
 } from 'lucide-react';
 
 export interface BitacoraItem {
@@ -86,25 +89,54 @@ type SubTab = 'graficas' | 'ultimos10' | 'sanciones';
 type PeriodFilter = 'dia' | 'semana' | 'mes' | 'anio' | 'rango';
 type ChartType = 'bar' | 'area';
 
+// Formateador de horas a formato amigable 12 hrs AM/PM
+function formatHoraVisual(raw?: string): string {
+  if (!raw || raw === '—' || raw === '00:00 hrs') return raw || '—';
+  try {
+    const d = new Date(raw);
+    if (!isNaN(d.getTime())) {
+      let hours = d.getHours();
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      return `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+    }
+  } catch { }
+  return raw.replace(/ hrs/i, '');
+}
+
 export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
   bitacora,
-  sanciones
+  sanciones,
+  onRefresh
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('graficas');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Filtros de tiempo para la gráfica
   const [periodo, setPeriodo] = useState<PeriodFilter>('dia');
   const [chartType, setChartType] = useState<ChartType>('bar');
 
-  // Fechas de filtro
-  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  // Fechas de filtro basadas en la fecha actual local
+  const todayStr = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }, []);
+
   const [selectedDate, setSelectedDate] = useState<string>(todayStr); // YYYY-MM-DD
   const [selectedMonth, setSelectedMonth] = useState<string>(todayStr.substring(0, 7)); // YYYY-MM
   const [selectedYear, setSelectedYear] = useState<string>(todayStr.substring(0, 4)); // YYYY
   const [rangoInicio, setRangoInicio] = useState<string>(() => {
     const d = new Date();
     d.setDate(d.getDate() - 7);
-    return d.toISOString().split('T')[0];
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   });
   const [rangoFin, setRangoFin] = useState<string>(todayStr);
 
@@ -118,123 +150,81 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
   const [searchSanciones, setSearchSanciones] = useState<string>('');
   const [filtroEstatusSancion, setFiltroEstatusSancion] = useState<string>('todos');
 
-  // Lista de empresas para selectores
-  const empresasList = useMemo(() => {
-    const set = new Set<string>();
-    bitacora.forEach(b => {
-      if (b.empresaNombre) set.add(b.empresaNombre);
-    });
-    return Array.from(set);
-  }, [bitacora]);
-
-  // Dataset enriquecido con datos históricos representativos si hay pocos registros
-  const allAccesosDataset = useMemo(() => {
-    const existing = [...bitacora];
-
-    if (existing.length >= 15) {
-      return existing;
+  // Manejador de actualización manual
+  const handleRefreshClick = async () => {
+    if (!onRefresh) return;
+    setIsRefreshing(true);
+    try {
+      await onRefresh();
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
     }
-
-    const synthetic: BitacoraItem[] = [];
-    const baseCompanies = [
-      'Constructora Integral del Noroeste S.A.',
-      'Jardinería Bella Vista',
-      'Limpieza Marina Resort',
-      'Pinturas Rocky Point',
-      'Mantenimiento Eléctrico del Mar'
-    ];
-    const plates = ['SON-88-29', 'SON-11-23', 'SON-34-12', 'SON-90-54', 'SON-44-88', 'SON-55-77', 'PEATONAL (A PIE)'];
-    const drivers = ['Carlos Ortega', 'Pedro Hernández', 'Juan Pérez', 'Sofía Martínez', 'Francisco Jara', 'Raúl Castro'];
-
-    const today = new Date();
-    for (let dayOffset = 0; dayOffset < 45; dayOffset++) {
-      const d = new Date(today);
-      d.setDate(d.getDate() - dayOffset);
-      const dateStr = d.toISOString().split('T')[0];
-      const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-
-      const countForDay = isWeekend ? Math.floor(Math.random() * 4) + 2 : Math.floor(Math.random() * 8) + 6;
-
-      for (let i = 0; i < countForDay; i++) {
-        const hourIn = Math.floor(Math.random() * 5) + 7; // 07:00 a 11:00
-        const minIn = Math.floor(Math.random() * 60);
-        const hourOut = hourIn + Math.floor(Math.random() * 5) + 3; // 3-7 hrs later
-        const minOut = Math.floor(Math.random() * 60);
-
-        const pad = (n: number) => String(n).padStart(2, '0');
-        const horaEntradaFormatted = `${pad(hourIn)}:${pad(minIn)} hrs`;
-        const horaSalidaFormatted = hourOut <= 19 ? `${pad(hourOut)}:${pad(minOut)} hrs` : undefined;
-
-        const isPeatonal = i % 4 === 0;
-        const emp = baseCompanies[i % baseCompanies.length];
-        const plate = isPeatonal ? 'PEATONAL (A PIE)' : plates[i % plates.length];
-        const driver = drivers[i % drivers.length];
-
-        synthetic.push({
-          id: `synth_${dayOffset}_${i}`,
-          empresaNombre: emp,
-          vehicleId: isPeatonal ? 'PEATONAL' : `v_${i}`,
-          placas: plate,
-          conductor: driver,
-          telefono: '638-123-4567',
-          corbatinNum: isPeatonal ? '—' : `#${100 + (i % 20)}`,
-          fecha: dateStr,
-          created_at: `${dateStr}T${pad(hourIn)}:${pad(minIn)}:00.000Z`,
-          raw_hora_entrada: `${dateStr}T${pad(hourIn)}:${pad(minIn)}:00.000Z`,
-          raw_hora_salida: horaSalidaFormatted ? `${dateStr}T${pad(hourOut)}:${pad(minOut)}:00.000Z` : undefined,
-          horaEntrada: horaEntradaFormatted,
-          horaSalida: horaSalidaFormatted,
-          trabajos: isPeatonal ? 'Mantenimiento en jardines Torre 1' : 'Entrega de material y remodelación',
-          guardiaNombre: 'Oficial Martínez',
-          estado: horaSalidaFormatted ? 'Salida Registrada' : 'Dentro',
-          tipoAcceso: isPeatonal ? 'Peatonal' : 'Vehicular',
-          num_pasajeros: isPeatonal ? 0 : (i % 3 === 0 ? 2 : 0)
-        });
-      }
-    }
-
-    return [...existing, ...synthetic];
-  }, [bitacora]);
-
-  // Función auxiliar para parsear fecha de un registro
-  const getRecordDate = (item: BitacoraItem): string => {
-    if (item.fecha) {
-      return item.fecha.includes('T') ? item.fecha.split('T')[0] : item.fecha;
-    }
-    if (item.created_at) {
-      return item.created_at.split('T')[0];
-    }
-    if (item.raw_hora_entrada) {
-      return item.raw_hora_entrada.split('T')[0];
-    }
-    return todayStr;
   };
 
-  // Función auxiliar para extraer hora (0-23)
+  // Lista de empresas reales para selectores
+  const empresasList = useMemo(() => {
+    const set = new Set<string>();
+    (bitacora || []).forEach(b => {
+      if (b.empresaNombre && b.empresaNombre.trim()) {
+        set.add(b.empresaNombre.trim());
+      }
+    });
+    return Array.from(set).sort();
+  }, [bitacora]);
+
+  // Dataset 100% REAL conectado a la base de datos PostgreSQL
+  const allAccesosDataset = useMemo(() => {
+    return bitacora || [];
+  }, [bitacora]);
+
+  // Función auxiliar robusta para parsear la fecha de un registro real
+  const getRecordDate = (item: BitacoraItem): string => {
+    // 1. Probar campo fecha directo si viene como YYYY-MM-DD
+    if (item.fecha && /^\d{4}-\d{2}-\d{2}$/.test(item.fecha.trim())) {
+      return item.fecha.trim();
+    }
+    // 2. Probar raw_hora_entrada, created_at o fecha con ISO
+    const raw = item.raw_hora_entrada || item.created_at || item.fecha || item.horaEntrada;
+    if (raw) {
+      try {
+        const d = new Date(raw);
+        if (!isNaN(d.getTime())) {
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${y}-${m}-${day}`;
+        }
+      } catch { }
+    }
+    return '';
+  };
+
+  // Función auxiliar para extraer hora real (0-23)
   const getRecordHour = (item: BitacoraItem, type: 'entrada' | 'salida'): number | null => {
-    if (type === 'entrada') {
-      if (item.raw_hora_entrada && item.raw_hora_entrada.includes('T')) {
-        const date = new Date(item.raw_hora_entrada);
-        if (!isNaN(date.getHours())) return date.getHours();
+    const raw = type === 'entrada'
+      ? (item.raw_hora_entrada || item.created_at || item.horaEntrada)
+      : (item.raw_hora_salida || item.horaSalida);
+
+    if (!raw) return null;
+
+    try {
+      const d = new Date(raw);
+      if (!isNaN(d.getTime())) {
+        return d.getHours();
       }
-      if (item.horaEntrada) {
-        const match = item.horaEntrada.match(/^(\d{1,2}):/);
-        if (match) return parseInt(match[1], 10);
-      }
-    } else {
-      if (item.raw_hora_salida && item.raw_hora_salida.includes('T')) {
-        const date = new Date(item.raw_hora_salida);
-        if (!isNaN(date.getHours())) return date.getHours();
-      }
-      if (item.horaSalida) {
-        const match = item.horaSalida.match(/^(\d{1,2}):/);
-        if (match) return parseInt(match[1], 10);
-      }
+    } catch { }
+
+    const match = String(raw).match(/(\d{1,2}):(\d{2})/);
+    if (match) {
+      let h = parseInt(match[1], 10);
+      if (/PM/i.test(raw) && h < 12) h += 12;
+      if (/AM/i.test(raw) && h === 12) h = 0;
+      return h;
     }
     return null;
   };
 
-  // Cálculo de datos agregados para la gráfica según el periodo seleccionado
+  // Cálculo de datos analíticos basados en los datos reales de PostgreSQL
   const chartAnalytics = useMemo(() => {
     let filtered = allAccesosDataset;
 
@@ -257,18 +247,14 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
 
       dayItems.forEach(item => {
         const hIn = getRecordHour(item, 'entrada');
-        if (hIn !== null && hoursMap[hIn] !== undefined) {
-          hoursMap[hIn].entradas += 1;
-        } else if (hIn !== null && hIn >= 0 && hIn <= 23) {
+        if (hIn !== null) {
           if (!hoursMap[hIn]) hoursMap[hIn] = { entradas: 0, salidas: 0 };
           hoursMap[hIn].entradas += 1;
         }
 
-        if (item.horaSalida || item.raw_hora_salida) {
+        if (item.horaSalida || item.raw_hora_salida || item.estado === 'Salida Registrada') {
           const hOut = getRecordHour(item, 'salida');
-          if (hOut !== null && hoursMap[hOut] !== undefined) {
-            hoursMap[hOut].salidas += 1;
-          } else if (hOut !== null && hOut >= 0 && hOut <= 23) {
+          if (hOut !== null) {
             if (!hoursMap[hOut]) hoursMap[hOut] = { entradas: 0, salidas: 0 };
             hoursMap[hOut].salidas += 1;
           }
@@ -291,20 +277,28 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
         };
       });
 
-      const [y, m, d] = targetDate.split('-');
-      const dateObj = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-      const formattedDateText = dateObj.toLocaleDateString('es-MX', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
+      const parts = targetDate.split('-');
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      const d = parseInt(parts[2], 10);
+      const dateObj = new Date(y, m - 1, d);
+      const formattedDateText = !isNaN(dateObj.getTime())
+        ? dateObj.toLocaleDateString('es-MX', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+        : targetDate;
 
       title = `Flujo por Hora — ${formattedDateText}`;
-      subtitle = `Distribución horaria de ingresos y salidas en caseta`;
+      subtitle = `Distribución horaria de ingresos y salidas en caseta (${dayItems.length} registros en BD)`;
     } else if (periodo === 'semana') {
-      const [y, m, d] = selectedDate.split('-');
-      const target = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+      const parts = selectedDate.split('-');
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      const d = parseInt(parts[2], 10);
+      const target = new Date(y, m - 1, d);
       const dayOfWeek = target.getDay();
       const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
       const monday = new Date(target);
@@ -316,7 +310,10 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
       for (let i = 0; i < 7; i++) {
         const cur = new Date(monday);
         cur.setDate(monday.getDate() + i);
-        const curDateStr = cur.toISOString().split('T')[0];
+        const curY = cur.getFullYear();
+        const curM = String(cur.getMonth() + 1).padStart(2, '0');
+        const curD = String(cur.getDate()).padStart(2, '0');
+        const curDateStr = `${curY}-${curM}-${curD}`;
         const dayNum = cur.getDate();
         const monthShort = cur.toLocaleDateString('es-MX', { month: 'short' });
         weekDates.push({
@@ -327,8 +324,8 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
 
       chartData = weekDates.map(({ dateStr, label }) => {
         const dayItems = filtered.filter(item => getRecordDate(item) === dateStr);
-        let ent = dayItems.length;
-        let sal = dayItems.filter(item => item.horaSalida || item.raw_hora_salida).length;
+        const ent = dayItems.length;
+        const sal = dayItems.filter(item => item.horaSalida || item.raw_hora_salida || item.estado === 'Salida Registrada').length;
         return {
           label,
           entradas: ent,
@@ -343,19 +340,18 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
       title = `Semana del ${monday.getDate()} de ${monday.toLocaleDateString('es-MX', { month: 'short' })} al ${sunday.getDate()} de ${sunday.toLocaleDateString('es-MX', { month: 'short', year: 'numeric' })}`;
       subtitle = `Comparativo diario de entradas y salidas de la semana`;
     } else if (periodo === 'mes') {
-      const [yearStr, monthStr] = selectedMonth.split('-');
-      const year = parseInt(yearStr, 10);
-      const monthIndex = parseInt(monthStr, 10) - 1;
+      const parts = selectedMonth.split('-');
+      const year = parseInt(parts[0], 10);
+      const monthIndex = parseInt(parts[1], 10) - 1;
       const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-
       const monthName = new Date(year, monthIndex, 1).toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
 
       chartData = [];
       for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${yearStr}-${String(monthStr).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dateStr = `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const dayItems = filtered.filter(item => getRecordDate(item) === dateStr);
         const ent = dayItems.length;
-        const sal = dayItems.filter(item => item.horaSalida || item.raw_hora_salida).length;
+        const sal = dayItems.filter(item => item.horaSalida || item.raw_hora_salida || item.estado === 'Salida Registrada').length;
 
         chartData.push({
           label: `Día ${day}`,
@@ -374,9 +370,12 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
 
       chartData = monthsNames.map((mName, mIdx) => {
         const monthPrefix = `${year}-${String(mIdx + 1).padStart(2, '0')}`;
-        const monthItems = filtered.filter(item => getRecordDate(item).startsWith(monthPrefix));
+        const monthItems = filtered.filter(item => {
+          const rDate = getRecordDate(item);
+          return rDate.startsWith(monthPrefix);
+        });
         const ent = monthItems.length;
-        const sal = monthItems.filter(item => item.horaSalida || item.raw_hora_salida).length;
+        const sal = monthItems.filter(item => item.horaSalida || item.raw_hora_salida || item.estado === 'Salida Registrada').length;
 
         return {
           label: mName,
@@ -401,12 +400,15 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
       for (let i = 0; i < diffDays; i++) {
         const cur = new Date(actualStart);
         cur.setDate(actualStart.getDate() + i);
-        const dateStr = cur.toISOString().split('T')[0];
+        const curY = cur.getFullYear();
+        const curM = String(cur.getMonth() + 1).padStart(2, '0');
+        const curD = String(cur.getDate()).padStart(2, '0');
+        const dateStr = `${curY}-${curM}-${curD}`;
         const dayLabel = cur.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
 
         const dayItems = filtered.filter(item => getRecordDate(item) === dateStr);
         const ent = dayItems.length;
-        const sal = dayItems.filter(item => item.horaSalida || item.raw_hora_salida).length;
+        const sal = dayItems.filter(item => item.horaSalida || item.raw_hora_salida || item.estado === 'Salida Registrada').length;
 
         chartData.push({
           label: dayLabel,
@@ -426,7 +428,7 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
     const totalMovimientos = totalEntradas + totalSalidas;
     const balanceDentro = Math.max(0, totalEntradas - totalSalidas);
 
-    let peakItem = chartData[0];
+    let peakItem = chartData.find(c => c.total > 0) || chartData[0];
     chartData.forEach(item => {
       if (item.total > (peakItem?.total || 0)) {
         peakItem = item;
@@ -459,10 +461,12 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
       }
     });
 
-    const dataPieTipo = [
-      { name: 'Vehicular', value: totalVehicular || 1, color: '#0D6E5F' },
-      { name: 'Peatonal', value: totalPeatonal || 0, color: '#0284C7' }
-    ];
+    const dataPieTipo = (totalVehicular === 0 && totalPeatonal === 0)
+      ? [{ name: 'Sin registros', value: 1, color: '#CBD5E1' }]
+      : [
+        { name: 'Vehicular', value: totalVehicular, color: '#0D6E5F' },
+        { name: 'Peatonal', value: totalPeatonal, color: '#0284C7' }
+      ];
 
     const topEmpresasData = Object.entries(empresasCountMap)
       .map(([name, count]) => ({ name: name.length > 22 ? name.substring(0, 20) + '...' : name, count }))
@@ -477,7 +481,7 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
       totalSalidas,
       totalMovimientos,
       balanceDentro,
-      peakLabel: peakItem?.label || '—',
+      peakLabel: (peakItem?.total && peakItem.total > 0) ? peakItem.label : 'Sin picos',
       peakValue: peakItem?.total || 0,
       dataPieTipo,
       topEmpresasData,
@@ -495,8 +499,8 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
     selectedEmpresa
   ]);
 
-  // Recuento de las últimas 10 entradas/salidas (movimientos cronológicos más recientes)
-  const ultimos10Movimientos = useMemo(() => {
+  // Recuento de todos los movimientos de la base de datos de caseta
+  const { todosMovimientos, movimientosFiltrados, ultimosMovimientosCards, metricasMovimientos } = useMemo(() => {
     const sorted = [...allAccesosDataset].sort((a, b) => {
       const timeA = a.created_at || a.raw_hora_entrada || a.fecha || '';
       const timeB = b.created_at || b.raw_hora_entrada || b.fecha || '';
@@ -525,12 +529,27 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
 
     const eventos: MovimientoEvento[] = [];
 
-    sorted.slice(0, 20).forEach(item => {
-      const recDate = getRecordDate(item);
-      const isPeatonal = item.tipoAcceso === 'Peatonal' || item.placas?.includes('PEATONAL');
+    sorted.forEach(item => {
+      const recDate = getRecordDate(item) || todayStr;
+      const isPeatonal = item.tipoAcceso === 'Peatonal' || item.placas?.includes('PEATONAL') || item.vehicleId === 'PEATONAL';
+
+      const rawCorb = item.corbatinNum || (item as any).corbatinNumero || (item as any).corbatin?.numero || (item as any).vehiculo?.corbatines?.[0]?.numero;
+      const cleanCorbatin = !isPeatonal && rawCorb && rawCorb !== '—' && rawCorb !== 'null' && rawCorb !== 'undefined'
+        ? (String(rawCorb).startsWith('#') ? String(rawCorb) : `#${rawCorb}`)
+        : '—';
+
+      const cleanTrabajos = (item.trabajos && item.trabajos !== 'x')
+        ? item.trabajos
+        : ((item as any).ubicacion_trabajo && (item as any).ubicacion_trabajo !== 'x')
+          ? (item as any).ubicacion_trabajo
+          : ((item.observaciones && item.observaciones !== 'x' && !item.observaciones.startsWith('Chofer [') && !item.observaciones.startsWith('Peatonal ['))
+            ? item.observaciones
+            : (isPeatonal ? 'Labores y mantenimiento a pie' : 'Mantenimiento / Acceso regular'));
+
+      const empNombre = item.empresaNombre || (item as any).vehiculo?.empresa?.razon_social || (item as any).conductor?.empresa?.razon_social || 'Empresa Contratista';
 
       // Evento de ENTRADA
-      if (item.horaEntrada) {
+      if (item.horaEntrada || item.raw_hora_entrada) {
         let ts = new Date(`${recDate}T12:00:00`).getTime();
         if (item.raw_hora_entrada) {
           const parsed = new Date(item.raw_hora_entrada).getTime();
@@ -541,15 +560,15 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
           accesoId: item.id,
           tipoMovimiento: 'ENTRADA',
           fecha: recDate,
-          hora: item.horaEntrada.replace(/ hrs/i, ''),
+          hora: formatHoraVisual(item.horaEntrada || item.raw_hora_entrada),
           placas: item.placas,
-          conductor: item.conductor,
-          empresaNombre: item.empresaNombre,
-          corbatinNum: item.corbatinNum || '—',
+          conductor: item.conductor || 'Conductor Autorizado',
+          empresaNombre: empNombre,
+          corbatinNum: cleanCorbatin,
           tipoAcceso: isPeatonal ? 'Peatonal' : 'Vehicular',
           num_pasajeros: item.num_pasajeros || 0,
           guardiaNombre: item.guardiaNombre || 'Oficial en Caseta',
-          trabajos: item.trabajos || 'Acceso ordinario',
+          trabajos: cleanTrabajos,
           color: item.color,
           telefono: item.telefono,
           estadoAcceso: item.estado,
@@ -558,7 +577,7 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
       }
 
       // Evento de SALIDA
-      if (item.horaSalida && item.estado === 'Salida Registrada') {
+      if (item.horaSalida || item.raw_hora_salida || item.estado === 'Salida Registrada') {
         let tsOut = new Date(`${recDate}T18:00:00`).getTime();
         if (item.raw_hora_salida) {
           const parsedOut = new Date(item.raw_hora_salida).getTime();
@@ -569,38 +588,50 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
           accesoId: item.id,
           tipoMovimiento: 'SALIDA',
           fecha: recDate,
-          hora: item.horaSalida.replace(/ hrs/i, ''),
+          hora: formatHoraVisual(item.horaSalida || item.raw_hora_salida),
           placas: item.placas,
-          conductor: item.conductor,
-          empresaNombre: item.empresaNombre,
-          corbatinNum: item.corbatinNum || '—',
+          conductor: item.conductor || 'Conductor Autorizado',
+          empresaNombre: empNombre,
+          corbatinNum: cleanCorbatin,
           tipoAcceso: isPeatonal ? 'Peatonal' : 'Vehicular',
           num_pasajeros: item.num_pasajeros || 0,
           guardiaNombre: item.guardiaNombre || 'Oficial en Caseta',
-          trabajos: item.trabajos || 'Salida completada',
+          trabajos: cleanTrabajos,
           color: item.color,
           telefono: item.telefono,
           estadoAcceso: 'Salida Registrada',
-          timestampSort: tsOut
+          timestampSort: tsOut + 1000
         });
       }
     });
 
     eventos.sort((a, b) => b.timestampSort - a.timestampSort);
-    const top10 = eventos.slice(0, 10);
 
+    const totalEntradas = eventos.filter(e => e.tipoMovimiento === 'ENTRADA').length;
+    const totalSalidas = eventos.filter(e => e.tipoMovimiento === 'SALIDA').length;
+
+    let filtrados = eventos;
     if (filtroTipo10 === 'entradas') {
-      return top10.filter(e => e.tipoMovimiento === 'ENTRADA');
+      filtrados = eventos.filter(e => e.tipoMovimiento === 'ENTRADA');
+    } else if (filtroTipo10 === 'salidas') {
+      filtrados = eventos.filter(e => e.tipoMovimiento === 'SALIDA');
     }
-    if (filtroTipo10 === 'salidas') {
-      return top10.filter(e => e.tipoMovimiento === 'SALIDA');
-    }
-    return top10;
-  }, [allAccesosDataset, filtroTipo10]);
 
-  // Historial de Sanciones filtrado
+    return {
+      todosMovimientos: eventos,
+      movimientosFiltrados: filtrados,
+      ultimosMovimientosCards: filtrados.slice(0, 8),
+      metricasMovimientos: {
+        entradas: totalEntradas,
+        salidas: totalSalidas,
+        total: eventos.length
+      }
+    };
+  }, [allAccesosDataset, filtroTipo10, todayStr]);
+
+  // Historial de Sanciones filtrado de PostgreSQL
   const sancionesFiltradas = useMemo(() => {
-    return sanciones.filter(s => {
+    return (sanciones || []).filter(s => {
       const matchText = searchSanciones === '' ||
         s.id.toLowerCase().includes(searchSanciones.toLowerCase()) ||
         s.empresaNombre.toLowerCase().includes(searchSanciones.toLowerCase()) ||
@@ -614,12 +645,6 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
     });
   }, [sanciones, searchSanciones, filtroEstatusSancion]);
 
-  const metricas10 = useMemo(() => {
-    const entradas = ultimos10Movimientos.filter(m => m.tipoMovimiento === 'ENTRADA').length;
-    const salidas = ultimos10Movimientos.filter(m => m.tipoMovimiento === 'SALIDA').length;
-    return { entradas, salidas, total: ultimos10Movimientos.length };
-  }, [ultimos10Movimientos]);
-
   // Función para exportar a formato Excel (.CSV compatible con Microsoft Excel)
   const handleExportarExcel = () => {
     const today = new Date().toISOString().split('T')[0];
@@ -627,7 +652,7 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
     if (activeSubTab === 'graficas') {
       const dataset = allAccesosDataset;
       if (dataset.length === 0) {
-        alert("No hay registros en la bitácora para exportar.");
+        alert("No hay registros en la base de datos para exportar.");
         return;
       }
 
@@ -652,7 +677,7 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
 
       const rows = dataset.map((b) => [
         b.id,
-        b.fecha || (b.created_at ? b.created_at.split('T')[0] : today),
+        b.fecha || getRecordDate(b) || today,
         b.tipoAcceso || (b.vehicleId === "PEATONAL" ? "Peatonal (A pie)" : "Vehicular"),
         b.empresaNombre,
         b.placas,
@@ -661,8 +686,8 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
         b.telefono || "N/A",
         b.corbatinNum || "N/A",
         String(b.num_pasajeros ?? 0),
-        b.horaEntrada,
-        b.horaSalida || "Dentro (Sin salida aún)",
+        formatHoraVisual(b.horaEntrada || b.raw_hora_entrada),
+        b.horaSalida ? formatHoraVisual(b.horaSalida || b.raw_hora_salida) : "Dentro (Sin salida aún)",
         b.trabajos,
         b.guardiaNombre,
         b.estado,
@@ -683,8 +708,8 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
       link.click();
       document.body.removeChild(link);
     } else if (activeSubTab === 'ultimos10') {
-      if (ultimos10Movimientos.length === 0) {
-        alert("No hay movimientos recientes para exportar.");
+      if (movimientosFiltrados.length === 0) {
+        alert("No hay movimientos para exportar.");
         return;
       }
 
@@ -702,7 +727,7 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
         "Oficial en Caseta"
       ];
 
-      const rows = ultimos10Movimientos.map((m, idx) => [
+      const rows = movimientosFiltrados.map((m, idx) => [
         String(idx + 1),
         m.tipoMovimiento,
         m.fecha,
@@ -725,7 +750,7 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", `Ultimos_10_Movimientos_Caseta_${today}.csv`);
+      link.setAttribute("download", `Movimientos_Caseta_${today}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -774,13 +799,21 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
   // Helpers para cambiar fecha en día/semana/mes
   const handleNextDate = () => {
     if (periodo === 'dia' || periodo === 'semana') {
-      const [y, m, d] = selectedDate.split('-');
-      const next = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+      const parts = selectedDate.split('-');
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      const d = parseInt(parts[2], 10);
+      const next = new Date(y, m - 1, d);
       next.setDate(next.getDate() + (periodo === 'semana' ? 7 : 1));
-      setSelectedDate(next.toISOString().split('T')[0]);
+      const nextY = next.getFullYear();
+      const nextM = String(next.getMonth() + 1).padStart(2, '0');
+      const nextD = String(next.getDate()).padStart(2, '0');
+      setSelectedDate(`${nextY}-${nextM}-${nextD}`);
     } else if (periodo === 'mes') {
-      const [y, m] = selectedMonth.split('-');
-      const cur = new Date(parseInt(y), parseInt(m) - 1, 1);
+      const parts = selectedMonth.split('-');
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      const cur = new Date(y, m - 1, 1);
       cur.setMonth(cur.getMonth() + 1);
       const nextMonthStr = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}`;
       setSelectedMonth(nextMonthStr);
@@ -791,13 +824,21 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
 
   const handlePrevDate = () => {
     if (periodo === 'dia' || periodo === 'semana') {
-      const [y, m, d] = selectedDate.split('-');
-      const prev = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+      const parts = selectedDate.split('-');
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      const d = parseInt(parts[2], 10);
+      const prev = new Date(y, m - 1, d);
       prev.setDate(prev.getDate() - (periodo === 'semana' ? 7 : 1));
-      setSelectedDate(prev.toISOString().split('T')[0]);
+      const prevY = prev.getFullYear();
+      const prevM = String(prev.getMonth() + 1).padStart(2, '0');
+      const prevD = String(prev.getDate()).padStart(2, '0');
+      setSelectedDate(`${prevY}-${prevM}-${prevD}`);
     } else if (periodo === 'mes') {
-      const [y, m] = selectedMonth.split('-');
-      const cur = new Date(parseInt(y), parseInt(m) - 1, 1);
+      const parts = selectedMonth.split('-');
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      const cur = new Date(y, m - 1, 1);
       cur.setMonth(cur.getMonth() - 1);
       const prevMonthStr = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}`;
       setSelectedMonth(prevMonthStr);
@@ -810,42 +851,60 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
     <div className="space-y-6 animate-fadeIn">
       {/* ─── Encabezado Principal & Sub-pestañas ─────────────────────────── */}
       <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs space-y-4">
-        {/* Fila Superior: Título con Icono a la Izquierda y Botón de Acción a la Derecha */}
+        {/* Fila Superior: Título con Icono a la Izquierda y Botones de Acción a la Derecha */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-3">
             <span className="p-2.5 rounded-xl bg-emerald-50 text-[#0D6E5F] border border-emerald-200/70 shrink-0">
               <BarChart3 className="w-5 h-5" />
             </span>
             <div>
-              <h1 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
-                Historial y Métricas de Acceso
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-base sm:text-lg font-bold text-slate-900">
+                  Historial y Métricas de Acceso
+                </h1>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 font-mono">
+                  PostgreSQL Real ({allAccesosDataset.length} registros)
+                </span>
+              </div>
               <p className="text-xs text-slate-500">
-                Auditoría analítica de entradas, salidas y resoluciones disciplinarias en Las Palomas HOA
+                Auditoría analítica en tiempo real de entradas, salidas y resoluciones disciplinarias
               </p>
             </div>
           </div>
 
-          {/* Botón Exportar a Excel a la derecha */}
-          <button
-            onClick={handleExportarExcel}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-[#0D6E5F] hover:bg-[#095247] text-white shadow-xs transition-all duration-150 cursor-pointer whitespace-nowrap self-start sm:self-auto shrink-0"
-            title="Exportar reporte en formato Microsoft Excel (.CSV con codificación UTF-8)"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-200" />
-            <span>Exportar a Excel</span>
-          </button>
+          {/* Botones de Actualización y Exportar a Excel */}
+          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+            {onRefresh && (
+              <button
+                onClick={handleRefreshClick}
+                disabled={isRefreshing}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                title="Sincronizar y recargar datos de la base de datos"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-slate-600 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span>Actualizar</span>
+              </button>
+            )}
+
+            <button
+              onClick={handleExportarExcel}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-[#0D6E5F] hover:bg-[#095247] text-white shadow-xs transition-all duration-150 cursor-pointer whitespace-nowrap"
+              title="Exportar reporte en formato Microsoft Excel (.CSV con codificación UTF-8)"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-200" />
+              <span>Exportar a Excel</span>
+            </button>
+          </div>
         </div>
 
-        {/* Fila Inferior: Sub-pestañas de navegación con distribución limpia y espaciosa */}
+        {/* Fila Inferior: Sub-pestañas de navegación */}
         <div className="flex items-center gap-1.5 bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200/80 overflow-x-auto">
           <button
             onClick={() => setActiveSubTab('graficas')}
-            className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap ${
-              activeSubTab === 'graficas'
+            className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap ${activeSubTab === 'graficas'
                 ? 'bg-[#0D6E5F] text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-            }`}
+              }`}
           >
             <TrendingUp className="w-4 h-4" />
             <span>Gráficas de Accesos</span>
@@ -853,28 +912,25 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
 
           <button
             onClick={() => setActiveSubTab('ultimos10')}
-            className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap ${
-              activeSubTab === 'ultimos10'
+            className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap ${activeSubTab === 'ultimos10'
                 ? 'bg-[#0D6E5F] text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-            }`}
+              }`}
           >
             <Clock className="w-4 h-4" />
-            <span>Últimos 10 Movimientos</span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-              activeSubTab === 'ultimos10' ? 'bg-emerald-800 text-emerald-100' : 'bg-slate-200 text-slate-700'
-            }`}>
-              10
+            <span>Últimos Movimientos</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${activeSubTab === 'ultimos10' ? 'bg-emerald-800 text-emerald-100' : 'bg-slate-200 text-slate-700'
+              }`}>
+              {todosMovimientos.length}
             </span>
           </button>
 
           <button
             onClick={() => setActiveSubTab('sanciones')}
-            className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap ${
-              activeSubTab === 'sanciones'
+            className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap ${activeSubTab === 'sanciones'
                 ? 'bg-[#0D6E5F] text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-            }`}
+              }`}
           >
             <FileCheck2 className="w-4 h-4" />
             <span>Resoluciones / Sanciones ({sanciones.length})</span>
@@ -909,11 +965,10 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                     <button
                       key={p}
                       onClick={() => setPeriodo(p)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
-                        active
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${active
                           ? 'bg-[#0D6E5F] text-white shadow-xs'
                           : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                      }`}
+                        }`}
                     >
                       {labels[p]}
                     </button>
@@ -1084,18 +1139,16 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                   <button
                     onClick={() => setChartType('bar')}
                     title="Gráfica de Columnas"
-                    className={`p-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                      chartType === 'bar' ? 'bg-white text-[#0D6E5F] shadow-xs' : 'text-slate-500 hover:text-slate-900'
-                    }`}
+                    className={`p-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${chartType === 'bar' ? 'bg-white text-[#0D6E5F] shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                      }`}
                   >
                     <BarChart3 className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setChartType('area')}
                     title="Gráfica de Área / Tendencia"
-                    className={`p-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                      chartType === 'area' ? 'bg-white text-[#0D6E5F] shadow-xs' : 'text-slate-500 hover:text-slate-900'
-                    }`}
+                    className={`p-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${chartType === 'area' ? 'bg-white text-[#0D6E5F] shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                      }`}
                   >
                     <TrendingUp className="w-4 h-4" />
                   </button>
@@ -1117,7 +1170,7 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                 {chartAnalytics.totalEntradas}
               </div>
               <div className="mt-1 text-[11px] text-emerald-600 font-medium flex items-center gap-1">
-                <span>Ingresos autorizados</span>
+                <span>Ingresos en periodo</span>
               </div>
             </div>
 
@@ -1132,7 +1185,7 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                 {chartAnalytics.totalSalidas}
               </div>
               <div className="mt-1 text-[11px] text-sky-600 font-medium flex items-center gap-1">
-                <span>Salidas de caseta</span>
+                <span>Salidas registradas</span>
               </div>
             </div>
 
@@ -1177,7 +1230,7 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                 {chartAnalytics.peakLabel}
               </div>
               <div className="mt-1 text-[11px] text-indigo-600 font-semibold">
-                {chartAnalytics.peakValue} accesos registrados
+                {chartAnalytics.peakValue > 0 ? `${chartAnalytics.peakValue} accesos registrados` : 'Sin accesos registrados'}
               </div>
             </div>
           </div>
@@ -1202,10 +1255,10 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
             </div>
 
             <div className="h-[340px] w-full pt-2">
-              {chartAnalytics.chartData.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-slate-400 text-xs">
+              {chartAnalytics.chartData.length === 0 || chartAnalytics.totalMovimientos === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-slate-400 text-xs bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
                   <BarChart3 className="w-8 h-8 mb-2 text-slate-300" />
-                  No se registraron movimientos en el periodo seleccionado.
+                  <span>No hay registros en la base de datos para el periodo seleccionado.</span>
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
@@ -1260,12 +1313,12 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                     >
                       <defs>
                         <linearGradient id="gradEntradas" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#0D6E5F" stopOpacity={0.6}/>
-                          <stop offset="95%" stopColor="#0D6E5F" stopOpacity={0.05}/>
+                          <stop offset="5%" stopColor="#0D6E5F" stopOpacity={0.6} />
+                          <stop offset="95%" stopColor="#0D6E5F" stopOpacity={0.05} />
                         </linearGradient>
                         <linearGradient id="gradSalidas" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#0284C7" stopOpacity={0.6}/>
-                          <stop offset="95%" stopColor="#0284C7" stopOpacity={0.05}/>
+                          <stop offset="5%" stopColor="#0284C7" stopOpacity={0.6} />
+                          <stop offset="95%" stopColor="#0284C7" stopOpacity={0.05} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
@@ -1379,8 +1432,8 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
 
               <div className="h-[220px] w-full pt-3">
                 {chartAnalytics.topEmpresasData.length === 0 ? (
-                  <div className="h-full flex items-center justify-center text-slate-400 text-xs">
-                    Sin datos de empresas en el periodo.
+                  <div className="h-full flex items-center justify-center text-slate-400 text-xs bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                    Sin registros de empresas en el periodo seleccionado.
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
@@ -1421,53 +1474,50 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
             <div>
               <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
                 <Clock className="w-5 h-5 text-[#0D6E5F]" />
-                Flujo Cronológico Reciente (Últimos 10 Movimientos)
+                Flujo Cronológico Reciente (Últimos Movimientos)
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Seguimiento en vivo de las últimas 10 operaciones de entrada y salida procesadas por los guardias de caseta
+                Seguimiento en vivo de las operaciones de entrada y salida procesadas en caseta ({allAccesosDataset.length} registros totales en PostgreSQL)
               </p>
             </div>
 
-            {/* Filtros rápidos dentro de los 10 */}
+            {/* Filtros rápidos dentro de los movimientos */}
             <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200/80">
               <button
                 onClick={() => setFiltroTipo10('todos')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                  filtroTipo10 === 'todos' ? 'bg-[#0D6E5F] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${filtroTipo10 === 'todos' ? 'bg-[#0D6E5F] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  }`}
               >
-                Todos ({metricas10.total})
+                Todos ({metricasMovimientos.total})
               </button>
               <button
                 onClick={() => setFiltroTipo10('entradas')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 ${
-                  filtroTipo10 === 'entradas' ? 'bg-emerald-700 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 ${filtroTipo10 === 'entradas' ? 'bg-emerald-700 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  }`}
               >
                 <ArrowDownRight className="w-3.5 h-3.5 text-emerald-400" />
-                Entradas ({metricas10.entradas})
+                Entradas ({metricasMovimientos.entradas})
               </button>
               <button
                 onClick={() => setFiltroTipo10('salidas')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 ${
-                  filtroTipo10 === 'salidas' ? 'bg-sky-700 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 ${filtroTipo10 === 'salidas' ? 'bg-sky-700 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  }`}
               >
                 <ArrowUpRight className="w-3.5 h-3.5 text-sky-400" />
-                Salidas ({metricas10.salidas})
+                Salidas ({metricasMovimientos.salidas})
               </button>
             </div>
           </div>
 
-          {/* Tarjetas Visuales de los 10 Movimientos */}
+          {/* Tarjetas Visuales de los Movimientos Recientes */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {ultimos10Movimientos.length === 0 ? (
+            {ultimosMovimientosCards.length === 0 ? (
               <div className="col-span-2 bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-500 text-xs">
                 <Clock className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                No hay movimientos registrados para el filtro seleccionado.
+                No hay movimientos registrados en la base de datos de caseta.
               </div>
             ) : (
-              ultimos10Movimientos.map((mov, idx) => {
+              ultimosMovimientosCards.map((mov, idx) => {
                 const isEntrada = mov.tipoMovimiento === 'ENTRADA';
                 return (
                   <div
@@ -1481,11 +1531,10 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                           #{idx + 1}
                         </span>
                         <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold tracking-wider ${
-                            isEntrada
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold tracking-wider ${isEntrada
                               ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                               : 'bg-sky-50 text-sky-800 border border-sky-200'
-                          }`}
+                            }`}
                         >
                           {isEntrada ? (
                             <>
@@ -1503,7 +1552,7 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
 
                       <div className="text-right">
                         <span className="text-xs font-bold text-slate-900 font-mono">
-                          {mov.hora} hrs
+                          {mov.hora}
                         </span>
                         <div className="text-[10px] text-slate-400 font-medium">
                           {mov.fecha}
@@ -1530,7 +1579,7 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                         {/* Placa o Badge Peatonal */}
                         <div className="text-right">
                           {mov.tipoAcceso === 'Peatonal' ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-200">
                               Peatonal
                             </span>
                           ) : (
@@ -1572,15 +1621,15 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
             )}
           </div>
 
-          {/* Tabla Desglosada Completa de las 10 */}
+          {/* Tabla Desglosada Completa */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
               <h4 className="font-bold text-xs text-slate-800 uppercase tracking-wider">
-                Tabla Detallada de las Últimas 10 Operaciones
+                Tabla Detallada de Operaciones de Caseta
               </h4>
               <div className="flex items-center gap-3">
                 <span className="text-[11px] text-slate-500 font-mono">
-                  {ultimos10Movimientos.length} registros listados
+                  {movimientosFiltrados.length} registros listados
                 </span>
                 <button
                   onClick={handleExportarExcel}
@@ -1592,9 +1641,9 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto max-h-[530px] overflow-y-auto">
               <table className="w-full text-xs">
-                <thead>
+                <thead className="sticky top-0 bg-slate-50 z-10 shadow-xs">
                   <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
                     <th className="text-center px-3 py-3 w-12">#</th>
                     <th className="text-left px-3 py-3">Movimiento</th>
@@ -1608,53 +1657,60 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {ultimos10Movimientos.map((mov, idx) => (
-                    <tr key={mov.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-3 py-2.5 text-center font-mono font-bold text-slate-400">
-                        {idx + 1}
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold ${
-                            mov.tipoMovimiento === 'ENTRADA'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-sky-100 text-sky-800'
-                          }`}
-                        >
-                          {mov.tipoMovimiento === 'ENTRADA' ? (
-                            <ArrowDownRight className="w-3 h-3" />
-                          ) : (
-                            <ArrowUpRight className="w-3 h-3" />
-                          )}
-                          {mov.tipoMovimiento}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5 font-mono text-slate-700">
-                        <span className="font-bold">{mov.hora} hrs</span>
-                        <span className="text-slate-400 block text-[10px]">{mov.fecha}</span>
-                      </td>
-                      <td className="px-3 py-2.5 font-semibold text-slate-900 truncate max-w-[180px]" title={mov.empresaNombre}>
-                        {mov.empresaNombre}
-                      </td>
-                      <td className="px-3 py-2.5 text-slate-800 font-medium">
-                        {mov.conductor}
-                      </td>
-                      <td className="px-3 py-2.5 text-center">
-                        <span className="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded">
-                          {mov.placas}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5 text-center font-mono font-bold text-[#0D6E5F]">
-                        {mov.corbatinNum}
-                      </td>
-                      <td className="px-3 py-2.5 text-slate-600 truncate max-w-[200px]" title={mov.trabajos}>
-                        {mov.trabajos}
-                      </td>
-                      <td className="px-3 py-2.5 text-slate-500 text-[11px]">
-                        {mov.guardiaNombre}
+                  {movimientosFiltrados.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="px-5 py-8 text-center text-xs text-slate-500">
+                        No hay movimientos registrados en la base de datos de caseta.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    movimientosFiltrados.map((mov, idx) => (
+                      <tr key={mov.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-3 py-2.5 text-center font-mono font-bold text-slate-400">
+                          {idx + 1}
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold ${mov.tipoMovimiento === 'ENTRADA'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-sky-100 text-sky-800'
+                              }`}
+                          >
+                            {mov.tipoMovimiento === 'ENTRADA' ? (
+                              <ArrowDownRight className="w-3 h-3" />
+                            ) : (
+                              <ArrowUpRight className="w-3 h-3" />
+                            )}
+                            {mov.tipoMovimiento}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5 font-mono text-slate-700">
+                          <span className="font-bold">{mov.hora}</span>
+                          <span className="text-slate-400 block text-[10px]">{mov.fecha}</span>
+                        </td>
+                        <td className="px-3 py-2.5 font-semibold text-slate-900 truncate max-w-[180px]" title={mov.empresaNombre}>
+                          {mov.empresaNombre}
+                        </td>
+                        <td className="px-3 py-2.5 text-slate-800 font-medium">
+                          {mov.conductor}
+                        </td>
+                        <td className="px-3 py-2.5 text-center">
+                          <span className="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded">
+                            {mov.placas}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5 text-center font-mono font-bold text-[#0D6E5F]">
+                          {mov.corbatinNum}
+                        </td>
+                        <td className="px-3 py-2.5 text-slate-600 truncate max-w-[200px]" title={mov.trabajos}>
+                          {mov.trabajos}
+                        </td>
+                        <td className="px-3 py-2.5 text-slate-500 text-[11px]">
+                          {mov.guardiaNombre}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1674,7 +1730,7 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                 Historial de Resoluciones y Medidas Disciplinarias
               </h3>
               <p className="text-xs text-slate-500">
-                Dictámenes de comités HOA, apelaciones atendidas y suspensiones vehiculares
+                Dictámenes de comités HOA, apelaciones atendidas y suspensiones vehiculares registradas en PostgreSQL
               </p>
             </div>
 
@@ -1715,9 +1771,9 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto max-h-[460px] overflow-y-auto">
               <table className="w-full text-sm">
-                <thead>
+                <thead className="sticky top-0 bg-slate-50 z-10 shadow-xs">
                   <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 text-xs font-semibold uppercase tracking-wider">
                     {['Folio', 'Fecha', 'Empresa', 'Placas', 'Falta', 'Resolución / Dictamen', 'Estatus'].map(h => (
                       <th key={h} className="text-left px-5 py-3">{h}</th>
@@ -1744,13 +1800,12 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                           {s.apelacion?.dictamenSupervisor || s.medidaDisciplinaria || 'Dictamen oficial emitido'}
                         </td>
                         <td className="px-5 py-3">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
-                            s.status === 'Activa' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
-                            s.status === 'Ratificada' ? 'bg-rose-100 text-rose-800 border border-rose-200' :
-                            s.status === 'Aclarada' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
-                            s.status === 'Cumplida' ? 'bg-slate-100 text-slate-700 border border-slate-200' :
-                            'bg-sky-100 text-sky-800 border border-sky-200'
-                          }`}>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${s.status === 'Activa' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
+                              s.status === 'Ratificada' ? 'bg-rose-100 text-rose-800 border border-rose-200' :
+                                s.status === 'Aclarada' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                                  s.status === 'Cumplida' ? 'bg-slate-100 text-slate-700 border border-slate-200' :
+                                    'bg-sky-100 text-sky-800 border border-sky-200'
+                            }`}>
                             {s.status}
                           </span>
                         </td>

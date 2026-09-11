@@ -914,6 +914,50 @@ function formatFechaLegible(dateStr?: string | null, includeTime = true): string
   }
 }
 
+// ─── Format Time Helper (Convierte timestamps UTC / ISO a hora local del navegador) ──
+function formatHoraLocal(timeStr?: string | Date | null): string {
+  if (!timeStr || timeStr === "—" || timeStr === "N/A" || timeStr === "null" || timeStr === "undefined") return "—";
+  const raw = String(timeStr).trim();
+  if (!raw || raw === "-") return "—";
+
+  // Si ya viene formateado como "08:30" o "08:30 hrs" sin fecha
+  if (/^\d{1,2}:\d{2}(\s*hrs)?$/i.test(raw)) {
+    return raw.replace(/ hrs/i, "");
+  }
+
+  // Si ya tiene formato 12h como "01:13 PM" o "1:13 PM"
+  if (/^\d{1,2}:\d{2}\s*(AM|PM)(\s*hrs)?$/i.test(raw)) {
+    return raw.replace(/ hrs/i, "");
+  }
+
+  try {
+    let dateObj: Date;
+    if (raw.includes("T") || raw.includes("-") || raw.includes("Z")) {
+      let isoStr = raw;
+      if (/^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}/.test(raw)) {
+        isoStr = raw.replace(" ", "T") + "Z";
+      }
+      dateObj = new Date(isoStr);
+    } else {
+      dateObj = new Date(raw);
+    }
+
+    if (!isNaN(dateObj.getTime())) {
+      let hours = dateObj.getHours();
+      const minutes = String(dateObj.getMinutes()).padStart(2, "0");
+      const ampm = hours >= 12 ? "PM" : "AM";
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      const strHours = String(hours).padStart(2, "0");
+      return `${strHours}:${minutes} ${ampm}`;
+    }
+  } catch {
+    // fallback
+  }
+
+  return raw.replace(/ hrs/i, "");
+}
+
 // ─── Copyable UI Components ──────────────────────────────────────────────────
 function CopyableContactCardField({
   icon,
@@ -1754,28 +1798,43 @@ export default function App() {
       }
 
       if (resBitacora.status === "fulfilled" && Array.isArray(resBitacora.value)) {
-        const mappedBit: RegistroCaseta[] = resBitacora.value.map((b: any) => ({
-          id: String(b.id_acceso || b.id),
-          empresaNombre: b.empresaNombre || b.vehiculo?.empresa?.razon_social || "",
-          vehicleId: String(b.id_vehiculo || ""),
-          placas: b.placas || b.vehiculo?.placas || "PEATONAL",
-          color: b.vehiculo?.color || "N/A",
-          conductor: b.conductor || "",
-          telefono: b.vehiculo?.empresa?.telefono || "",
-          corbatinNum: b.corbatinNumero || "—",
-          fecha: b.fecha || (b.created_at ? new Date(b.created_at).toISOString().split("T")[0] : undefined),
-          created_at: b.created_at,
-          raw_hora_entrada: b.raw_hora_entrada || b.hora_entrada,
-          raw_hora_salida: b.raw_hora_salida || b.hora_salida,
-          horaEntrada: b.hora_entrada || "00:00 hrs",
-          horaSalida: b.hora_salida || undefined,
-          trabajos: b.ubicacion_trabajo || b.observaciones || "Acceso regular",
-          guardiaNombre: b.guardiaNombre || "Oficial de Turno",
-          estado: b.hora_salida ? "Salida Registrada" : "Dentro",
-          tipoAcceso: (b.tipo || (b.id_vehiculo ? "Vehicular" : "Peatonal")) as "Vehicular" | "Peatonal",
-          observaciones: b.observaciones || undefined,
-          num_pasajeros: b.num_pasajeros !== undefined && b.num_pasajeros !== null ? Number(b.num_pasajeros) : 0
-        }));
+        const mappedBit: RegistroCaseta[] = resBitacora.value.map((b: any) => {
+          const rawCorb = b.corbatinNumero || b.corbatinNum || (b.corbatin?.numero ? String(b.corbatin.numero) : (b.vehiculo?.corbatines?.[0]?.numero ? String(b.vehiculo.corbatines[0].numero) : "—"));
+          const cleanCorb = rawCorb && rawCorb !== "—" && rawCorb !== "null" && rawCorb !== "undefined"
+            ? (String(rawCorb).startsWith("#") ? String(rawCorb) : `#${rawCorb}`)
+            : "—";
+
+          const cleanTrabajos = (b.trabajos && b.trabajos !== "x")
+            ? b.trabajos
+            : ((b.ubicacion_trabajo && b.ubicacion_trabajo !== "x")
+              ? b.ubicacion_trabajo
+              : ((b.observaciones && b.observaciones !== "x" && !b.observaciones.startsWith("Chofer [") && !b.observaciones.startsWith("Peatonal ["))
+                ? b.observaciones
+                : (b.tipo === "Peatonal" || b.id_vehiculo === null || b.placas === "PEATONAL" ? "Labores y mantenimiento a pie" : "Mantenimiento / Acceso regular")));
+
+          return {
+            id: String(b.id_acceso || b.id),
+            empresaNombre: b.empresaNombre || b.vehiculo?.empresa?.razon_social || b.conductor?.empresa?.razon_social || "",
+            vehicleId: String(b.id_vehiculo || ""),
+            placas: b.placas || b.placa || b.vehiculo?.placas || "PEATONAL",
+            color: b.vehiculo?.color || "N/A",
+            conductor: b.conductor || "",
+            telefono: b.telefono || b.vehiculo?.empresa?.telefono || b.conductor?.telefono || "",
+            corbatinNum: cleanCorb,
+            fecha: b.fecha || (b.created_at ? new Date(b.created_at).toISOString().split("T")[0] : undefined),
+            created_at: b.created_at,
+            raw_hora_entrada: b.raw_hora_entrada || b.hora_entrada,
+            raw_hora_salida: b.raw_hora_salida || b.hora_salida,
+            horaEntrada: b.hora_entrada || "00:00 hrs",
+            horaSalida: b.hora_salida || undefined,
+            trabajos: cleanTrabajos,
+            guardiaNombre: b.guardiaNombre || b.agenteNombre || "Oficial de Turno",
+            estado: b.hora_salida ? "Salida Registrada" : "Dentro",
+            tipoAcceso: (b.tipo || (b.id_vehiculo ? "Vehicular" : "Peatonal")) as "Vehicular" | "Peatonal",
+            observaciones: b.observaciones || undefined,
+            num_pasajeros: b.num_pasajeros !== undefined && b.num_pasajeros !== null ? Number(b.num_pasajeros) : 0
+          };
+        });
         setBitacora(mappedBit);
       }
 
@@ -1812,28 +1871,43 @@ export default function App() {
     try {
       const res = await api.getBitacora();
       if (Array.isArray(res)) {
-        const mappedBit: RegistroCaseta[] = res.map((b: any) => ({
-          id: String(b.id_acceso || b.id),
-          empresaNombre: b.empresaNombre || b.vehiculo?.empresa?.razon_social || "",
-          vehicleId: String(b.id_vehiculo || ""),
-          placas: b.placas || b.vehiculo?.placas || "PEATONAL",
-          color: b.vehiculo?.color || "N/A",
-          conductor: b.conductor || "",
-          telefono: b.vehiculo?.empresa?.telefono || "",
-          corbatinNum: b.corbatinNumero || "—",
-          fecha: b.fecha || (b.created_at ? new Date(b.created_at).toISOString().split("T")[0] : undefined),
-          created_at: b.created_at,
-          raw_hora_entrada: b.raw_hora_entrada || b.hora_entrada,
-          raw_hora_salida: b.raw_hora_salida || b.hora_salida,
-          horaEntrada: b.hora_entrada || "00:00 hrs",
-          horaSalida: b.hora_salida || undefined,
-          trabajos: b.ubicacion_trabajo || b.observaciones || "Acceso regular",
-          guardiaNombre: b.guardiaNombre || "Oficial de Turno",
-          estado: b.hora_salida ? "Salida Registrada" : "Dentro",
-          tipoAcceso: (b.tipo || (b.id_vehiculo ? "Vehicular" : "Peatonal")) as "Vehicular" | "Peatonal",
-          observaciones: b.observaciones || undefined,
-          num_pasajeros: b.num_pasajeros !== undefined && b.num_pasajeros !== null ? Number(b.num_pasajeros) : 0
-        }));
+        const mappedBit: RegistroCaseta[] = res.map((b: any) => {
+          const rawCorb = b.corbatinNumero || b.corbatinNum || (b.corbatin?.numero ? String(b.corbatin.numero) : (b.vehiculo?.corbatines?.[0]?.numero ? String(b.vehiculo.corbatines[0].numero) : "—"));
+          const cleanCorb = rawCorb && rawCorb !== "—" && rawCorb !== "null" && rawCorb !== "undefined"
+            ? (String(rawCorb).startsWith("#") ? String(rawCorb) : `#${rawCorb}`)
+            : "—";
+
+          const cleanTrabajos = (b.trabajos && b.trabajos !== "x")
+            ? b.trabajos
+            : ((b.ubicacion_trabajo && b.ubicacion_trabajo !== "x")
+              ? b.ubicacion_trabajo
+              : ((b.observaciones && b.observaciones !== "x" && !b.observaciones.startsWith("Chofer [") && !b.observaciones.startsWith("Peatonal ["))
+                ? b.observaciones
+                : (b.tipo === "Peatonal" || b.id_vehiculo === null || b.placas === "PEATONAL" ? "Labores y mantenimiento a pie" : "Mantenimiento / Acceso regular")));
+
+          return {
+            id: String(b.id_acceso || b.id),
+            empresaNombre: b.empresaNombre || b.vehiculo?.empresa?.razon_social || b.conductor?.empresa?.razon_social || "",
+            vehicleId: String(b.id_vehiculo || ""),
+            placas: b.placas || b.placa || b.vehiculo?.placas || "PEATONAL",
+            color: b.vehiculo?.color || "N/A",
+            conductor: b.conductor || "",
+            telefono: b.telefono || b.vehiculo?.empresa?.telefono || b.conductor?.telefono || "",
+            corbatinNum: cleanCorb,
+            fecha: b.fecha || (b.created_at ? new Date(b.created_at).toISOString().split("T")[0] : undefined),
+            created_at: b.created_at,
+            raw_hora_entrada: b.raw_hora_entrada || b.hora_entrada,
+            raw_hora_salida: b.raw_hora_salida || b.hora_salida,
+            horaEntrada: b.hora_entrada || "00:00 hrs",
+            horaSalida: b.hora_salida || undefined,
+            trabajos: cleanTrabajos,
+            guardiaNombre: b.guardiaNombre || b.agenteNombre || "Oficial de Turno",
+            estado: b.hora_salida ? "Salida Registrada" : "Dentro",
+            tipoAcceso: (b.tipo || (b.id_vehiculo ? "Vehicular" : "Peatonal")) as "Vehicular" | "Peatonal",
+            observaciones: b.observaciones || undefined,
+            num_pasajeros: b.num_pasajeros !== undefined && b.num_pasajeros !== null ? Number(b.num_pasajeros) : 0
+          };
+        });
         setBitacora(mappedBit);
       }
     } catch (e) {
@@ -2456,8 +2530,8 @@ export default function App() {
       b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? "0" : String(b.num_pasajeros ?? 0),
       b.telefono || "N/A",
       b.corbatinNum ? `#${b.corbatinNum}` : "N/A",
-      b.horaEntrada,
-      b.horaSalida || "Dentro (Sin salida aún)",
+      formatHoraLocal(b.horaEntrada),
+      b.horaSalida ? formatHoraLocal(b.horaSalida) : "Dentro (Sin salida aún)",
       b.trabajos,
       b.guardiaNombre,
       b.estado,
@@ -2587,7 +2661,7 @@ export default function App() {
       }
 
       const conductorFinalId = currentConductorVehicular ? Number(currentConductorVehicular.id_trabajador) : null;
-      const conductorFinalNombre = currentConductorVehicular 
+      const conductorFinalNombre = currentConductorVehicular
         ? `${currentConductorVehicular.nombre} ${currentConductorVehicular.apellidos}`
         : (casetaConductorQuery || currentCasetaVehicle.conductor || "Chofer General");
 
@@ -6098,7 +6172,7 @@ export default function App() {
         {/* CASETA */}
         {currentUser.role === "caseta" && (
           <main>
-            <PageHero img={IMG_GATE} title="Registro de Caseta de Vigilancia (Tablet)" subtitle="Formulario ultrarrápido con validación de suspensiones en tiempo real, acceso peatonal y exportación de bitácora" />
+            <PageHero img={IMG_GATE} title="Registro de Caseta de Vigilancia" subtitle="Formulario ultrarrápido con validación de suspensiones en tiempo real, acceso peatonal y exportación de bitácora" />
 
             <div className={`mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-6 min-h-[calc(100vh-16rem)] ${casetaTab === "bitacora" ? "max-w-[1600px] w-full" : "max-w-7xl"}`}>
               {casetaTab === "registro" && (
@@ -6241,13 +6315,12 @@ export default function App() {
                                             key={v.id}
                                             onClick={() => handleSelectVehicleFromDropdown(v)}
                                             onMouseEnter={() => setCorbatinHighlightedIndex(idx)}
-                                            className={`p-2.5 cursor-pointer transition-colors border-l-4 ${
-                                              isSelected
-                                                ? "bg-emerald-100/70 border-l-emerald-600"
-                                                : isHighlighted
+                                            className={`p-2.5 cursor-pointer transition-colors border-l-4 ${isSelected
+                                              ? "bg-emerald-100/70 border-l-emerald-600"
+                                              : isHighlighted
                                                 ? "bg-emerald-50/80 border-l-emerald-400"
                                                 : "hover:bg-slate-50 border-l-transparent"
-                                            }`}
+                                              }`}
                                           >
                                             <div className="flex items-center justify-between gap-2">
                                               <div className="flex items-center gap-1.5 flex-wrap">
@@ -6262,11 +6335,10 @@ export default function App() {
                                                 </span>
                                               </div>
                                               <span
-                                                className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${
-                                                  v.status === "Habilitado"
-                                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                                    : "bg-rose-50 text-rose-700 border-rose-200"
-                                                }`}
+                                                className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${v.status === "Habilitado"
+                                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                                  : "bg-rose-50 text-rose-700 border-rose-200"
+                                                  }`}
                                               >
                                                 {v.status === "Habilitado" ? "✓" : "⛔"}
                                               </span>
@@ -6371,13 +6443,12 @@ export default function App() {
                                             key={t.id_trabajador}
                                             onClick={() => handleSelectConductorFromDropdown(t)}
                                             onMouseEnter={() => setConductorHighlightedIndex(idx)}
-                                            className={`p-2.5 cursor-pointer transition-colors border-l-4 ${
-                                              isSelected
-                                                ? "bg-emerald-100/70 border-l-emerald-600"
-                                                : isHighlighted
+                                            className={`p-2.5 cursor-pointer transition-colors border-l-4 ${isSelected
+                                              ? "bg-emerald-100/70 border-l-emerald-600"
+                                              : isHighlighted
                                                 ? "bg-emerald-50/80 border-l-emerald-400"
                                                 : "hover:bg-slate-50 border-l-transparent"
-                                            }`}
+                                              }`}
                                           >
                                             <div className="flex items-center justify-between gap-2">
                                               <div className="min-w-0">
@@ -6400,8 +6471,8 @@ export default function App() {
                                     <div className="p-3 text-center text-xs text-slate-500 space-y-1">
                                       <p className="font-bold text-slate-700">No hay colaboradores con "{casetaConductorQuery}"</p>
                                       <p className="text-[11px] text-slate-400">
-                                        {empresaTrabajadores.length === 0 
-                                          ? `No hay colaboradores registrados para ${currentEmpresa?.nombre || "esta empresa"}.` 
+                                        {empresaTrabajadores.length === 0
+                                          ? `No hay colaboradores registrados para ${currentEmpresa?.nombre || "esta empresa"}.`
                                           : "Puedes escribir el nombre manualmente si cuenta con autorización especial."}
                                       </p>
                                     </div>
@@ -6967,8 +7038,8 @@ export default function App() {
                         ) : (
                           bitacora.map((b) => {
                             const trabajoTexto = (b.trabajos && b.trabajos !== "x") ? b.trabajos : (b.observaciones || "Acceso regular");
-                            const horaEntradaLimpia = (b.horaEntrada || "").replace(/ hrs/i, "");
-                            const horaSalidaLimpia = (b.horaSalida || "").replace(/ hrs/i, "");
+                            const horaEntradaLimpia = formatHoraLocal(b.horaEntrada);
+                            const horaSalidaLimpia = b.horaSalida ? formatHoraLocal(b.horaSalida) : "";
 
                             return (
                               <tr key={b.id} className="hover:bg-slate-50 transition-colors">

@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { Op } = require('sequelize');
 const db = require('../models/index.cjs');
 const events = require('../events.cjs');
 const { saveBase64Image } = require('../utils/imageHandler.cjs');
@@ -7,8 +8,11 @@ const { saveBase64Image } = require('../utils/imageHandler.cjs');
 // GET /api/vehiculos - Listar todos los vehículos
 router.get('/', async (req, res) => {
   try {
-    const { id_empresa, estatus_acceso } = req.query;
+    const { id_empresa, estatus_acceso, include_deleted } = req.query;
     const where = {};
+    if (include_deleted !== 'true') {
+      where.eliminado = { [Op.or]: [false, null] };
+    }
     if (id_empresa) where.id_empresa = id_empresa;
     if (estatus_acceso) where.estatus_acceso = estatus_acceso;
 
@@ -254,7 +258,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/vehiculos/:id - Eliminar vehículo permanentemente (Hard Delete con cascada limpia)
+// DELETE /api/vehiculos/:id - Eliminación lógica (Soft Delete) para preservar integridad de bitácoras históricas
 router.delete('/:id', async (req, res) => {
   try {
     const vehiculo = await db.Vehiculo.findByPk(req.params.id);
@@ -262,63 +266,27 @@ router.delete('/:id', async (req, res) => {
     
     const idVeh = req.params.id;
 
-    // 1. Obtener IDs de corbatines asociados
-    const corbatines = await db.Corbatin.findAll({ where: { id_vehiculo: idVeh }, attributes: ['id_corbatin'] }).catch(() => []);
-    const corbatinIds = corbatines.map(c => c.id_corbatin);
-
-    // 2. Obtener IDs de reportes de infracción vinculados a este vehículo
-    const reportes = await db.ReporteInfraccion.findAll({ where: { id_vehiculo: idVeh }, attributes: ['id_reporte'] }).catch(() => []);
-    const reporteIds = reportes.map(r => r.id_reporte);
-
-    // 3. Desvincular en bitácora de accesos histórica (poner a NULL para no perder el histórico de entradas)
-    await db.BitacoraAcceso.update(
-      { id_vehiculo: null, id_corbatin: null },
+    // 1. Desvincular corbatín asignado para que quede libre de reasignarse, pero sin borrar historial
+    await db.Corbatin.update(
+      { id_vehiculo: null, estatus: 'INACTIVO' },
       { where: { id_vehiculo: idVeh } }
     ).catch(() => {});
-    if (corbatinIds.length > 0) {
-      await db.BitacoraAcceso.update(
-        { id_corbatin: null },
-        { where: { id_corbatin: corbatinIds } }
-      ).catch(() => {});
-    }
 
-    // 4. Eliminar sanciones asociadas al vehículo o a los reportes de infracción
-    if (db.Sancion) {
-      await db.Sancion.destroy({ where: { id_vehiculo: idVeh } }).catch(() => {});
-      if (reporteIds.length > 0) {
-        await db.Sancion.destroy({ where: { id_reporte: reporteIds } }).catch(() => {});
-      }
-    }
-
-    // 5. Eliminar revisiones de reportes y evidencias fotográficas
-    if (reporteIds.length > 0) {
-      if (db.RevisionReporte) {
-        await db.RevisionReporte.destroy({ where: { id_reporte: reporteIds } }).catch(() => {});
-      }
-      if (db.Evidencia) {
-        await db.Evidencia.destroy({ where: { id_reporte: reporteIds } }).catch(() => {});
-      }
-    }
-
-    // 6. Eliminar reportes de infracción del vehículo
-    if (db.ReporteInfraccion) {
-      await db.ReporteInfraccion.destroy({ where: { id_vehiculo: idVeh } }).catch(() => {});
-    }
-
-    // 7. Eliminar asignaciones conductor-vehículo
+    // 2. Eliminar asignaciones activas conductor-vehículo
     if (db.ConductorVehiculo) {
       await db.ConductorVehiculo.destroy({ where: { id_vehiculo: idVeh } }).catch(() => {});
     }
 
-    // 8. Eliminar corbatines asociados
-    if (db.Corbatin) {
-      await db.Corbatin.destroy({ where: { id_vehiculo: idVeh } }).catch(() => {});
-    }
+    // 3. Marcar el vehículo como eliminado lógicamente (Soft Delete)
+    // NOTA: NO se toca ni se borra bitacora_accesos, para que el historial conserve las placas, marca y empresa originales
+    await vehiculo.update({ 
+      eliminado: true,
+      estatus_acceso: 'RESTRINGIDO'
+    });
 
-    // 9. Eliminar permanentemente el registro del vehículo de la base de datos
-    await vehiculo.destroy();
+    events.emitChange('vehiculos', { action: 'delete', id_vehiculo: idVeh });
 
-    res.json({ message: 'Vehículo eliminado permanentemente', id_vehiculo: idVeh });
+    res.json({ message: 'Vehículo eliminado correctamente (lógico)', id_vehiculo: idVeh, eliminado: true });
   } catch (error) {
     console.error('Error al eliminar vehículo:', error);
     res.status(500).json({ error: 'Error al eliminar vehículo', details: error.message });

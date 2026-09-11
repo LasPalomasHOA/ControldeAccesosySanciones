@@ -67,6 +67,7 @@ export interface VehiculoDB {
   color: string;
   foto_url?: string | null;
   estatus_acceso: 'HABILITADO' | 'SUSPENDIDO' | 'RESTRINGIDO' | string;
+  eliminado?: boolean;
   created_at: string;
   updated_at: string;
   // Asociaciones opcionales
@@ -318,6 +319,7 @@ export interface Vehiculo {
   corbatinNumero?: string;
   corbatinVencimiento?: string;
   reincidencias?: number;
+  eliminado?: boolean;
 }
 
 export interface Acceso {

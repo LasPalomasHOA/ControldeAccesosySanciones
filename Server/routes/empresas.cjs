@@ -9,7 +9,13 @@ router.get('/', async (req, res) => {
     const empresas = await db.Empresa.findAll({
       include: [
         { model: db.Trabajador, as: 'trabajadores', attributes: ['id_trabajador'] },
-        { model: db.Vehiculo, as: 'vehiculos', attributes: ['id_vehiculo'] }
+        { 
+          model: db.Vehiculo, 
+          as: 'vehiculos', 
+          attributes: ['id_vehiculo'],
+          where: { eliminado: { [Op.or]: [false, null] } },
+          required: false
+        }
       ],
       order: [['created_at', 'DESC']]
     });
@@ -47,7 +53,12 @@ router.get('/:id', async (req, res) => {
     const empresa = await db.Empresa.findByPk(req.params.id, {
       include: [
         { model: db.Trabajador, as: 'trabajadores' },
-        { model: db.Vehiculo, as: 'vehiculos' },
+        { 
+          model: db.Vehiculo, 
+          as: 'vehiculos',
+          where: { eliminado: { [Op.or]: [false, null] } },
+          required: false
+        },
         { model: db.Usuario, as: 'usuarios', attributes: ['id_usuario', 'nombre', 'correo'] }
       ]
     });
@@ -232,18 +243,9 @@ router.delete('/:id', async (req, res) => {
       }
     }
 
-    // 5. Desvincular bitácora de acceso histórica (poner id_empresa, id_vehiculo, id_trabajador a NULL para conservar el historial)
-    if (db.BitacoraAcceso) {
-      await db.BitacoraAcceso.update(
-        { id_empresa: null, id_vehiculo: null, id_trabajador: null, id_corbatin: null },
-        { where: { id_empresa: idEmp } }
-      ).catch(() => {});
-      if (vehiculoIds.length > 0) {
-        await db.BitacoraAcceso.update({ id_vehiculo: null }, { where: { id_vehiculo: vehiculoIds } }).catch(() => {});
-      }
-      if (trabajadorIds.length > 0) {
-        await db.BitacoraAcceso.update({ id_trabajador: null }, { where: { id_trabajador: trabajadorIds } }).catch(() => {});
-      }
+    // 5. Desvincular corbatines de vehículos para que queden liberados
+    if (vehiculoIds.length > 0 && db.Corbatin) {
+      await db.Corbatin.update({ id_vehiculo: null, estatus: 'INACTIVO' }, { where: { id_vehiculo: vehiculoIds } }).catch(() => {});
     }
 
     // 6. Eliminar sanciones, revisiones, evidencias y reportes
@@ -266,9 +268,12 @@ router.delete('/:id', async (req, res) => {
       await db.ReporteInfraccion.destroy({ where: { id_reporte: reporteIds } }).catch(() => {});
     }
 
-    // 7. Eliminar vehículos y trabajadores de la empresa
+    // 7. Marcar vehículos como eliminados (Soft Delete) para no romper el historial de bitácora
     if (vehiculoIds.length > 0) {
-      await db.Vehiculo.destroy({ where: { id_vehiculo: vehiculoIds } }).catch(() => {});
+      await db.Vehiculo.update(
+        { eliminado: true, estatus_acceso: 'RESTRINGIDO' },
+        { where: { id_vehiculo: vehiculoIds } }
+      ).catch(() => {});
     }
     if (trabajadorIds.length > 0) {
       await db.Trabajador.destroy({ where: { id_trabajador: trabajadorIds } }).catch(() => {});
