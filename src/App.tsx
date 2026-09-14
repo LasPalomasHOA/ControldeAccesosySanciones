@@ -5290,9 +5290,10 @@ export default function App() {
                     </button>
 
                     {openSupervisorDropdown === "directorio" && (
-                      <div className="absolute left-0 top-full mt-2 w-64 rounded-2xl bg-white border border-slate-200 shadow-2xl py-1.5 z-[100] ring-1 ring-black/5">
-                        <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
-                          Directorio y Personal
+                      <div className="absolute left-0 top-full mt-2 w-80 rounded-2xl bg-white border border-slate-200/90 shadow-2xl py-2 px-1.5 z-[100] ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-150">
+                        <div className="px-3 py-1.5 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1 flex items-center justify-between">
+                          <span>Directorio y Personal</span>
+                          <span className="text-[10px] text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded font-mono font-bold">PADRÓN</span>
                         </div>
                         <button
                           type="button"
@@ -5300,16 +5301,24 @@ export default function App() {
                             setSupervisorTab("proveedores");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "proveedores" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
-                            }`}
+                          className={`w-full text-left p-2.5 rounded-xl flex items-center gap-3 transition-all duration-150 cursor-pointer ${
+                            supervisorTab === "proveedores" ? "bg-teal-50/90 text-[#0D6E5F] font-bold shadow-2xs" : "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                          }`}
                         >
-                          <div>
-                            <div className="font-semibold">Proveedores / Contratistas</div>
-                            <div className="text-[11px] text-slate-400">Empresas, personal y flotillas</div>
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                            supervisorTab === "proveedores" ? "bg-[#0D6E5F] text-white" : "bg-teal-50 text-[#0D6E5F] border border-teal-100"
+                          }`}>
+                            <IconBuilding className="w-4 h-4" />
                           </div>
-                          <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">
-                            {empresas.length}
-                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="font-bold text-xs truncate">Proveedores / Contratistas</span>
+                              <span className="shrink-0 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold">
+                                {empresas.length}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-slate-400 truncate mt-0.5">Empresas, personal y flotillas</div>
+                          </div>
                         </button>
 
                         <button
@@ -5318,16 +5327,24 @@ export default function App() {
                             setSupervisorTab("guardias");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "guardias" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
-                            }`}
+                          className={`w-full text-left p-2.5 rounded-xl flex items-center gap-3 transition-all duration-150 cursor-pointer ${
+                            supervisorTab === "guardias" ? "bg-teal-50/90 text-[#0D6E5F] font-bold shadow-2xs" : "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                          }`}
                         >
-                          <div>
-                            <div className="font-semibold">Guardias de Caseta</div>
-                            <div className="text-[11px] text-slate-400">Oficiales activos y turnos</div>
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                            supervisorTab === "guardias" ? "bg-[#0D6E5F] text-white" : "bg-blue-50 text-blue-700 border border-blue-100"
+                          }`}>
+                            <IconUsers className="w-4 h-4" />
                           </div>
-                          <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">
-                            {users.filter(u => u.role === "caseta").length}
-                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="font-bold text-xs truncate">Guardias de Caseta</span>
+                              <span className="shrink-0 px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[10px] font-bold">
+                                {users.filter(u => u.role === "caseta").length}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-slate-400 truncate mt-0.5">Oficiales activos y turnos</div>
+                          </div>
                         </button>
                       </div>
                     )}
@@ -5349,61 +5366,90 @@ export default function App() {
                     </button>
 
                     {openSupervisorDropdown === "documentos" && (
-                      <div className="absolute left-0 top-full mt-2 w-72 rounded-2xl bg-white border border-slate-200 shadow-2xl py-1.5 z-[100] ring-1 ring-black/5">
-                        <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
-                          Documentación Oficial
+                      <div className="absolute left-0 top-full mt-2 w-80 sm:w-88 rounded-2xl bg-white border border-slate-200/90 shadow-2xl py-2 px-1.5 z-[100] ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-150">
+                        <div className="px-3 py-1.5 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1 flex items-center justify-between">
+                          <span>Documentación Oficial</span>
+                          <span className="text-[10px] text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded font-mono font-bold">HOA</span>
                         </div>
+
+                        {/* Opción 1: Corbatines Vehiculares */}
                         <button
                           type="button"
                           onClick={() => {
                             setSupervisorTab("corbatines");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "corbatines" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
-                            }`}
+                          className={`w-full text-left p-2.5 rounded-xl flex items-center gap-3 transition-all duration-150 cursor-pointer ${
+                            supervisorTab === "corbatines" ? "bg-teal-50/90 text-[#0D6E5F] font-bold shadow-2xs" : "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                          }`}
                         >
-                          <div>
-                            <div className="font-semibold">Impresión de Corbatines</div>
-                            <div className="text-[11px] text-slate-400">Emisión vehicular con QR y placas</div>
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                            supervisorTab === "corbatines" ? "bg-[#0D6E5F] text-white" : "bg-teal-50 text-[#0D6E5F] border border-teal-100"
+                          }`}>
+                            <IconCar className="w-4 h-4" />
                           </div>
-                          <span className="px-2 py-0.5 rounded-full bg-teal-100 text-[#0D6E5F] text-[10px] font-bold">
-                            PDF
-                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="font-bold text-xs truncate">Impresión de Corbatines</span>
+                              <span className="shrink-0 px-2 py-0.5 rounded-md bg-teal-100 text-[#0D6E5F] text-[10px] font-bold">
+                                PDF
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-slate-400 truncate mt-0.5">Emisión vehicular con QR y placas</div>
+                          </div>
                         </button>
 
+                        {/* Opción 2: Corbatines Verdes (Larga Estancia) */}
                         <button
                           type="button"
                           onClick={() => {
                             setSupervisorTab("corbatines_verdes");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "corbatines_verdes" ? "bg-emerald-50 text-emerald-800 font-bold" : "text-slate-700"
-                            }`}
+                          className={`w-full text-left p-2.5 rounded-xl flex items-center gap-3 transition-all duration-150 cursor-pointer ${
+                            supervisorTab === "corbatines_verdes" ? "bg-emerald-50/90 text-emerald-950 font-bold shadow-2xs" : "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                          }`}
                         >
-                          <div className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
-                            <div>
-                              <div className="font-semibold text-emerald-950">Corbatines Verdes</div>
-                              <div className="text-[11px] text-slate-400">Empresas / Larga estancia (#001...)</div>
-                            </div>
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                            supervisorTab === "corbatines_verdes" ? "bg-emerald-600 text-white" : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          }`}>
+                            <IconBadge className="w-4 h-4" />
                           </div>
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-                            Opción 2
-                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1.5">
+                              <span className="font-bold text-xs truncate text-emerald-950">Corbatines Verdes</span>
+                              <span className="shrink-0 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-extrabold border border-emerald-300">
+                                Larga Estancia
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-slate-400 truncate mt-0.5">Empresas por rango (#001...)</div>
+                          </div>
                         </button>
 
+                        {/* Opción 3: Reglamento & Banderines */}
                         <button
                           type="button"
                           onClick={() => {
                             setSupervisorTab("reglamento");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "reglamento" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
-                            }`}
+                          className={`w-full text-left p-2.5 rounded-xl flex items-center gap-3 transition-all duration-150 cursor-pointer ${
+                            supervisorTab === "reglamento" ? "bg-teal-50/90 text-[#0D6E5F] font-bold shadow-2xs" : "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                          }`}
                         >
-                          <div>
-                            <div className="font-semibold">Reglamento & Banderines</div>
-                            <div className="text-[11px] text-slate-400">Editor de normas oficiales</div>
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                            supervisorTab === "reglamento" ? "bg-[#0D6E5F] text-white" : "bg-slate-100 text-slate-600 border border-slate-200"
+                          }`}>
+                            <IconFileText className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="font-bold text-xs truncate">Reglamento & Banderines</span>
+                              <span className="shrink-0 px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold">
+                                Normas
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-slate-400 truncate mt-0.5">Editor de normas oficiales</div>
                           </div>
                         </button>
                       </div>
@@ -5431,9 +5477,10 @@ export default function App() {
                     </button>
 
                     {openSupervisorDropdown === "operacion" && (
-                      <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-64 rounded-2xl bg-white border border-slate-200 shadow-2xl py-1.5 z-[100] ring-1 ring-black/5">
-                        <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
-                          Sanciones y Casos
+                      <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-80 rounded-2xl bg-white border border-slate-200/90 shadow-2xl py-2 px-1.5 z-[100] ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-150">
+                        <div className="px-3 py-1.5 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1 flex items-center justify-between">
+                          <span>Sanciones y Casos</span>
+                          <span className="text-[10px] text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded font-mono font-bold">SEGURIDAD</span>
                         </div>
                         <button
                           type="button"
@@ -5441,22 +5488,30 @@ export default function App() {
                             setSupervisorTab("bandeja");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "bandeja" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
-                            }`}
+                          className={`w-full text-left p-2.5 rounded-xl flex items-center gap-3 transition-all duration-150 cursor-pointer ${
+                            supervisorTab === "bandeja" ? "bg-teal-50/90 text-[#0D6E5F] font-bold shadow-2xs" : "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                          }`}
                         >
-                          <div>
-                            <div className="font-semibold">Infracciones en Campo</div>
-                            <div className="text-[11px] text-slate-400">Dictamen de reportes móviles</div>
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                            supervisorTab === "bandeja" ? "bg-[#0D6E5F] text-white" : "bg-amber-50 text-amber-700 border border-amber-200"
+                          }`}>
+                            <IconScale className="w-4 h-4" />
                           </div>
-                          {infraccionesPendientes.filter(i => i.estado === "Pendiente").length > 0 ? (
-                            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold">
-                              {infraccionesPendientes.filter(i => i.estado === "Pendiente").length}
-                            </span>
-                          ) : (
-                            <span className="w-4 h-4 rounded-full bg-slate-100 text-slate-500 text-[10px] flex items-center justify-center font-semibold">
-                              0
-                            </span>
-                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="font-bold text-xs truncate">Infracciones en Campo</span>
+                              {infraccionesPendientes.filter(i => i.estado === "Pendiente").length > 0 ? (
+                                <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 text-[10px] font-black">
+                                  {infraccionesPendientes.filter(i => i.estado === "Pendiente").length} pendientes
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[10px] font-bold">
+                                  0
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-slate-400 truncate mt-0.5">Dictamen de reportes móviles</div>
+                          </div>
                         </button>
 
                         <button
@@ -5465,22 +5520,30 @@ export default function App() {
                             setSupervisorTab("apelaciones");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "apelaciones" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
-                            }`}
+                          className={`w-full text-left p-2.5 rounded-xl flex items-center gap-3 transition-all duration-150 cursor-pointer ${
+                            supervisorTab === "apelaciones" ? "bg-teal-50/90 text-[#0D6E5F] font-bold shadow-2xs" : "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                          }`}
                         >
-                          <div>
-                            <div className="font-semibold">Bandeja de Apelaciones</div>
-                            <div className="text-[11px] text-slate-400">Recursos de contratistas</div>
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                            supervisorTab === "apelaciones" ? "bg-[#0D6E5F] text-white" : "bg-sky-50 text-sky-700 border border-sky-200"
+                          }`}>
+                            <IconMessageSquare className="w-4 h-4" />
                           </div>
-                          {apelacionesPendientesCount > 0 ? (
-                            <span className="px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 text-[10px] font-bold">
-                              {apelacionesPendientesCount}
-                            </span>
-                          ) : (
-                            <span className="w-4 h-4 rounded-full bg-slate-100 text-slate-500 text-[10px] flex items-center justify-center font-semibold">
-                              0
-                            </span>
-                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="font-bold text-xs truncate">Bandeja de Apelaciones</span>
+                              {apelacionesPendientesCount > 0 ? (
+                                <span className="px-2 py-0.5 rounded-md bg-sky-100 text-sky-800 text-[10px] font-black">
+                                  {apelacionesPendientesCount} nuevas
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[10px] font-bold">
+                                  0
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-slate-400 truncate mt-0.5">Recursos de contratistas</div>
+                          </div>
                         </button>
                       </div>
                     )}
