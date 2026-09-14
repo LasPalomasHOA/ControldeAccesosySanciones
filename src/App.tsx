@@ -566,7 +566,7 @@ const IMG_PARK = "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w
 const IMG_COAST = "https://images.unsplash.com/photo-1785300550144-6fc8db9cbb95?w=1600&h=600&fit=crop&auto=format";
 
 // ─── Official Brand Logo ───────────────────────────────────────────────────
-function LPLogo({ size = 160, className = "" }: { size?: number; light?: boolean; className?: string }) {
+function LPLogo({ size = 180, className = "" }: { size?: number; light?: boolean; className?: string }) {
   return (
     <img
       src={logoPng}
@@ -3957,7 +3957,7 @@ export default function App() {
             <div className="bg-white rounded-3xl p-8 sm:p-9 shadow-2xl border border-white/20 space-y-6">
               <div className="text-center space-y-2 pb-1 border-b border-slate-100">
                 <div className="flex justify-center pb-2">
-                  <LPLogo size={170} />
+                  <LPLogo size={200} className="h-14 sm:h-16 w-auto" />
                 </div>
                 <h1 className="text-xl font-bold text-slate-800 tracking-tight" style={{ fontFamily: "var(--font-display)" }}>
                   Plataforma Operativa HOA
@@ -4626,9 +4626,9 @@ export default function App() {
     <div className="flex flex-col justify-between w-full max-w-full overflow-x-hidden min-h-screen" style={{ background: "var(--color-bg)", fontFamily: "var(--font-body)" }}>
       <div className="w-full max-w-full">
         <header className="sticky top-0 z-50 border-b bg-white no-print w-full" style={{ borderColor: "var(--color-border)", boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
-          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 flex items-center h-16 gap-2 sm:gap-4 justify-between w-full">
-            <div className="shrink-0">
-              <LPLogo size={140} />
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 flex items-center min-h-[68px] sm:min-h-[72px] gap-3 sm:gap-6 justify-between w-full py-1.5">
+            <div className="shrink-0 flex items-center">
+              <LPLogo size={195} className="h-10 sm:h-12 w-auto max-h-12 transition-all" />
             </div>
 
             <div className="flex items-center gap-1 shrink-0 py-1 overflow-visible">
