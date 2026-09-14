@@ -113,10 +113,10 @@ export const Bitacora: React.FC = () => {
 
       {/* Bitacora Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto overflow-y-auto max-h-[620px]">
           <table className="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-slate-400 font-semibold bg-slate-50/50">
+            <thead className="sticky top-0 z-10 bg-slate-50">
+              <tr className="border-b border-slate-200 text-slate-400 font-semibold bg-slate-50">
                 <th className="py-3 px-4">Fecha / Hora</th>
                 <th className="py-3 px-4">Vehículo (Placa)</th>
                 <th className="py-3 px-4">Conductor Autorizado</th>

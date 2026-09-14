@@ -7711,7 +7711,7 @@ export default function App() {
                       <span className="text-xs text-slate-500 font-mono bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">{bitacora.length} registros</span>
                     </div>
                   </div>
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto overflow-y-auto max-h-[620px] scrollbar-thin">
                     <table className="w-full table-fixed text-xs">
                       <colgroup>
                         <col className="w-[4%]" />
@@ -7727,7 +7727,7 @@ export default function App() {
                         <col className="w-[7%]" />
                         <col className="w-[7%]" />
                       </colgroup>
-                      <thead>
+                      <thead className="sticky top-0 z-10 bg-slate-50 shadow-xs">
                         <tr className="border-b bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ borderColor: "var(--color-border)" }}>
                           <th className="text-center px-1.5 py-3">Folio</th>
                           <th className="text-center px-1 py-3">Modalidad</th>
