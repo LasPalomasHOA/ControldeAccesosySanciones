@@ -6,6 +6,8 @@ import { api } from "./services/api";
 import { compressImageClient } from "./utils/imageCompressor";
 import SupervisorHistorial from "./components/SupervisorHistorial";
 import SupervisorReglamentoEditor, { ReglamentoSection } from "./components/SupervisorReglamentoEditor";
+import ContratistaReglamentoView from "./components/ContratistaReglamentoView";
+import QRScannerModal from "./components/QRScannerModal";
 import logoPng from "./assets/logo.png";
 
 // ─── SVG Icons (Clean, Modern, Vector) ────────────────────────────────────────
@@ -361,7 +363,7 @@ function IconCheckSimple({ className = "w-4 h-4" }: { className?: string }) {
 // ─── Types & Roles ────────────────────────────────────────────────────────────
 
 type UserRole = "admin" | "supervisor" | "contratista" | "caseta";
-type PortalScreen = "reglamento" | "dashboard" | "alta" | "trabajadores" | "sanciones";
+type PortalScreen = "reglamento" | "dashboard" | "alta" | "trabajadores" | "sanciones" | "consulta_reglamento";
 type SupervisorTab = "bandeja" | "apelaciones" | "proveedores" | "guardias" | "historial" | "reglamento" | "corbatines" | "corbatines_verdes";
 type AdminTab = "supervisores" | "proveedores" | "auditoria";
 type CasetaTab = "registro" | "bitacora";
@@ -1491,6 +1493,7 @@ export default function App() {
   const [showCreateEmpresaModal, setShowCreateEmpresaModal] = useState(false);
   const [empresaCreateError, setEmpresaCreateError] = useState("");
   const [showCreateGuardiaModal, setShowCreateGuardiaModal] = useState(false);
+  const [showQRScannerModal, setShowQRScannerModal] = useState(false);
   const [selectedSancionParaApelar, setSelectedSancionParaApelar] = useState<Sancion | null>(null);
   const [apelacionArgumentos, setApelacionArgumentos] = useState("");
 
@@ -1911,6 +1914,91 @@ export default function App() {
       }
     } else if (e.key === "Escape") {
       setIsConductorDropdownOpen(false);
+    }
+  };
+
+  // Procesar datos escaneados desde el código QR del Corbatín
+  const handleQRScanData = (qrRawData: string) => {
+    setShowQRScannerModal(false);
+    if (!qrRawData || !qrRawData.trim()) return;
+
+    const raw = qrRawData.trim();
+    let targetCorbatinNum: number | null = null;
+    let targetPlacas: string | null = null;
+
+    // 1. Formato oficial: LP-HOA|CORB:2|PLACAS:MTY-0001-A|VIG:2026-2027
+    const corbMatch = raw.match(/CORB:(\d+)/i);
+    const placasMatch = raw.match(/PLACAS:([^|]+)/i);
+
+    if (corbMatch && corbMatch[1]) {
+      targetCorbatinNum = parseInt(corbMatch[1], 10);
+    }
+    if (placasMatch && placasMatch[1]) {
+      targetPlacas = placasMatch[1].trim();
+    }
+
+    // 2. Formato JSON: { "corbatinNum": 2, ... }
+    if (!targetCorbatinNum && !targetPlacas && raw.startsWith("{")) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed.corbatinNum || parsed.corbatin) targetCorbatinNum = Number(parsed.corbatinNum || parsed.corbatin);
+        if (parsed.placas || parsed.placa) targetPlacas = String(parsed.placas || parsed.placa);
+      } catch { }
+    }
+
+    // 3. Formato simple: número (ej. "2" o "#2") o placas directas
+    if (!targetCorbatinNum && !targetPlacas) {
+      const clean = raw.replace(/^#/, "").trim();
+      if (/^\d+$/.test(clean)) {
+        targetCorbatinNum = parseInt(clean, 10);
+      } else {
+        targetPlacas = clean;
+      }
+    }
+
+    // Buscar vehículo en el catálogo
+    let matchedVehicle: Vehicle | undefined = undefined;
+    if (targetCorbatinNum !== null) {
+      matchedVehicle = vehicles.find((v) => Number(v.corbatinNum) === targetCorbatinNum);
+    }
+    if (!matchedVehicle && targetPlacas) {
+      const normSearch = targetPlacas.replace(/[-\s]/g, "").toLowerCase();
+      matchedVehicle = vehicles.find((v) =>
+        (v.placas || "").replace(/[-\s]/g, "").toLowerCase() === normSearch
+      );
+    }
+
+    if (matchedVehicle) {
+      // Auto-seleccionar empresa y vehículo
+      if (matchedVehicle.empresaId) {
+        setSelectedEmpresaId(matchedVehicle.empresaId);
+      }
+      setSelectedVehicleId(matchedVehicle.id);
+      setCasetaCorbatin(matchedVehicle.corbatinNum ? `#${matchedVehicle.corbatinNum}` : (matchedVehicle.placas || ""));
+      setCasetaModoAcceso("vehicular");
+
+      // Dejar chofer vacío para que el guardia lo verifique/seleccione en el momento
+      setCasetaConductorId("");
+      setCasetaConductorQuery("");
+
+      if (!casetaHoraEntrada) {
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, "0");
+        const mm = String(now.getMinutes()).padStart(2, "0");
+        setCasetaHoraEntrada(`${hh}:${mm} hrs`);
+      }
+
+      showToast(
+        `Vehículo: ${matchedVehicle.marca} ${matchedVehicle.modelo} (${matchedVehicle.empresaNombre}) - Corbatín #${matchedVehicle.corbatinNum}`,
+        "success",
+        "✓ Código QR Escaneado"
+      );
+    } else {
+      showToast(
+        `Código QR leído ("${raw}"), pero no coincide con ningún vehículo registrado en el sistema.`,
+        "error",
+        "Vehículo No Encontrado"
+      );
     }
   };
 
@@ -2791,7 +2879,7 @@ export default function App() {
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(dynamicFontSize);
         pdf.setTextColor(25, 25, 25);
-        
+
         let itemStopped = false;
         for (const it of (sec.items || [])) {
           if (textY + dynamicSpacing >= maxY) {
@@ -3055,7 +3143,7 @@ export default function App() {
 
     const today = new Date();
     const fechaEmision = today.toISOString().split("T")[0];
-    
+
     // Calculate expiration date
     let monthsToAdd = 6;
     if (nuevoCVVigencia === "1 Mes") monthsToAdd = 1;
@@ -3124,7 +3212,7 @@ export default function App() {
     setCorbatinesVerdes(updated);
     try {
       localStorage.setItem("hoa_corbatines_verdes", JSON.stringify(updated));
-    } catch {}
+    } catch { }
 
     setShowCreateCorbatinVerdeModal(false);
     setSelectedCorbatinVerdeId(nuevosCorbatines[0]?.id || "");
@@ -3149,7 +3237,7 @@ export default function App() {
     setCorbatinesVerdes(updated);
     try {
       localStorage.setItem("hoa_corbatines_verdes", JSON.stringify(updated));
-    } catch {}
+    } catch { }
     const item = updated.find(c => c.id === id);
     showToast(`Corbatín Verde #${item?.corbatinNum} ${item?.activo ? "habilitado" : "deshabilitado"} exitosamente.`, "info");
   };
@@ -3161,7 +3249,7 @@ export default function App() {
     setCorbatinesVerdes(updated);
     try {
       localStorage.setItem("hoa_corbatines_verdes", JSON.stringify(updated));
-    } catch {}
+    } catch { }
     if (selectedCorbatinVerdeId === id) {
       setSelectedCorbatinVerdeId(updated[0]?.id || "");
     }
@@ -5191,11 +5279,10 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setOpenSupervisorDropdown(openSupervisorDropdown === "directorio" ? null : "directorio")}
-                      className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                        ["proveedores", "guardias"].includes(supervisorTab)
+                      className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${["proveedores", "guardias"].includes(supervisorTab)
                           ? "bg-[#0D6E5F] text-white shadow-xs"
                           : "text-slate-700 hover:bg-white hover:text-slate-900"
-                      }`}
+                        }`}
                     >
                       <IconUsers className="w-3.5 h-3.5" />
                       <span>Directorio</span>
@@ -5213,9 +5300,8 @@ export default function App() {
                             setSupervisorTab("proveedores");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
-                            supervisorTab === "proveedores" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
-                          }`}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "proveedores" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                            }`}
                         >
                           <div>
                             <div className="font-semibold">Proveedores / Contratistas</div>
@@ -5232,9 +5318,8 @@ export default function App() {
                             setSupervisorTab("guardias");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
-                            supervisorTab === "guardias" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
-                          }`}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "guardias" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                            }`}
                         >
                           <div>
                             <div className="font-semibold">Guardias de Caseta</div>
@@ -5253,11 +5338,10 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setOpenSupervisorDropdown(openSupervisorDropdown === "documentos" ? null : "documentos")}
-                      className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                        ["corbatines", "corbatines_verdes", "reglamento"].includes(supervisorTab)
+                      className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${["corbatines", "corbatines_verdes", "reglamento"].includes(supervisorTab)
                           ? "bg-[#0D6E5F] text-white shadow-xs"
                           : "text-slate-700 hover:bg-white hover:text-slate-900"
-                      }`}
+                        }`}
                     >
                       <IconFileText className="w-3.5 h-3.5" />
                       <span>Documentos & Control</span>
@@ -5275,9 +5359,8 @@ export default function App() {
                             setSupervisorTab("corbatines");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
-                            supervisorTab === "corbatines" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
-                          }`}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "corbatines" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                            }`}
                         >
                           <div>
                             <div className="font-semibold">Impresión de Corbatines</div>
@@ -5294,9 +5377,8 @@ export default function App() {
                             setSupervisorTab("corbatines_verdes");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
-                            supervisorTab === "corbatines_verdes" ? "bg-emerald-50 text-emerald-800 font-bold" : "text-slate-700"
-                          }`}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "corbatines_verdes" ? "bg-emerald-50 text-emerald-800 font-bold" : "text-slate-700"
+                            }`}
                         >
                           <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
@@ -5316,9 +5398,8 @@ export default function App() {
                             setSupervisorTab("reglamento");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
-                            supervisorTab === "reglamento" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
-                          }`}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "reglamento" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                            }`}
                         >
                           <div>
                             <div className="font-semibold">Reglamento & Banderines</div>
@@ -5334,11 +5415,10 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setOpenSupervisorDropdown(openSupervisorDropdown === "operacion" ? null : "operacion")}
-                      className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                        ["bandeja", "apelaciones"].includes(supervisorTab)
+                      className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${["bandeja", "apelaciones"].includes(supervisorTab)
                           ? "bg-[#0D6E5F] text-white shadow-xs"
                           : "text-slate-700 hover:bg-white hover:text-slate-900"
-                      }`}
+                        }`}
                     >
                       <IconShield className="w-3.5 h-3.5" />
                       <span>Infracciones</span>
@@ -5361,9 +5441,8 @@ export default function App() {
                             setSupervisorTab("bandeja");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
-                            supervisorTab === "bandeja" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
-                          }`}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "bandeja" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                            }`}
                         >
                           <div>
                             <div className="font-semibold">Infracciones en Campo</div>
@@ -5386,9 +5465,8 @@ export default function App() {
                             setSupervisorTab("apelaciones");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
-                            supervisorTab === "apelaciones" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
-                          }`}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "apelaciones" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                            }`}
                         >
                           <div>
                             <div className="font-semibold">Bandeja de Apelaciones</div>
@@ -5415,11 +5493,10 @@ export default function App() {
                       setSupervisorTab("historial");
                       setOpenSupervisorDropdown(null);
                     }}
-                    className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                      supervisorTab === "historial"
+                    className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${supervisorTab === "historial"
                         ? "bg-[#0D6E5F] text-white shadow-xs"
                         : "text-slate-700 hover:bg-white hover:text-slate-900"
-                    }`}
+                      }`}
                   >
                     <IconClock className="w-3.5 h-3.5" />
                     <span>Historial</span>
@@ -5461,6 +5538,12 @@ export default function App() {
                       className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${portalScreen === "sanciones" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
                     >
                       Sanciones & Apelaciones {sanciones.filter(s => !currentUser.empresaNombre || s.empresaNombre === currentUser.empresaNombre).length > 0 ? `(${sanciones.filter(s => !currentUser.empresaNombre || s.empresaNombre === currentUser.empresaNombre).length})` : ""}
+                    </button>
+                    <button
+                      onClick={() => setPortalScreen("consulta_reglamento")}
+                      className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${portalScreen === "consulta_reglamento" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
+                    >
+                      Reglamento HOA
                     </button>
                   </div>
                 )
@@ -5820,8 +5903,8 @@ export default function App() {
                                     key={pageNum}
                                     onClick={() => setAuditoriaCurrentPage(pageNum)}
                                     className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${isActive
-                                        ? "bg-[#0D6E5F] text-white shadow-xs"
-                                        : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-100"
+                                      ? "bg-[#0D6E5F] text-white shadow-xs"
+                                      : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-100"
                                       }`}
                                   >
                                     {pageNum}
@@ -6709,9 +6792,8 @@ export default function App() {
                                 key={c.id}
                                 type="button"
                                 onClick={() => setSelectedCorbatinVerdeId(c.id)}
-                                className={`w-full text-left px-4 py-3.5 transition-all hover:bg-slate-50 cursor-pointer ${
-                                  isSelected ? "bg-emerald-50/80 border-l-4 border-emerald-600 shadow-2xs" : ""
-                                }`}
+                                className={`w-full text-left px-4 py-3.5 transition-all hover:bg-slate-50 cursor-pointer ${isSelected ? "bg-emerald-50/80 border-l-4 border-emerald-600 shadow-2xs" : ""
+                                  }`}
                               >
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="truncate">
@@ -7093,9 +7175,8 @@ export default function App() {
                             setIsSubmittingReglamento(false);
                           }
                         }}
-                        className={`px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 cursor-pointer flex items-center gap-2 ${
-                          (isSubmittingReglamento || !contratistaAceptoTerminos) ? "opacity-60 cursor-not-allowed" : ""
-                        }`}
+                        className={`px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 cursor-pointer flex items-center gap-2 ${(isSubmittingReglamento || !contratistaAceptoTerminos) ? "opacity-60 cursor-not-allowed" : ""
+                          }`}
                         style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                       >
                         {isSubmittingReglamento ? (
@@ -7954,6 +8035,23 @@ export default function App() {
                 </div>
               </div>
             )}
+
+            {/* CONSULTA DE REGLAMENTO Y NORMAS */}
+            {portalScreen === "consulta_reglamento" && (
+              <div>
+                <PageHero
+                  img={IMG_GATE}
+                  title="Reglamento HOA y Normativas de Operación"
+                  subtitle="Consulta permanente de términos, normas de banderín y lineamientos de seguridad de Las Palomas"
+                />
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-16rem)]">
+                  <ContratistaReglamentoView
+                    reglamentoTexto={reglamentoTexto}
+                    reglamentoSecciones={reglamentoSecciones}
+                  />
+                </div>
+              </div>
+            )}
           </main>
         )}
 
@@ -8016,6 +8114,34 @@ export default function App() {
                     {/* FORMULARIO DE ACCESO VEHICULAR */}
                     {casetaModoAcceso === "vehicular" && (
                       <form onSubmit={handleRegistrarEntrada} className="space-y-4">
+                        {/* BANNER / BOTÓN DE ACCESO RÁPIDO CON CÓDIGO QR */}
+                        <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-[#0D6E5F] to-emerald-800 text-white shadow-sm flex items-center justify-between gap-3 flex-wrap border border-emerald-700/50">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-xs flex items-center justify-center shrink-0 border border-white/20">
+                              <IconCamera className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                              <div className="font-bold text-xs sm:text-sm text-white flex items-center gap-2 flex-wrap">
+                                <span>Escanear Código QR de Corbatín</span>
+                                <span className="text-[10px] font-bold bg-white/20 text-emerald-100 px-2 py-0.5 rounded-full">
+                                  Cámara en Vivo
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-emerald-100/85 mt-0.5">
+                                Escanea el código QR del vehículo para autollenar los datos de la empresa y unidad al instante
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setShowQRScannerModal(true)}
+                            className="px-4 py-2 rounded-xl bg-white hover:bg-emerald-50 text-[#0D6E5F] font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95 shrink-0"
+                          >
+                            <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
+                            <span>Abrir Escáner QR</span>
+                          </button>
+                        </div>
+
                         {/* 1. INGRESO RÁPIDO: CORBATÍN/PLACAS Y CONDUCTOR (LADO A LADO) */}
                         <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50/90 via-teal-50/50 to-slate-50 border-2 border-emerald-300 shadow-2xs space-y-2.5">
                           <div className="flex items-center justify-between">
@@ -10650,7 +10776,7 @@ export default function App() {
       <footer className="mt-16 border-t py-6 px-6 text-center bg-white no-print" style={{ borderColor: "var(--color-border)" }}>
 
         <p className="text-xs text-slate-500">
-          © 2026 Las Palomas Rocky Point HOA, A.C. · Ecosistema Integral de Control y Seguridad Vehicular
+          © 2026 Las Palomas Rocky Point HOA, A.C. · Sistema de Control y Seguridad Vehicular
         </p>
       </footer>
 
@@ -11080,6 +11206,15 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* ─── MODAL DE ESCANEO QR PARA CASETA ─── */}
+      <QRScannerModal
+        isOpen={showQRScannerModal}
+        onClose={() => setShowQRScannerModal(false)}
+        onScanSuccess={handleQRScanData}
+        title="Escanear Código QR de Corbatín"
+        subtitle="Apunta la cámara al código QR impreso en el corbatín o sube una imagen / foto del QR"
+      />
 
       {/* ─── TOAST NOTIFICATIONS OVERLAY ─── */}
       <ToastContainer toasts={toasts} onClose={removeToast} />
