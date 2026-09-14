@@ -791,7 +791,7 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                   Historial y Métricas de Acceso
                 </h1>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 font-mono">
-                  PostgreSQL Real ({allAccesosDataset.length} registros)
+                  Registros Actuales ({allAccesosDataset.length} registros)
                 </span>
               </div>
               <p className="text-xs text-slate-500">
@@ -840,8 +840,8 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
           <button
             onClick={() => setActiveSubTab('graficas')}
             className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap ${activeSubTab === 'graficas'
-                ? 'bg-[#0D6E5F] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+              ? 'bg-[#0D6E5F] text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
           >
             <TrendingUp className="w-4 h-4" />
@@ -851,8 +851,8 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
           <button
             onClick={() => setActiveSubTab('ultimos10')}
             className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap ${activeSubTab === 'ultimos10'
-                ? 'bg-[#0D6E5F] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+              ? 'bg-[#0D6E5F] text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
           >
             <Clock className="w-4 h-4" />
@@ -866,8 +866,8 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
           <button
             onClick={() => setActiveSubTab('sanciones')}
             className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap ${activeSubTab === 'sanciones'
-                ? 'bg-[#0D6E5F] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+              ? 'bg-[#0D6E5F] text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
           >
             <FileCheck2 className="w-4 h-4" />
@@ -904,8 +904,8 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                       key={p}
                       onClick={() => setPeriodo(p)}
                       className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${active
-                          ? 'bg-[#0D6E5F] text-white shadow-xs'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        ? 'bg-[#0D6E5F] text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                         }`}
                     >
                       {labels[p]}
@@ -1482,8 +1482,8 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                         </span>
                         <span
                           className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold tracking-wider ${isEntrada
-                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                              : 'bg-sky-50 text-sky-800 border border-sky-200'
+                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                            : 'bg-sky-50 text-sky-800 border border-sky-200'
                             }`}
                         >
                           {isEntrada ? (
@@ -1622,8 +1622,8 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                         <td className="px-3 py-2.5">
                           <span
                             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold ${mov.tipoMovimiento === 'ENTRADA'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-sky-100 text-sky-800'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-sky-100 text-sky-800'
                               }`}
                           >
                             {mov.tipoMovimiento === 'ENTRADA' ? (
@@ -1751,10 +1751,10 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                         </td>
                         <td className="px-5 py-3">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${s.status === 'Activa' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
-                              s.status === 'Ratificada' ? 'bg-rose-100 text-rose-800 border border-rose-200' :
-                                s.status === 'Aclarada' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
-                                  s.status === 'Cumplida' ? 'bg-slate-100 text-slate-700 border border-slate-200' :
-                                    'bg-sky-100 text-sky-800 border border-sky-200'
+                            s.status === 'Ratificada' ? 'bg-rose-100 text-rose-800 border border-rose-200' :
+                              s.status === 'Aclarada' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                                s.status === 'Cumplida' ? 'bg-slate-100 text-slate-700 border border-slate-200' :
+                                  'bg-sky-100 text-sky-800 border border-sky-200'
                             }`}>
                             {s.status}
                           </span>

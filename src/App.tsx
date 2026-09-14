@@ -304,6 +304,58 @@ function IconChevronUp({ className = "w-4 h-4" }: { className?: string }) {
   );
 }
 
+function IconChevronLeft({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  );
+}
+
+function IconChevronRight({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  );
+}
+
+function IconX({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
+function IconInfo({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="16" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12.01" y2="8" />
+    </svg>
+  );
+}
+
+function IconCopy({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+    </svg>
+  );
+}
+
+function IconCheckSimple({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
 // ─── Types & Roles ────────────────────────────────────────────────────────────
 
 type UserRole = "admin" | "supervisor" | "contratista" | "caseta";
@@ -817,42 +869,6 @@ function CorbatinDocument({ vehicle }: { vehicle: Vehicle }) {
   );
 }
 
-function IconX({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  );
-}
-
-function IconInfo({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <line x1="12" y1="16" x2="12" y2="12" />
-      <line x1="12" y1="8" x2="12.01" y2="8" />
-    </svg>
-  );
-}
-
-function IconCopy({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-    </svg>
-  );
-}
-
-function IconCheckSimple({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
-}
-
 // ─── Clipboard Helper Function ───────────────────────────────────────────────
 async function copyTextToClipboard(text: string): Promise<boolean> {
   if (!text) return false;
@@ -1307,6 +1323,12 @@ export default function App() {
   const [confirmarPassword, setConfirmarPassword] = useState("");
   const [passwordModalError, setPasswordModalError] = useState("");
 
+  // Estados para Auditoría Global de Cuentas (Búsqueda y Paginación)
+  const [auditoriaSearchTerm, setAuditoriaSearchTerm] = useState("");
+  const [auditoriaRoleFilter, setAuditoriaRoleFilter] = useState<"todos" | "admin" | "supervisor" | "contratista" | "caseta">("todos");
+  const [auditoriaCurrentPage, setAuditoriaCurrentPage] = useState(1);
+  const AUDITORIA_PAGE_SIZE = 10;
+
   // New Vehicle Photo State
   const [nuevoVehiculoFoto, setNuevoVehiculoFoto] = useState<string>("");
   const [nuevoVehiculoFotoError, setNuevoVehiculoFotoError] = useState<string>("");
@@ -1357,7 +1379,7 @@ export default function App() {
       const updated = prev.includes(sancionId) ? prev : [...prev, sancionId];
       try {
         localStorage.setItem("las_palomas_dismissed_sancion_alerts", JSON.stringify(updated));
-      } catch {}
+      } catch { }
       return updated;
     });
     setActiveSancionAlertIndex(0);
@@ -1368,7 +1390,7 @@ export default function App() {
       const updated = Array.from(new Set([...prev, ...ids]));
       try {
         localStorage.setItem("las_palomas_dismissed_sancion_alerts", JSON.stringify(updated));
-      } catch {}
+      } catch { }
       return updated;
     });
     setActiveSancionAlertIndex(0);
@@ -4642,12 +4664,6 @@ export default function App() {
                     </span>
                   </button>
                   <button
-                    onClick={() => setPortalScreen("corbatin")}
-                    className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${portalScreen === "corbatin" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
-                  >
-                    Corbatines PDF
-                  </button>
-                  <button
                     onClick={() => setPortalScreen("sanciones")}
                     className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${portalScreen === "sanciones" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
                   >
@@ -4725,7 +4741,6 @@ export default function App() {
                     <div className="px-5 py-4 border-b bg-slate-50 flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
                       <div>
                         <h2 className="font-bold text-sm text-slate-800">Supervisores HOA Creados por Sistemas</h2>
-                        <p className="text-xs text-slate-500">Tienen autorización para crear proveedores contratistas, oficiales de caseta y dictaminar infracciones.</p>
                       </div>
                       <button
                         onClick={() => setShowCreateSupervisorModal(true)}
@@ -4797,59 +4812,246 @@ export default function App() {
 
               {adminTab === "proveedores" && renderEmpresasManagementView()}
 
-              {adminTab === "auditoria" && (
-                <div className="rounded-2xl border bg-white shadow-sm overflow-hidden" style={{ borderColor: "var(--color-border)" }}>
-                  <div className="px-5 py-4 border-b bg-slate-50 flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
-                    <div>
-                      <h2 className="font-bold text-sm text-slate-800">Auditoría Global de Cuentas y Gestión de Contraseñas</h2>
-                      <p className="text-xs text-slate-500">Como Administrador de TI puedes restablecer contraseñas de cualquier cuenta ante olvidos o bloqueos.</p>
+              {adminTab === "auditoria" && (() => {
+                const normalizeText = (str: string) =>
+                  (str || "")
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .trim();
+
+                const queryNormalized = normalizeText(auditoriaSearchTerm);
+                const queryTokens = queryNormalized.split(/\s+/).filter(Boolean);
+
+                const filteredUsers = users.filter((u) => {
+                  if (auditoriaRoleFilter !== "todos" && u.role !== auditoriaRoleFilter) {
+                    return false;
+                  }
+
+                  if (queryTokens.length === 0) return true;
+
+                  const searchableFields = [
+                    u.nombre,
+                    u.username,
+                    u.email,
+                    u.role,
+                    u.role === "contratista" ? "proveedor contratista" : "",
+                    u.role === "caseta" ? "guardia caseta oficial" : "",
+                    u.role === "supervisor" ? "supervisor hoa" : "",
+                    u.role === "admin" ? "administrador ti sistemas admin" : "",
+                    u.empresaNombre || "",
+                    u.turno || "",
+                  ].map(normalizeText).join(" ");
+
+                  return queryTokens.every((token) => searchableFields.includes(token));
+                });
+
+                const totalPages = Math.max(1, Math.ceil(filteredUsers.length / AUDITORIA_PAGE_SIZE));
+                const currentPage = Math.min(Math.max(1, auditoriaCurrentPage), totalPages);
+                const startIndex = (currentPage - 1) * AUDITORIA_PAGE_SIZE;
+                const paginatedUsers = filteredUsers.slice(startIndex, startIndex + AUDITORIA_PAGE_SIZE);
+
+                return (
+                  <div className="rounded-2xl border bg-white shadow-sm overflow-hidden" style={{ borderColor: "var(--color-border)" }}>
+                    {/* Header con Buscador y Filtros */}
+                    <div className="px-5 py-4 border-b bg-slate-50 flex flex-col lg:flex-row lg:items-center justify-between gap-3.5" style={{ borderColor: "var(--color-border)" }}>
+                      <div className="flex items-center gap-2.5">
+                        <h2 className="font-bold text-sm text-slate-800">Auditoría Global de Cuentas y Gestión de Contraseñas</h2>
+                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 font-mono">
+                          {filteredUsers.length} {filteredUsers.length === 1 ? "cuenta" : "cuentas"}
+                        </span>
+                      </div>
+
+                      {/* Barra de Búsqueda y Filtro de Rol */}
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <div className="relative flex-1 sm:w-80">
+                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                            <IconSearch className="w-4 h-4" />
+                          </span>
+                          <input
+                            type="text"
+                            value={auditoriaSearchTerm}
+                            onChange={(e) => {
+                              setAuditoriaSearchTerm(e.target.value);
+                              setAuditoriaCurrentPage(1);
+                            }}
+                            placeholder="Buscar por nombre, usuario, correo, rol... (ej. Miguel, Kenet)"
+                            className="w-full pl-9 pr-8 py-1.5 text-xs rounded-xl border border-slate-300 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F] focus:border-transparent transition-all shadow-2xs"
+                          />
+                          {auditoriaSearchTerm && (
+                            <button
+                              onClick={() => {
+                                setAuditoriaSearchTerm("");
+                                setAuditoriaCurrentPage(1);
+                              }}
+                              className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 hover:text-slate-700 cursor-pointer"
+                              title="Borrar búsqueda"
+                            >
+                              <IconX className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+
+                        <select
+                          value={auditoriaRoleFilter}
+                          onChange={(e) => {
+                            setAuditoriaRoleFilter(e.target.value as any);
+                            setAuditoriaCurrentPage(1);
+                          }}
+                          className="px-3 py-1.5 text-xs rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-[#0D6E5F] cursor-pointer shadow-2xs"
+                        >
+                          <option value="todos">Todos los roles</option>
+                          <option value="admin">Administrador</option>
+                          <option value="supervisor">Supervisor</option>
+                          <option value="contratista">Contratista</option>
+                          <option value="caseta">Caseta / Guardia</option>
+                        </select>
+                      </div>
                     </div>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
-                          {["Usuario", "Nombre Completo", "Rol en el Sistema", "Detalles / Empresa", "Acción TI"].map((h) => (
-                            <th key={h} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {users.map((u) => (
-                          <tr key={u.id} className="hover:bg-slate-50">
-                            <td className="px-5 py-3 font-mono font-bold text-xs text-slate-800">{u.username}</td>
-                            <td className="px-5 py-3 text-xs font-medium text-slate-900">{u.nombre}</td>
-                            <td className="px-5 py-3">
-                              <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold uppercase ${u.role === "admin" ? "bg-purple-50 text-purple-700 border border-purple-200" :
-                                u.role === "supervisor" ? "bg-blue-50 text-blue-700 border border-blue-200" :
-                                  u.role === "contratista" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
-                                    "bg-amber-50 text-amber-700 border border-amber-200"
-                                }`}>
-                                {u.role}
-                              </span>
-                            </td>
-                            <td className="px-5 py-3 text-xs text-slate-600">{u.empresaNombre || u.turno || u.email}</td>
-                            <td className="px-5 py-3">
-                              <button
-                                onClick={() => {
-                                  setSelectedUserParaPassword(u);
-                                  setNuevaPassword("");
-                                  setConfirmarPassword("");
-                                  setPasswordModalError("");
-                                }}
-                                className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-[#0D6E5F] hover:text-white border border-slate-300 hover:border-transparent transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
-                              >
-                                <IconKey className="w-3.5 h-3.5" />
-                                <span>Modificar Clave</span>
-                              </button>
-                            </td>
+
+                    {/* Tabla de Usuarios */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
+                            {["Usuario", "Nombre Completo", "Rol en el Sistema", "Detalles / Empresa", "Acción TI"].map((h) => (
+                              <th key={h} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
+                            ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {paginatedUsers.length === 0 ? (
+                            <tr>
+                              <td colSpan={5} className="py-12 text-center text-slate-500">
+                                <div className="flex flex-col items-center justify-center gap-2">
+                                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400">
+                                    <IconSearch className="w-5 h-5" />
+                                  </div>
+                                  <p className="font-semibold text-sm text-slate-700">No se encontraron cuentas</p>
+                                  <p className="text-xs text-slate-400 max-w-sm">
+                                    {auditoriaSearchTerm
+                                      ? `No hay usuarios que coincidan con "${auditoriaSearchTerm}". Prueba con otro término.`
+                                      : "No hay cuentas de usuario disponibles en este filtro."}
+                                  </p>
+                                  {(auditoriaSearchTerm || auditoriaRoleFilter !== "todos") && (
+                                    <button
+                                      onClick={() => {
+                                        setAuditoriaSearchTerm("");
+                                        setAuditoriaRoleFilter("todos");
+                                        setAuditoriaCurrentPage(1);
+                                      }}
+                                      className="mt-2 text-xs px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold border border-slate-200 cursor-pointer transition-colors shadow-2xs"
+                                    >
+                                      Restablecer búsqueda
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ) : (
+                            paginatedUsers.map((u) => (
+                              <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                                <td className="px-5 py-3 font-mono font-bold text-xs text-slate-800">{u.username}</td>
+                                <td className="px-5 py-3 text-xs font-medium text-slate-900">{u.nombre}</td>
+                                <td className="px-5 py-3">
+                                  <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold uppercase ${u.role === "admin" ? "bg-purple-50 text-purple-700 border border-purple-200" :
+                                    u.role === "supervisor" ? "bg-blue-50 text-blue-700 border border-blue-200" :
+                                      u.role === "contratista" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+                                        "bg-amber-50 text-amber-700 border border-amber-200"
+                                    }`}>
+                                    {u.role}
+                                  </span>
+                                </td>
+                                <td className="px-5 py-3 text-xs text-slate-600">{u.empresaNombre || u.turno || u.email}</td>
+                                <td className="px-5 py-3">
+                                  <button
+                                    onClick={() => {
+                                      setSelectedUserParaPassword(u);
+                                      setNuevaPassword("");
+                                      setConfirmarPassword("");
+                                      setPasswordModalError("");
+                                    }}
+                                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-[#0D6E5F] hover:text-white border border-slate-300 hover:border-transparent transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                                  >
+                                    <IconKey className="w-3.5 h-3.5" />
+                                    <span>Modificar Clave</span>
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Footer de Paginación */}
+                    {filteredUsers.length > 0 && (
+                      <div className="px-5 py-3.5 border-t bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600" style={{ borderColor: "var(--color-border)" }}>
+                        <div>
+                          Mostrando <strong className="text-slate-800">{startIndex + 1}</strong> – <strong className="text-slate-800">{Math.min(startIndex + AUDITORIA_PAGE_SIZE, filteredUsers.length)}</strong> de <strong className="text-slate-800">{filteredUsers.length}</strong> cuentas
+                          {auditoriaSearchTerm && (
+                            <span className="text-slate-400 font-normal"> (filtradas de {users.length} totales)</span>
+                          )}
+                        </div>
+
+                        {totalPages > 1 && (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => setAuditoriaCurrentPage((p) => Math.max(1, p - 1))}
+                              disabled={currentPage <= 1}
+                              className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
+                              title="Página anterior"
+                            >
+                              <IconChevronLeft className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">Anterior</span>
+                            </button>
+
+                            <div className="flex items-center gap-1">
+                              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                                if (
+                                  totalPages > 7 &&
+                                  pageNum !== 1 &&
+                                  pageNum !== totalPages &&
+                                  Math.abs(pageNum - currentPage) > 1
+                                ) {
+                                  if (pageNum === 2 || pageNum === totalPages - 1) {
+                                    return <span key={pageNum} className="px-1 text-slate-400">...</span>;
+                                  }
+                                  return null;
+                                }
+
+                                const isActive = pageNum === currentPage;
+                                return (
+                                  <button
+                                    key={pageNum}
+                                    onClick={() => setAuditoriaCurrentPage(pageNum)}
+                                    className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${isActive
+                                        ? "bg-[#0D6E5F] text-white shadow-xs"
+                                        : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-100"
+                                      }`}
+                                  >
+                                    {pageNum}
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            <button
+                              onClick={() => setAuditoriaCurrentPage((p) => Math.min(totalPages, p + 1))}
+                              disabled={currentPage >= totalPages}
+                              className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
+                              title="Página siguiente"
+                            >
+                              <span className="hidden sm:inline">Siguiente</span>
+                              <IconChevronRight className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           </main>
         )}
@@ -5343,7 +5545,6 @@ export default function App() {
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-5 sm:px-6 py-4 border-b bg-slate-50 gap-3" style={{ borderColor: "var(--color-border)" }}>
                       <div>
                         <h2 className="font-bold text-base text-slate-800">Plantilla de Trabajadores y Colaboradores</h2>
-                        <p className="text-xs text-slate-500">Personal acreditado para ingreso a obras y mantenimiento en Las Palomas</p>
                       </div>
                       <div className="flex gap-2">
                         <button
@@ -5354,12 +5555,7 @@ export default function App() {
                           <IconUserPlus className="w-3.5 h-3.5" />
                           <span>+ Agregar Trabajador</span>
                         </button>
-                        <button
-                          onClick={() => setPortalScreen("trabajadores")}
-                          className="text-xs px-3.5 py-2 rounded-xl font-semibold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-sm"
-                        >
-                          Ver Lista Completa →
-                        </button>
+
                       </div>
                     </div>
 
@@ -5778,7 +5974,6 @@ export default function App() {
                     <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b bg-slate-50" style={{ borderColor: "var(--color-border)" }}>
                       <div>
                         <h2 className="font-bold text-base text-slate-800">Colaboradores Registrados</h2>
-                        <p className="text-xs text-slate-500">Personal autorizado para acceso vehicular y peatonal</p>
                       </div>
                       <span className="text-xs font-mono font-bold text-slate-500">
                         {trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre).length} registros
@@ -6261,9 +6456,7 @@ export default function App() {
                         <h2 className="font-bold text-sm uppercase tracking-wider text-slate-800">
                           {casetaModoAcceso === "vehicular" ? "Registro de Entrada Vehicular" : "Registro de Entrada Peatonal"}
                         </h2>
-                        <p className="text-xs text-slate-500">
-                          {casetaModoAcceso === "vehicular" ? "Control de acceso vehicular y verificación de corbatines" : "Ingreso autorizado a pie de técnicos y contratistas (ej. unidad con sanción)"}
-                        </p>
+
                       </div>
                       <span className="text-xs text-slate-500 font-mono">Oficial: {currentUser.nombre}</span>
                     </div>
@@ -6806,16 +6999,6 @@ export default function App() {
                     {/* FORMULARIO DE ACCESO PEATONAL */}
                     {casetaModoAcceso === "peatonal" && (
                       <form onSubmit={handleRegistrarEntrada} className="space-y-4">
-                        <div className="p-3.5 rounded-xl bg-sky-50 border border-sky-200 text-xs text-sky-900 space-y-1">
-                          <div className="font-bold flex items-center gap-1.5">
-                            <IconWalk className="w-4 h-4 text-sky-700 shrink-0" />
-                            <span>Protocolo de Ingreso Peatonal Acreditado</span>
-                          </div>
-                          <p className="text-sky-800">
-                            Registra el acceso a pie para contratistas, técnicos o cuadrillas cuyo vehículo esté suspendido por sanciones o ingresen caminando con herramienta.
-                          </p>
-                        </div>
-
                         <div>
                           <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                             1. Empresa Contratista
@@ -7057,7 +7240,6 @@ export default function App() {
                   <div className="px-5 py-4 border-b bg-slate-50 flex flex-wrap items-center justify-between gap-3" style={{ borderColor: "var(--color-border)" }}>
                     <div>
                       <h2 className="font-bold text-sm text-slate-800">Bitácora Oficial de Accesos en Caseta</h2>
-                      <p className="text-xs text-slate-500">Registro histórico en tiempo real de entradas y salidas vehiculares y peatonales.</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <button
