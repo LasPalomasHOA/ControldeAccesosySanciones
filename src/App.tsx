@@ -308,8 +308,8 @@ function IconChevronUp({ className = "w-4 h-4" }: { className?: string }) {
 // ─── Types & Roles ────────────────────────────────────────────────────────────
 
 type UserRole = "admin" | "supervisor" | "contratista" | "caseta";
-type PortalScreen = "reglamento" | "dashboard" | "alta" | "trabajadores" | "corbatin" | "sanciones";
-type SupervisorTab = "bandeja" | "apelaciones" | "proveedores" | "guardias" | "historial" | "reglamento";
+type PortalScreen = "reglamento" | "dashboard" | "alta" | "trabajadores" | "sanciones";
+type SupervisorTab = "bandeja" | "apelaciones" | "proveedores" | "guardias" | "historial" | "reglamento" | "corbatines";
 type AdminTab = "supervisores" | "proveedores" | "auditoria";
 type CasetaTab = "registro" | "bitacora";
 
@@ -780,7 +780,7 @@ function CorbatinDocument({ vehicle, sections }: { vehicle: Vehicle; sections?: 
               </div>
             </td>
 
-            {/* RIGHT REVERSE — EXACT 380px (50% WIDTH) */}
+            {/* RIGHT REVERSE — EXACT 380px (50% WIDTH) WITH FIXED SIZE 10 FONT */}
             <td
               style={{
                 width: "380px",
@@ -796,21 +796,21 @@ function CorbatinDocument({ vehicle, sections }: { vehicle: Vehicle; sections?: 
               }}
             >
               <div>
-                <div style={{ fontSize: "12.5px", fontWeight: "900", textAlign: "center", marginBottom: "10px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                <div style={{ fontSize: "11.5px", fontWeight: "900", textAlign: "center", marginBottom: "8px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                   Reglamento para externos en áreas comunes:
                 </div>
                 {docSections.map((sec, idx) => (
-                  <div key={sec.title || idx} style={{ marginBottom: "7px" }}>
+                  <div key={sec.title || idx} style={{ marginBottom: "6px" }}>
                     <div style={{ fontSize: "10.5px", fontWeight: "bold", color: "#000000", marginBottom: "1.5px" }}>{sec.title}</div>
-                    <ul style={{ margin: 0, paddingLeft: "15px", listStyleType: "disc" }}>
+                    <ul style={{ margin: 0, paddingLeft: "14px", listStyleType: "disc" }}>
                       {sec.items.map((item, i) => (
-                        <li key={i} style={{ fontSize: "9.5px", color: "#222222", lineHeight: "1.4", marginBottom: "1.5px" }}>{item}</li>
+                        <li key={i} style={{ fontSize: "10px", color: "#222222", lineHeight: "1.35", marginBottom: "1.5px" }}>{item}</li>
                       ))}
                     </ul>
                   </div>
                 ))}
               </div>
-              <div style={{ borderTop: "1px solid #cccccc", paddingTop: "8px", marginTop: "10px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "8.5px", color: "#555555" }}>
+              <div style={{ borderTop: "1px solid #cccccc", paddingTop: "6px", marginTop: "6px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "8px", color: "#555555" }}>
                 <span>Las Palomas Rocky Point HOA, A.C.</span>
                 <span style={{ fontFamily: "monospace", fontWeight: "bold" }}>Corbatín #{vehicle.corbatinNum} · {vehicle.placas} · Vigencia 1 Año ({currentYear}–{nextYear})</span>
               </div>
@@ -1264,6 +1264,8 @@ export default function App() {
 
   const [adminTab, setAdminTab] = useState<AdminTab>("supervisores");
   const [supervisorTab, setSupervisorTab] = useState<SupervisorTab>("bandeja");
+  const [openSupervisorDropdown, setOpenSupervisorDropdown] = useState<"operacion" | "directorio" | "documentos" | null>(null);
+  const supervisorNavRef = useRef<HTMLDivElement>(null);
   const [portalScreen, setPortalScreen] = useState<PortalScreen>("dashboard");
   const [casetaTab, setCasetaTab] = useState<CasetaTab>("registro");
 
@@ -1467,6 +1469,9 @@ export default function App() {
   const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>("");
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
   const [selectedCorbatinVehicleId, setSelectedCorbatinVehicleId] = useState<string>("");
+  const [supervisorCorbatinEmpresaFilter, setSupervisorCorbatinEmpresaFilter] = useState<string>("all");
+  const [supervisorCorbatinSearch, setSupervisorCorbatinSearch] = useState<string>("");
+  const [supervisorCorbatinStatusFilter, setSupervisorCorbatinStatusFilter] = useState<string>("all");
   const [casetaModoAcceso, setCasetaModoAcceso] = useState<"vehicular" | "peatonal">("vehicular");
   const [casetaPeatonalTrabajadorId, setCasetaPeatonalTrabajadorId] = useState<string>("");
   const [casetaPeatonalNombre, setCasetaPeatonalNombre] = useState("");
@@ -1509,6 +1514,9 @@ export default function App() {
       }
       if (conductorDropdownRef.current && !conductorDropdownRef.current.contains(event.target as Node)) {
         setIsConductorDropdownOpen(false);
+      }
+      if (supervisorNavRef.current && !supervisorNavRef.current.contains(event.target as Node)) {
+        setOpenSupervisorDropdown(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -2533,50 +2541,61 @@ export default function App() {
       pdf.text("POR FAVOR DE COLOCAR", leftCenterX, startY + 150.5, { align: "center" });
       pdf.text("EN EL RETROVISOR", leftCenterX, startY + 155, { align: "center" });
 
-      // ── RIGHT SIDE: REVERSO (Reglamento Oficial - Letras Grandes) ──────────
+      // ── RIGHT SIDE: REVERSO (Reglamento Oficial - Fuente Fija Tamaño 10) ───
       const rightMargin = midX + 9;
+      const contentWidth = colW - 17; // 113 mm printable area for right side
       let textY = startY + 11.5;
-
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(11);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text("REGLAMENTO PARA EXTERNOS EN ÁREAS COMUNES:", midX + colW / 2, textY, { align: "center" });
-
-      textY += 7.5;
 
       const activeSections = reglamentoSecciones && reglamentoSecciones.length > 0 ? reglamentoSecciones : DEFAULT_REGLAMENTO_SECTIONS;
 
+      const headerFontSize = 11;
+      const secTitleFontSize = 9.5;
+      const itemFontSize = 8.5; // Fixed size 10 equivalent in print points
+      const secTitleSpacing = 4.0;
+      const itemSpacing = 3.6;
+      const secMargin = 2.4;
+
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(headerFontSize);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text("REGLAMENTO PARA EXTERNOS EN ÁREAS COMUNES:", midX + colW / 2, textY, { align: "center" });
+
+      textY += 7.0;
+
       activeSections.forEach((sec) => {
         pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(9.5);
+        pdf.setFontSize(secTitleFontSize);
         pdf.setTextColor(0, 0, 0);
-        pdf.text(sec.title, rightMargin, textY);
-        textY += 4.2;
+        pdf.text(sec.title || "", rightMargin, textY);
+        textY += secTitleSpacing;
 
         pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(8.2);
+        pdf.setFontSize(itemFontSize);
         pdf.setTextColor(25, 25, 25);
-        sec.items.forEach((it) => {
-          const bullet = it.startsWith("•") ? it : `• ${it}`;
-          pdf.text(bullet, rightMargin + 2, textY);
-          textY += 3.8;
+        (sec.items || []).forEach((it) => {
+          const rawBullet = it.startsWith("•") ? it : `• ${it}`;
+          const lines = pdf.splitTextToSize(rawBullet, contentWidth);
+          lines.forEach((line: string) => {
+            pdf.text(line, rightMargin + 1.5, textY);
+            textY += itemSpacing;
+          });
         });
-        textY += 2.6;
+        textY += secMargin;
       });
 
-      // Bottom Footer
+      // Bottom Footer (Always strictly anchored at card bottom)
       pdf.setLineWidth(0.3);
       pdf.setDrawColor(200, 200, 200);
       pdf.line(rightMargin, startY + cardH - 10, startX + cardW - 8, startY + cardH - 10);
 
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(7);
-      pdf.setTextColor(100, 100, 100);
-      pdf.text("Las Palomas Rocky Point HOA, A.C.", rightMargin, startY + cardH - 5.5);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(6.5);
+      pdf.setTextColor(110, 110, 110);
+      pdf.text("Las Palomas Rocky Point HOA", rightMargin, startY + cardH - 5.5);
 
-      pdf.setFont("courier", "bold");
-      pdf.setFontSize(7);
-      pdf.text(`Corbatín #${veh.corbatinNum} · ${veh.placas} · Vigencia 1 Año (${currentYear}–${nextYear})`, startX + cardW - 8, startY + cardH - 5.5, { align: "right" });
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(6.5);
+      pdf.text(`Corb. #${veh.corbatinNum} · ${veh.placas} · Vig. ${currentYear}–${nextYear}`, startX + cardW - 8, startY + cardH - 5.5, { align: "right" });
 
       // Save PDF directly to user download folder
       pdf.save(`Corbatin_${veh.corbatinNum}_${veh.placas}.pdf`);
@@ -4418,6 +4437,19 @@ export default function App() {
                                         <div className="flex items-center gap-1.5">
                                           <button
                                             type="button"
+                                            onClick={() => {
+                                              setSelectedCorbatinVehicleId(v.id);
+                                              setSupervisorCorbatinEmpresaFilter(v.empresaNombre || "all");
+                                              setSupervisorTab("corbatines");
+                                            }}
+                                            className="px-2.5 py-1 rounded-lg text-xs font-bold text-teal-700 bg-teal-50 hover:bg-[#0D6E5F] hover:text-white border border-teal-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                            title="Ver, descargar e imprimir corbatín"
+                                          >
+                                            <IconFileText className="w-3.5 h-3.5" />
+                                            <span>Corbatín</span>
+                                          </button>
+                                          <button
+                                            type="button"
                                             onClick={() => handleOpenEditarVehiculo(v)}
                                             className="px-2.5 py-1 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white border border-blue-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
                                             title="Editar datos y cambiar estatus de acceso"
@@ -4570,7 +4602,7 @@ export default function App() {
               <LPLogo size={140} />
             </div>
 
-            <div className="flex items-center gap-1 shrink-0 overflow-x-auto py-1 scrollbar-none">
+            <div className="flex items-center gap-1 shrink-0 py-1 overflow-visible">
               {currentUser.role === "admin" && (
                 <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                   <button
@@ -4595,59 +4627,222 @@ export default function App() {
               )}
 
               {currentUser.role === "supervisor" && (
-                <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
-                  <button
-                    onClick={() => setSupervisorTab("bandeja")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${supervisorTab === "bandeja" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
-                  >
-                    <span>Infracciones</span>
-                    {infraccionesPendientes.filter(i => i.estado === "Pendiente").length > 0 ? (
-                      <span className="relative flex h-4 w-4">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-4 w-4 bg-amber-400 text-slate-950 text-[10px] items-center justify-center font-black">
-                          {infraccionesPendientes.filter(i => i.estado === "Pendiente").length}
+                <div ref={supervisorNavRef} className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-2xl border border-slate-200/80 shadow-xs relative">
+                  {/* 1. DIRECTORIO (DROPDOWN) */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setOpenSupervisorDropdown(openSupervisorDropdown === "directorio" ? null : "directorio")}
+                      className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                        ["proveedores", "guardias"].includes(supervisorTab)
+                          ? "bg-[#0D6E5F] text-white shadow-xs"
+                          : "text-slate-700 hover:bg-white hover:text-slate-900"
+                      }`}
+                    >
+                      <IconUsers className="w-3.5 h-3.5" />
+                      <span>Directorio</span>
+                      <IconChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${openSupervisorDropdown === "directorio" ? "rotate-180" : ""}`} />
+                    </button>
+
+                    {openSupervisorDropdown === "directorio" && (
+                      <div className="absolute left-0 top-full mt-2 w-64 rounded-2xl bg-white border border-slate-200 shadow-2xl py-1.5 z-[100] ring-1 ring-black/5">
+                        <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
+                          Directorio y Personal
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSupervisorTab("proveedores");
+                            setOpenSupervisorDropdown(null);
+                          }}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
+                            supervisorTab === "proveedores" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                          }`}
+                        >
+                          <div>
+                            <div className="font-semibold">Proveedores / Contratistas</div>
+                            <div className="text-[11px] text-slate-400">Empresas, personal y flotillas</div>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">
+                            {empresas.length}
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSupervisorTab("guardias");
+                            setOpenSupervisorDropdown(null);
+                          }}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
+                            supervisorTab === "guardias" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                          }`}
+                        >
+                          <div>
+                            <div className="font-semibold">Guardias de Caseta</div>
+                            <div className="text-[11px] text-slate-400">Oficiales activos y turnos</div>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">
+                            {users.filter(u => u.role === "caseta").length}
+                          </span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 2. DOCUMENTOS & CONTROL (DROPDOWN) */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setOpenSupervisorDropdown(openSupervisorDropdown === "documentos" ? null : "documentos")}
+                      className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                        ["corbatines", "reglamento"].includes(supervisorTab)
+                          ? "bg-[#0D6E5F] text-white shadow-xs"
+                          : "text-slate-700 hover:bg-white hover:text-slate-900"
+                      }`}
+                    >
+                      <IconFileText className="w-3.5 h-3.5" />
+                      <span>Documentos & Control</span>
+                      <IconChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${openSupervisorDropdown === "documentos" ? "rotate-180" : ""}`} />
+                    </button>
+
+                    {openSupervisorDropdown === "documentos" && (
+                      <div className="absolute left-0 top-full mt-2 w-64 rounded-2xl bg-white border border-slate-200 shadow-2xl py-1.5 z-[100] ring-1 ring-black/5">
+                        <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
+                          Documentación Oficial
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSupervisorTab("corbatines");
+                            setOpenSupervisorDropdown(null);
+                          }}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
+                            supervisorTab === "corbatines" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                          }`}
+                        >
+                          <div>
+                            <div className="font-semibold">Impresión de Corbatines</div>
+                            <div className="text-[11px] text-slate-400">Emisión física con código QR</div>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full bg-teal-100 text-[#0D6E5F] text-[10px] font-bold">
+                            PDF
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSupervisorTab("reglamento");
+                            setOpenSupervisorDropdown(null);
+                          }}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
+                            supervisorTab === "reglamento" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                          }`}
+                        >
+                          <div>
+                            <div className="font-semibold">Reglamento & Banderines</div>
+                            <div className="text-[11px] text-slate-400">Editor de normas oficiales</div>
+                          </div>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 3. INFRACCIONES & APELACIONES (DROPDOWN) */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setOpenSupervisorDropdown(openSupervisorDropdown === "operacion" ? null : "operacion")}
+                      className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                        ["bandeja", "apelaciones"].includes(supervisorTab)
+                          ? "bg-[#0D6E5F] text-white shadow-xs"
+                          : "text-slate-700 hover:bg-white hover:text-slate-900"
+                      }`}
+                    >
+                      <IconShield className="w-3.5 h-3.5" />
+                      <span>Infracciones</span>
+                      {(infraccionesPendientes.filter(i => i.estado === "Pendiente").length > 0 || apelacionesPendientesCount > 0) && (
+                        <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black">
+                          {infraccionesPendientes.filter(i => i.estado === "Pendiente").length + apelacionesPendientesCount}
                         </span>
-                      </span>
-                    ) : (
-                      <span className="w-4 h-4 rounded-full bg-slate-200 text-slate-600 text-[10px] flex items-center justify-center font-black">
-                        0
-                      </span>
+                      )}
+                      <IconChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${openSupervisorDropdown === "operacion" ? "rotate-180" : ""}`} />
+                    </button>
+
+                    {openSupervisorDropdown === "operacion" && (
+                      <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-64 rounded-2xl bg-white border border-slate-200 shadow-2xl py-1.5 z-[100] ring-1 ring-black/5">
+                        <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
+                          Sanciones y Casos
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSupervisorTab("bandeja");
+                            setOpenSupervisorDropdown(null);
+                          }}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
+                            supervisorTab === "bandeja" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                          }`}
+                        >
+                          <div>
+                            <div className="font-semibold">Infracciones en Campo</div>
+                            <div className="text-[11px] text-slate-400">Dictamen de reportes móviles</div>
+                          </div>
+                          {infraccionesPendientes.filter(i => i.estado === "Pendiente").length > 0 ? (
+                            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold">
+                              {infraccionesPendientes.filter(i => i.estado === "Pendiente").length}
+                            </span>
+                          ) : (
+                            <span className="w-4 h-4 rounded-full bg-slate-100 text-slate-500 text-[10px] flex items-center justify-center font-semibold">
+                              0
+                            </span>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSupervisorTab("apelaciones");
+                            setOpenSupervisorDropdown(null);
+                          }}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
+                            supervisorTab === "apelaciones" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                          }`}
+                        >
+                          <div>
+                            <div className="font-semibold">Bandeja de Apelaciones</div>
+                            <div className="text-[11px] text-slate-400">Recursos de contratistas</div>
+                          </div>
+                          {apelacionesPendientesCount > 0 ? (
+                            <span className="px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 text-[10px] font-bold">
+                              {apelacionesPendientesCount}
+                            </span>
+                          ) : (
+                            <span className="w-4 h-4 rounded-full bg-slate-100 text-slate-500 text-[10px] flex items-center justify-center font-semibold">
+                              0
+                            </span>
+                          )}
+                        </button>
+                      </div>
                     )}
-                  </button>
+                  </div>
+
+                  {/* 4. HISTORIAL (AL FINAL) */}
                   <button
-                    onClick={() => setSupervisorTab("apelaciones")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${supervisorTab === "apelaciones" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    type="button"
+                    onClick={() => {
+                      setSupervisorTab("historial");
+                      setOpenSupervisorDropdown(null);
+                    }}
+                    className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                      supervisorTab === "historial"
+                        ? "bg-[#0D6E5F] text-white shadow-xs"
+                        : "text-slate-700 hover:bg-white hover:text-slate-900"
+                    }`}
                   >
-                    <span>Bandeja de Apelaciones</span>
-                    {apelacionesPendientesCount > 0 && (
-                      <span className="w-4 h-4 rounded-full bg-sky-500 text-white text-[10px] flex items-center justify-center font-black">
-                        {apelacionesPendientesCount}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setSupervisorTab("proveedores")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${supervisorTab === "proveedores" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
-                  >
-                    Proveedores ({empresas.length})
-                  </button>
-                  <button
-                    onClick={() => setSupervisorTab("guardias")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${supervisorTab === "guardias" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
-                  >
-                    Guardias ({users.filter(u => u.role === "caseta").length})
-                  </button>
-                  <button
-                    onClick={() => setSupervisorTab("historial")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${supervisorTab === "historial" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
-                  >
-                    Historial
-                  </button>
-                  <button
-                    onClick={() => setSupervisorTab("reglamento")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${supervisorTab === "reglamento" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
-                  >
-                    <span>Reglamento & Banderines</span>
+                    <IconClock className="w-3.5 h-3.5" />
+                    <span>Historial</span>
                   </button>
                 </div>
               )}
@@ -4680,12 +4875,6 @@ export default function App() {
                       <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
                         {trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre && t.activo).length}
                       </span>
-                    </button>
-                    <button
-                      onClick={() => setPortalScreen("corbatin")}
-                      className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${portalScreen === "corbatin" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
-                    >
-                      Corbatines PDF
                     </button>
                     <button
                       onClick={() => setPortalScreen("sanciones")}
@@ -5265,6 +5454,271 @@ export default function App() {
                   onResetDefaults={handleResetReglamentoSupervisor}
                   isSaving={isSavingReglamento}
                 />
+              )}
+
+              {supervisorTab === "corbatines" && (
+                <div className="space-y-6">
+                  {/* Filtros Superiores para el Supervisor */}
+                  <div className="rounded-2xl border p-5 bg-white shadow-sm space-y-4 no-print" style={{ borderColor: "var(--color-border)" }}>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b pb-4" style={{ borderColor: "var(--color-border)" }}>
+                      <div>
+                        <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                          <IconFileText className="w-5 h-5 text-[#0D6E5F]" />
+                          <span>Impresión y Emisión Oficial de Corbatines</span>
+                        </h2>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Generación, descarga en PDF e impresión física de corbatines vehiculares con código QR dinámico y reglamento oficial.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                        <div className="px-3 py-1.5 rounded-xl bg-teal-50 border border-teal-200 text-teal-900 text-xs font-bold">
+                          Total Unidades: <span className="text-[#0D6E5F] font-black">{vehicles.length}</span>
+                        </div>
+                        <div className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold">
+                          Habilitados: <span className="text-emerald-700 font-black">{vehicles.filter(v => v.status === "Habilitado").length}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {/* Filtro por Proveedor */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1">Filtrar por Proveedor / Empresa:</label>
+                        <select
+                          value={supervisorCorbatinEmpresaFilter}
+                          onChange={(e) => {
+                            setSupervisorCorbatinEmpresaFilter(e.target.value);
+                            setSelectedCorbatinVehicleId("");
+                          }}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                        >
+                          <option value="all">🏢 Todas las Empresas ({empresas.length})</option>
+                          {empresas.map((emp) => {
+                            const empVehCount = vehicles.filter(v => v.empresaNombre === emp.nombre || v.empresaId === emp.id).length;
+                            return (
+                              <option key={emp.id} value={emp.nombre}>
+                                {emp.nombre} ({empVehCount} vehículos)
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </div>
+
+                      {/* Filtro por Estatus */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1">Estatus de Acceso:</label>
+                        <select
+                          value={supervisorCorbatinStatusFilter}
+                          onChange={(e) => setSupervisorCorbatinStatusFilter(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                        >
+                          <option value="all">Todos los Estatus</option>
+                          <option value="Habilitado">Habilitado</option>
+                          <option value="Suspendido">Suspendido</option>
+                          <option value="Restringido">Restringido</option>
+                          <option value="Deshabilitado">Deshabilitado</option>
+                        </select>
+                      </div>
+
+                      {/* Búsqueda rápida */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1">Buscar Vehículo o Placa:</label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={supervisorCorbatinSearch}
+                            onChange={(e) => setSupervisorCorbatinSearch(e.target.value)}
+                            placeholder="Placas, modelo, marca o # corbatín..."
+                            className="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                          />
+                          <IconSearch className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" />
+                          {supervisorCorbatinSearch && (
+                            <button
+                              type="button"
+                              onClick={() => setSupervisorCorbatinSearch("")}
+                              className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 text-xs"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Panel Principal de Dos Columnas */}
+                  <div className="flex flex-col lg:flex-row gap-6 items-start">
+                    {/* Lista Lateral de Vehículos */}
+                    <div className="w-full lg:w-80 shrink-0 no-print">
+                      <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
+                        <div className="px-5 py-3.5 border-b bg-slate-50 flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
+                          <h3 className="font-bold text-xs text-slate-700 uppercase tracking-wider">
+                            Seleccionar Vehículo
+                          </h3>
+                          <span className="px-2 py-0.5 rounded-md bg-slate-200 text-slate-700 font-bold text-[10px]">
+                            {(() => {
+                              const filteredList = vehicles.filter((v) => {
+                                const matchEmp = supervisorCorbatinEmpresaFilter === "all" ||
+                                  (v.empresaNombre || "").trim().toLowerCase() === supervisorCorbatinEmpresaFilter.trim().toLowerCase();
+                                const matchStatus = supervisorCorbatinStatusFilter === "all" || v.status === supervisorCorbatinStatusFilter;
+                                const q = supervisorCorbatinSearch.trim().toLowerCase();
+                                const matchQ = !q ||
+                                  (v.placas || "").toLowerCase().includes(q) ||
+                                  (v.marca || "").toLowerCase().includes(q) ||
+                                  (v.modelo || "").toLowerCase().includes(q) ||
+                                  (v.empresaNombre || "").toLowerCase().includes(q) ||
+                                  String(v.corbatinNum || "").toLowerCase().includes(q);
+                                return matchEmp && matchStatus && matchQ;
+                              });
+                              return filteredList.length;
+                            })()}
+                          </span>
+                        </div>
+
+                        <div className="divide-y divide-slate-100 max-h-[600px] overflow-y-auto">
+                          {(() => {
+                            const filteredList = vehicles.filter((v) => {
+                              const matchEmp = supervisorCorbatinEmpresaFilter === "all" ||
+                                (v.empresaNombre || "").trim().toLowerCase() === supervisorCorbatinEmpresaFilter.trim().toLowerCase();
+                              const matchStatus = supervisorCorbatinStatusFilter === "all" || v.status === supervisorCorbatinStatusFilter;
+                              const q = supervisorCorbatinSearch.trim().toLowerCase();
+                              const matchQ = !q ||
+                                (v.placas || "").toLowerCase().includes(q) ||
+                                (v.marca || "").toLowerCase().includes(q) ||
+                                (v.modelo || "").toLowerCase().includes(q) ||
+                                (v.empresaNombre || "").toLowerCase().includes(q) ||
+                                String(v.corbatinNum || "").toLowerCase().includes(q);
+                              return matchEmp && matchStatus && matchQ;
+                            });
+
+                            if (filteredList.length === 0) {
+                              return (
+                                <div className="p-8 text-center text-xs text-slate-500 space-y-1">
+                                  <p className="font-semibold text-slate-700">Sin vehículos encontrados</p>
+                                  <p className="text-[11px] text-slate-400">Intenta cambiar los filtros o el término de búsqueda.</p>
+                                </div>
+                              );
+                            }
+
+                            const activeVeh = filteredList.find((v) => v.id === selectedCorbatinVehicleId) || filteredList[0];
+
+                            return filteredList.map((v) => {
+                              const isSelected = activeVeh?.id === v.id;
+                              return (
+                                <button
+                                  key={v.id}
+                                  type="button"
+                                  onClick={() => setSelectedCorbatinVehicleId(v.id)}
+                                  className={`w-full text-left px-4 py-3.5 transition-all hover:bg-slate-50 cursor-pointer ${isSelected ? "bg-[#E6F4F1] border-l-4 border-[#0D6E5F]" : ""
+                                    }`}
+                                >
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="truncate">
+                                      <div className="font-bold text-xs text-slate-900 truncate">
+                                        {v.marca} {v.modelo}
+                                      </div>
+                                      <div className="text-[11px] text-slate-500 truncate mt-0.5">
+                                        {v.empresaNombre || "Empresa General"}
+                                      </div>
+                                    </div>
+                                    <span className="font-mono font-bold text-xs shrink-0 text-[#0D6E5F]">
+                                      #{v.corbatinNum || v.id}
+                                    </span>
+                                  </div>
+                                  <div className="mt-2 flex items-center justify-between gap-2">
+                                    <span className="font-mono font-bold text-[11px] text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+                                      {v.placas}
+                                    </span>
+                                    <StatusBadge status={v.status} />
+                                  </div>
+                                </button>
+                              );
+                            });
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Previsualizador y Acciones de Descarga / Impresión */}
+                    <div className="flex-1 space-y-4 w-full">
+                      {(() => {
+                        const filteredList = vehicles.filter((v) => {
+                          const matchEmp = supervisorCorbatinEmpresaFilter === "all" ||
+                            (v.empresaNombre || "").trim().toLowerCase() === supervisorCorbatinEmpresaFilter.trim().toLowerCase();
+                          const matchStatus = supervisorCorbatinStatusFilter === "all" || v.status === supervisorCorbatinStatusFilter;
+                          const q = supervisorCorbatinSearch.trim().toLowerCase();
+                          const matchQ = !q ||
+                            (v.placas || "").toLowerCase().includes(q) ||
+                            (v.marca || "").toLowerCase().includes(q) ||
+                            (v.modelo || "").toLowerCase().includes(q) ||
+                            (v.empresaNombre || "").toLowerCase().includes(q) ||
+                            String(v.corbatinNum || "").toLowerCase().includes(q);
+                          return matchEmp && matchStatus && matchQ;
+                        });
+
+                        const veh = filteredList.find((v) => v.id === selectedCorbatinVehicleId) || filteredList[0];
+
+                        if (!veh) {
+                          return (
+                            <div className="rounded-2xl border p-12 text-center bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
+                              <IconFileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                              <h3 className="font-bold text-slate-800 mb-1 text-sm">Sin vehículo seleccionado</h3>
+                              <p className="text-xs text-slate-500">Selecciona una unidad de la lista lateral o modifica los filtros superiores.</p>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <>
+                            <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" id="corbatin-container" style={{ borderColor: "var(--color-border)" }}>
+                              <div className="px-5 py-4 border-b bg-slate-50 flex flex-wrap items-center justify-between gap-3 no-print" style={{ borderColor: "var(--color-border)" }}>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <h2 className="font-bold text-sm text-slate-800">
+                                      Corbatín Oficial #{veh.corbatinNum || veh.id}
+                                    </h2>
+                                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-700 font-bold">
+                                      {veh.empresaNombre}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-slate-500 mt-0.5">
+                                    {veh.marca} {veh.modelo} ({veh.anio || veh.año || "N/A"}) · Placas: <strong className="font-mono text-slate-700">{veh.placas}</strong> · Color: {veh.color}
+                                  </p>
+                                </div>
+                                <StatusBadge status={veh.status} />
+                              </div>
+
+                              <div className="p-4 sm:p-6 overflow-x-auto bg-slate-100 flex justify-center">
+                                <CorbatinDocument vehicle={veh} sections={reglamentoSecciones} />
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-3 no-print">
+                              <button
+                                type="button"
+                                onClick={() => handleDescargarPDFDirecto(veh)}
+                                disabled={isGeneratingPDF}
+                                className="px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] flex items-center gap-2 cursor-pointer shadow-md transition-all disabled:opacity-50"
+                                style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
+                              >
+                                <IconFileText className="w-4 h-4" />
+                                <span>{isGeneratingPDF ? "Generando Archivo PDF..." : "Descargar Corbatín en PDF (.pdf)"}</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => window.print()}
+                                className="px-6 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-sm transition-all"
+                              >
+                                🖨️ Imprimir Corbatín
+                              </button>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           </main>
@@ -5966,106 +6420,6 @@ export default function App() {
               </div>
             )}
 
-
-            {portalScreen === "corbatin" && (
-              <div>
-                <PageHero img={IMG_PARK} title="Descarga e Impresión de Corbatines PDF" subtitle="Visualiza y descarga el corbatín físico con código QR para colocar en el retrovisor" />
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-16rem)]">
-                  <div className="flex flex-col lg:flex-row gap-6">
-                    <div className="w-full lg:w-72 shrink-0 no-print">
-                      <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
-                        <div className="px-5 py-4 border-b bg-slate-50" style={{ borderColor: "var(--color-border)" }}>
-                          <h2 className="font-bold text-sm text-slate-800">Seleccionar Vehículo</h2>
-                        </div>
-                        <div className="divide-y divide-slate-100">
-                          {(() => {
-                            const empVehicles = vehicles.filter((v) =>
-                              !currentUser.empresaNombre ||
-                              (v.empresaNombre || "").trim().toLowerCase() === (currentUser.empresaNombre || "").trim().toLowerCase()
-                            );
-                            const listToRender = empVehicles.length > 0 ? empVehicles : vehicles;
-                            if (listToRender.length === 0) {
-                              return (
-                                <div className="p-5 text-center text-xs text-slate-500">
-                                  No hay vehículos registrados para tu empresa.
-                                </div>
-                              );
-                            }
-                            const activeVeh = listToRender.find((v) => v.id === selectedCorbatinVehicleId) || listToRender[0];
-                            return listToRender.map((v) => (
-                              <button
-                                key={v.id}
-                                onClick={() => setSelectedCorbatinVehicleId(v.id)}
-                                className={`w-full text-left px-5 py-4 transition-all hover:bg-slate-50 cursor-pointer ${activeVeh?.id === v.id ? "bg-[#E6F4F1] border-l-4 border-[#0D6E5F]" : ""
-                                  }`}
-                              >
-                                <div className="font-semibold text-sm text-slate-800">{v.marca} {v.modelo}</div>
-                                <div className="text-xs text-slate-500 font-mono mt-0.5">{v.placas} · Corbatín #{v.corbatinNum || v.id}</div>
-                                <div className="mt-1.5"><StatusBadge status={v.status} /></div>
-                              </button>
-                            ));
-                          })()}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex-1 space-y-4">
-                      {(() => {
-                        const empVehicles = vehicles.filter((v) =>
-                          !currentUser.empresaNombre ||
-                          (v.empresaNombre || "").trim().toLowerCase() === (currentUser.empresaNombre || "").trim().toLowerCase()
-                        );
-                        const listToRender = empVehicles.length > 0 ? empVehicles : vehicles;
-                        const veh = listToRender.find((v) => v.id === selectedCorbatinVehicleId) || listToRender[0];
-
-                        if (!veh) {
-                          return (
-                            <div className="rounded-2xl border p-12 text-center bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
-                              <h3 className="font-bold text-slate-800 mb-1">Sin vehículos disponibles</h3>
-                              <p className="text-xs text-slate-500">No hay vehículos registrados para generar corbatín en este momento.</p>
-                            </div>
-                          );
-                        }
-
-                        return (
-                          <>
-                            <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" id="corbatin-container" style={{ borderColor: "var(--color-border)" }}>
-                              <div className="px-5 py-4 border-b bg-slate-50 flex items-center justify-between no-print" style={{ borderColor: "var(--color-border)" }}>
-                                <div>
-                                  <h2 className="font-bold text-sm text-slate-800">Vista Previa — Corbatín #{veh.corbatinNum || veh.id}</h2>
-                                  <p className="text-xs text-slate-500">{veh.marca} {veh.modelo} · {veh.placas}</p>
-                                </div>
-                                <StatusBadge status={veh.status} />
-                              </div>
-                              <div className="p-4 sm:p-6 overflow-x-auto bg-slate-100 flex justify-center">
-                                <CorbatinDocument vehicle={veh} sections={reglamentoSecciones} />
-                              </div>
-                            </div>
-                            <div className="flex gap-3 no-print">
-                              <button
-                                onClick={() => handleDescargarPDFDirecto(veh)}
-                                disabled={isGeneratingPDF}
-                                className="px-6 py-2.5 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] flex items-center gap-2 cursor-pointer shadow-md transition-all disabled:opacity-50"
-                                style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
-                              >
-                                <IconFileText className="w-4 h-4" />
-                                <span>{isGeneratingPDF ? "Generando Archivo PDF..." : "Descargar Corbatín en PDF (.pdf)"}</span>
-                              </button>
-                              <button
-                                onClick={() => window.print()}
-                                className="px-6 py-2.5 rounded-xl text-sm font-semibold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-sm"
-                              >
-                                Imprimir
-                              </button>
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* SANCIONES & APELACIÓN */}
             {portalScreen === "sanciones" && (

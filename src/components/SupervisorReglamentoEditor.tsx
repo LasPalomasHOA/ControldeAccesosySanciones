@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 
 export interface ReglamentoSection {
   title: string;
@@ -26,6 +26,24 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
 }) => {
   const [activeTab, setActiveTab] = useState<"banderin" | "general">("banderin");
   const [hasChanges, setHasChanges] = useState(false);
+
+  // Estadísticas discretas de contenido
+  const { totalSections, totalItems, totalChars } = useMemo(() => {
+    const sectionsCount = (reglamentoSecciones || []).length;
+    const itemsCount = (reglamentoSecciones || []).reduce((acc, s) => acc + (s.items ? s.items.length : 0), 0);
+    const titleCharsCount = (reglamentoSecciones || []).reduce((acc, s) => acc + (s.title || "").length, 0);
+    const itemCharsCount = (reglamentoSecciones || []).reduce(
+      (acc, s) => acc + (s.items || []).reduce((a, it) => a + (it || "").length, 0),
+      0
+    );
+    const charsCount = titleCharsCount + itemCharsCount;
+
+    return {
+      totalSections: sectionsCount,
+      totalItems: itemsCount,
+      totalChars: charsCount,
+    };
+  }, [reglamentoSecciones]);
 
   // Manipulación de Secciones del Banderín
   const handleTitleChange = (index: number, newTitle: string) => {
@@ -66,7 +84,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
     const nextNumber = reglamentoSecciones.length + 1;
     const newSection: ReglamentoSection = {
       title: `${nextNumber}. NUEVA SECCIÓN`,
-      items: ["Especificación o regla de operación"],
+      items: ["Norma u obligación operativa"],
     };
     onUpdateReglamentoSecciones([...reglamentoSecciones, newSection]);
     setHasChanges(true);
@@ -93,7 +111,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
   };
 
   const handleResetClick = () => {
-    if (window.confirm("¿Seguro que deseas restablecer tanto el banderín como el reglamento a sus valores de fábrica? Los cambios no guardados se perderán.")) {
+    if (window.confirm("¿Seguro que deseas restablecer tanto el banderín físico como el reglamento digital a sus valores de fábrica? Los cambios no guardados se perderán.")) {
       onResetDefaults();
       setHasChanges(true);
     }
@@ -104,12 +122,15 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
       {/* Header y Barra de Estado */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#0D6E5F]/10 text-[#0D6E5F]">
               Control de Supervisión HOA
             </span>
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
               PostgreSQL + Supabase
+            </span>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-50 text-slate-600 border border-slate-200">
+              Formato Oficial: 13.0 × 17.5 cm
             </span>
             {hasChanges && (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 animate-pulse">
@@ -118,11 +139,11 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
               </span>
             )}
           </div>
-          <h2 className="text-xl font-black text-slate-900 mt-1">
+          <h2 className="text-xl font-black text-slate-900 mt-1.5">
             Gestión y Modificación de Reglamentos Oficiales
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Personaliza las normas impresas en el reverso de los corbatines (banderines físicos) y el texto legal que firman digitalmente los contratistas.
+            Personaliza las normas impresas en el reverso de los corbatines y el texto legal que firman digitalmente los contratistas.
           </p>
         </div>
 
@@ -135,7 +156,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
             className="px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-300 text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer disabled:opacity-50"
             title="Restablecer contenido a los textos oficiales originales"
           >
-            Restablecer Valores Oficiales
+            Restablecer Valores
           </button>
           <button
             type="button"
@@ -167,48 +188,65 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
       </div>
 
       {/* Selector de Pestañas */}
-      <div className="flex gap-2 border-b border-slate-200">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <button
           type="button"
           onClick={() => setActiveTab("banderin")}
-          className={`pb-3 px-4 text-xs font-bold transition-all border-b-2 cursor-pointer flex items-center gap-2 ${
+          className={`p-4 rounded-2xl text-left border-2 transition-all cursor-pointer ${
             activeTab === "banderin"
-              ? "border-[#0D6E5F] text-[#0D6E5F]"
-              : "border-transparent text-slate-500 hover:text-slate-800"
+              ? "border-[#0D6E5F] bg-[#0D6E5F]/5 shadow-sm"
+              : "border-slate-200 bg-white hover:border-slate-300 text-slate-600"
           }`}
         >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="4" width="18" height="16" rx="2" />
-            <line x1="7" y1="8" x2="17" y2="8" />
-            <line x1="7" y1="12" x2="17" y2="12" />
-            <line x1="7" y1="16" x2="13" y2="16" />
-          </svg>
-          <span>Normas de Banderín Físico (Reverso del Corbatín)</span>
-          <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-600 font-mono">
-            {reglamentoSecciones.length} secciones
-          </span>
+          <div className="flex items-center justify-between">
+            <span className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${activeTab === "banderin" ? "text-[#0D6E5F]" : "text-slate-700"}`}>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="4" width="18" height="16" rx="2" />
+                <line x1="7" y1="8" x2="17" y2="8" />
+                <line x1="7" y1="12" x2="17" y2="12" />
+                <line x1="7" y1="16" x2="13" y2="16" />
+              </svg>
+              1. Normas de Banderín Físico (Reverso del Corbatín)
+            </span>
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+              {totalSections} secciones · {totalItems} normas
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">
+            Secciones y normas impresas directamente en el reverso de la tarjeta vehicular.
+          </p>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab("general")}
-          className={`pb-3 px-4 text-xs font-bold transition-all border-b-2 cursor-pointer flex items-center gap-2 ${
+          className={`p-4 rounded-2xl text-left border-2 transition-all cursor-pointer ${
             activeTab === "general"
-              ? "border-[#0D6E5F] text-[#0D6E5F]"
-              : "border-transparent text-slate-500 hover:text-slate-800"
+              ? "border-[#0D6E5F] bg-[#0D6E5F]/5 shadow-sm"
+              : "border-slate-200 bg-white hover:border-slate-300 text-slate-600"
           }`}
         >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-            <line x1="16" y1="13" x2="8" y2="13" />
-            <line x1="16" y1="17" x2="8" y2="17" />
-          </svg>
-          <span>Términos y Condiciones Generales (Firma Digital Contratistas)</span>
+          <div className="flex items-center justify-between">
+            <span className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${activeTab === "general" ? "text-[#0D6E5F]" : "text-slate-700"}`}>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+              2. Términos y Condiciones Generales
+            </span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+              Firma Digital
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">
+            Texto legal íntegro para firma digital obligatoria de contratistas al ingresar al portal.
+          </p>
         </button>
       </div>
 
-      {/* PESTAÑA 1: SECCIONES DEL BANDERÍN */}
+      {/* PESTAÑA 1: SECCIONES DEL BANDERÍN FÍSICO */}
       {activeTab === "banderin" && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Editor de Secciones (Izquierda - 7 columnas) */}
@@ -219,7 +257,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
                   Estructura de Secciones y Normas Impresas
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Edita los títulos y añade o remueve puntos para que se organicen en el banderín impreso.
+                  Edita los títulos y agrega o elimina puntos para organizar el banderín impreso.
                 </p>
               </div>
               <button
@@ -271,7 +309,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
                           type="text"
                           value={item}
                           onChange={(e) => handleItemChange(secIdx, itemIdx, e.target.value)}
-                          placeholder="Descripción de la norma u obligación"
+                          placeholder="Descripción de la norma"
                           className="flex-1 text-xs text-slate-700 rounded-lg px-2.5 py-1.5 border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-[#0D6E5F]"
                         />
                         <button
@@ -308,67 +346,69 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
             <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                   <span className="text-xs font-bold text-slate-800">
-                    Previsualización en Vivo del Banderín Físico
+                    Previsualización en Escala Real
                   </span>
                 </div>
                 <span className="text-[10px] text-slate-400 font-mono">
-                  Reverso · 380px
+                  Reverso · 13.0 × 17.5 cm
                 </span>
               </div>
 
-              {/* Contenedor del Banderín Simulado con estilo exacto de impresión */}
+              {/* Contenedor del Banderín Simulado con proporción real de tarjeta física */}
               <div
-                className="bg-white border-2 border-black rounded p-3 font-sans overflow-hidden text-black shadow-inner"
-                style={{ fontFamily: "Arial, Helvetica, sans-serif" }}
+                className="bg-white border-2 border-black rounded p-3.5 font-sans text-black shadow-inner flex flex-col justify-between"
+                style={{
+                  fontFamily: "Arial, Helvetica, sans-serif",
+                  minHeight: "560px",
+                }}
               >
-                <div className="text-center font-bold text-[11px] uppercase tracking-wide border-b border-black pb-1 mb-2">
-                  Reglamento para Externos en Áreas Comunes
-                </div>
+                <div>
+                  <div className="text-center font-bold uppercase tracking-wide border-b border-black pb-1 mb-2.5 text-[11px]">
+                    Reglamento para Externos en Áreas Comunes
+                  </div>
 
-                <div className="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
-                  {reglamentoSecciones.map((sec, i) => (
-                    <div key={i} className="space-y-0.5">
-                      <div className="text-[10px] font-bold text-black uppercase">
-                        {sec.title || "SECCIÓN SIN TÍTULO"}
+                  <div className="space-y-2.5 pr-0.5">
+                    {reglamentoSecciones.map((sec, i) => (
+                      <div key={i} className="space-y-0.5">
+                        <div className="font-bold text-black uppercase text-[10px]">
+                          {sec.title || "SECCIÓN SIN TÍTULO"}
+                        </div>
+                        <ul className="list-disc pl-4 space-y-0.5 m-0">
+                          {sec.items.map((item, j) => (
+                            <li
+                              key={j}
+                              className="text-slate-900 leading-snug text-[9.5px]"
+                            >
+                              {item || "Norma pendiente de redacción"}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                      <ul className="list-disc pl-4 space-y-0.5 m-0">
-                        {sec.items.map((item, j) => (
-                          <li key={j} className="text-[9px] text-slate-800 leading-tight">
-                            {item || "Norma pendiente de redacción"}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
 
-                <div className="border-t border-slate-300 pt-2 mt-3 flex justify-between items-center text-[8px] text-slate-500">
-                  <span>Las Palomas Rocky Point HOA, A.C.</span>
-                  <span className="font-mono font-bold">Vigencia 1 Año</span>
+                <div className="border-t border-slate-300 pt-2 mt-6 flex justify-between items-center text-[7.5px] text-slate-500 shrink-0">
+                  <span>Las Palomas Rocky Point HOA</span>
+                  <span className="font-mono">Vigencia 1 Año</span>
                 </div>
               </div>
 
-              <div className="mt-3 p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 text-[11px] text-slate-600 space-y-1">
-                <p className="font-semibold text-slate-700 flex items-center gap-1">
-                  <svg className="w-3.5 h-3.5 text-[#0D6E5F]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="16" x2="12" y2="12" />
-                    <line x1="12" y1="8" x2="12.01" y2="8" />
-                  </svg>
-                  Nota de sincronización:
-                </p>
-                <p>
-                  Al hacer clic en <strong>Guardar Cambios Oficiales</strong>, los cambios se actualizan de inmediato en la base de datos de Supabase/PostgreSQL y se reflejan en la descarga de PDFs de todos los contratistas.
-                </p>
+              {/* Indicador Minimalista y Silencioso (Opción 3) */}
+              <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-400 px-1">
+                <span>📄 Cara Posterior Física</span>
+                <span className="font-medium text-slate-500">
+                  {totalSections} secciones · {totalItems} normas · {totalChars} caracteres
+                </span>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* PESTAÑA 2: TÉRMINOS Y CONDICIONES GENERALES */}
+      {/* PESTAÑA 2: TÉRMINOS Y CONDICIONES GENERALES (DIGITAL) */}
       {activeTab === "general" && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Editor de Texto (Izquierda - 7 columnas) */}
@@ -376,10 +416,10 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-slate-800">
-                  Texto Completo de Términos y Condiciones
+                  Texto Completo de Términos y Condiciones Legales
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Este es el documento íntegro que los contratistas deben leer y firmar digitalmente al iniciar sesión por primera vez.
+                  Documento íntegro que los contratistas leen y firman digitalmente al registrarse por primera vez.
                 </p>
               </div>
               <span className="text-xs font-mono text-slate-400">
@@ -403,7 +443,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
             <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                 <span className="text-xs font-bold text-slate-800">
-                  Vista Previa del Contratista al Firmar
+                  Vista Previa de la Firma Digital
                 </span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                   Requisito Obligatorio
