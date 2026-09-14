@@ -146,24 +146,15 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
       {/* Header y Barra de Estado */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#0D6E5F]/10 text-[#0D6E5F]">
-              Control de Supervisión HOA
-            </span>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-              PostgreSQL + Supabase
-            </span>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 text-teal-800 border border-teal-200">
-              Formato Físico Oficial: 13.0 × 17.5 cm
-            </span>
-            {hasChanges && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 animate-pulse">
+          {hasChanges && (
+            <div className="mb-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 animate-pulse">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
                 Cambios pendientes por guardar
               </span>
-            )}
-          </div>
-          <h2 className="text-xl font-black text-slate-900 mt-1.5">
+            </div>
+          )}
+          <h2 className="text-xl font-black text-slate-900">
             Gestión y Modificación de Reglamentos Oficiales
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
