@@ -2164,7 +2164,7 @@ export default function App() {
               loadDatabaseData(true);
               playNotificationChime();
               showToast(
-                `🚨 Nueva infracción registrada en campo — Folio: FOL-${payload.data?.id_reporte || ""}`,
+                `Nueva infracción registrada en campo — Folio: FOL-${payload.data?.id_reporte || ""}`,
                 "warning",
                 "Infracción Detectada en Tiempo Real"
               );
@@ -2174,7 +2174,7 @@ export default function App() {
                 playNotificationChime();
                 if (currentUser?.role === "contratista" && (!payload.empresaNombre || payload.empresaNombre === currentUser.empresaNombre)) {
                   showToast(
-                    `⚠️ Medida disciplinaria dictaminada y aprobada para tu empresa (Vehículo ${payload.placas || ""}).`,
+                    `Medida disciplinaria dictaminada y aprobada para tu empresa (Vehículo ${payload.placas || ""}).`,
                     "error",
                     "Suspensión Vehicular Aplicada"
                   );
@@ -6011,7 +6011,7 @@ export default function App() {
                     </div>
                     <div className="flex items-center justify-between pt-2">
                       <span className="text-xs text-slate-500">
-                        {!contratistaAceptoTerminos ? "⚠️ Marca la casilla de aceptación para habilitar la firma" : "✓ Listo para registrar tu firma en la base de datos"}
+                        {!contratistaAceptoTerminos ? "Marca la casilla de aceptación para habilitar la firma" : "Listo para registrar tu firma en la base de datos"}
                       </span>
                       <button
                         type="button"
@@ -6965,7 +6965,7 @@ export default function App() {
                               <span>1. Ingreso Vehicular: Corbatín / Placas y Conductor</span>
                             </label>
                             <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-300/60">
-                              ⚡ Búsqueda & Desplegables
+                              Búsqueda & Desplegables
                             </span>
                           </div>
 
@@ -9186,7 +9186,7 @@ export default function App() {
                 <div className={`p-3.5 rounded-2xl border text-xs space-y-1 ${isQuotaFull ? "bg-amber-50/90 border-amber-300 text-amber-900" : "bg-slate-50 border-slate-200 text-slate-700"
                   }`}>
                   <div className="flex items-center justify-between font-bold">
-                    <span>🏷️ Control de Corbatines de la Empresa:</span>
+                    <span>Control de Corbatines de la Empresa:</span>
                     {hasRange ? (
                       <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${isQuotaFull ? "bg-amber-200 text-amber-900" : "bg-teal-100 text-teal-800"}`}>
                         {cuposOcupados} / {totalCupos} cupos ocupados
@@ -9202,7 +9202,7 @@ export default function App() {
                   )}
                   {isQuotaFull && (
                     <p className="text-[11px] font-bold text-red-600 pt-1">
-                      ⚠️ Atención: La empresa ha completado el total de cupos asignados ({totalCupos} corbatines). Puedes ampliar el rango en "Editar Rango / Empresa".
+                      Atención: La empresa ha completado el total de cupos asignados ({totalCupos} corbatines). Puedes ampliar el rango en "Editar Rango / Empresa".
                     </p>
                   )}
                 </div>
@@ -9269,9 +9269,9 @@ export default function App() {
                   defaultValue="HABILITADO"
                   className="w-full rounded-xl px-4 py-2.5 text-xs font-bold border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800"
                 >
-                  <option value="HABILITADO">✅ HABILITADO - Acceso vehicular autorizado</option>
-                  <option value="DESHABILITADO">⚪ DESHABILITADO - Inactivo o en mantenimiento</option>
-                  <option value="SUSPENDIDO">⛔ SUSPENDIDO - Suspensión preventiva</option>
+                  <option value="HABILITADO">HABILITADO - Acceso vehicular autorizado</option>
+                  <option value="DESHABILITADO">DESHABILITADO - Inactivo o en mantenimiento</option>
+                  <option value="SUSPENDIDO">SUSPENDIDO - Suspensión preventiva</option>
                 </select>
               </div>
 
@@ -9552,7 +9552,7 @@ export default function App() {
                 </span>
                 <div>
                   <h4 className="text-xs font-black uppercase tracking-wider text-rose-700 flex items-center gap-1.5">
-                    <span>🚨 Infracción Aprobada</span>
+                    <span>Infracción Aprobada</span>
                     {sancionesAlertaParaProveedor.length > 1 && (
                       <span className="bg-rose-100 text-rose-800 border border-rose-200 text-[10px] font-bold px-2 py-0.5 rounded-full">
                         {safeIdx + 1} de {sancionesAlertaParaProveedor.length}

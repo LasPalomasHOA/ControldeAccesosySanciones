@@ -380,7 +380,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
                   }`}
                   title={isFull ? "Has alcanzado la capacidad física de la tarjeta" : "Agregar nueva sección"}
                 >
-                  <span>{isFull ? "Tarjeta Llena" : "+ Nueva Sección"}</span>
+                  <span>{isFull ? "Tarjeta Llena" : "Nueva Sección"}</span>
                 </button>
               </div>
 
@@ -450,7 +450,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
                             isFull ? "text-slate-400 cursor-not-allowed" : "text-[#0D6E5F] hover:underline cursor-pointer"
                           }`}
                         >
-                          <span>+ Agregar norma a esta sección</span>
+                          <span>Agregar norma a esta sección</span>
                         </button>
                       </div>
                     </div>

@@ -583,7 +583,7 @@ export async function exportSupervisorReportToExcel(data: ExportReportData) {
   // Tabla Derecha 1: Modalidad
   wsDashboard.mergeCells(`G${tableStartRow}:J${tableStartRow}`);
   const tHeaderRight1 = wsDashboard.getCell(`G${tableStartRow}`);
-  tHeaderRight1.value = '🚗 MODALIDAD DE ACCESO';
+  tHeaderRight1.value = 'MODALIDAD DE ACCESO';
   tHeaderRight1.font = { size: 10, bold: true, color: { argb: COLORS.headerText } };
   tHeaderRight1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.primary } };
   tHeaderRight1.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
@@ -632,7 +632,7 @@ export async function exportSupervisorReportToExcel(data: ExportReportData) {
   const topEmpStartRow = curRowRight1 + 2;
   wsDashboard.mergeCells(`G${topEmpStartRow}:J${topEmpStartRow}`);
   const tHeaderTopEmp = wsDashboard.getCell(`G${topEmpStartRow}`);
-  tHeaderTopEmp.value = '🏢 TOP EMPRESAS CON MAYOR TRÁFICO';
+  tHeaderTopEmp.value = 'TOP EMPRESAS CON MAYOR TRÁFICO';
   tHeaderTopEmp.font = { size: 10, bold: true, color: { argb: COLORS.headerText } };
   tHeaderTopEmp.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.primaryDark } };
   tHeaderTopEmp.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
