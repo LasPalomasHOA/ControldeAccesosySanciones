@@ -58,8 +58,8 @@ export const Login: React.FC = () => {
       <div className="w-full max-w-xl bg-slate-900/80 border border-slate-800 rounded-2xl shadow-2xl p-8 backdrop-blur-md relative z-10">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-cyan-500/30 bg-white p-1 mx-auto shadow-lg mb-4 flex items-center justify-center">
-            <img src="/src/assets/logo.jpg" alt="Las Palomas" className="w-full h-full object-cover rounded-xl" />
+          <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-cyan-500/30 bg-white p-2 mx-auto shadow-lg mb-4 flex items-center justify-center">
+            <img src="/logo.png" alt="Las Palomas" className="w-full h-full object-contain rounded-xl" />
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-white">Las Palomas Rocky Point</h2>
           <p className="text-slate-400 text-sm mt-2">

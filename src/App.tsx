@@ -6,6 +6,7 @@ import { api } from "./services/api";
 import { compressImageClient } from "./utils/imageCompressor";
 import SupervisorHistorial from "./components/SupervisorHistorial";
 import SupervisorReglamentoEditor, { ReglamentoSection } from "./components/SupervisorReglamentoEditor";
+import logoPng from "./assets/logo.png";
 
 // ─── SVG Icons (Clean, Modern, Vector) ────────────────────────────────────────
 function IconSpinner({ className = "w-4 h-4" }: { className?: string }) {
@@ -564,36 +565,15 @@ const IMG_GATE = "https://images.unsplash.com/photo-1775112077888-8fa36e9bbc51?w
 const IMG_PARK = "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=1600&h=600&fit=crop&auto=format";
 const IMG_COAST = "https://images.unsplash.com/photo-1785300550144-6fc8db9cbb95?w=1600&h=600&fit=crop&auto=format";
 
-// ─── Repaired & Uncropped Logo SVG ───────────────────────────────────────────
-
-function LPLogo({ size = 160, light = false }: { size?: number; light?: boolean }) {
-  const textColor = light ? "#ffffff" : "#0D6E5F";
-  const subColor = light ? "rgba(255,255,255,0.85)" : "#64748B";
-  const scale = size / 160;
-
+// ─── Official Brand Logo ───────────────────────────────────────────────────
+function LPLogo({ size = 160, className = "" }: { size?: number; light?: boolean; className?: string }) {
   return (
-    <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: `${10 * scale}px` }}>
-      <svg
-        width={46 * scale}
-        height={38 * scale}
-        viewBox="0 0 85 70"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        style={{ display: "block" }}
-      >
-        <path d="M6 24 Q18 6 30 20 Q42 34 54 18 Q66 2 78 16" stroke="#DC2626" strokeWidth="6.5" strokeLinecap="round" fill="none" />
-        <path d="M6 38 Q18 20 30 34 Q42 48 54 32 Q66 16 78 30" stroke="#D97706" strokeWidth="6.5" strokeLinecap="round" fill="none" />
-        <path d="M6 52 Q18 34 30 48 Q42 62 54 46 Q66 30 78 44" stroke="#059669" strokeWidth="6.5" strokeLinecap="round" fill="none" />
-      </svg>
-      <div style={{ textAlign: "left", lineHeight: "1.15" }}>
-        <div style={{ fontFamily: "Georgia, serif", fontWeight: "bold", fontSize: `${18 * scale}px`, color: textColor, letterSpacing: "0.2px" }}>
-          Las Palomas
-        </div>
-        <div style={{ fontFamily: "Georgia, serif", fontSize: `${10.5 * scale}px`, color: subColor, marginTop: `${2 * scale}px`, letterSpacing: "0.2px" }}>
-          Rocky Point HOA, A.C.
-        </div>
-      </div>
-    </div>
+    <img
+      src={logoPng}
+      alt="Las Palomas Rocky Point HOA"
+      className={`object-contain inline-block ${className}`}
+      style={{ width: `${size}px`, maxWidth: "100%", height: "auto" }}
+    />
   );
 }
 
@@ -2395,33 +2375,24 @@ export default function App() {
   // Helper function to render authentic colorful logo to PNG for PDF embedding
   const getLogoImageForPDF = (): Promise<string> => {
     return new Promise((resolve) => {
-      const logoSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="96" viewBox="0 0 300 96">
-        <path d="M6 36 Q18 16 30 32 Q42 48 54 30 Q66 12 78 28" stroke="#DC2626" stroke-width="7" stroke-linecap="round" fill="none"/>
-        <path d="M6 52 Q18 32 30 48 Q42 64 54 46 Q66 28 78 44" stroke="#D97706" stroke-width="7" stroke-linecap="round" fill="none"/>
-        <path d="M6 68 Q18 48 30 64 Q42 80 54 62 Q66 44 78 60" stroke="#059669" stroke-width="7" stroke-linecap="round" fill="none"/>
-        <text x="96" y="46" font-family="Georgia, serif" font-weight="bold" font-size="24" fill="#0D6E5F">Las Palomas</text>
-        <text x="96" y="68" font-family="Georgia, serif" font-size="12" fill="#64748B">Rocky Point HOA, A.C.</text>
-      </svg>`;
-
       const img = new Image();
-      const svgBlob = new Blob([logoSvg], { type: "image/svg+xml;charset=utf-8" });
-      const url = URL.createObjectURL(svgBlob);
+      img.crossOrigin = "anonymous";
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        canvas.width = 600;
-        canvas.height = 192;
+        canvas.width = img.naturalWidth || img.width || 400;
+        canvas.height = img.naturalHeight || img.height || 120;
         const ctx = canvas.getContext("2d");
         if (ctx) {
-          ctx.drawImage(img, 0, 0, 600, 192);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           resolve(canvas.toDataURL("image/png"));
+        } else {
+          resolve(logoPng);
         }
-        URL.revokeObjectURL(url);
       };
       img.onerror = () => {
-        URL.revokeObjectURL(url);
-        resolve("");
+        resolve(logoPng);
       };
-      img.src = url;
+      img.src = logoPng;
     });
   };
 
