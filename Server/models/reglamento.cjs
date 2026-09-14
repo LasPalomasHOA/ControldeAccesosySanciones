@@ -36,6 +36,16 @@ const Reglamento = sequelize.define(
       allowNull: false,
       defaultValue: true,
       comment: 'Marca si es la versión activa actual'
+    },
+    contenido_texto: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Texto completo de términos y artículos del reglamento'
+    },
+    contenido_secciones: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      comment: 'Secciones dinámicas para reverso de corbatines y banderines'
     }
   },
   {

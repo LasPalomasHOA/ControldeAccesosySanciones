@@ -7,6 +7,26 @@ import { spawn, type ChildProcess } from 'node:child_process'
 function expressServerPlugin(): Plugin {
   let serverProcess: ChildProcess | null = null
 
+  const startServer = () => {
+    if (serverProcess && !serverProcess.killed) return
+    const serverScript = path.resolve(process.cwd(), 'Server/index.cjs')
+    serverProcess = spawn(process.execPath, [serverScript], {
+      stdio: 'inherit',
+      env: { ...process.env },
+    })
+
+    serverProcess.on('error', (err) => {
+      console.error('❌ Error al iniciar el servidor Express:', err)
+    })
+
+    serverProcess.on('exit', (code) => {
+      if (code !== 0 && code !== null) {
+        console.warn(`⚠️ Servidor Express finalizó con código: ${code}`)
+      }
+      serverProcess = null
+    })
+  }
+
   const killServer = () => {
     if (serverProcess && !serverProcess.killed) {
       serverProcess.kill()
@@ -18,15 +38,7 @@ function expressServerPlugin(): Plugin {
     name: 'express-server-runner',
     apply: 'serve',
     configureServer(server) {
-      if (!serverProcess) {
-        serverProcess = spawn(
-          process.execPath,
-          ['--watch', path.resolve(import.meta.dirname, 'Server/index.cjs')],
-          {
-            stdio: ['ignore', 'inherit', 'inherit'],
-          }
-        )
-      }
+      startServer()
 
       server.httpServer?.on('close', killServer)
       process.once('SIGINT', () => {

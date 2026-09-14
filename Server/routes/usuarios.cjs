@@ -42,15 +42,39 @@ router.post('/login', async (req, res) => {
     };
 
     const resolvedFoto = resolveFotoToDataUrl(plain.foto_url);
+    const rolCalculado = rolMap[plain.rol?.nombre] || plain.rol?.nombre?.toLowerCase() || 'admin';
+
+    // Verificar si el contratista ya aceptó el reglamento vigente en la base de datos
+    let hasAcceptedReglamento = true;
+    if (rolCalculado === 'proveedor') {
+      hasAcceptedReglamento = false;
+      try {
+        const regVigente = await db.Reglamento.findOne({ where: { vigente: true } });
+        if (regVigente) {
+          const conditions = [{ id_usuario: plain.id_usuario }];
+          if (plain.id_empresa) conditions.push({ id_empresa: plain.id_empresa });
+          const aceptacion = await db.AceptacionReglamento.findOne({
+            where: {
+              id_reglamento: regVigente.id_reglamento,
+              [db.Sequelize.Op.or]: conditions
+            }
+          });
+          hasAcceptedReglamento = !!aceptacion;
+        }
+      } catch (checkErr) {
+        console.warn('Error verificando aceptación de reglamento:', checkErr.message);
+      }
+    }
 
     res.json({
       ...plain,
       id: String(plain.id_usuario),
-      rol: rolMap[plain.rol?.nombre] || plain.rol?.nombre?.toLowerCase() || 'admin',
+      rol: rolCalculado,
       rolNombre: plain.rol?.nombre,
       empresaNombre: plain.empresa?.razon_social || '',
       foto_url: resolvedFoto || null,
-      avatar: resolvedFoto || `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150`
+      avatar: resolvedFoto || `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150`,
+      hasAcceptedReglamento
     });
   } catch (error) {
     console.error('Error en login:', error);

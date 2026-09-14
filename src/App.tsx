@@ -5,6 +5,7 @@ import html2canvas from "html2canvas";
 import { api } from "./services/api";
 import { compressImageClient } from "./utils/imageCompressor";
 import SupervisorHistorial from "./components/SupervisorHistorial";
+import SupervisorReglamentoEditor, { ReglamentoSection } from "./components/SupervisorReglamentoEditor";
 
 // ─── SVG Icons (Clean, Modern, Vector) ────────────────────────────────────────
 function IconSpinner({ className = "w-4 h-4" }: { className?: string }) {
@@ -360,7 +361,7 @@ function IconCheckSimple({ className = "w-4 h-4" }: { className?: string }) {
 
 type UserRole = "admin" | "supervisor" | "contratista" | "caseta";
 type PortalScreen = "reglamento" | "dashboard" | "alta" | "trabajadores" | "corbatin" | "sanciones";
-type SupervisorTab = "bandeja" | "apelaciones" | "proveedores" | "guardias" | "historial";
+type SupervisorTab = "bandeja" | "apelaciones" | "proveedores" | "guardias" | "historial" | "reglamento";
 type AdminTab = "supervisores" | "proveedores" | "auditoria";
 type CasetaTab = "registro" | "bitacora";
 
@@ -500,7 +501,7 @@ interface InfraccionReporte {
 const INITIAL_USERS: UserAccount[] = [
   { id: "1", username: "admin@laspalomashoa.com", password: "123456", nombre: "Administrador de Seguridad HOA", email: "admin@laspalomashoa.com", role: "admin", fechaCreacion: "2026-01-01", creadoPor: "Sistema Raíz", activo: true },
   { id: "2", username: "supervisor@laspalomashoa.com", password: "123456", nombre: "Supervisor Operativo", email: "supervisor@laspalomashoa.com", role: "supervisor", turno: "Turno General 24/7", fechaCreacion: "2026-01-10", creadoPor: "Admin TI", activo: true },
-  { id: "5", username: "proveedor@constructoraintegral.com", password: "123456", nombre: "Roberto Silva Morales", email: "proveedor@constructoraintegral.com", role: "contratista", empresaNombre: "Constructora Integral del Noroeste S.A. de C.V.", fechaCreacion: "2026-02-01", creadoPor: "Supervisor HOA", hasAcceptedReglamento: true, activo: true },
+  { id: "5", username: "proveedor@constructoraintegral.com", password: "123456", nombre: "Roberto Silva Morales", email: "proveedor@constructoraintegral.com", role: "contratista", empresaNombre: "Constructora Integral del Noroeste S.A. de C.V.", fechaCreacion: "2026-02-01", creadoPor: "Supervisor HOA", hasAcceptedReglamento: false, activo: true },
   { id: "4", username: "caseta@laspalomashoa.com", password: "123456", nombre: "Guardia Caseta Principal", email: "caseta@laspalomashoa.com", role: "caseta", turno: "Vespertino (14:00 - 22:00)", fechaCreacion: "2026-02-05", creadoPor: "Supervisor HOA", activo: true },
 ];
 
@@ -511,6 +512,15 @@ const INITIAL_VEHICLES: Vehicle[] = [];
 const INITIAL_SANCIONES: Sancion[] = [];
 const INITIAL_BITACORA: RegistroCaseta[] = [];
 const INITIAL_INFRACCIONES_PENDIENTES: InfraccionReporte[] = [];
+
+const DEFAULT_REGLAMENTO_SECTIONS: ReglamentoSection[] = [
+  { title: "1. INGRESO", items: ["Registrar: corbatín, compañía, vehículo, placas, nombre y celular.", "Indicar área de trabajo y horario.", "Portar uniforme, gafete visible y EPP obligatorio."] },
+  { title: "2. ÁREA DE TRABAJO", items: ["Permanecer solo en el área asignada.", "Usar señalización de seguridad (conos, cintas).", "Uso obligatorio de EPP (incluye arnés en altura).", "Consumir alimentos solo en áreas designadas.", "No usar elevadores de huéspedes."] },
+  { title: "3. VEHÍCULOS", items: ["Altura máxima: 2.40 m.", "Estacionarse solo en áreas autorizadas (Sótano 2).", "Colocar corbatín visible en el retrovisor o tablero."] },
+  { title: "4. PROHIBICIONES", items: ['No tirar escombro en "Trash Chute".', "No dejar materiales en áreas comunes.", "No usar bocinas ni generar ruido excesivo.", "No dormir en áreas comunes."] },
+  { title: "5. SANCIONES DISCIPLINARIAS", items: ["1ª: Amonestación escrita", "2ª: Suspensión de 24 a 48 hrs", "3ª: Suspensión de 1 semana", "Reincidencia: Restricción definitiva"] },
+  { title: "6. HORARIOS", items: ["Lunes a viernes: 08:00 a 18:00 hrs", "Sábado: 09:00 a 14:00 hrs", "No generar ruido antes de 09:00 hrs", "Horarios especiales requieren autorización HOA."] },
+];
 
 const REGLAMENTO_TEXT = `REGLAMENTO DE COLABORADORES EXTERNOS — LAS PALOMAS ROCKY POINT HOA
 
@@ -546,6 +556,8 @@ El representante acreditado de la empresa contratista cuenta con el derecho regl
 
 7. RESPONSABILIDADES CIVILES
 La empresa contratista asume plena responsabilidad civil y solidaria por los daños o percances que sus colaboradores o unidades vehiculares ocasionen a la infraestructura o áreas comunes de Las Palomas.`;
+
+const DEFAULT_REGLAMENTO_TEXT = REGLAMENTO_TEXT;
 
 const IMG_AERIAL = "https://images.unsplash.com/photo-1785300674532-87efce12b5ee?w=1600&h=600&fit=crop&auto=format";
 const IMG_GATE = "https://images.unsplash.com/photo-1775112077888-8fa36e9bbc51?w=1600&h=600&fit=crop&auto=format";
@@ -745,21 +757,14 @@ function RealQRCode({ value, size = 135 }: { value: string; size?: number }) {
 
 // ─── Printable Corbatin Document (50% / 50% Symmetry) ─────────────────────────
 
-function CorbatinDocument({ vehicle }: { vehicle: Vehicle }) {
+function CorbatinDocument({ vehicle, sections }: { vehicle: Vehicle; sections?: ReglamentoSection[] }) {
   const currentYear = new Date().getFullYear();
   const nextYear = currentYear + 1;
 
   // Optimized compact payload for clean, large, high-contrast QR dots
   const qrPayload = `LP-HOA|CORB:${vehicle.corbatinNum}|PLACAS:${vehicle.placas}|VIG:${currentYear}-${nextYear}`;
 
-  const sections = [
-    { title: "1. INGRESO", items: ["Registrar: corbatín, compañía, vehículo, placas, nombre y celular.", "Indicar área de trabajo y horario.", "Portar uniforme, gafete visible y EPP obligatorio."] },
-    { title: "2. ÁREA DE TRABAJO", items: ["Permanecer solo en el área asignada.", "Usar señalización de seguridad (conos, cintas).", "Uso obligatorio de EPP (incluye arnés en altura).", "Consumir alimentos solo en áreas designadas.", "No usar elevadores de huéspedes."] },
-    { title: "3. VEHÍCULOS", items: ["Altura máxima: 2.40 m.", "Estacionarse solo en áreas autorizadas (Sótano 2).", "Colocar corbatín visible en el retrovisor o tablero."] },
-    { title: "4. PROHIBICIONES", items: ['No tirar escombro en "Trash Chute".', "No dejar materiales en áreas comunes.", "No usar bocinas ni generar ruido excesivo.", "No dormir en áreas comunes."] },
-    { title: "5. SANCIONES DISCIPLINARIAS", items: ["1ª: Amonestación escrita", "2ª: Suspensión de 24 a 48 hrs", "3ª: Suspensión de 1 semana", "Reincidencia: Restricción definitiva"] },
-    { title: "6. HORARIOS", items: ["Lunes a viernes: 08:00 a 18:00 hrs", "Sábado: 09:00 a 14:00 hrs", "No generar ruido antes de 09:00 hrs", "Horarios especiales requieren autorización HOA."] },
-  ];
+  const docSections = sections && sections.length > 0 ? sections : DEFAULT_REGLAMENTO_SECTIONS;
 
   return (
     <div
@@ -846,8 +851,8 @@ function CorbatinDocument({ vehicle }: { vehicle: Vehicle }) {
                 <div style={{ fontSize: "12.5px", fontWeight: "900", textAlign: "center", marginBottom: "10px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                   Reglamento para externos en áreas comunes:
                 </div>
-                {sections.map((sec) => (
-                  <div key={sec.title} style={{ marginBottom: "7px" }}>
+                {docSections.map((sec, idx) => (
+                  <div key={sec.title || idx} style={{ marginBottom: "7px" }}>
                     <div style={{ fontSize: "10.5px", fontWeight: "bold", color: "#000000", marginBottom: "1.5px" }}>{sec.title}</div>
                     <ul style={{ margin: 0, paddingLeft: "15px", listStyleType: "disc" }}>
                       {sec.items.map((item, i) => (
@@ -1278,8 +1283,23 @@ export default function App() {
   const [portalScreen, setPortalScreen] = useState<PortalScreen>("dashboard");
   const [casetaTab, setCasetaTab] = useState<CasetaTab>("registro");
 
+  // Estado dinámico del reglamento oficial y banderines
+  const [reglamentoTexto, setReglamentoTexto] = useState<string>(() => {
+    return localStorage.getItem("hoa_reglamento_texto") || DEFAULT_REGLAMENTO_TEXT;
+  });
+  const [reglamentoSecciones, setReglamentoSecciones] = useState<ReglamentoSection[]>(() => {
+    try {
+      const saved = localStorage.getItem("hoa_reglamento_secciones");
+      return saved ? JSON.parse(saved) : DEFAULT_REGLAMENTO_SECTIONS;
+    } catch {
+      return DEFAULT_REGLAMENTO_SECTIONS;
+    }
+  });
+  const [isSavingReglamento, setIsSavingReglamento] = useState(false);
 
-
+  // Estado controlado para la firma de aceptación del contratista
+  const [contratistaFirmaNombre, setContratistaFirmaNombre] = useState("");
+  const [contratistaAceptoTerminos, setContratistaAceptoTerminos] = useState(false);
   const [users, setUsers] = useState<UserAccount[]>(INITIAL_USERS);
   const [empresas, setEmpresas] = useState<Empresa[]>(INITIAL_EMPRESAS);
   const [vehicles, setVehicles] = useState<Vehicle[]>(INITIAL_VEHICLES);
@@ -1725,7 +1745,7 @@ export default function App() {
 
     isFetchingDbRef.current = true;
     try {
-      const [resUsers, resEmpresas, resVehicles, resTrabajadores, resSanciones, resBitacora, resReportes] = await Promise.allSettled([
+      const [resUsers, resEmpresas, resVehicles, resTrabajadores, resSanciones, resBitacora, resReportes, resReglamento] = await Promise.allSettled([
         api.getUsuarios(),
         api.getEmpresas(),
         api.getVehiculos(),
@@ -1733,6 +1753,7 @@ export default function App() {
         api.getSanciones(),
         api.getBitacora(),
         api.getReportes(),
+        api.getReglamentoVigente(),
       ]);
 
       lastFetchTimestampRef.current = Date.now();
@@ -1747,7 +1768,9 @@ export default function App() {
           empresaNombre: u.empresaNombre || "",
           fechaCreacion: u.created_at ? new Date(u.created_at).toISOString().split("T")[0] : "2026-01-01",
           creadoPor: "Administrador de Seguridad HOA",
-          hasAcceptedReglamento: true,
+          hasAcceptedReglamento: (u.rol === "proveedor" || u.role === "contratista")
+            ? ((localStorage.getItem("hoa_accepted_reglamento_" + (u.id_usuario || u.id)) === "true") || Boolean(u.hasAcceptedReglamento))
+            : true,
           activo: u.activo !== false,
           foto_url: u.foto_url || u.avatar || "",
         }));
@@ -1930,6 +1953,21 @@ export default function App() {
           };
         });
         setInfraccionesPendientes(mappedInf);
+      }
+
+      if (resReglamento.status === "fulfilled" && resReglamento.value) {
+        const reg = resReglamento.value;
+        if (reg.contenido_texto) {
+          setReglamentoTexto(reg.contenido_texto);
+          localStorage.setItem("hoa_reglamento_texto", reg.contenido_texto);
+        }
+        if (reg.contenido_secciones) {
+          const parsed = typeof reg.contenido_secciones === "string" ? JSON.parse(reg.contenido_secciones) : reg.contenido_secciones;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setReglamentoSecciones(parsed);
+            localStorage.setItem("hoa_reglamento_secciones", JSON.stringify(parsed));
+          }
+        }
       }
     } catch (err) {
       console.warn("Error cargando base de datos:", err);
@@ -2229,6 +2267,10 @@ export default function App() {
             data.rol === "supervisor" ? "supervisor" :
               data.rol === "proveedor" ? "contratista" : "caseta";
 
+        const isAccepted = roleMapped === "contratista"
+          ? (data.hasAcceptedReglamento !== undefined ? data.hasAcceptedReglamento : (localStorage.getItem("hoa_accepted_reglamento_" + (data.id || data.id_usuario)) === "true"))
+          : true;
+
         const loggedUser: UserAccount = {
           id: String(data.id || data.id_usuario),
           username: data.correo,
@@ -2238,7 +2280,7 @@ export default function App() {
           empresaNombre: data.empresaNombre || "",
           fechaCreacion: data.created_at || "2026-01-01",
           creadoPor: "PostgreSQL Database",
-          hasAcceptedReglamento: true,
+          hasAcceptedReglamento: isAccepted,
         };
 
         setCurrentUser(loggedUser);
@@ -2263,8 +2305,12 @@ export default function App() {
         setLoginError("Contraseña incorrecta. Por favor verifica tu clave (123456).");
         return;
       }
-      setCurrentUser(found);
-      if (found.role === "contratista" && !found.hasAcceptedReglamento) {
+      const isAccepted = found.role === "contratista"
+        ? ((localStorage.getItem("hoa_accepted_reglamento_" + found.id) === "true") || Boolean(found.hasAcceptedReglamento))
+        : true;
+      const userWithAcceptance = { ...found, hasAcceptedReglamento: isAccepted };
+      setCurrentUser(userWithAcceptance);
+      if (userWithAcceptance.role === "contratista" && !userWithAcceptance.hasAcceptedReglamento) {
         setPortalScreen("reglamento");
       } else {
         setPortalScreen("dashboard");
@@ -2285,9 +2331,13 @@ export default function App() {
     const targetEmail = roleEmailMap[role];
     const found = users.find((u) => u.email?.toLowerCase() === targetEmail || u.role === role);
     if (found) {
-      setCurrentUser(found);
+      const isAccepted = found.role === "contratista"
+        ? ((localStorage.getItem("hoa_accepted_reglamento_" + found.id) === "true") || Boolean(found.hasAcceptedReglamento))
+        : true;
+      const userWithAcceptance = { ...found, hasAcceptedReglamento: isAccepted };
+      setCurrentUser(userWithAcceptance);
       setLoginError("");
-      if (found.role === "contratista" && !found.hasAcceptedReglamento) {
+      if (userWithAcceptance.role === "contratista" && !userWithAcceptance.hasAcceptedReglamento) {
         setPortalScreen("reglamento");
       } else {
         setPortalScreen("dashboard");
@@ -2300,6 +2350,37 @@ export default function App() {
     setLoginUsername("");
     setLoginPassword("");
     setLoginError("");
+  };
+
+  // Guardado de reglamento y banderines por el Supervisor (Persistencia Dual: PostgreSQL + LocalStorage)
+  const handleGuardarReglamentoSupervisor = async () => {
+    try {
+      setIsSavingReglamento(true);
+      // 1. Guardar en almacenamiento local para disponibilidad inmediata offline
+      localStorage.setItem("hoa_reglamento_texto", reglamentoTexto);
+      localStorage.setItem("hoa_reglamento_secciones", JSON.stringify(reglamentoSecciones));
+
+      // 2. Persistir en la base de datos PostgreSQL en Supabase a través del endpoint del backend
+      await api.updateReglamentoContenido({
+        contenido_texto: reglamentoTexto,
+        contenido_secciones: reglamentoSecciones,
+      });
+
+      showToast("El reglamento general y las normas de banderines se guardaron exitosamente en la base de datos.", "success", "Cambios Oficiales Guardados");
+    } catch (err: any) {
+      console.error("Error al guardar reglamento en la base de datos:", err);
+      showToast("Se guardó en memoria local. Error de conexión con el servidor: " + (err.message || "Error desconocido"), "warning", "Guardado Localmente");
+    } finally {
+      setIsSavingReglamento(false);
+    }
+  };
+
+  const handleResetReglamentoSupervisor = () => {
+    setReglamentoTexto(DEFAULT_REGLAMENTO_TEXT);
+    setReglamentoSecciones(DEFAULT_REGLAMENTO_SECTIONS);
+    localStorage.removeItem("hoa_reglamento_texto");
+    localStorage.removeItem("hoa_reglamento_secciones");
+    showToast("Se restablecieron las secciones y el texto oficial a los valores por defecto.", "info", "Valores Restablecidos");
   };
 
   // Helper function to render authentic colorful logo to PNG for PDF embedding
@@ -2485,63 +2566,9 @@ export default function App() {
 
       textY += 7.5;
 
-      const sections = [
-        {
-          title: "1. INGRESO",
-          items: [
-            "• Registrar: corbatín, compañía, vehículo, placas, nombre y celular.",
-            "• Indicar área de trabajo y horario.",
-            "• Portar uniforme, gafete visible y EPP obligatorio."
-          ]
-        },
-        {
-          title: "2. ÁREA DE TRABAJO",
-          items: [
-            "• Permanecer solo en el área asignada.",
-            "• Usar señalización de seguridad (conos, cintas).",
-            "• Uso obligatorio de EPP (incluye arnés en altura).",
-            "• Consumir alimentos solo en áreas designadas.",
-            "• No usar elevadores de huéspedes."
-          ]
-        },
-        {
-          title: "3. VEHÍCULOS",
-          items: [
-            "• Altura máxima: 2.40 m.",
-            "• Estacionarse solo en áreas autorizadas (Sótano 2).",
-            "• Colocar corbatín visible en el retrovisor o tablero."
-          ]
-        },
-        {
-          title: "4. PROHIBICIONES",
-          items: [
-            '• No tirar escombro en "Trash Chute".',
-            "• No dejar materiales en áreas comunes.",
-            "• No usar bocinas ni generar ruido excesivo.",
-            "• No dormir en áreas comunes."
-          ]
-        },
-        {
-          title: "5. SANCIONES DISCIPLINARIAS",
-          items: [
-            "• 1ª: Amonestación escrita",
-            "• 2ª: Suspensión de 24 a 48 hrs",
-            "• 3ª: Suspensión de 1 semana",
-            "• Reincidencia: Restricción definitiva"
-          ]
-        },
-        {
-          title: "6. HORARIOS",
-          items: [
-            "• Lunes a viernes: 08:00 a 18:00 hrs",
-            "• Sábado: 09:00 a 14:00 hrs",
-            "• No generar ruido antes de 09:00 hrs",
-            "• Horarios especiales requieren autorización HOA."
-          ]
-        },
-      ];
+      const activeSections = reglamentoSecciones && reglamentoSecciones.length > 0 ? reglamentoSecciones : DEFAULT_REGLAMENTO_SECTIONS;
 
-      sections.forEach((sec) => {
+      activeSections.forEach((sec) => {
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(9.5);
         pdf.setTextColor(0, 0, 0);
@@ -2552,7 +2579,8 @@ export default function App() {
         pdf.setFontSize(8.2);
         pdf.setTextColor(25, 25, 25);
         sec.items.forEach((it) => {
-          pdf.text(it, rightMargin + 2, textY);
+          const bullet = it.startsWith("•") ? it : `• ${it}`;
+          pdf.text(bullet, rightMargin + 2, textY);
           textY += 3.8;
         });
         textY += 2.6;
@@ -4637,39 +4665,52 @@ export default function App() {
                   >
                     Historial
                   </button>
+                  <button
+                    onClick={() => setSupervisorTab("reglamento")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${supervisorTab === "reglamento" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                  >
+                    <span>Reglamento & Banderines</span>
+                  </button>
                 </div>
               )}
 
               {currentUser.role === "contratista" && (
-                <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-2xl border border-slate-200/80 whitespace-nowrap shrink-0 shadow-xs">
-                  <button
-                    onClick={() => setPortalScreen("dashboard")}
-                    className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${portalScreen === "dashboard" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
-                  >
-                    Flotilla
-                  </button>
-                  <button
-                    onClick={() => setPortalScreen("alta")}
-                    className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${portalScreen === "alta" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
-                  >
-                    + Alta Vehículo
-                  </button>
-                  <button
-                    onClick={() => setPortalScreen("trabajadores")}
-                    className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${portalScreen === "trabajadores" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
-                  >
-                    <span>Trabajadores</span>
-                    <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
-                      {trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre && t.activo).length}
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => setPortalScreen("sanciones")}
-                    className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${portalScreen === "sanciones" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
-                  >
-                    Sanciones & Apelaciones {sanciones.filter(s => !currentUser.empresaNombre || s.empresaNombre === currentUser.empresaNombre).length > 0 ? `(${sanciones.filter(s => !currentUser.empresaNombre || s.empresaNombre === currentUser.empresaNombre).length})` : ""}
-                  </button>
-                </div>
+                portalScreen === "reglamento" || !currentUser.hasAcceptedReglamento ? (
+                  <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold shadow-xs">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+                    <span>Lectura y Aceptación Obligatoria de Reglamento</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-2xl border border-slate-200/80 whitespace-nowrap shrink-0 shadow-xs">
+                    <button
+                      onClick={() => setPortalScreen("dashboard")}
+                      className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${portalScreen === "dashboard" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
+                    >
+                      Flotilla
+                    </button>
+                    <button
+                      onClick={() => setPortalScreen("alta")}
+                      className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${portalScreen === "alta" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
+                    >
+                      + Alta Vehículo
+                    </button>
+                    <button
+                      onClick={() => setPortalScreen("trabajadores")}
+                      className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${portalScreen === "trabajadores" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
+                    >
+                      <span>Trabajadores</span>
+                      <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
+                        {trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre && t.activo).length}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => setPortalScreen("sanciones")}
+                      className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${portalScreen === "sanciones" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
+                    >
+                      Sanciones & Apelaciones {sanciones.filter(s => !currentUser.empresaNombre || s.empresaNombre === currentUser.empresaNombre).length > 0 ? `(${sanciones.filter(s => !currentUser.empresaNombre || s.empresaNombre === currentUser.empresaNombre).length})` : ""}
+                    </button>
+                  </div>
+                )
               )}
 
               {currentUser.role === "caseta" && (
@@ -5415,6 +5456,18 @@ export default function App() {
                   onRefresh={reloadBitacora}
                 />
               )}
+
+              {supervisorTab === "reglamento" && (
+                <SupervisorReglamentoEditor
+                  reglamentoTexto={reglamentoTexto}
+                  onUpdateReglamentoTexto={setReglamentoTexto}
+                  reglamentoSecciones={reglamentoSecciones}
+                  onUpdateReglamentoSecciones={setReglamentoSecciones}
+                  onSave={handleGuardarReglamentoSupervisor}
+                  onResetDefaults={handleResetReglamentoSupervisor}
+                  isSaving={isSavingReglamento}
+                />
+              )}
             </div>
           </main>
         )}
@@ -5433,8 +5486,8 @@ export default function App() {
                         Requisito Obligatorio
                       </span>
                     </div>
-                    <pre className="text-sm leading-7 whitespace-pre-wrap px-6 py-5 text-slate-700 max-h-96 overflow-y-auto">
-                      {REGLAMENTO_TEXT}
+                    <pre className="text-sm leading-7 whitespace-pre-wrap px-6 py-5 text-slate-700 max-h-96 overflow-y-auto font-sans">
+                      {reglamentoTexto}
                     </pre>
                   </div>
 
@@ -5443,8 +5496,9 @@ export default function App() {
                     <label className="flex items-start gap-3 cursor-pointer">
                       <input
                         type="checkbox"
-                        id="acceptCheck"
-                        className="mt-1 w-4 h-4 text-emerald-600 rounded"
+                        checked={contratistaAceptoTerminos}
+                        onChange={(e) => setContratistaAceptoTerminos(e.target.checked)}
+                        className="mt-1 w-4 h-4 text-emerald-600 rounded cursor-pointer"
                       />
                       <span className="text-sm text-slate-700 leading-relaxed">
                         He leído y acepto en su totalidad el Reglamento de Colaboradores Externos de Las Palomas Rocky Point HOA, comprometiéndome al estricto cumplimiento de sus cláusulas y medidas disciplinarias.
@@ -5456,33 +5510,41 @@ export default function App() {
                       </label>
                       <input
                         type="text"
-                        id="repName"
+                        value={contratistaFirmaNombre || currentUser?.nombre || ""}
+                        onChange={(e) => setContratistaFirmaNombre(e.target.value)}
                         placeholder="Ej. Ing. Roberto Garza Leal"
-                        defaultValue={currentUser?.nombre || ""}
-                        className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 italic"
+                        className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 italic bg-white"
                       />
                     </div>
-                    <div className="flex justify-end pt-2">
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="text-xs text-slate-500">
+                        {!contratistaAceptoTerminos ? "⚠️ Marca la casilla de aceptación para habilitar la firma" : "✓ Listo para registrar tu firma en la base de datos"}
+                      </span>
                       <button
                         type="button"
-                        disabled={isSubmittingReglamento}
+                        disabled={isSubmittingReglamento || !contratistaAceptoTerminos}
                         onClick={async () => {
                           if (isSubmittingReglamentoRef.current) return;
+                          if (!contratistaAceptoTerminos) {
+                            showToast("Debes marcar la casilla de aceptación para continuar.", "warning", "Requisito");
+                            return;
+                          }
                           isSubmittingReglamentoRef.current = true;
                           setIsSubmittingReglamento(true);
                           try {
-                            const repNameInput = (document.getElementById("repName") as HTMLInputElement)?.value || currentUser?.nombre || "";
+                            const finalFirmaNombre = (contratistaFirmaNombre || currentUser?.nombre || "Representante Acreditado").trim();
                             const currentEmp = empresas.find(e => e.nombre === currentUser?.empresaNombre) || empresas[0];
                             try {
                               await api.aceptarReglamento({
                                 id_empresa: currentEmp?.id || 1,
                                 id_usuario: currentUser?.id || 1,
-                                firma_nombre: repNameInput
+                                firma_nombre: finalFirmaNombre
                               });
                             } catch (err) {
                               console.warn("Error guardando aceptación de reglamento en BD:", err);
                             }
                             if (currentUser) {
+                              localStorage.setItem("hoa_accepted_reglamento_" + currentUser.id, "true");
                               setUsers(users.map(u => u.id === currentUser.id ? { ...u, hasAcceptedReglamento: true } : u));
                               setCurrentUser({ ...currentUser, hasAcceptedReglamento: true });
                             }
@@ -5493,8 +5555,9 @@ export default function App() {
                             setIsSubmittingReglamento(false);
                           }
                         }}
-                        className={`px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 cursor-pointer flex items-center gap-2 ${isSubmittingReglamento ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                          }`}
+                        className={`px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 cursor-pointer flex items-center gap-2 ${
+                          (isSubmittingReglamento || !contratistaAceptoTerminos) ? "opacity-60 cursor-not-allowed" : ""
+                        }`}
                         style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                       >
                         {isSubmittingReglamento ? (
@@ -6170,7 +6233,7 @@ export default function App() {
                                 <StatusBadge status={veh.status} />
                               </div>
                               <div className="p-4 sm:p-6 overflow-x-auto bg-slate-100 flex justify-center">
-                                <CorbatinDocument vehicle={veh} />
+                                <CorbatinDocument vehicle={veh} sections={reglamentoSecciones} />
                               </div>
                             </div>
                             <div className="flex gap-3 no-print">
