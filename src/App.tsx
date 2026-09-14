@@ -901,9 +901,11 @@ function CorbatinDocument({ vehicle, sections }: { vehicle: Vehicle; sections?: 
                   </div>
                 ))}
               </div>
-              <div style={{ borderTop: "1px solid #cccccc", paddingTop: "6px", marginTop: "6px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "8px", color: "#555555" }}>
-                <span>Las Palomas Rocky Point HOA</span>
-                <span style={{ fontFamily: "monospace", fontWeight: "bold" }}>Corbatín #{vehicle.corbatinNum} · {vehicle.placas} · Vigencia 1 Año ({currentYear}–{nextYear})</span>
+              <div style={{ borderTop: "1px solid #cccccc", paddingTop: "5px", marginTop: "4px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "8px", color: "#555555", gap: "8px", overflow: "hidden" }}>
+                <span style={{ flexShrink: 0, fontWeight: "600" }}>Las Palomas Rocky Point HOA</span>
+                <span style={{ fontFamily: "monospace", fontWeight: "bold", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>
+                  Corbatín #{vehicle.corbatinNum} · {vehicle.placas} · Vigencia 1 Año ({currentYear}–{nextYear})
+                </span>
               </div>
             </td>
           </tr>
@@ -1019,9 +1021,11 @@ function TarjetaCorbatinVerdePrintable({ corb, sections }: { corb: CorbatinVerde
                   </div>
                 ))}
               </div>
-              <div style={{ borderTop: "1px solid #cccccc", paddingTop: "6px", marginTop: "6px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "8px", color: "#555555" }}>
-                <span>Las Palomas Rocky Point HOA</span>
-                <span style={{ fontFamily: "monospace", fontWeight: "bold", color: "#0D6E5F" }}>Corbatín Verde #{corb.corbatinNum} · {corb.empresaNombre}</span>
+              <div style={{ borderTop: "1px solid #cccccc", paddingTop: "5px", marginTop: "4px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "8px", color: "#555555", gap: "8px", overflow: "hidden" }}>
+                <span style={{ flexShrink: 0, fontWeight: "600" }}>Las Palomas Rocky Point HOA</span>
+                <span style={{ fontFamily: "monospace", fontWeight: "bold", color: "#0D6E5F", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>
+                  Corbatín Verde #{corb.corbatinNum} · {corb.empresaNombre}
+                </span>
               </div>
             </td>
           </tr>
@@ -5290,10 +5294,9 @@ export default function App() {
                     </button>
 
                     {openSupervisorDropdown === "directorio" && (
-                      <div className="absolute left-0 top-full mt-2 w-80 rounded-2xl bg-white border border-slate-200/90 shadow-2xl py-2 px-1.5 z-[100] ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-150">
-                        <div className="px-3 py-1.5 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1 flex items-center justify-between">
-                          <span>Directorio y Personal</span>
-                          <span className="text-[10px] text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded font-mono font-bold">PADRÓN</span>
+                      <div className="absolute left-0 top-full mt-2 w-64 rounded-2xl bg-white border border-slate-200 shadow-2xl py-1.5 z-[100] ring-1 ring-black/5">
+                        <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
+                          Directorio y Personal
                         </div>
                         <button
                           type="button"
@@ -5301,24 +5304,17 @@ export default function App() {
                             setSupervisorTab("proveedores");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left p-2.5 rounded-xl flex items-center gap-3 transition-all duration-150 cursor-pointer ${
-                            supervisorTab === "proveedores" ? "bg-teal-50/90 text-[#0D6E5F] font-bold shadow-2xs" : "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
+                            supervisorTab === "proveedores" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
                           }`}
                         >
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-                            supervisorTab === "proveedores" ? "bg-[#0D6E5F] text-white" : "bg-teal-50 text-[#0D6E5F] border border-teal-100"
-                          }`}>
-                            <IconBuilding className="w-4 h-4" />
+                          <div>
+                            <div className="font-semibold">Proveedores / Contratistas</div>
+                            <div className="text-[11px] text-slate-400">Empresas, personal y flotillas</div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="font-bold text-xs truncate">Proveedores / Contratistas</span>
-                              <span className="shrink-0 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold">
-                                {empresas.length}
-                              </span>
-                            </div>
-                            <div className="text-[11px] text-slate-400 truncate mt-0.5">Empresas, personal y flotillas</div>
-                          </div>
+                          <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">
+                            {empresas.length}
+                          </span>
                         </button>
 
                         <button
@@ -5327,24 +5323,17 @@ export default function App() {
                             setSupervisorTab("guardias");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left p-2.5 rounded-xl flex items-center gap-3 transition-all duration-150 cursor-pointer ${
-                            supervisorTab === "guardias" ? "bg-teal-50/90 text-[#0D6E5F] font-bold shadow-2xs" : "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
+                            supervisorTab === "guardias" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
                           }`}
                         >
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-                            supervisorTab === "guardias" ? "bg-[#0D6E5F] text-white" : "bg-blue-50 text-blue-700 border border-blue-100"
-                          }`}>
-                            <IconUsers className="w-4 h-4" />
+                          <div>
+                            <div className="font-semibold">Guardias de Caseta</div>
+                            <div className="text-[11px] text-slate-400">Oficiales activos y turnos</div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="font-bold text-xs truncate">Guardias de Caseta</span>
-                              <span className="shrink-0 px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[10px] font-bold">
-                                {users.filter(u => u.role === "caseta").length}
-                              </span>
-                            </div>
-                            <div className="text-[11px] text-slate-400 truncate mt-0.5">Oficiales activos y turnos</div>
-                          </div>
+                          <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">
+                            {users.filter(u => u.role === "caseta").length}
+                          </span>
                         </button>
                       </div>
                     )}
@@ -5366,90 +5355,61 @@ export default function App() {
                     </button>
 
                     {openSupervisorDropdown === "documentos" && (
-                      <div className="absolute left-0 top-full mt-2 w-80 sm:w-88 rounded-2xl bg-white border border-slate-200/90 shadow-2xl py-2 px-1.5 z-[100] ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-150">
-                        <div className="px-3 py-1.5 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1 flex items-center justify-between">
-                          <span>Documentación Oficial</span>
-                          <span className="text-[10px] text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded font-mono font-bold">HOA</span>
+                      <div className="absolute left-0 top-full mt-2 w-72 rounded-2xl bg-white border border-slate-200 shadow-2xl py-1.5 z-[100] ring-1 ring-black/5">
+                        <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
+                          Documentación Oficial
                         </div>
-
-                        {/* Opción 1: Corbatines Vehiculares */}
                         <button
                           type="button"
                           onClick={() => {
                             setSupervisorTab("corbatines");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left p-2.5 rounded-xl flex items-center gap-3 transition-all duration-150 cursor-pointer ${
-                            supervisorTab === "corbatines" ? "bg-teal-50/90 text-[#0D6E5F] font-bold shadow-2xs" : "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
+                            supervisorTab === "corbatines" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
                           }`}
                         >
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-                            supervisorTab === "corbatines" ? "bg-[#0D6E5F] text-white" : "bg-teal-50 text-[#0D6E5F] border border-teal-100"
-                          }`}>
-                            <IconCar className="w-4 h-4" />
+                          <div>
+                            <div className="font-semibold">Impresión de Corbatines</div>
+                            <div className="text-[11px] text-slate-400">Emisión vehicular con QR y placas</div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="font-bold text-xs truncate">Impresión de Corbatines</span>
-                              <span className="shrink-0 px-2 py-0.5 rounded-md bg-teal-100 text-[#0D6E5F] text-[10px] font-bold">
-                                PDF
-                              </span>
-                            </div>
-                            <div className="text-[11px] text-slate-400 truncate mt-0.5">Emisión vehicular con QR y placas</div>
-                          </div>
+                          <span className="px-2 py-0.5 rounded-full bg-teal-100 text-[#0D6E5F] text-[10px] font-bold">
+                            PDF
+                          </span>
                         </button>
 
-                        {/* Opción 2: Corbatines Verdes (Larga Estancia) */}
                         <button
                           type="button"
                           onClick={() => {
                             setSupervisorTab("corbatines_verdes");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left p-2.5 rounded-xl flex items-center gap-3 transition-all duration-150 cursor-pointer ${
-                            supervisorTab === "corbatines_verdes" ? "bg-emerald-50/90 text-emerald-950 font-bold shadow-2xs" : "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
+                            supervisorTab === "corbatines_verdes" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
                           }`}
                         >
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-                            supervisorTab === "corbatines_verdes" ? "bg-emerald-600 text-white" : "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          }`}>
-                            <IconBadge className="w-4 h-4" />
+                          <div>
+                            <div className="font-semibold">Corbatines Verdes</div>
+                            <div className="text-[11px] text-slate-400">Empresas de larga estancia (#001+)</div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-1.5">
-                              <span className="font-bold text-xs truncate text-emerald-950">Corbatines Verdes</span>
-                              <span className="shrink-0 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-extrabold border border-emerald-300">
-                                Larga Estancia
-                              </span>
-                            </div>
-                            <div className="text-[11px] text-slate-400 truncate mt-0.5">Empresas por rango (#001...)</div>
-                          </div>
+                          <span className="px-2 py-0.5 rounded-full bg-teal-100 text-[#0D6E5F] text-[10px] font-bold">
+                            Empresas
+                          </span>
                         </button>
 
-                        {/* Opción 3: Reglamento & Banderines */}
                         <button
                           type="button"
                           onClick={() => {
                             setSupervisorTab("reglamento");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left p-2.5 rounded-xl flex items-center gap-3 transition-all duration-150 cursor-pointer ${
-                            supervisorTab === "reglamento" ? "bg-teal-50/90 text-[#0D6E5F] font-bold shadow-2xs" : "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
+                            supervisorTab === "reglamento" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
                           }`}
                         >
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-                            supervisorTab === "reglamento" ? "bg-[#0D6E5F] text-white" : "bg-slate-100 text-slate-600 border border-slate-200"
-                          }`}>
-                            <IconFileText className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="font-bold text-xs truncate">Reglamento & Banderines</span>
-                              <span className="shrink-0 px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold">
-                                Normas
-                              </span>
-                            </div>
-                            <div className="text-[11px] text-slate-400 truncate mt-0.5">Editor de normas oficiales</div>
+                          <div>
+                            <div className="font-semibold">Reglamento & Banderines</div>
+                            <div className="text-[11px] text-slate-400">Editor de normas oficiales</div>
                           </div>
                         </button>
                       </div>
@@ -5477,10 +5437,9 @@ export default function App() {
                     </button>
 
                     {openSupervisorDropdown === "operacion" && (
-                      <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-80 rounded-2xl bg-white border border-slate-200/90 shadow-2xl py-2 px-1.5 z-[100] ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-150">
-                        <div className="px-3 py-1.5 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1 flex items-center justify-between">
-                          <span>Sanciones y Casos</span>
-                          <span className="text-[10px] text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded font-mono font-bold">SEGURIDAD</span>
+                      <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-64 rounded-2xl bg-white border border-slate-200 shadow-2xl py-1.5 z-[100] ring-1 ring-black/5">
+                        <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
+                          Sanciones y Casos
                         </div>
                         <button
                           type="button"
@@ -5488,30 +5447,23 @@ export default function App() {
                             setSupervisorTab("bandeja");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left p-2.5 rounded-xl flex items-center gap-3 transition-all duration-150 cursor-pointer ${
-                            supervisorTab === "bandeja" ? "bg-teal-50/90 text-[#0D6E5F] font-bold shadow-2xs" : "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
+                            supervisorTab === "bandeja" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
                           }`}
                         >
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-                            supervisorTab === "bandeja" ? "bg-[#0D6E5F] text-white" : "bg-amber-50 text-amber-700 border border-amber-200"
-                          }`}>
-                            <IconScale className="w-4 h-4" />
+                          <div>
+                            <div className="font-semibold">Infracciones en Campo</div>
+                            <div className="text-[11px] text-slate-400">Dictamen de reportes móviles</div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="font-bold text-xs truncate">Infracciones en Campo</span>
-                              {infraccionesPendientes.filter(i => i.estado === "Pendiente").length > 0 ? (
-                                <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 text-[10px] font-black">
-                                  {infraccionesPendientes.filter(i => i.estado === "Pendiente").length} pendientes
-                                </span>
-                              ) : (
-                                <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[10px] font-bold">
-                                  0
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-[11px] text-slate-400 truncate mt-0.5">Dictamen de reportes móviles</div>
-                          </div>
+                          {infraccionesPendientes.filter(i => i.estado === "Pendiente").length > 0 ? (
+                            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold">
+                              {infraccionesPendientes.filter(i => i.estado === "Pendiente").length}
+                            </span>
+                          ) : (
+                            <span className="w-4 h-4 rounded-full bg-slate-100 text-slate-500 text-[10px] flex items-center justify-center font-semibold">
+                              0
+                            </span>
+                          )}
                         </button>
 
                         <button
@@ -5520,30 +5472,23 @@ export default function App() {
                             setSupervisorTab("apelaciones");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left p-2.5 rounded-xl flex items-center gap-3 transition-all duration-150 cursor-pointer ${
-                            supervisorTab === "apelaciones" ? "bg-teal-50/90 text-[#0D6E5F] font-bold shadow-2xs" : "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
+                            supervisorTab === "apelaciones" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
                           }`}
                         >
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-                            supervisorTab === "apelaciones" ? "bg-[#0D6E5F] text-white" : "bg-sky-50 text-sky-700 border border-sky-200"
-                          }`}>
-                            <IconMessageSquare className="w-4 h-4" />
+                          <div>
+                            <div className="font-semibold">Bandeja de Apelaciones</div>
+                            <div className="text-[11px] text-slate-400">Recursos de contratistas</div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="font-bold text-xs truncate">Bandeja de Apelaciones</span>
-                              {apelacionesPendientesCount > 0 ? (
-                                <span className="px-2 py-0.5 rounded-md bg-sky-100 text-sky-800 text-[10px] font-black">
-                                  {apelacionesPendientesCount} nuevas
-                                </span>
-                              ) : (
-                                <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[10px] font-bold">
-                                  0
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-[11px] text-slate-400 truncate mt-0.5">Recursos de contratistas</div>
-                          </div>
+                          {apelacionesPendientesCount > 0 ? (
+                            <span className="px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 text-[10px] font-bold">
+                              {apelacionesPendientesCount}
+                            </span>
+                          ) : (
+                            <span className="w-4 h-4 rounded-full bg-slate-100 text-slate-500 text-[10px] flex items-center justify-center font-semibold">
+                              0
+                            </span>
+                          )}
                         </button>
                       </div>
                     )}
@@ -6662,22 +6607,25 @@ export default function App() {
                   {/* Hero & Banner Superior */}
                   <div className="rounded-2xl border p-5 bg-white shadow-sm space-y-4 no-print" style={{ borderColor: "var(--color-border)" }}>
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b pb-4" style={{ borderColor: "var(--color-border)" }}>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-sm" />
-                          <h2 className="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
-                            <span>Corbatines Verdes — Proveedores de Larga Estancia</span>
-                          </h2>
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                            Opción 2 · Rango 001+
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500 max-w-3xl leading-relaxed">
-                          Emisión de corbatines verdes para empresas contratistas y proveedores autorizados que laboran por días o meses continuos en Las Palomas Rocky Point HOA. No requiere registro individual de vehículos. Asignación consecutiva a partir del correlativo <strong>#001</strong>.
+                      <div>
+                        <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                          <IconFileText className="w-5 h-5 text-[#0D6E5F]" />
+                          <span>Impresión y Emisión de Corbatines Verdes</span>
+                        </h2>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Emisión de corbatines para empresas contratistas y proveedores autorizados de larga estancia. Correlativo consecutivo desde el #001.
                         </p>
                       </div>
 
                       <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap shrink-0">
+                        <div className="h-9 px-3.5 rounded-xl bg-teal-50 border border-teal-200 text-teal-900 text-xs font-bold whitespace-nowrap flex items-center gap-1.5 shadow-2xs">
+                          <span>Total Emitidos:</span>
+                          <span className="text-[#0D6E5F] font-black">{corbatinesVerdes.length}</span>
+                        </div>
+                        <div className="h-9 px-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold whitespace-nowrap flex items-center gap-1.5 shadow-2xs">
+                          <span>En Servicio:</span>
+                          <span className="text-emerald-700 font-black">{corbatinesVerdes.filter(c => c.activo).length}</span>
+                        </div>
                         <button
                           type="button"
                           onClick={() => {
@@ -6691,76 +6639,28 @@ export default function App() {
                             setNuevoCVError("");
                             setShowCreateCorbatinVerdeModal(true);
                           }}
-                          className="px-4 py-2.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-md shadow-emerald-700/20 active:scale-[0.98] transition-all flex items-center gap-2 cursor-pointer"
+                          style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
+                          className="h-9 px-4 rounded-xl font-bold text-xs text-white shadow-xs active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                             <line x1="12" y1="5" x2="12" y2="19" />
                             <line x1="5" y1="12" x2="19" y2="12" />
                           </svg>
-                          <span>Emitir Corbatín(es) Verde(s)</span>
+                          <span>Emitir Corbatín(es)</span>
                         </button>
                       </div>
                     </div>
 
-                    {/* KPI Metrics Chips */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between">
-                        <div>
-                          <div className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Total Emitidos</div>
-                          <div className="text-xl font-black text-emerald-950 mt-0.5">{corbatinesVerdes.length}</div>
-                        </div>
-                        <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700">
-                          <IconBadge className="w-5 h-5" />
-                        </div>
-                      </div>
-
-                      <div className="p-3.5 rounded-xl bg-teal-50/70 border border-teal-200/80 flex items-center justify-between">
-                        <div>
-                          <div className="text-[11px] font-bold text-teal-800 uppercase tracking-wider">En Servicio / Activos</div>
-                          <div className="text-xl font-black text-teal-950 mt-0.5">
-                            {corbatinesVerdes.filter(c => c.activo).length}
-                          </div>
-                        </div>
-                        <div className="w-9 h-9 rounded-lg bg-teal-100 flex items-center justify-center text-teal-700">
-                          <IconCheckCircle className="w-5 h-5" />
-                        </div>
-                      </div>
-
-                      <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-                        <div>
-                          <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Empresas con Acceso</div>
-                          <div className="text-xl font-black text-slate-800 mt-0.5">
-                            {new Set(corbatinesVerdes.map(c => c.empresaNombre)).size}
-                          </div>
-                        </div>
-                        <div className="w-9 h-9 rounded-lg bg-slate-200/70 flex items-center justify-center text-slate-700">
-                          <IconBuilding className="w-5 h-5" />
-                        </div>
-                      </div>
-
-                      <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 flex items-center justify-between">
-                        <div>
-                          <div className="text-[11px] font-bold text-amber-800 uppercase tracking-wider">Siguiente Correlativo</div>
-                          <div className="text-xl font-black font-mono text-amber-950 mt-0.5">
-                            #{getNextCorbatinVerdeNum(corbatinesVerdes)}
-                          </div>
-                        </div>
-                        <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 font-mono font-bold text-xs">
-                          001+
-                        </div>
-                      </div>
-                    </div>
-
                     {/* Filtros de Búsqueda y Selección */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <label className="block text-xs font-bold text-slate-600 mb-1">Filtrar por Empresa:</label>
                         <select
                           value={corbatinVerdeEmpresaFilter}
                           onChange={(e) => setCorbatinVerdeEmpresaFilter(e.target.value)}
-                          className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                          className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
                         >
-                          <option value="all">Todas las empresas</option>
+                          <option value="all">Todas las empresas ({Array.from(new Set(corbatinesVerdes.map(c => c.empresaNombre))).length})</option>
                           {Array.from(new Set(corbatinesVerdes.map(c => c.empresaNombre))).map((emp) => (
                             <option key={emp} value={emp}>
                               {emp} ({corbatinesVerdes.filter(c => c.empresaNombre === emp).length} corbatines)
@@ -6774,7 +6674,7 @@ export default function App() {
                         <select
                           value={corbatinVerdeStatusFilter}
                           onChange={(e) => setCorbatinVerdeStatusFilter(e.target.value)}
-                          className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                          className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
                         >
                           <option value="all">Todos los estatus</option>
                           <option value="activos">En Servicio / Activos</option>
@@ -6790,7 +6690,7 @@ export default function App() {
                             value={corbatinVerdeSearch}
                             onChange={(e) => setCorbatinVerdeSearch(e.target.value)}
                             placeholder="Buscar # correlativo, empresa, teléfono..."
-                            className="w-full text-xs font-semibold pl-8 pr-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                            className="w-full text-xs font-semibold pl-8 pr-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
                           />
                           <IconSearch className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                         </div>
@@ -6802,12 +6702,11 @@ export default function App() {
                   <div className="flex flex-col lg:flex-row gap-6 items-start">
                     {/* Lista Lateral de Corbatines Verdes */}
                     <div className="w-full lg:w-80 rounded-2xl border overflow-hidden bg-white shadow-sm flex flex-col shrink-0 no-print" style={{ borderColor: "var(--color-border)" }}>
-                      <div className="p-4 border-b bg-emerald-50/50 flex items-center justify-between border-emerald-100">
-                        <span className="font-bold text-xs uppercase tracking-wider text-emerald-950 flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                          <span>Corbatines Emitidos</span>
+                      <div className="p-4 border-b bg-slate-50 flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
+                        <span className="font-bold text-xs uppercase tracking-wider text-slate-700">
+                          Corbatines Emitidos
                         </span>
-                        <span className="text-[11px] font-bold text-emerald-700 font-mono">
+                        <span className="text-[11px] font-bold text-[#0D6E5F] font-mono">
                           {corbatinesVerdes.filter((c) => {
                             const matchEmp = corbatinVerdeEmpresaFilter === "all" || c.empresaNombre.toLowerCase() === corbatinVerdeEmpresaFilter.toLowerCase();
                             const matchStatus = corbatinVerdeStatusFilter === "all" || (corbatinVerdeStatusFilter === "activos" ? c.activo : !c.activo);
@@ -6841,7 +6740,7 @@ export default function App() {
                               <div className="p-8 text-center text-xs text-slate-500 space-y-2">
                                 <IconBadge className="w-8 h-8 text-slate-300 mx-auto" />
                                 <p className="font-semibold text-slate-700">Sin corbatines verdes encontrados</p>
-                                <p className="text-[11px] text-slate-400">Haz clic en "Emitir Corbatín(es) Verde(s)" para dar de alta uno nuevo.</p>
+                                <p className="text-[11px] text-slate-400">Haz clic en "Emitir Corbatín(es)" para dar de alta uno nuevo.</p>
                               </div>
                             );
                           }
@@ -6855,7 +6754,7 @@ export default function App() {
                                 key={c.id}
                                 type="button"
                                 onClick={() => setSelectedCorbatinVerdeId(c.id)}
-                                className={`w-full text-left px-4 py-3.5 transition-all hover:bg-slate-50 cursor-pointer ${isSelected ? "bg-emerald-50/80 border-l-4 border-emerald-600 shadow-2xs" : ""
+                                className={`w-full text-left px-4 py-3.5 transition-all hover:bg-slate-50 cursor-pointer ${isSelected ? "bg-[#E6F4F1] border-l-4 border-[#0D6E5F]" : ""
                                   }`}
                               >
                                 <div className="flex items-start justify-between gap-2">
@@ -6868,7 +6767,7 @@ export default function App() {
                                       <span>{c.telefono}</span>
                                     </div>
                                   </div>
-                                  <span className="font-mono font-black text-sm shrink-0 px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-900 border border-emerald-200">
+                                  <span className="font-mono font-bold text-xs shrink-0 px-2 py-0.5 rounded-lg bg-teal-50 text-[#0D6E5F] border border-teal-200">
                                     #{c.corbatinNum}
                                   </span>
                                 </div>
@@ -6877,13 +6776,11 @@ export default function App() {
                                     Vence: {c.fechaVencimiento || c.vigenciaTexto || "Vigente"}
                                   </span>
                                   {c.activo ? (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-emerald-100/80 text-emerald-800 border border-emerald-300">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
                                       <span>Activo</span>
                                     </span>
                                   ) : (
                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-red-50 text-red-700 border border-red-200">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
                                       <span>Inactivo</span>
                                     </span>
                                   )}
@@ -6915,9 +6812,9 @@ export default function App() {
                         if (!activeItem) {
                           return (
                             <div className="rounded-2xl border p-12 text-center bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
-                              <IconBadge className="w-12 h-12 text-emerald-300 mx-auto mb-3" />
+                              <IconBadge className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                               <h3 className="font-bold text-slate-800 mb-1 text-sm">Sin corbatín verde seleccionado</h3>
-                              <p className="text-xs text-slate-500">Selecciona un elemento de la lista lateral o haz clic en "Emitir Corbatín(es) Verde(s)".</p>
+                              <p className="text-xs text-slate-500">Selecciona un elemento de la lista lateral o haz clic en "Emitir Corbatín(es)".</p>
                             </div>
                           );
                         }
@@ -6926,11 +6823,11 @@ export default function App() {
                           <>
                             <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
                               {/* Tarjeta Header */}
-                              <div className="px-5 py-4 border-b bg-emerald-50/40 flex flex-wrap items-center justify-between gap-3 no-print border-emerald-100">
+                              <div className="px-5 py-4 border-b bg-slate-50 flex flex-wrap items-center justify-between gap-3 no-print" style={{ borderColor: "var(--color-border)" }}>
                                 <div className="space-y-0.5">
                                   <div className="flex items-center gap-2">
-                                    <span className="font-mono font-black text-base text-emerald-950 px-2.5 py-0.5 rounded-lg bg-emerald-200/80 border border-emerald-300">
-                                      Corbatín Verde #{activeItem.corbatinNum}
+                                    <span className="font-mono font-bold text-xs text-[#0D6E5F] px-2.5 py-1 rounded-lg bg-teal-50 border border-teal-200">
+                                      Corbatín #{activeItem.corbatinNum}
                                     </span>
                                     <h3 className="font-bold text-sm text-slate-800">
                                       {activeItem.empresaNombre}
@@ -6951,13 +6848,11 @@ export default function App() {
                                     title="Clic para cambiar estatus"
                                   >
                                     {activeItem.activo ? (
-                                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200 transition-colors">
-                                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-colors">
                                         <span>En Servicio</span>
                                       </span>
                                     ) : (
-                                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-300 hover:bg-red-200 transition-colors">
-                                        <span className="w-2 h-2 rounded-full bg-red-500" />
+                                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-800 border border-red-200 hover:bg-red-100 transition-colors">
                                         <span>Inactivo</span>
                                       </span>
                                     )}
@@ -6998,7 +6893,8 @@ export default function App() {
                                   type="button"
                                   onClick={() => handleDescargarPDFCorbatinVerdeDirecto(activeItem)}
                                   disabled={isGeneratingCorbatinVerdePDF}
-                                  className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 active:scale-[0.98] flex items-center gap-2 cursor-pointer shadow-md transition-all disabled:opacity-50"
+                                  style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
+                                  className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white active:scale-[0.98] flex items-center gap-2 cursor-pointer shadow-xs transition-all disabled:opacity-50"
                                 >
                                   <IconDownload className="w-4 h-4" />
                                   <span>{isGeneratingCorbatinVerdePDF ? "Generando PDF..." : `Descargar PDF Corbatín #${activeItem.corbatinNum}`}</span>
@@ -7007,7 +6903,7 @@ export default function App() {
                                 <button
                                   type="button"
                                   onClick={() => window.print()}
-                                  className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-sm transition-all flex items-center gap-2"
+                                  className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs transition-all flex items-center gap-2"
                                 >
                                   <svg className="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <polyline points="6 9 6 2 18 2 18 9" />
@@ -7044,7 +6940,7 @@ export default function App() {
                         <h3 className="font-bold text-sm text-slate-800">Padrón Oficial de Corbatines Verdes (Larga Estancia)</h3>
                         <p className="text-xs text-slate-400 mt-0.5">Control de correlativos, vigencia y emisión directa.</p>
                       </div>
-                      <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+                      <span className="text-xs font-bold text-[#0D6E5F] bg-teal-50 border border-teal-200 px-3 py-1 rounded-full">
                         {corbatinesVerdes.length} Registros
                       </span>
                     </div>
@@ -7067,14 +6963,18 @@ export default function App() {
                           {corbatinesVerdes.length === 0 ? (
                             <tr>
                               <td colSpan={8} className="py-8 text-center text-slate-400">
-                                No hay corbatines verdes emitidos aún. Haz clic en "Emitir Corbatín(es) Verde(s)" para comenzar.
+                                No hay corbatines verdes emitidos aún. Haz clic en "Emitir Corbatín(es)" para comenzar.
                               </td>
                             </tr>
                           ) : (
                             corbatinesVerdes.map((c) => (
-                              <tr key={c.id} className="hover:bg-slate-50/70 transition-colors">
+                              <tr
+                                key={c.id}
+                                onClick={() => setSelectedCorbatinVerdeId(c.id)}
+                                className={`hover:bg-teal-50/50 cursor-pointer transition-colors ${selectedCorbatinVerdeId === c.id ? "bg-teal-50/60" : ""}`}
+                              >
                                 <td className="px-5 py-3">
-                                  <span className="font-mono font-black text-xs text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200">
+                                  <span className="font-mono font-bold text-xs text-[#0D6E5F] bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200">
                                     #{c.corbatinNum}
                                   </span>
                                 </td>
@@ -7091,42 +6991,33 @@ export default function App() {
                                 <td className="px-5 py-3">
                                   <button
                                     type="button"
-                                    onClick={() => handleToggleActivoCorbatinVerde(c.id)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleToggleActivoCorbatinVerde(c.id);
+                                    }}
                                     className="cursor-pointer"
                                   >
                                     {c.activo ? (
-                                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100">
                                         <span>Activo</span>
                                       </span>
                                     ) : (
-                                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-300 hover:bg-red-100">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
                                         <span>Inactivo</span>
                                       </span>
                                     )}
                                   </button>
                                 </td>
                                 <td className="px-5 py-3 text-right">
-                                  <div className="flex items-center justify-end gap-1.5">
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setSelectedCorbatinVerdeId(c.id);
-                                        window.scrollTo({ top: 0, behavior: "smooth" });
-                                      }}
-                                      className="px-2.5 py-1 rounded-lg text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-600 hover:text-white border border-emerald-200 transition-all cursor-pointer shadow-2xs"
-                                      title="Ver tarjeta en previsualizador"
-                                    >
-                                      Ver Tarjeta
-                                    </button>
+                                  <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
                                     <button
                                       type="button"
                                       onClick={() => handleDescargarPDFCorbatinVerdeDirecto(c)}
-                                      className="p-1 px-2 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all cursor-pointer"
-                                      title="Descargar PDF"
+                                      className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all cursor-pointer flex items-center gap-1"
+                                      title="Descargar PDF Oficial"
                                     >
                                       <IconDownload className="w-3.5 h-3.5" />
+                                      <span>PDF</span>
                                     </button>
                                     <button
                                       type="button"
@@ -7135,8 +7026,8 @@ export default function App() {
                                           handleEliminarCorbatinVerde(c.id);
                                         }
                                       }}
-                                      className="p-1 px-2 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-600 hover:text-white border border-red-200 transition-all cursor-pointer"
-                                      title="Eliminar"
+                                      className="p-1.5 px-2 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-600 hover:text-white border border-red-200 transition-all cursor-pointer"
+                                      title="Eliminar Corbatín"
                                     >
                                       <IconTrash className="w-3.5 h-3.5" />
                                     </button>
@@ -10986,13 +10877,13 @@ export default function App() {
             {/* Header decorativo */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-emerald-100/80 border border-emerald-200 flex items-center justify-center text-emerald-800 shadow-2xs">
+                <div className="w-11 h-11 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0D6E5F] shadow-2xs">
                   <IconBadge className="w-6 h-6" />
                 </div>
                 <div>
                   <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
                     <span>Emitir Corbatín(es) Verde(s)</span>
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase">
+                    <span className="px-2 py-0.5 rounded-md bg-teal-50 text-[#0D6E5F] border border-teal-200 text-[10px] font-extrabold uppercase">
                       Larga Estancia
                     </span>
                   </h3>
@@ -11022,7 +10913,7 @@ export default function App() {
                 onClick={() => setNuevoCVModo("individual")}
                 className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
                   nuevoCVModo === "individual"
-                    ? "bg-white text-emerald-900 shadow-xs border border-slate-200"
+                    ? "bg-white text-[#0D6E5F] shadow-xs border border-slate-200"
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
@@ -11042,7 +10933,7 @@ export default function App() {
                 }}
                 className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
                   nuevoCVModo === "lote"
-                    ? "bg-white text-emerald-900 shadow-xs border border-slate-200"
+                    ? "bg-white text-[#0D6E5F] shadow-xs border border-slate-200"
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
@@ -11081,7 +10972,7 @@ export default function App() {
                       }
                     }}
                     placeholder="Ej. Albercas del Desierto S.A."
-                    className="w-full text-xs font-semibold pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    className="w-full text-xs font-semibold pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
                   />
                   <IconBuilding className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <datalist id="empresas-list-cv">
@@ -11108,7 +10999,7 @@ export default function App() {
                       value={nuevoCVTelefono}
                       onChange={(e) => setNuevoCVTelefono(e.target.value)}
                       placeholder="Ej. 638 123 4567"
-                      className="w-full text-xs font-semibold pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 font-mono"
+                      className="w-full text-xs font-semibold pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F] font-mono"
                     />
                     <IconPhone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   </div>
@@ -11125,7 +11016,7 @@ export default function App() {
                       value={nuevoCVEmail}
                       onChange={(e) => setNuevoCVEmail(e.target.value)}
                       placeholder="contacto@empresa.com"
-                      className="w-full text-xs font-semibold pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      className="w-full text-xs font-semibold pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
                     />
                     <IconMail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   </div>
@@ -11134,27 +11025,27 @@ export default function App() {
 
               {/* Modo Individual: Info del Correlativo */}
               {nuevoCVModo === "individual" ? (
-                <div className="p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200 flex items-center justify-between">
+                <div className="p-3.5 rounded-2xl bg-teal-50/70 border border-teal-200 flex items-center justify-between">
                   <div>
-                    <div className="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">
+                    <div className="text-[11px] font-bold text-teal-900 uppercase tracking-wider">
                       Correlativo Asignado Automáticamente
                     </div>
-                    <div className="text-xs text-emerald-700 mt-0.5">
+                    <div className="text-xs text-teal-700 mt-0.5">
                       Siguiente número consecutivo oficial disponible
                     </div>
                   </div>
-                  <span className="font-mono font-black text-xl px-3 py-1 rounded-xl bg-white text-emerald-900 border border-emerald-300 shadow-2xs">
+                  <span className="font-mono font-black text-xl px-3 py-1 rounded-xl bg-white text-[#0D6E5F] border border-teal-200 shadow-2xs">
                     #{getNextCorbatinVerdeNum(corbatinesVerdes)}
                   </span>
                 </div>
               ) : (
                 /* Modo Lote: Rango Consecutivo */
-                <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 space-y-3">
+                <div className="p-4 rounded-2xl bg-teal-50/70 border border-teal-200 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider">
+                    <span className="text-xs font-bold text-teal-900 uppercase tracking-wider">
                       Rango de Corbatines Verdes
                     </span>
-                    <span className="text-[11px] font-extrabold text-emerald-700 bg-white px-2 py-0.5 rounded-lg border border-emerald-300 font-mono">
+                    <span className="text-[11px] font-extrabold text-[#0D6E5F] bg-white px-2 py-0.5 rounded-lg border border-teal-200 font-mono">
                       Inicio sugerido: #{getNextCorbatinVerdeNum(corbatinesVerdes)}
                     </span>
                   </div>
@@ -11171,7 +11062,7 @@ export default function App() {
                         value={nuevoCVRangoInicio}
                         onChange={(e) => setNuevoCVRangoInicio(e.target.value)}
                         placeholder="Ej. 001"
-                        className="w-full text-xs font-bold font-mono px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                        className="w-full text-xs font-bold font-mono px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
                       />
                     </div>
 
@@ -11186,7 +11077,7 @@ export default function App() {
                         value={nuevoCVRangoFin}
                         onChange={(e) => setNuevoCVRangoFin(e.target.value)}
                         placeholder="Ej. 005"
-                        className="w-full text-xs font-bold font-mono px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                        className="w-full text-xs font-bold font-mono px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
                       />
                     </div>
                   </div>
@@ -11196,9 +11087,9 @@ export default function App() {
                     const e = parseInt(nuevoCVRangoFin, 10);
                     const count = (!isNaN(s) && !isNaN(e) && e >= s) ? (e - s + 1) : 0;
                     return (
-                      <div className="text-xs text-emerald-900 font-semibold bg-white/80 p-2.5 rounded-xl border border-emerald-200/80 flex items-center justify-between">
+                      <div className="text-xs text-teal-900 font-semibold bg-white/80 p-2.5 rounded-xl border border-teal-200/80 flex items-center justify-between">
                         <span>Total de corbatines a generar:</span>
-                        <span className="font-mono font-black text-emerald-950 px-2 py-0.5 rounded bg-emerald-100 border border-emerald-300">
+                        <span className="font-mono font-black text-[#0D6E5F] px-2 py-0.5 rounded bg-teal-50 border border-teal-200">
                           {count} {count === 1 ? "corbatín" : "corbatines"}
                         </span>
                       </div>
@@ -11216,7 +11107,7 @@ export default function App() {
                   <select
                     value={nuevoCVVigencia}
                     onChange={(e) => setNuevoCVVigencia(e.target.value)}
-                    className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
                   >
                     <option value="1 Mes">1 Mes</option>
                     <option value="3 Meses">3 Meses</option>
@@ -11235,7 +11126,7 @@ export default function App() {
                     value={nuevoCVNotas}
                     onChange={(e) => setNuevoCVNotas(e.target.value)}
                     placeholder="Ej. Proyecto Fase 2 Torre A"
-                    className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
                   />
                 </div>
               </div>
@@ -11255,13 +11146,14 @@ export default function App() {
 
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-md shadow-emerald-700/20 active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer"
+                  style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-xs active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <IconBadge className="w-4 h-4" />
                   <span>
                     {nuevoCVModo === "individual"
-                      ? "Emitir Corbatín Verde #" + getNextCorbatinVerdeNum(corbatinesVerdes)
-                      : "Emitir Lote de Corbatines Verdes"}
+                      ? "Emitir Corbatín #" + getNextCorbatinVerdeNum(corbatinesVerdes)
+                      : "Emitir Lote de Corbatines"}
                   </span>
                 </button>
               </div>
