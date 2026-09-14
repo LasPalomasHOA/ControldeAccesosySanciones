@@ -362,9 +362,23 @@ function IconCheckSimple({ className = "w-4 h-4" }: { className?: string }) {
 
 type UserRole = "admin" | "supervisor" | "contratista" | "caseta";
 type PortalScreen = "reglamento" | "dashboard" | "alta" | "trabajadores" | "sanciones";
-type SupervisorTab = "bandeja" | "apelaciones" | "proveedores" | "guardias" | "historial" | "reglamento" | "corbatines";
+type SupervisorTab = "bandeja" | "apelaciones" | "proveedores" | "guardias" | "historial" | "reglamento" | "corbatines" | "corbatines_verdes";
 type AdminTab = "supervisores" | "proveedores" | "auditoria";
 type CasetaTab = "registro" | "bitacora";
+
+interface CorbatinVerde {
+  id: string;
+  corbatinNum: string; // "001", "002", etc.
+  empresaNombre: string;
+  telefono: string;
+  email: string;
+  fechaEmision: string;
+  vigenciaTexto?: string;
+  fechaVencimiento?: string;
+  activo: boolean;
+  creadoPor?: string;
+  notas?: string;
+}
 
 interface Trabajador {
   id_trabajador: number | string;
@@ -513,6 +527,44 @@ const INITIAL_VEHICLES: Vehicle[] = [];
 const INITIAL_SANCIONES: Sancion[] = [];
 const INITIAL_BITACORA: RegistroCaseta[] = [];
 const INITIAL_INFRACCIONES_PENDIENTES: InfraccionReporte[] = [];
+const INITIAL_CORBATINES_VERDES: CorbatinVerde[] = [
+  {
+    id: "cv-1",
+    corbatinNum: "001",
+    empresaNombre: "Constructora Integral del Noroeste S.A. de C.V.",
+    telefono: "638-102-4589",
+    email: "operaciones@constructoranoroeste.com",
+    fechaEmision: "2026-09-01",
+    vigenciaTexto: "6 Meses",
+    fechaVencimiento: "2027-03-01",
+    activo: true,
+    creadoPor: "Supervisor HOA",
+  },
+  {
+    id: "cv-2",
+    corbatinNum: "002",
+    empresaNombre: "Constructora Integral del Noroeste S.A. de C.V.",
+    telefono: "638-102-4589",
+    email: "operaciones@constructoranoroeste.com",
+    fechaEmision: "2026-09-01",
+    vigenciaTexto: "6 Meses",
+    fechaVencimiento: "2027-03-01",
+    activo: true,
+    creadoPor: "Supervisor HOA",
+  },
+  {
+    id: "cv-3",
+    corbatinNum: "003",
+    empresaNombre: "Mantenimiento y Climas del Pacífico",
+    telefono: "638-384-9921",
+    email: "contacto@climaspacifico.mx",
+    fechaEmision: "2026-08-15",
+    vigenciaTexto: "1 Año",
+    fechaVencimiento: "2027-08-15",
+    activo: true,
+    creadoPor: "Supervisor HOA",
+  }
+];
 
 const DEFAULT_REGLAMENTO_SECTIONS: ReglamentoSection[] = [
   { title: "1. INGRESO", items: ["Registrar: corbatín, compañía, vehículo, placas, nombre y celular.", "Indicar área de trabajo y horario.", "Portar uniforme, gafete visible y EPP obligatorio."] },
@@ -850,6 +902,124 @@ function CorbatinDocument({ vehicle, sections }: { vehicle: Vehicle; sections?: 
               <div style={{ borderTop: "1px solid #cccccc", paddingTop: "6px", marginTop: "6px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "8px", color: "#555555" }}>
                 <span>Las Palomas Rocky Point HOA</span>
                 <span style={{ fontFamily: "monospace", fontWeight: "bold" }}>Corbatín #{vehicle.corbatinNum} · {vehicle.placas} · Vigencia 1 Año ({currentYear}–{nextYear})</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ─── Tarjeta Corbatin Verde Printable Component (Larga Estancia / Empresas) ───
+function TarjetaCorbatinVerdePrintable({ corb, sections }: { corb: CorbatinVerde; sections?: ReglamentoSection[] }) {
+  const qrPayload = `LP-HOA|CORB-VERDE:${corb.corbatinNum}|EMP:${corb.empresaNombre}|TEL:${corb.telefono}|VIG:${corb.vigenciaTexto || "Vigente"}`;
+  const docSections = sections && sections.length > 0 ? sections : DEFAULT_REGLAMENTO_SECTIONS;
+
+  return (
+    <div
+      className="card-exact-print-root bg-white"
+      style={{
+        width: "760px",
+        height: "512px",
+        margin: "0 auto",
+        boxSizing: "border-box",
+        border: "3px solid #0D6E5F",
+        borderRadius: "14px",
+        overflow: "hidden",
+        boxShadow: "0 10px 30px rgba(13,110,95,0.12)",
+        background: "#ffffff",
+      }}
+    >
+      <table style={{ width: "100%", height: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+        <tbody>
+          <tr>
+            {/* ANVERSO (LEFT) */}
+            <td
+              style={{
+                width: "380px",
+                verticalAlign: "top",
+                borderRight: "2px dashed #0D6E5F",
+                padding: "16px 14px",
+                textAlign: "center",
+                background: "#ffffff",
+                boxSizing: "border-box",
+              }}
+            >
+              <div style={{ textAlign: "center", width: "100%" }}>
+                <div style={{ fontSize: "15px", fontWeight: "900", color: "#0D6E5F", textAlign: "center", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                  PROVEEDOR — LARGA ESTANCIA
+                </div>
+                <div style={{ borderTop: "2px solid #0D6E5F", borderBottom: "2px solid #0D6E5F", height: "4px", margin: "5px auto", width: "100%" }} />
+                <div style={{ padding: "4px 0", textAlign: "center", display: "flex", justifyContent: "center" }}>
+                  <LPLogo size={150} />
+                </div>
+                <div style={{ borderTop: "2px solid #0D6E5F", borderBottom: "2px solid #0D6E5F", height: "4px", margin: "5px auto", width: "100%" }} />
+                <div style={{ fontSize: "64px", fontWeight: "900", color: "#0D6E5F", lineHeight: "1", textAlign: "center", width: "100%", padding: "2px 0", fontFamily: "var(--font-mono, monospace)" }}>
+                  {corb.corbatinNum}
+                </div>
+                <div style={{ borderTop: "2px solid #0D6E5F", borderBottom: "2px solid #0D6E5F", height: "4px", margin: "5px auto", width: "100%" }} />
+              </div>
+
+              <div style={{ textAlign: "center", fontSize: "11px", color: "#222222", lineHeight: "1.35", padding: "4px 0" }}>
+                <div style={{ fontWeight: "bold", fontSize: "13px", color: "#000", marginBottom: "1.5px" }}>{corb.empresaNombre}</div>
+                <div style={{ color: "#0D6E5F", fontWeight: "bold", fontSize: "11px" }}>Tel: {corb.telefono}</div>
+                <div style={{ color: "#555555", fontSize: "9.5px" }}>Email: {corb.email}</div>
+              </div>
+
+              {/* QR CODE */}
+              <div style={{ borderTop: "1px dashed #0D6E5F", paddingTop: "6px", marginTop: "4px", textAlign: "center" }}>
+                <div style={{ display: "inline-block", background: "#ffffff", padding: "5px", border: "2px solid #0D6E5F", borderRadius: "6px", boxShadow: "0 2px 6px rgba(0,0,0,0.06)" }}>
+                  <RealQRCode value={qrPayload} size={110} />
+                </div>
+                <div style={{ fontSize: "9.5px", fontWeight: "bold", color: "#0D6E5F", marginTop: "3px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  VIGENCIA: {corb.vigenciaTexto || "LARGA ESTANCIA"}
+                </div>
+                {corb.fechaVencimiento && (
+                  <div style={{ fontSize: "8px", color: "#666666", fontWeight: "600" }}>
+                    Válido hasta: {corb.fechaVencimiento}
+                  </div>
+                )}
+                <div style={{ fontSize: "8.5px", fontWeight: "bold", color: "#000000", marginTop: "2px", textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: "1.2" }}>
+                  POR FAVOR DE COLOCAR<br />EN EL RETROVISOR
+                </div>
+              </div>
+            </td>
+
+            {/* REVERSO (RIGHT) */}
+            <td
+              style={{
+                width: "380px",
+                verticalAlign: "top",
+                padding: "16px 16px 12px",
+                textAlign: "left",
+                background: "#ffffff",
+                boxSizing: "border-box",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                height: "100%",
+                overflow: "hidden",
+              }}
+            >
+              <div style={{ overflow: "hidden" }}>
+                <div style={{ fontSize: "11px", fontWeight: "900", textAlign: "center", marginBottom: "8px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  Reglamento para externos en áreas comunes:
+                </div>
+                {docSections.map((sec, idx) => (
+                  <div key={sec.title || idx} style={{ marginBottom: "5.5px" }}>
+                    <div style={{ fontSize: "10px", fontWeight: "bold", color: "#000000", marginBottom: "1px" }}>{sec.title}</div>
+                    <ul style={{ margin: 0, paddingLeft: "13px", listStyleType: "disc" }}>
+                      {sec.items.map((item, i) => (
+                        <li key={i} style={{ fontSize: "9.5px", color: "#222222", lineHeight: "1.3", marginBottom: "1px" }}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+              <div style={{ borderTop: "1px solid #cccccc", paddingTop: "6px", marginTop: "6px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "8px", color: "#555555" }}>
+                <span>Las Palomas Rocky Point HOA</span>
+                <span style={{ fontFamily: "monospace", fontWeight: "bold", color: "#0D6E5F" }}>Corbatín Verde #{corb.corbatinNum} · {corb.empresaNombre}</span>
               </div>
             </td>
           </tr>
@@ -1349,6 +1519,34 @@ export default function App() {
   const [expandedEmpresaId, setExpandedEmpresaId] = useState<string | null>(null);
   const [empresaSearchTerm, setEmpresaSearchTerm] = useState("");
   const [empresaSubTabMap, setEmpresaSubTabMap] = useState<Record<string, "vehiculos" | "trabajadores">>({});
+
+  // ─── Estados de Corbatines Verdes (Empresas / Larga Estancia) ───
+  const [corbatinesVerdes, setCorbatinesVerdes] = useState<CorbatinVerde[]>(() => {
+    try {
+      const saved = localStorage.getItem("hoa_corbatines_verdes");
+      return saved ? JSON.parse(saved) : INITIAL_CORBATINES_VERDES;
+    } catch {
+      return INITIAL_CORBATINES_VERDES;
+    }
+  });
+  const [selectedCorbatinVerdeId, setSelectedCorbatinVerdeId] = useState<string>("");
+  const [showCreateCorbatinVerdeModal, setShowCreateCorbatinVerdeModal] = useState(false);
+  const [corbatinVerdeSearch, setCorbatinVerdeSearch] = useState("");
+  const [corbatinVerdeEmpresaFilter, setCorbatinVerdeEmpresaFilter] = useState("all");
+  const [corbatinVerdeStatusFilter, setCorbatinVerdeStatusFilter] = useState("all");
+  const [isGeneratingCorbatinVerdePDF, setIsGeneratingCorbatinVerdePDF] = useState(false);
+
+  // Form states para creación de Corbatín Verde
+  const [nuevoCVModo, setNuevoCVModo] = useState<"individual" | "lote">("individual");
+  const [nuevoCVEmpresa, setNuevoCVEmpresa] = useState("");
+  const [nuevoCVTelefono, setNuevoCVTelefono] = useState("");
+  const [nuevoCVEmail, setNuevoCVEmail] = useState("");
+  const [nuevoCVCantidad, setNuevoCVCantidad] = useState(1);
+  const [nuevoCVRangoInicio, setNuevoCVRangoInicio] = useState("");
+  const [nuevoCVRangoFin, setNuevoCVRangoFin] = useState("");
+  const [nuevoCVVigencia, setNuevoCVVigencia] = useState("6 Meses");
+  const [nuevoCVNotas, setNuevoCVNotas] = useState("");
+  const [nuevoCVError, setNuevoCVError] = useState("");
 
   // Edición y Eliminación de Vehículos
   const [selectedVehiculoParaEditar, setSelectedVehiculoParaEditar] = useState<Vehicle | null>(null);
@@ -2637,6 +2835,337 @@ export default function App() {
     } finally {
       setIsGeneratingPDF(false);
     }
+  };
+
+  // ─── Native Vector PDF Generator para Corbatines Verdes (Larga Estancia) ───
+  const handleDescargarPDFCorbatinVerdeDirecto = async (corb: CorbatinVerde) => {
+    try {
+      setIsGeneratingCorbatinVerdePDF(true);
+
+      const qrPayload = `LP-HOA|CORB-VERDE:${corb.corbatinNum}|EMP:${corb.empresaNombre}|TEL:${corb.telefono}|VIG:${corb.vigenciaTexto || "Vigente"}`;
+
+      const [qrDataUrl, logoDataUrl] = await Promise.all([
+        QRCode.toDataURL(qrPayload, {
+          width: 500,
+          margin: 1,
+          errorCorrectionLevel: "M",
+          color: { dark: "#000000", light: "#ffffff" },
+        }),
+        getLogoImageForPDF(),
+      ]);
+
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4", // 297 x 210 mm
+      });
+
+      const cardW = 260; // 26.0 cm total width
+      const cardH = 175; // 17.5 cm total height
+      const startX = (297 - cardW) / 2; // 18.5 mm
+      const startY = (210 - cardH) / 2; // 17.5 mm
+      const colW = cardW / 2; // 130 mm
+      const midX = startX + colW; // 148.5 mm
+
+      // Outer Solid Emerald Border
+      pdf.setDrawColor(13, 110, 95);
+      pdf.setLineWidth(1.2);
+      pdf.rect(startX, startY, cardW, cardH);
+
+      // Center Dashed Folding Line
+      pdf.setLineDashPattern([2.5, 2.5], 0);
+      pdf.setDrawColor(80, 80, 80);
+      pdf.setLineWidth(0.5);
+      pdf.line(midX, startY, midX, startY + cardH);
+      pdf.setLineDashPattern([], 0);
+
+      // ── LEFT SIDE: ANVERSO ──
+      const leftCenterX = startX + colW / 2;
+
+      // 1. Title PROVEEDOR - LARGA ESTANCIA
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(14);
+      pdf.setTextColor(13, 110, 95);
+      pdf.text("PROVEEDOR — LARGA ESTANCIA", leftCenterX, startY + 11.5, { align: "center" });
+
+      // Double Line 1 (Green)
+      pdf.setLineWidth(0.6);
+      pdf.setDrawColor(13, 110, 95);
+      pdf.line(startX + 7, startY + 15, midX - 7, startY + 15);
+      pdf.line(startX + 7, startY + 16.3, midX - 7, startY + 16.3);
+
+      // 2. Logo HOA
+      if (logoDataUrl) {
+        const logoW = 50;
+        const logoH = 16;
+        pdf.addImage(logoDataUrl, "PNG", leftCenterX - logoW / 2, startY + 18.5, logoW, logoH);
+      } else {
+        pdf.setFont("times", "bold");
+        pdf.setFontSize(14);
+        pdf.setTextColor(13, 110, 95);
+        pdf.text("Las Palomas", leftCenterX, startY + 25.5, { align: "center" });
+        pdf.setFontSize(8.5);
+        pdf.setTextColor(100, 116, 139);
+        pdf.text("Rocky Point HOA, A.C.", leftCenterX, startY + 30, { align: "center" });
+      }
+
+      // Double Line 2 (Green)
+      pdf.setDrawColor(13, 110, 95);
+      pdf.line(startX + 7, startY + 37, midX - 7, startY + 37);
+      pdf.line(startX + 7, startY + 38.3, midX - 7, startY + 38.3);
+
+      // 3. NUMBER 001 - BOLD GREEN
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(54);
+      pdf.setTextColor(13, 110, 95);
+      pdf.text(corb.corbatinNum, leftCenterX, startY + 54, { align: "center" });
+
+      // Double Line 3
+      pdf.line(startX + 7, startY + 59, midX - 7, startY + 59);
+      pdf.line(startX + 7, startY + 60.3, midX - 7, startY + 60.3);
+
+      // 4. Empresa & Contact Information
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(11);
+      pdf.setTextColor(0, 0, 0);
+      const splitEmpresa = pdf.splitTextToSize(corb.empresaNombre, colW - 20);
+      pdf.text(splitEmpresa, leftCenterX, startY + 67, { align: "center" });
+
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(9.5);
+      pdf.setTextColor(13, 110, 95);
+      pdf.text(`Tel: ${corb.telefono}`, leftCenterX, startY + 75, { align: "center" });
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8);
+      pdf.setTextColor(60, 60, 60);
+      pdf.text(`Email: ${corb.email}`, leftCenterX, startY + 80, { align: "center" });
+
+      // Divider Line
+      pdf.setLineDashPattern([1.5, 1.5], 0);
+      pdf.setDrawColor(170, 170, 170);
+      pdf.line(startX + 10, startY + 84.5, midX - 10, startY + 84.5);
+      pdf.setLineDashPattern([], 0);
+
+      // 5. Large Centered QR Code
+      const qrSize = 44;
+      const qrX = leftCenterX - qrSize / 2;
+      const qrY = startY + 88;
+
+      pdf.setDrawColor(13, 110, 95);
+      pdf.setLineWidth(0.6);
+      pdf.rect(qrX - 1.5, qrY - 1.5, qrSize + 3, qrSize + 3);
+      pdf.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
+
+      // 6. Validity & Placement Instructions
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(8.5);
+      pdf.setTextColor(13, 110, 95);
+      pdf.text(`VIGENCIA: ${corb.vigenciaTexto || "LARGA ESTANCIA"}`, leftCenterX, startY + 143, { align: "center" });
+
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(80, 80, 80);
+      if (corb.fechaVencimiento) {
+        pdf.text(`Emisión: ${corb.fechaEmision} · Vencimiento: ${corb.fechaVencimiento}`, leftCenterX, startY + 148, { align: "center" });
+      }
+
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(8);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text("POR FAVOR DE COLOCAR EN EL RETROVISOR", leftCenterX, startY + 154, { align: "center" });
+
+      // ── RIGHT SIDE: REVERSO (Reglamento Oficial) ──
+      const rightMargin = midX + 9;
+      const contentWidth = colW - 17;
+      let textY = startY + 11.5;
+
+      const activeSections = reglamentoSecciones && reglamentoSecciones.length > 0 ? reglamentoSecciones : DEFAULT_REGLAMENTO_SECTIONS;
+
+      // Header Reverso
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(10.5);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text("REGLAMENTO PARA EXTERNOS EN ÁREAS COMUNES:", rightMargin + contentWidth / 2, textY, { align: "center" });
+      textY += 6.5;
+
+      activeSections.forEach((sec) => {
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(8.5);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(sec.title, rightMargin, textY);
+        textY += 4;
+
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(7.5);
+        pdf.setTextColor(30, 30, 30);
+
+        sec.items.forEach((item) => {
+          const rawBullet = item.startsWith("•") ? item : `• ${item}`;
+          const lines = pdf.splitTextToSize(rawBullet, contentWidth - 3);
+          pdf.text(lines, rightMargin + 2, textY);
+          textY += lines.length * 3.3;
+        });
+        textY += 1.5;
+      });
+
+      // Footer Reverso
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.4);
+      pdf.line(rightMargin, startY + cardH - 9, rightMargin + contentWidth, startY + cardH - 9);
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(7);
+      pdf.setTextColor(80, 80, 80);
+      pdf.text("Las Palomas Rocky Point HOA, A.C.", rightMargin, startY + cardH - 5);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(`Corbatín Verde #${corb.corbatinNum} · ${corb.empresaNombre}`, rightMargin + contentWidth, startY + cardH - 5, { align: "right" });
+
+      pdf.save(`Corbatin_Verde_${corb.corbatinNum}_${corb.empresaNombre.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`);
+      showToast(`Corbatín Verde #${corb.corbatinNum} generado y descargado exitosamente.`, "success", "PDF Generado");
+    } catch (err: any) {
+      console.error("Error generando PDF corbatín verde:", err);
+      showToast("Error al generar PDF: " + (err.message || err), "error");
+    } finally {
+      setIsGeneratingCorbatinVerdePDF(false);
+    }
+  };
+
+  const getNextCorbatinVerdeNum = (list: CorbatinVerde[]): string => {
+    const existingNums = list.map(c => parseInt(c.corbatinNum, 10)).filter(n => !isNaN(n));
+    const maxNum = existingNums.length > 0 ? Math.max(...existingNums) : 0;
+    return String(maxNum + 1).padStart(3, "0");
+  };
+
+  const handleGuardarNuevoCorbatinVerde = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setNuevoCVError("");
+
+    if (!nuevoCVEmpresa.trim()) {
+      setNuevoCVError("El nombre de la empresa es obligatorio.");
+      return;
+    }
+    if (!nuevoCVTelefono.trim()) {
+      setNuevoCVError("El número telefónico de contacto es obligatorio.");
+      return;
+    }
+    if (!nuevoCVEmail.trim()) {
+      setNuevoCVError("El correo electrónico es obligatorio.");
+      return;
+    }
+
+    const today = new Date();
+    const fechaEmision = today.toISOString().split("T")[0];
+    
+    // Calculate expiration date
+    let monthsToAdd = 6;
+    if (nuevoCVVigencia === "1 Mes") monthsToAdd = 1;
+    else if (nuevoCVVigencia === "3 Meses") monthsToAdd = 3;
+    else if (nuevoCVVigencia === "6 Meses") monthsToAdd = 6;
+    else if (nuevoCVVigencia === "1 Año") monthsToAdd = 12;
+
+    const vencimiento = new Date(today);
+    vencimiento.setMonth(vencimiento.getMonth() + monthsToAdd);
+    const fechaVencimiento = vencimiento.toISOString().split("T")[0];
+
+    let nuevosCorbatines: CorbatinVerde[] = [];
+
+    if (nuevoCVModo === "individual") {
+      const nextNum = getNextCorbatinVerdeNum(corbatinesVerdes);
+      const newCorb: CorbatinVerde = {
+        id: `cv-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        corbatinNum: nextNum,
+        empresaNombre: nuevoCVEmpresa.trim(),
+        telefono: nuevoCVTelefono.trim(),
+        email: nuevoCVEmail.trim(),
+        fechaEmision,
+        vigenciaTexto: nuevoCVVigencia,
+        fechaVencimiento,
+        activo: true,
+        creadoPor: currentUser?.nombre || "Supervisor HOA",
+        notas: nuevoCVNotas.trim() || undefined,
+      };
+      nuevosCorbatines.push(newCorb);
+    } else {
+      // Lote / Rango
+      let start = parseInt(nuevoCVRangoInicio, 10);
+      let end = parseInt(nuevoCVRangoFin, 10);
+
+      if (isNaN(start) || isNaN(end)) {
+        // Fallback a cantidad
+        const nextStart = parseInt(getNextCorbatinVerdeNum(corbatinesVerdes), 10);
+        start = nextStart;
+        end = nextStart + Math.max(1, nuevoCVCantidad) - 1;
+      }
+
+      if (start <= 0 || end < start) {
+        setNuevoCVError("El rango numérico de corbatines es inválido.");
+        return;
+      }
+
+      for (let num = start; num <= end; num++) {
+        const numStr = String(num).padStart(3, "0");
+        nuevosCorbatines.push({
+          id: `cv-${Date.now()}-${num}-${Math.random().toString(36).substr(2, 4)}`,
+          corbatinNum: numStr,
+          empresaNombre: nuevoCVEmpresa.trim(),
+          telefono: nuevoCVTelefono.trim(),
+          email: nuevoCVEmail.trim(),
+          fechaEmision,
+          vigenciaTexto: nuevoCVVigencia,
+          fechaVencimiento,
+          activo: true,
+          creadoPor: currentUser?.nombre || "Supervisor HOA",
+          notas: nuevoCVNotas.trim() || undefined,
+        });
+      }
+    }
+
+    const updated = [...corbatinesVerdes, ...nuevosCorbatines];
+    setCorbatinesVerdes(updated);
+    try {
+      localStorage.setItem("hoa_corbatines_verdes", JSON.stringify(updated));
+    } catch {}
+
+    setShowCreateCorbatinVerdeModal(false);
+    setSelectedCorbatinVerdeId(nuevosCorbatines[0]?.id || "");
+    setNuevoCVEmpresa("");
+    setNuevoCVTelefono("");
+    setNuevoCVEmail("");
+    setNuevoCVCantidad(1);
+    setNuevoCVRangoInicio("");
+    setNuevoCVRangoFin("");
+    setNuevoCVNotas("");
+    setNuevoCVError("");
+
+    showToast(
+      `Se ${nuevosCorbatines.length === 1 ? "ha emitido el Corbatín Verde #" + nuevosCorbatines[0].corbatinNum : "han emitido " + nuevosCorbatines.length + " Corbatines Verdes (#" + nuevosCorbatines[0].corbatinNum + " al #" + nuevosCorbatines[nuevosCorbatines.length - 1].corbatinNum + ")"} para ${nuevoCVEmpresa}.`,
+      "success",
+      "Corbatín(es) Verde(s) Emitido(s)"
+    );
+  };
+
+  const handleToggleActivoCorbatinVerde = (id: string) => {
+    const updated = corbatinesVerdes.map(c => c.id === id ? { ...c, activo: !c.activo } : c);
+    setCorbatinesVerdes(updated);
+    try {
+      localStorage.setItem("hoa_corbatines_verdes", JSON.stringify(updated));
+    } catch {}
+    const item = updated.find(c => c.id === id);
+    showToast(`Corbatín Verde #${item?.corbatinNum} ${item?.activo ? "habilitado" : "deshabilitado"} exitosamente.`, "info");
+  };
+
+  const handleEliminarCorbatinVerde = (id: string) => {
+    const item = corbatinesVerdes.find(c => c.id === id);
+    if (!item) return;
+    const updated = corbatinesVerdes.filter(c => c.id !== id);
+    setCorbatinesVerdes(updated);
+    try {
+      localStorage.setItem("hoa_corbatines_verdes", JSON.stringify(updated));
+    } catch {}
+    if (selectedCorbatinVerdeId === id) {
+      setSelectedCorbatinVerdeId(updated[0]?.id || "");
+    }
+    showToast(`Corbatín Verde #${item.corbatinNum} (${item.empresaNombre}) eliminado permanentemente.`, "success");
   };
 
   const handleCambiarAIngresoPeatonal = (veh?: Vehicle) => {
@@ -4725,7 +5254,7 @@ export default function App() {
                       type="button"
                       onClick={() => setOpenSupervisorDropdown(openSupervisorDropdown === "documentos" ? null : "documentos")}
                       className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                        ["corbatines", "reglamento"].includes(supervisorTab)
+                        ["corbatines", "corbatines_verdes", "reglamento"].includes(supervisorTab)
                           ? "bg-[#0D6E5F] text-white shadow-xs"
                           : "text-slate-700 hover:bg-white hover:text-slate-900"
                       }`}
@@ -4736,7 +5265,7 @@ export default function App() {
                     </button>
 
                     {openSupervisorDropdown === "documentos" && (
-                      <div className="absolute left-0 top-full mt-2 w-64 rounded-2xl bg-white border border-slate-200 shadow-2xl py-1.5 z-[100] ring-1 ring-black/5">
+                      <div className="absolute left-0 top-full mt-2 w-72 rounded-2xl bg-white border border-slate-200 shadow-2xl py-1.5 z-[100] ring-1 ring-black/5">
                         <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
                           Documentación Oficial
                         </div>
@@ -4752,10 +5281,32 @@ export default function App() {
                         >
                           <div>
                             <div className="font-semibold">Impresión de Corbatines</div>
-                            <div className="text-[11px] text-slate-400">Emisión física con código QR</div>
+                            <div className="text-[11px] text-slate-400">Emisión vehicular con QR y placas</div>
                           </div>
                           <span className="px-2 py-0.5 rounded-full bg-teal-100 text-[#0D6E5F] text-[10px] font-bold">
                             PDF
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSupervisorTab("corbatines_verdes");
+                            setOpenSupervisorDropdown(null);
+                          }}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
+                            supervisorTab === "corbatines_verdes" ? "bg-emerald-50 text-emerald-800 font-bold" : "text-slate-700"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
+                            <div>
+                              <div className="font-semibold text-emerald-950">Corbatines Verdes</div>
+                              <div className="text-[11px] text-slate-400">Empresas / Larga estancia (#001...)</div>
+                            </div>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                            Opción 2
                           </span>
                         </button>
 
@@ -5954,6 +6505,503 @@ export default function App() {
                           </>
                         );
                       })()}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ─── SUB-MÓDULO: CORBATINES VERDES (LARGA ESTANCIA / EMPRESAS) ─── */}
+              {supervisorTab === "corbatines_verdes" && (
+                <div className="space-y-6">
+                  {/* Hero & Banner Superior */}
+                  <div className="rounded-2xl border p-5 bg-white shadow-sm space-y-4 no-print" style={{ borderColor: "var(--color-border)" }}>
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b pb-4" style={{ borderColor: "var(--color-border)" }}>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-sm" />
+                          <h2 className="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <span>Corbatines Verdes — Proveedores de Larga Estancia</span>
+                          </h2>
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            Opción 2 · Rango 001+
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 max-w-3xl leading-relaxed">
+                          Emisión de corbatines verdes para empresas contratistas y proveedores autorizados que laboran por días o meses continuos en Las Palomas Rocky Point HOA. No requiere registro individual de vehículos. Asignación consecutiva a partir del correlativo <strong>#001</strong>.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNuevoCVModo("individual");
+                            setNuevoCVEmpresa("");
+                            setNuevoCVTelefono("");
+                            setNuevoCVEmail("");
+                            setNuevoCVCantidad(1);
+                            setNuevoCVRangoInicio(getNextCorbatinVerdeNum(corbatinesVerdes));
+                            setNuevoCVRangoFin(getNextCorbatinVerdeNum(corbatinesVerdes));
+                            setNuevoCVError("");
+                            setShowCreateCorbatinVerdeModal(true);
+                          }}
+                          className="px-4 py-2.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-md shadow-emerald-700/20 active:scale-[0.98] transition-all flex items-center gap-2 cursor-pointer"
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                          </svg>
+                          <span>Emitir Corbatín(es) Verde(s)</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* KPI Metrics Chips */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between">
+                        <div>
+                          <div className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Total Emitidos</div>
+                          <div className="text-xl font-black text-emerald-950 mt-0.5">{corbatinesVerdes.length}</div>
+                        </div>
+                        <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700">
+                          <IconBadge className="w-5 h-5" />
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-teal-50/70 border border-teal-200/80 flex items-center justify-between">
+                        <div>
+                          <div className="text-[11px] font-bold text-teal-800 uppercase tracking-wider">En Servicio / Activos</div>
+                          <div className="text-xl font-black text-teal-950 mt-0.5">
+                            {corbatinesVerdes.filter(c => c.activo).length}
+                          </div>
+                        </div>
+                        <div className="w-9 h-9 rounded-lg bg-teal-100 flex items-center justify-center text-teal-700">
+                          <IconCheckCircle className="w-5 h-5" />
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                        <div>
+                          <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Empresas con Acceso</div>
+                          <div className="text-xl font-black text-slate-800 mt-0.5">
+                            {new Set(corbatinesVerdes.map(c => c.empresaNombre)).size}
+                          </div>
+                        </div>
+                        <div className="w-9 h-9 rounded-lg bg-slate-200/70 flex items-center justify-center text-slate-700">
+                          <IconBuilding className="w-5 h-5" />
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 flex items-center justify-between">
+                        <div>
+                          <div className="text-[11px] font-bold text-amber-800 uppercase tracking-wider">Siguiente Correlativo</div>
+                          <div className="text-xl font-black font-mono text-amber-950 mt-0.5">
+                            #{getNextCorbatinVerdeNum(corbatinesVerdes)}
+                          </div>
+                        </div>
+                        <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 font-mono font-bold text-xs">
+                          001+
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Filtros de Búsqueda y Selección */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1">Filtrar por Empresa:</label>
+                        <select
+                          value={corbatinVerdeEmpresaFilter}
+                          onChange={(e) => setCorbatinVerdeEmpresaFilter(e.target.value)}
+                          className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                        >
+                          <option value="all">Todas las empresas</option>
+                          {Array.from(new Set(corbatinesVerdes.map(c => c.empresaNombre))).map((emp) => (
+                            <option key={emp} value={emp}>
+                              {emp} ({corbatinesVerdes.filter(c => c.empresaNombre === emp).length} corbatines)
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1">Estatus del Corbatín:</label>
+                        <select
+                          value={corbatinVerdeStatusFilter}
+                          onChange={(e) => setCorbatinVerdeStatusFilter(e.target.value)}
+                          className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                        >
+                          <option value="all">Todos los estatus</option>
+                          <option value="activos">En Servicio / Activos</option>
+                          <option value="inactivos">Inactivos / Deshabilitados</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1">Búsqueda rápida:</label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={corbatinVerdeSearch}
+                            onChange={(e) => setCorbatinVerdeSearch(e.target.value)}
+                            placeholder="Buscar # correlativo, empresa, teléfono..."
+                            className="w-full text-xs font-semibold pl-8 pr-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                          />
+                          <IconSearch className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Panel Principal Master-Detail */}
+                  <div className="flex flex-col lg:flex-row gap-6 items-start">
+                    {/* Lista Lateral de Corbatines Verdes */}
+                    <div className="w-full lg:w-80 rounded-2xl border overflow-hidden bg-white shadow-sm flex flex-col shrink-0 no-print" style={{ borderColor: "var(--color-border)" }}>
+                      <div className="p-4 border-b bg-emerald-50/50 flex items-center justify-between border-emerald-100">
+                        <span className="font-bold text-xs uppercase tracking-wider text-emerald-950 flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                          <span>Corbatines Emitidos</span>
+                        </span>
+                        <span className="text-[11px] font-bold text-emerald-700 font-mono">
+                          {corbatinesVerdes.filter((c) => {
+                            const matchEmp = corbatinVerdeEmpresaFilter === "all" || c.empresaNombre.toLowerCase() === corbatinVerdeEmpresaFilter.toLowerCase();
+                            const matchStatus = corbatinVerdeStatusFilter === "all" || (corbatinVerdeStatusFilter === "activos" ? c.activo : !c.activo);
+                            const q = corbatinVerdeSearch.trim().toLowerCase();
+                            const matchQ = !q ||
+                              c.corbatinNum.toLowerCase().includes(q) ||
+                              c.empresaNombre.toLowerCase().includes(q) ||
+                              c.telefono.toLowerCase().includes(q) ||
+                              c.email.toLowerCase().includes(q);
+                            return matchEmp && matchStatus && matchQ;
+                          }).length} de {corbatinesVerdes.length}
+                        </span>
+                      </div>
+
+                      <div className="divide-y divide-slate-100 max-h-[580px] overflow-y-auto">
+                        {(() => {
+                          const filtered = corbatinesVerdes.filter((c) => {
+                            const matchEmp = corbatinVerdeEmpresaFilter === "all" || c.empresaNombre.toLowerCase() === corbatinVerdeEmpresaFilter.toLowerCase();
+                            const matchStatus = corbatinVerdeStatusFilter === "all" || (corbatinVerdeStatusFilter === "activos" ? c.activo : !c.activo);
+                            const q = corbatinVerdeSearch.trim().toLowerCase();
+                            const matchQ = !q ||
+                              c.corbatinNum.toLowerCase().includes(q) ||
+                              c.empresaNombre.toLowerCase().includes(q) ||
+                              c.telefono.toLowerCase().includes(q) ||
+                              c.email.toLowerCase().includes(q);
+                            return matchEmp && matchStatus && matchQ;
+                          });
+
+                          if (filtered.length === 0) {
+                            return (
+                              <div className="p-8 text-center text-xs text-slate-500 space-y-2">
+                                <IconBadge className="w-8 h-8 text-slate-300 mx-auto" />
+                                <p className="font-semibold text-slate-700">Sin corbatines verdes encontrados</p>
+                                <p className="text-[11px] text-slate-400">Haz clic en "Emitir Corbatín(es) Verde(s)" para dar de alta uno nuevo.</p>
+                              </div>
+                            );
+                          }
+
+                          const activeId = selectedCorbatinVerdeId || filtered[0].id;
+
+                          return filtered.map((c) => {
+                            const isSelected = activeId === c.id;
+                            return (
+                              <button
+                                key={c.id}
+                                type="button"
+                                onClick={() => setSelectedCorbatinVerdeId(c.id)}
+                                className={`w-full text-left px-4 py-3.5 transition-all hover:bg-slate-50 cursor-pointer ${
+                                  isSelected ? "bg-emerald-50/80 border-l-4 border-emerald-600 shadow-2xs" : ""
+                                }`}
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="truncate">
+                                    <div className="font-bold text-xs text-slate-900 truncate">
+                                      {c.empresaNombre}
+                                    </div>
+                                    <div className="text-[11px] text-slate-500 truncate mt-0.5 flex items-center gap-1">
+                                      <IconPhone className="w-3 h-3 text-slate-400 shrink-0" />
+                                      <span>{c.telefono}</span>
+                                    </div>
+                                  </div>
+                                  <span className="font-mono font-black text-sm shrink-0 px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-900 border border-emerald-200">
+                                    #{c.corbatinNum}
+                                  </span>
+                                </div>
+                                <div className="mt-2.5 flex items-center justify-between text-[10.5px]">
+                                  <span className="text-slate-400 font-medium">
+                                    Vence: {c.fechaVencimiento || c.vigenciaTexto || "Vigente"}
+                                  </span>
+                                  {c.activo ? (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-emerald-100/80 text-emerald-800 border border-emerald-300">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                      <span>Activo</span>
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-red-50 text-red-700 border border-red-200">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                                      <span>Inactivo</span>
+                                    </span>
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          });
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Previsualizador de Tarjeta Verde y Controles */}
+                    <div className="flex-1 space-y-4 w-full">
+                      {(() => {
+                        const filtered = corbatinesVerdes.filter((c) => {
+                          const matchEmp = corbatinVerdeEmpresaFilter === "all" || c.empresaNombre.toLowerCase() === corbatinVerdeEmpresaFilter.toLowerCase();
+                          const matchStatus = corbatinVerdeStatusFilter === "all" || (corbatinVerdeStatusFilter === "activos" ? c.activo : !c.activo);
+                          const q = corbatinVerdeSearch.trim().toLowerCase();
+                          const matchQ = !q ||
+                            c.corbatinNum.toLowerCase().includes(q) ||
+                            c.empresaNombre.toLowerCase().includes(q) ||
+                            c.telefono.toLowerCase().includes(q) ||
+                            c.email.toLowerCase().includes(q);
+                          return matchEmp && matchStatus && matchQ;
+                        });
+
+                        const activeItem = filtered.find(c => c.id === selectedCorbatinVerdeId) || filtered[0];
+
+                        if (!activeItem) {
+                          return (
+                            <div className="rounded-2xl border p-12 text-center bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
+                              <IconBadge className="w-12 h-12 text-emerald-300 mx-auto mb-3" />
+                              <h3 className="font-bold text-slate-800 mb-1 text-sm">Sin corbatín verde seleccionado</h3>
+                              <p className="text-xs text-slate-500">Selecciona un elemento de la lista lateral o haz clic en "Emitir Corbatín(es) Verde(s)".</p>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <>
+                            <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
+                              {/* Tarjeta Header */}
+                              <div className="px-5 py-4 border-b bg-emerald-50/40 flex flex-wrap items-center justify-between gap-3 no-print border-emerald-100">
+                                <div className="space-y-0.5">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-mono font-black text-base text-emerald-950 px-2.5 py-0.5 rounded-lg bg-emerald-200/80 border border-emerald-300">
+                                      Corbatín Verde #{activeItem.corbatinNum}
+                                    </span>
+                                    <h3 className="font-bold text-sm text-slate-800">
+                                      {activeItem.empresaNombre}
+                                    </h3>
+                                  </div>
+                                  <p className="text-xs text-slate-500 flex items-center gap-3">
+                                    <span>Tel: <strong className="font-mono text-slate-700">{activeItem.telefono}</strong></span>
+                                    <span>·</span>
+                                    <span>Email: <strong className="font-medium text-slate-700">{activeItem.email}</strong></span>
+                                  </p>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleActivoCorbatinVerde(activeItem.id)}
+                                    className="cursor-pointer"
+                                    title="Clic para cambiar estatus"
+                                  >
+                                    {activeItem.activo ? (
+                                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200 transition-colors">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                        <span>En Servicio</span>
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-300 hover:bg-red-200 transition-colors">
+                                        <span className="w-2 h-2 rounded-full bg-red-500" />
+                                        <span>Inactivo</span>
+                                      </span>
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Live Component Card Preview */}
+                              <div className="p-4 sm:p-6 overflow-x-auto bg-slate-100/80 flex justify-center items-center">
+                                <TarjetaCorbatinVerdePrintable corb={activeItem} sections={reglamentoSecciones} />
+                              </div>
+
+                              {/* Metadatos y Detalles Informativos */}
+                              <div className="p-4 bg-slate-50/70 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                                <div>
+                                  <div className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Fecha Emisión</div>
+                                  <div className="font-bold text-slate-800 mt-0.5">{activeItem.fechaEmision}</div>
+                                </div>
+                                <div>
+                                  <div className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Vigencia</div>
+                                  <div className="font-bold text-slate-800 mt-0.5">{activeItem.vigenciaTexto || "6 Meses"}</div>
+                                </div>
+                                <div>
+                                  <div className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Fecha Vencimiento</div>
+                                  <div className="font-bold text-slate-800 mt-0.5">{activeItem.fechaVencimiento || "Indefinida"}</div>
+                                </div>
+                                <div>
+                                  <div className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Emitido Por</div>
+                                  <div className="font-bold text-slate-800 mt-0.5">{activeItem.creadoPor || "Supervisor HOA"}</div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Botones de Acción */}
+                            <div className="flex flex-wrap items-center justify-between gap-3 no-print">
+                              <div className="flex flex-wrap gap-2.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleDescargarPDFCorbatinVerdeDirecto(activeItem)}
+                                  disabled={isGeneratingCorbatinVerdePDF}
+                                  className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 active:scale-[0.98] flex items-center gap-2 cursor-pointer shadow-md transition-all disabled:opacity-50"
+                                >
+                                  <IconDownload className="w-4 h-4" />
+                                  <span>{isGeneratingCorbatinVerdePDF ? "Generando PDF..." : `Descargar PDF Corbatín #${activeItem.corbatinNum}`}</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => window.print()}
+                                  className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-sm transition-all flex items-center gap-2"
+                                >
+                                  <svg className="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <polyline points="6 9 6 2 18 2 18 9" />
+                                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                                    <rect x="6" y="14" width="12" height="8" />
+                                  </svg>
+                                  <span>Imprimir Tarjeta</span>
+                                </button>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (confirm(`¿Estás seguro de eliminar permanentemente el Corbatín Verde #${activeItem.corbatinNum} asignado a ${activeItem.empresaNombre}?`)) {
+                                    handleEliminarCorbatinVerde(activeItem.id);
+                                  }
+                                }}
+                                className="px-3.5 py-2 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 border border-red-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+                              >
+                                <IconTrash className="w-3.5 h-3.5" />
+                                <span>Eliminar Corbatín</span>
+                              </button>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Tabla Completa de Corbatines Verdes Registrados */}
+                  <div className="rounded-2xl border overflow-hidden bg-white shadow-sm mt-8 no-print" style={{ borderColor: "var(--color-border)" }}>
+                    <div className="px-5 py-4 border-b bg-slate-50 flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
+                      <div>
+                        <h3 className="font-bold text-sm text-slate-800">Padrón Oficial de Corbatines Verdes (Larga Estancia)</h3>
+                        <p className="text-xs text-slate-400 mt-0.5">Control de correlativos, vigencia y emisión directa.</p>
+                      </div>
+                      <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+                        {corbatinesVerdes.length} Registros
+                      </span>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm text-left">
+                        <thead>
+                          <tr className="border-b bg-slate-50/70 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
+                            <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider"># Correlativo</th>
+                            <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider">Empresa / Contratista</th>
+                            <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider">Teléfono</th>
+                            <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider">Correo Electrónico</th>
+                            <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider">Emisión</th>
+                            <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider">Vigencia</th>
+                            <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider">Estatus</th>
+                            <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-right">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {corbatinesVerdes.length === 0 ? (
+                            <tr>
+                              <td colSpan={8} className="py-8 text-center text-slate-400">
+                                No hay corbatines verdes emitidos aún. Haz clic en "Emitir Corbatín(es) Verde(s)" para comenzar.
+                              </td>
+                            </tr>
+                          ) : (
+                            corbatinesVerdes.map((c) => (
+                              <tr key={c.id} className="hover:bg-slate-50/70 transition-colors">
+                                <td className="px-5 py-3">
+                                  <span className="font-mono font-black text-xs text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200">
+                                    #{c.corbatinNum}
+                                  </span>
+                                </td>
+                                <td className="px-5 py-3 font-bold text-xs text-slate-900">{c.empresaNombre}</td>
+                                <td className="px-5 py-3 font-mono text-xs text-slate-600">
+                                  <CopyableInlineText text={c.telefono} label="Teléfono" onCopyToast={showToast} />
+                                </td>
+                                <td className="px-5 py-3 text-xs text-slate-500">{c.email}</td>
+                                <td className="px-5 py-3 text-xs text-slate-500">{c.fechaEmision}</td>
+                                <td className="px-5 py-3 text-xs text-slate-600 font-medium">
+                                  {c.vigenciaTexto || "6 Meses"}
+                                  {c.fechaVencimiento && <div className="text-[10.5px] text-slate-400">Hasta {c.fechaVencimiento}</div>}
+                                </td>
+                                <td className="px-5 py-3">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleActivoCorbatinVerde(c.id)}
+                                    className="cursor-pointer"
+                                  >
+                                    {c.activo ? (
+                                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                        <span>Activo</span>
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-300 hover:bg-red-100">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                                        <span>Inactivo</span>
+                                      </span>
+                                    )}
+                                  </button>
+                                </td>
+                                <td className="px-5 py-3 text-right">
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedCorbatinVerdeId(c.id);
+                                        window.scrollTo({ top: 0, behavior: "smooth" });
+                                      }}
+                                      className="px-2.5 py-1 rounded-lg text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-600 hover:text-white border border-emerald-200 transition-all cursor-pointer shadow-2xs"
+                                      title="Ver tarjeta en previsualizador"
+                                    >
+                                      Ver Tarjeta
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDescargarPDFCorbatinVerdeDirecto(c)}
+                                      className="p-1 px-2 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all cursor-pointer"
+                                      title="Descargar PDF"
+                                    >
+                                      <IconDownload className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (confirm(`¿Eliminar Corbatín Verde #${c.corbatinNum}?`)) {
+                                          handleEliminarCorbatinVerde(c.id);
+                                        }
+                                      }}
+                                      className="p-1 px-2 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-600 hover:text-white border border-red-200 transition-all cursor-pointer"
+                                      title="Eliminar"
+                                    >
+                                      <IconTrash className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </div>
@@ -9741,6 +10789,297 @@ export default function App() {
           </div>
         );
       })()}
+
+      {/* ─── MODAL: EMITIR CORBATÍN(ES) VERDE(S) — LARGA ESTANCIA ─── */}
+      {showCreateCorbatinVerdeModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="relative bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-100 my-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Header decorativo */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-emerald-100/80 border border-emerald-200 flex items-center justify-center text-emerald-800 shadow-2xs">
+                  <IconBadge className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+                    <span>Emitir Corbatín(es) Verde(s)</span>
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase">
+                      Larga Estancia
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Para empresas con estadía continua sin registro vehicular previo.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCreateCorbatinVerdeModal(false);
+                  setNuevoCVError("");
+                }}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                title="Cerrar modal"
+              >
+                <IconX className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Selector de Modo: Individual vs Lote */}
+            <div className="mt-5 p-1 bg-slate-100 rounded-2xl flex items-center gap-1 border border-slate-200/80">
+              <button
+                type="button"
+                onClick={() => setNuevoCVModo("individual")}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
+                  nuevoCVModo === "individual"
+                    ? "bg-white text-emerald-900 shadow-xs border border-slate-200"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                Emisión Individual (1 Corbatín)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setNuevoCVModo("lote");
+                  if (!nuevoCVRangoInicio) {
+                    setNuevoCVRangoInicio(getNextCorbatinVerdeNum(corbatinesVerdes));
+                  }
+                  if (!nuevoCVRangoFin) {
+                    const start = parseInt(getNextCorbatinVerdeNum(corbatinesVerdes), 10);
+                    setNuevoCVRangoFin(String(start + 4).padStart(3, "0"));
+                  }
+                }}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
+                  nuevoCVModo === "lote"
+                    ? "bg-white text-emerald-900 shadow-xs border border-slate-200"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                Emisión en Lote / Rango Consecutivo
+              </button>
+            </div>
+
+            <form onSubmit={handleGuardarNuevoCorbatinVerde} className="mt-5 space-y-4">
+              {/* Error Banner */}
+              {nuevoCVError && (
+                <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2.5 text-xs text-red-700 font-medium">
+                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{nuevoCVError}</span>
+                </div>
+              )}
+
+              {/* Nombre de la Empresa */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Nombre de la Empresa / Contratista <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    required
+                    list="empresas-list-cv"
+                    value={nuevoCVEmpresa}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setNuevoCVEmpresa(val);
+                      // Auto-rellenar teléfono o email si coincide con empresa registrada
+                      const found = empresas.find(emp => emp.nombre.toLowerCase() === val.toLowerCase());
+                      if (found) {
+                        if (found.telefono && !nuevoCVTelefono) setNuevoCVTelefono(found.telefono);
+                        if (found.email && !nuevoCVEmail) setNuevoCVEmail(found.email);
+                      }
+                    }}
+                    placeholder="Ej. Albercas del Desierto S.A."
+                    className="w-full text-xs font-semibold pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                  <IconBuilding className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <datalist id="empresas-list-cv">
+                    {empresas.map((emp) => (
+                      <option key={emp.id} value={emp.nombre} />
+                    ))}
+                  </datalist>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Puedes seleccionar una empresa existente del padrón o escribir un nuevo proveedor.
+                </p>
+              </div>
+
+              {/* Teléfono y Correo */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Teléfono de Contacto <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="tel"
+                      required
+                      value={nuevoCVTelefono}
+                      onChange={(e) => setNuevoCVTelefono(e.target.value)}
+                      placeholder="Ej. 638 123 4567"
+                      className="w-full text-xs font-semibold pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 font-mono"
+                    />
+                    <IconPhone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Correo Electrónico <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      required
+                      value={nuevoCVEmail}
+                      onChange={(e) => setNuevoCVEmail(e.target.value)}
+                      placeholder="contacto@empresa.com"
+                      className="w-full text-xs font-semibold pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    />
+                    <IconMail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Modo Individual: Info del Correlativo */}
+              {nuevoCVModo === "individual" ? (
+                <div className="p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200 flex items-center justify-between">
+                  <div>
+                    <div className="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">
+                      Correlativo Asignado Automáticamente
+                    </div>
+                    <div className="text-xs text-emerald-700 mt-0.5">
+                      Siguiente número consecutivo oficial disponible
+                    </div>
+                  </div>
+                  <span className="font-mono font-black text-xl px-3 py-1 rounded-xl bg-white text-emerald-900 border border-emerald-300 shadow-2xs">
+                    #{getNextCorbatinVerdeNum(corbatinesVerdes)}
+                  </span>
+                </div>
+              ) : (
+                /* Modo Lote: Rango Consecutivo */
+                <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider">
+                      Rango de Corbatines Verdes
+                    </span>
+                    <span className="text-[11px] font-extrabold text-emerald-700 bg-white px-2 py-0.5 rounded-lg border border-emerald-300 font-mono">
+                      Inicio sugerido: #{getNextCorbatinVerdeNum(corbatinesVerdes)}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                        Desde Correlativo #:
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        required
+                        value={nuevoCVRangoInicio}
+                        onChange={(e) => setNuevoCVRangoInicio(e.target.value)}
+                        placeholder="Ej. 001"
+                        className="w-full text-xs font-bold font-mono px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                        Hasta Correlativo #:
+                      </label>
+                      <input
+                        type="number"
+                        min={nuevoCVRangoInicio || "1"}
+                        required
+                        value={nuevoCVRangoFin}
+                        onChange={(e) => setNuevoCVRangoFin(e.target.value)}
+                        placeholder="Ej. 005"
+                        className="w-full text-xs font-bold font-mono px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      />
+                    </div>
+                  </div>
+
+                  {(() => {
+                    const s = parseInt(nuevoCVRangoInicio, 10);
+                    const e = parseInt(nuevoCVRangoFin, 10);
+                    const count = (!isNaN(s) && !isNaN(e) && e >= s) ? (e - s + 1) : 0;
+                    return (
+                      <div className="text-xs text-emerald-900 font-semibold bg-white/80 p-2.5 rounded-xl border border-emerald-200/80 flex items-center justify-between">
+                        <span>Total de corbatines a generar:</span>
+                        <span className="font-mono font-black text-emerald-950 px-2 py-0.5 rounded bg-emerald-100 border border-emerald-300">
+                          {count} {count === 1 ? "corbatín" : "corbatines"}
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {/* Vigencia */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Periodo de Vigencia
+                  </label>
+                  <select
+                    value={nuevoCVVigencia}
+                    onChange={(e) => setNuevoCVVigencia(e.target.value)}
+                    className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  >
+                    <option value="1 Mes">1 Mes</option>
+                    <option value="3 Meses">3 Meses</option>
+                    <option value="6 Meses">6 Meses (Recomendado)</option>
+                    <option value="1 Año">1 Año Completo</option>
+                    <option value="Permanente">Permanente / Indefinido</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Notas u Observaciones (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={nuevoCVNotas}
+                    onChange={(e) => setNuevoCVNotas(e.target.value)}
+                    placeholder="Ej. Proyecto Fase 2 Torre A"
+                    className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+              </div>
+
+              {/* Modal Footer Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateCorbatinVerdeModal(false);
+                    setNuevoCVError("");
+                  }}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-md shadow-emerald-700/20 active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <IconBadge className="w-4 h-4" />
+                  <span>
+                    {nuevoCVModo === "individual"
+                      ? "Emitir Corbatín Verde #" + getNextCorbatinVerdeNum(corbatinesVerdes)
+                      : "Emitir Lote de Corbatines Verdes"}
+                  </span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ─── TOAST NOTIFICATIONS OVERLAY ─── */}
       <ToastContainer toasts={toasts} onClose={removeToast} />
