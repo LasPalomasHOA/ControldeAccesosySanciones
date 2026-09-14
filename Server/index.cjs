@@ -94,6 +94,17 @@ async function ensureDbInit() {
           ADD COLUMN IF NOT EXISTS "eliminado" BOOLEAN DEFAULT FALSE;
         `).catch(() => {});
 
+        // Campos para reglamento y banderines editables
+        await db.sequelize.query(`
+          ALTER TABLE IF EXISTS "${schemaName}"."reglamentos" 
+          ADD COLUMN IF NOT EXISTS "contenido_texto" TEXT;
+        `).catch(() => {});
+
+        await db.sequelize.query(`
+          ALTER TABLE IF EXISTS "${schemaName}"."reglamentos" 
+          ADD COLUMN IF NOT EXISTS "contenido_secciones" JSONB;
+        `).catch(() => {});
+
         // Migrar automáticamente registros que contengan rutas '/uploads/' o 'guardia_' a Base64 en PostgreSQL
         const usuariosConRuta = await db.Usuario.findAll({
           where: {

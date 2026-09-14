@@ -165,6 +165,14 @@ export const api = {
     });
     return handleResponse(res);
   },
+  async updateReglamentoContenido(data: { contenido_texto?: string; contenido_secciones?: any[]; titulo?: string }) {
+    const res = await fetch(`${API_BASE_URL}/reglamentos/vigente/contenido`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
 
   // 8. Casetas & Reglas
   async getCasetas() {
