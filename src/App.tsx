@@ -2572,70 +2572,64 @@ export default function App() {
 
       const activeSections = reglamentoSecciones && reglamentoSecciones.length > 0 ? reglamentoSecciones : DEFAULT_REGLAMENTO_SECTIONS;
 
-      // 1. Calculate required lines for optimal card distribution
-      let totalLines = 0;
+      // 1. Calculate required line weight
+      let totalLineCount = 0;
       activeSections.forEach((sec) => {
-        totalLines += 1.2; // section title
+        totalLineCount += 1.3; // section title weight
         (sec.items || []).forEach((it) => {
           const rawBullet = it.startsWith("•") ? it : `• ${it}`;
           const lines = pdf.splitTextToSize(rawBullet, contentWidth);
-          totalLines += lines.length;
+          totalLineCount += lines.length;
         });
       });
 
-      // Available vertical height on card: 148 mm
-      const availableH = 146; 
-      // Base ideal spacing for standard document (fills card elegantly)
-      const idealReqH = totalLines * 4.4 + activeSections.length * 3.5 + 8;
-      
-      // Proportional scale factor (1.0 for default 6 sections, scales gracefully if more sections are added)
-      const scale = Math.min(1.0, Math.max(0.68, availableH / idealReqH));
-
-      const headerFontSize = Math.round(11.5 * scale * 10) / 10;
-      const secTitleFontSize = Math.round(10.0 * scale * 10) / 10;
-      const itemFontSize = Math.round(9.2 * scale * 10) / 10;
-      const secTitleSpacing = Math.round(4.8 * scale * 10) / 10;
-      const itemSpacing = Math.round(4.3 * scale * 10) / 10;
-      const secMargin = Math.round(3.4 * scale * 10) / 10;
+      // Available vertical space between header and footer: ~140 mm
+      const targetAvailableH = 138;
+      // Compute dynamic spacing per line so it spans the entire card naturally
+      const dynamicSpacing = Math.min(5.2, Math.max(3.3, targetAvailableH / Math.max(1, totalLineCount + activeSections.length * 0.4)));
+      const dynamicFontSize = Math.min(10.2, Math.max(7.2, dynamicSpacing * 1.96));
+      const dynamicTitleSize = Math.min(11.0, dynamicFontSize * 1.12);
+      const dynamicTitleSpacing = dynamicSpacing * 1.18;
+      const dynamicSecMargin = dynamicSpacing * 0.75;
 
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(headerFontSize);
+      pdf.setFontSize(11.5);
       pdf.setTextColor(0, 0, 0);
       pdf.text("REGLAMENTO PARA EXTERNOS EN ÁREAS COMUNES:", midX + colW / 2, textY, { align: "center" });
 
-      textY += Math.max(5.8, 7.8 * scale);
+      textY += 8.5;
 
       for (const sec of activeSections) {
-        if (textY + secTitleSpacing >= maxY) break;
+        if (textY + dynamicTitleSpacing >= maxY) break;
 
         pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(secTitleFontSize);
+        pdf.setFontSize(dynamicTitleSize);
         pdf.setTextColor(0, 0, 0);
         pdf.text(sec.title || "", rightMargin, textY);
-        textY += secTitleSpacing;
+        textY += dynamicTitleSpacing;
 
         pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(itemFontSize);
+        pdf.setFontSize(dynamicFontSize);
         pdf.setTextColor(25, 25, 25);
         
         let itemStopped = false;
         for (const it of (sec.items || [])) {
-          if (textY + itemSpacing >= maxY) {
+          if (textY + dynamicSpacing >= maxY) {
             itemStopped = true;
             break;
           }
           const rawBullet = it.startsWith("•") ? it : `• ${it}`;
           const lines = pdf.splitTextToSize(rawBullet, contentWidth);
           for (const line of lines) {
-            if (textY + itemSpacing >= maxY) {
+            if (textY + dynamicSpacing >= maxY) {
               itemStopped = true;
               break;
             }
             pdf.text(line, rightMargin + 1.5, textY);
-            textY += itemSpacing;
+            textY += dynamicSpacing;
           }
         }
-        textY += secMargin;
+        textY += dynamicSecMargin;
         if (itemStopped || textY >= maxY) break;
       }
 
