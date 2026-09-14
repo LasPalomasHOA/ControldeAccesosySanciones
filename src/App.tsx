@@ -845,9 +845,10 @@ function CorbatinDocument({ vehicle, sections }: { vehicle: Vehicle; sections?: 
                 flexDirection: "column",
                 justifyContent: "space-between",
                 height: "100%",
+                overflow: "hidden",
               }}
             >
-              <div>
+              <div style={{ overflow: "hidden" }}>
                 <div style={{ fontSize: "11.5px", fontWeight: "900", textAlign: "center", marginBottom: "8px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                   Reglamento para externos en áreas comunes:
                 </div>
@@ -863,7 +864,7 @@ function CorbatinDocument({ vehicle, sections }: { vehicle: Vehicle; sections?: 
                 ))}
               </div>
               <div style={{ borderTop: "1px solid #cccccc", paddingTop: "6px", marginTop: "6px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "8px", color: "#555555" }}>
-                <span>Las Palomas Rocky Point HOA, A.C.</span>
+                <span>Las Palomas Rocky Point HOA</span>
                 <span style={{ fontFamily: "monospace", fontWeight: "bold" }}>Corbatín #{vehicle.corbatinNum} · {vehicle.placas} · Vigencia 1 Año ({currentYear}–{nextYear})</span>
               </div>
             </td>
@@ -2563,28 +2564,50 @@ export default function App() {
       pdf.text("POR FAVOR DE COLOCAR", leftCenterX, startY + 150.5, { align: "center" });
       pdf.text("EN EL RETROVISOR", leftCenterX, startY + 155, { align: "center" });
 
-      // ── RIGHT SIDE: REVERSO (Reglamento Oficial - Fuente Fija Tamaño 10) ───
+      // ── RIGHT SIDE: REVERSO (Reglamento Oficial - Proporción Idéntica a Vista Web) ───
       const rightMargin = midX + 9;
       const contentWidth = colW - 17; // 113 mm printable area for right side
+      const maxY = startY + cardH - 12; // 180.5 mm hard stop before footer line
       let textY = startY + 11.5;
 
       const activeSections = reglamentoSecciones && reglamentoSecciones.length > 0 ? reglamentoSecciones : DEFAULT_REGLAMENTO_SECTIONS;
 
-      const headerFontSize = 11;
-      const secTitleFontSize = 9.5;
-      const itemFontSize = 8.5; // Fixed size 10 equivalent in print points
-      const secTitleSpacing = 4.0;
-      const itemSpacing = 3.6;
-      const secMargin = 2.4;
+      // 1. Calculate required lines for optimal card distribution
+      let totalLines = 0;
+      activeSections.forEach((sec) => {
+        totalLines += 1.2; // section title
+        (sec.items || []).forEach((it) => {
+          const rawBullet = it.startsWith("•") ? it : `• ${it}`;
+          const lines = pdf.splitTextToSize(rawBullet, contentWidth);
+          totalLines += lines.length;
+        });
+      });
+
+      // Available vertical height on card: 148 mm
+      const availableH = 146; 
+      // Base ideal spacing for standard document (fills card elegantly)
+      const idealReqH = totalLines * 4.4 + activeSections.length * 3.5 + 8;
+      
+      // Proportional scale factor (1.0 for default 6 sections, scales gracefully if more sections are added)
+      const scale = Math.min(1.0, Math.max(0.68, availableH / idealReqH));
+
+      const headerFontSize = Math.round(11.5 * scale * 10) / 10;
+      const secTitleFontSize = Math.round(10.0 * scale * 10) / 10;
+      const itemFontSize = Math.round(9.2 * scale * 10) / 10;
+      const secTitleSpacing = Math.round(4.8 * scale * 10) / 10;
+      const itemSpacing = Math.round(4.3 * scale * 10) / 10;
+      const secMargin = Math.round(3.4 * scale * 10) / 10;
 
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(headerFontSize);
       pdf.setTextColor(0, 0, 0);
       pdf.text("REGLAMENTO PARA EXTERNOS EN ÁREAS COMUNES:", midX + colW / 2, textY, { align: "center" });
 
-      textY += 7.0;
+      textY += Math.max(5.8, 7.8 * scale);
 
-      activeSections.forEach((sec) => {
+      for (const sec of activeSections) {
+        if (textY + secTitleSpacing >= maxY) break;
+
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(secTitleFontSize);
         pdf.setTextColor(0, 0, 0);
@@ -2594,16 +2617,27 @@ export default function App() {
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(itemFontSize);
         pdf.setTextColor(25, 25, 25);
-        (sec.items || []).forEach((it) => {
+        
+        let itemStopped = false;
+        for (const it of (sec.items || [])) {
+          if (textY + itemSpacing >= maxY) {
+            itemStopped = true;
+            break;
+          }
           const rawBullet = it.startsWith("•") ? it : `• ${it}`;
           const lines = pdf.splitTextToSize(rawBullet, contentWidth);
-          lines.forEach((line: string) => {
+          for (const line of lines) {
+            if (textY + itemSpacing >= maxY) {
+              itemStopped = true;
+              break;
+            }
             pdf.text(line, rightMargin + 1.5, textY);
             textY += itemSpacing;
-          });
-        });
+          }
+        }
         textY += secMargin;
-      });
+        if (itemStopped || textY >= maxY) break;
+      }
 
       // Bottom Footer (Always strictly anchored at card bottom)
       pdf.setLineWidth(0.3);

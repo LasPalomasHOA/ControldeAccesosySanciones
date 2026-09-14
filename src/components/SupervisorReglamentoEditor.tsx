@@ -27,8 +27,8 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
   const [activeTab, setActiveTab] = useState<"banderin" | "general">("banderin");
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Estadísticas discretas de contenido
-  const { totalSections, totalItems, totalChars } = useMemo(() => {
+  // Cálculo de Capacidad Física Real de la Tarjeta (13.0 × 17.5 cm = 151 mm útiles)
+  const { totalSections, totalItems, totalChars, capacityPercent, isFull } = useMemo(() => {
     const sectionsCount = (reglamentoSecciones || []).length;
     const itemsCount = (reglamentoSecciones || []).reduce((acc, s) => acc + (s.items ? s.items.length : 0), 0);
     const titleCharsCount = (reglamentoSecciones || []).reduce((acc, s) => acc + (s.title || "").length, 0);
@@ -38,10 +38,26 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
     );
     const charsCount = titleCharsCount + itemCharsCount;
 
+    // Estimación de líneas reales de impresión (títulos + viñetas + wrapping de textos largos)
+    let estimatedLines = sectionsCount * 1.5;
+    (reglamentoSecciones || []).forEach((sec) => {
+      (sec.items || []).forEach((it) => {
+        const len = (it || "").length;
+        estimatedLines += Math.max(1, Math.ceil(len / 52)); // ~52 caracteres por línea en 113mm
+      });
+    });
+
+    // La tarjeta física puede alojar cómodamente ~28-30 líneas antes del pie de página
+    const maxLines = 28;
+    const percent = Math.min(100, Math.round((estimatedLines / maxLines) * 100));
+    const full = percent >= 100 || sectionsCount >= 10;
+
     return {
       totalSections: sectionsCount,
       totalItems: itemsCount,
       totalChars: charsCount,
+      capacityPercent: percent,
+      isFull: full,
     };
   }, [reglamentoSecciones]);
 
@@ -63,6 +79,10 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
   };
 
   const handleAddItem = (secIndex: number) => {
+    if (isFull) {
+      alert("Has alcanzado el límite físico de la tarjeta de 17.5 cm. Para agregar más normas, elimina o compacta alguna existente, o traslada el texto a la pestaña 'Términos y Condiciones Generales'.");
+      return;
+    }
     const updated = [...reglamentoSecciones];
     updated[secIndex] = {
       ...updated[secIndex],
@@ -81,6 +101,10 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
   };
 
   const handleAddSection = () => {
+    if (isFull) {
+      alert("La tarjeta física ha alcanzado su capacidad máxima (13.0 × 17.5 cm). No es posible agregar más secciones sin desbordar el documento al imprimir.");
+      return;
+    }
     const nextNumber = reglamentoSecciones.length + 1;
     const newSection: ReglamentoSection = {
       title: `${nextNumber}. NUEVA SECCIÓN`,
@@ -129,8 +153,8 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
               PostgreSQL + Supabase
             </span>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-50 text-slate-600 border border-slate-200">
-              Formato Oficial: 13.0 × 17.5 cm
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 text-teal-800 border border-teal-200">
+              Formato Físico Oficial: 13.0 × 17.5 cm
             </span>
             {hasChanges && (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 animate-pulse">
@@ -143,7 +167,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
             Gestión y Modificación de Reglamentos Oficiales
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Personaliza las normas impresas en el reverso de los corbatines y el texto legal que firman digitalmente los contratistas.
+            Personaliza las normas impresas en el reverso de los corbatines vehiculares y los términos que firman digitalmente los contratistas.
           </p>
         </div>
 
@@ -208,12 +232,12 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
               </svg>
               1. Normas de Banderín Físico (Reverso del Corbatín)
             </span>
-            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-              {totalSections} secciones · {totalItems} normas
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${isFull ? "bg-amber-50 text-amber-800 border-amber-300" : "bg-slate-100 text-slate-600 border-slate-200"}`}>
+              {capacityPercent}% Capacidad
             </span>
           </div>
           <p className="text-[11px] text-slate-500 mt-1">
-            Secciones y normas impresas directamente en el reverso de la tarjeta vehicular.
+            Secciones y normas impresas directamente en el reverso de la tarjeta vehicular de 13.0 × 17.5 cm.
           </p>
         </button>
 
@@ -248,160 +272,187 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
 
       {/* PESTAÑA 1: SECCIONES DEL BANDERÍN FÍSICO */}
       {activeTab === "banderin" && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Editor de Secciones (Izquierda - 7 columnas) */}
-          <div className="lg:col-span-7 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-slate-800">
-                  Estructura de Secciones y Normas Impresas
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Edita los títulos y agrega o elimina puntos para organizar el banderín impreso.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleAddSection}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0D6E5F]/10 text-[#0D6E5F] hover:bg-[#0D6E5F]/20 transition-colors flex items-center gap-1.5 cursor-pointer"
-              >
-                <span>+ Nueva Sección</span>
-              </button>
+        <div className="space-y-4">
+          {/* Barra elegante de capacidad física */}
+          <div className="bg-white rounded-xl border border-slate-200 px-4 py-2.5 flex items-center justify-between gap-4 text-xs">
+            <div className="flex items-center gap-2 font-medium text-slate-700">
+              <span className="text-sm">📏</span>
+              <span>Ocupación de la tarjeta física:</span>
+              <strong className={isFull ? "text-amber-700 font-bold" : "text-[#0D6E5F] font-bold"}>
+                {capacityPercent}% {isFull ? "(Capacidad Máxima)" : "(Espacio Disponible)"}
+              </strong>
             </div>
 
-            <div className="space-y-4">
-              {reglamentoSecciones.map((sec, secIdx) => (
-                <div
-                  key={secIdx}
-                  className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs transition-shadow hover:shadow-sm"
-                >
-                  {/* Encabezado de la Sección */}
-                  <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-                    <span className="text-xs font-bold text-slate-400 font-mono w-5">
-                      #{secIdx + 1}
-                    </span>
-                    <input
-                      type="text"
-                      value={sec.title}
-                      onChange={(e) => handleTitleChange(secIdx, e.target.value)}
-                      placeholder="Título de la Sección (ej. 1. INGRESO)"
-                      className="flex-1 font-bold text-xs text-slate-800 bg-slate-50 rounded-lg px-3 py-1.5 border border-slate-200 focus:outline-none focus:ring-1 focus:ring-[#0D6E5F]"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveSection(secIdx)}
-                      className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
-                      title="Eliminar esta sección completa"
-                    >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                      </svg>
-                    </button>
-                  </div>
-
-                  {/* Lista de Normas / Puntos */}
-                  <div className="mt-3 space-y-2 pl-3">
-                    {sec.items.map((item, itemIdx) => (
-                      <div key={itemIdx} className="flex items-center gap-2">
-                        <span className="text-slate-400 text-xs select-none">•</span>
-                        <input
-                          type="text"
-                          value={item}
-                          onChange={(e) => handleItemChange(secIdx, itemIdx, e.target.value)}
-                          placeholder="Descripción de la norma"
-                          className="flex-1 text-xs text-slate-700 rounded-lg px-2.5 py-1.5 border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-[#0D6E5F]"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveItem(secIdx, itemIdx)}
-                          className="p-1 text-slate-400 hover:text-red-500 rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
-                          title="Quitar este punto"
-                        >
-                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <line x1="18" y1="6" x2="6" y2="18" />
-                            <line x1="6" y1="6" x2="18" y2="18" />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
-
-                    <div className="pt-1">
-                      <button
-                        type="button"
-                        onClick={() => handleAddItem(secIdx)}
-                        className="text-[11px] font-bold text-[#0D6E5F] hover:underline flex items-center gap-1 cursor-pointer"
-                      >
-                        <span>+ Agregar norma a esta sección</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center gap-3 text-slate-500 font-mono text-[11px]">
+              <span>{totalSections} / 8 secciones rec.</span>
+              <span>{totalItems} normas</span>
             </div>
           </div>
 
-          {/* Previsualización en Vivo del Reverso del Banderín (Derecha - 5 columnas) */}
-          <div className="lg:col-span-5 sticky top-20">
-            <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  <span className="text-xs font-bold text-slate-800">
-                    Previsualización en Escala Real
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Editor de Secciones (Izquierda - 7 columnas) */}
+            <div className="lg:col-span-7 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800">
+                    Estructura de Secciones y Normas Impresas
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Edita los títulos y agrega o elimina puntos para organizar el banderín impreso.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddSection}
+                  disabled={isFull}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 ${
+                    isFull
+                      ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
+                      : "bg-[#0D6E5F]/10 text-[#0D6E5F] hover:bg-[#0D6E5F]/20 cursor-pointer"
+                  }`}
+                  title={isFull ? "Has alcanzado la capacidad física de la tarjeta" : "Agregar nueva sección"}
+                >
+                  <span>{isFull ? "Tarjeta Llena" : "+ Nueva Sección"}</span>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {reglamentoSecciones.map((sec, secIdx) => (
+                  <div
+                    key={secIdx}
+                    className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs transition-shadow hover:shadow-sm"
+                  >
+                    {/* Encabezado de la Sección */}
+                    <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+                      <span className="text-xs font-bold text-slate-400 font-mono w-5">
+                        #{secIdx + 1}
+                      </span>
+                      <input
+                        type="text"
+                        value={sec.title}
+                        onChange={(e) => handleTitleChange(secIdx, e.target.value)}
+                        placeholder="Título de la Sección (ej. 1. INGRESO)"
+                        className="flex-1 font-bold text-xs text-slate-800 bg-slate-50 rounded-lg px-3 py-1.5 border border-slate-200 focus:outline-none focus:ring-1 focus:ring-[#0D6E5F]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSection(secIdx)}
+                        className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+                        title="Eliminar esta sección completa"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Lista de Normas / Puntos */}
+                    <div className="mt-3 space-y-2 pl-3">
+                      {sec.items.map((item, itemIdx) => (
+                        <div key={itemIdx} className="flex items-center gap-2">
+                          <span className="text-slate-400 text-xs select-none">•</span>
+                          <input
+                            type="text"
+                            value={item}
+                            onChange={(e) => handleItemChange(secIdx, itemIdx, e.target.value)}
+                            placeholder="Descripción de la norma"
+                            className="flex-1 text-xs text-slate-700 rounded-lg px-2.5 py-1.5 border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-[#0D6E5F]"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveItem(secIdx, itemIdx)}
+                            className="p-1 text-slate-400 hover:text-red-500 rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
+                            title="Quitar este punto"
+                          >
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <line x1="18" y1="6" x2="6" y2="18" />
+                              <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+
+                      <div className="pt-1">
+                        <button
+                          type="button"
+                          onClick={() => handleAddItem(secIdx)}
+                          disabled={isFull}
+                          className={`text-[11px] font-bold flex items-center gap-1 ${
+                            isFull ? "text-slate-400 cursor-not-allowed" : "text-[#0D6E5F] hover:underline cursor-pointer"
+                          }`}
+                        >
+                          <span>+ Agregar norma a esta sección</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Previsualización en Vivo del Reverso del Banderín (Derecha - 5 columnas) */}
+            <div className="lg:col-span-5 sticky top-20">
+              <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span className="text-xs font-bold text-slate-800">
+                      Previsualización en Escala Real
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    Reverso · 13.0 × 17.5 cm
                   </span>
                 </div>
-                <span className="text-[10px] text-slate-400 font-mono">
-                  Reverso · 13.0 × 17.5 cm
-                </span>
-              </div>
 
-              {/* Contenedor del Banderín Simulado con proporción real de tarjeta física */}
-              <div
-                className="bg-white border-2 border-black rounded p-3.5 font-sans text-black shadow-inner flex flex-col justify-between"
-                style={{
-                  fontFamily: "Arial, Helvetica, sans-serif",
-                  minHeight: "560px",
-                }}
-              >
-                <div>
-                  <div className="text-center font-bold uppercase tracking-wide border-b border-black pb-1 mb-2.5 text-[11px]">
-                    Reglamento para Externos en Áreas Comunes
-                  </div>
+                {/* Contenedor del Banderín Simulado con proporción exacta de tarjeta física */}
+                <div
+                  className="bg-white border-2 border-black rounded p-3.5 font-sans text-black shadow-inner flex flex-col justify-between overflow-hidden"
+                  style={{
+                    fontFamily: "Arial, Helvetica, sans-serif",
+                    height: "560px",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <div className="overflow-hidden">
+                    <div className="text-center font-bold uppercase tracking-wide border-b border-black pb-1 mb-2.5 text-[11px]">
+                      Reglamento para Externos en Áreas Comunes
+                    </div>
 
-                  <div className="space-y-2.5 pr-0.5">
-                    {reglamentoSecciones.map((sec, i) => (
-                      <div key={i} className="space-y-0.5">
-                        <div className="font-bold text-black uppercase text-[10px]">
-                          {sec.title || "SECCIÓN SIN TÍTULO"}
+                    <div className="space-y-2 pr-0.5">
+                      {reglamentoSecciones.map((sec, i) => (
+                        <div key={i} className="space-y-0.5">
+                          <div className="font-bold text-black uppercase text-[10px]">
+                            {sec.title || "SECCIÓN SIN TÍTULO"}
+                          </div>
+                          <ul className="list-disc pl-4 space-y-0.5 m-0">
+                            {sec.items.map((item, j) => (
+                              <li
+                                key={j}
+                                className="text-slate-900 leading-snug text-[9.5px]"
+                              >
+                                {item || "Norma pendiente de redacción"}
+                              </li>
+                            ))}
+                          </ul>
                         </div>
-                        <ul className="list-disc pl-4 space-y-0.5 m-0">
-                          {sec.items.map((item, j) => (
-                            <li
-                              key={j}
-                              className="text-slate-900 leading-snug text-[9.5px]"
-                            >
-                              {item || "Norma pendiente de redacción"}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-slate-300 pt-2 mt-4 flex justify-between items-center text-[7.5px] text-slate-500 shrink-0">
+                    <span>Las Palomas Rocky Point HOA</span>
+                    <span className="font-mono">Vigencia 1 Año</span>
                   </div>
                 </div>
 
-                <div className="border-t border-slate-300 pt-2 mt-6 flex justify-between items-center text-[7.5px] text-slate-500 shrink-0">
-                  <span>Las Palomas Rocky Point HOA</span>
-                  <span className="font-mono">Vigencia 1 Año</span>
+                <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-400 px-1">
+                  <span>📄 Cara Posterior Física</span>
+                  <span className="font-medium text-slate-500">
+                    {totalSections} secciones · {totalItems} normas · {totalChars} caracteres
+                  </span>
                 </div>
-              </div>
-
-              {/* Indicador Minimalista y Silencioso (Opción 3) */}
-              <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-400 px-1">
-                <span>📄 Cara Posterior Física</span>
-                <span className="font-medium text-slate-500">
-                  {totalSections} secciones · {totalItems} normas · {totalChars} caracteres
-                </span>
               </div>
             </div>
           </div>
