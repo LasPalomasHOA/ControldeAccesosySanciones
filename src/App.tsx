@@ -4199,7 +4199,7 @@ export default function App() {
               style={{ background: "var(--color-primary)" }}
             >
               <IconUserPlus className="w-4 h-4" />
-              <span>+ Registrar Empresa Proveedora</span>
+              <span>Registrar Empresa Proveedora</span>
             </button>
           </div>
         </div>
@@ -4381,7 +4381,7 @@ export default function App() {
                               style={{ background: "var(--color-primary)" }}
                             >
                               <IconCar className="w-3.5 h-3.5" />
-                              <span>+ Agregar Vehículo a {emp.nombre}</span>
+                              <span>Agregar Vehículo a {emp.nombre}</span>
                             </button>
                           ) : (
                             <button
@@ -4400,7 +4400,7 @@ export default function App() {
                               style={{ background: "var(--color-primary)" }}
                             >
                               <IconUserPlus className="w-3.5 h-3.5" />
-                              <span>+ Agregar Colaborador a {emp.nombre}</span>
+                              <span>Agregar Colaborador a {emp.nombre}</span>
                             </button>
                           )}
                         </div>
@@ -4413,7 +4413,7 @@ export default function App() {
                             <div className="p-8 text-center rounded-2xl bg-white border border-slate-200">
                               <IconCar className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                               <p className="text-xs font-semibold text-slate-700">Esta empresa no tiene vehículos registrados</p>
-                              <p className="text-[11px] text-slate-400 mt-0.5">Haz clic en "+ Agregar Vehículo" para registrar la primera unidad autorizada.</p>
+                              <p className="text-[11px] text-slate-400 mt-0.5">Haz clic en "Agregar Vehículo" para registrar la primera unidad autorizada.</p>
                             </div>
                           ) : (
                             <div className="overflow-x-auto rounded-2xl border bg-white" style={{ borderColor: "var(--color-border)" }}>
@@ -4533,7 +4533,7 @@ export default function App() {
                             <div className="p-8 text-center rounded-2xl bg-white border border-slate-200">
                               <IconUsers className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                               <p className="text-xs font-semibold text-slate-700">Esta empresa no tiene trabajadores registrados</p>
-                              <p className="text-[11px] text-slate-400 mt-0.5">Haz clic en "+ Agregar Colaborador" para dar de alta al personal autorizado.</p>
+                              <p className="text-[11px] text-slate-400 mt-0.5">Haz clic en "Agregar Colaborador" para dar de alta al personal autorizado.</p>
                             </div>
                           ) : (
                             <div className="overflow-x-auto rounded-2xl border bg-white" style={{ borderColor: "var(--color-border)" }}>
@@ -4915,7 +4915,7 @@ export default function App() {
                       onClick={() => setPortalScreen("alta")}
                       className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${portalScreen === "alta" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"}`}
                     >
-                      + Alta Vehículo
+                      Alta Vehículo
                     </button>
                     <button
                       onClick={() => setPortalScreen("trabajadores")}
@@ -4942,7 +4942,7 @@ export default function App() {
                     onClick={() => setCasetaTab("registro")}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${casetaTab === "registro" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
-                    + Registro de Entrada
+                    Registro de Entrada
                   </button>
                   <button
                     onClick={() => setCasetaTab("bitacora")}
@@ -4993,7 +4993,7 @@ export default function App() {
                   className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-white/20 hover:bg-white/30 border border-white/40 flex items-center gap-1.5 cursor-pointer"
                 >
                   <IconUserPlus className="w-4 h-4" />
-                  <span>+ Crear Cuenta de Supervisor</span>
+                  <span>Crear Cuenta de Supervisor</span>
                 </button>
               </div>
             </PageHero>
@@ -5011,7 +5011,7 @@ export default function App() {
                         className="px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer"
                         style={{ background: "var(--color-primary)" }}
                       >
-                        + Nuevo Supervisor
+                        Nuevo Supervisor
                       </button>
                     </div>
                     <div className="overflow-x-auto">
@@ -5579,7 +5579,7 @@ export default function App() {
                         style={{ background: "var(--color-primary)" }}
                       >
                         <IconUserPlus className="w-3.5 h-3.5" />
-                        <span>+ Nuevo Oficial de Caseta</span>
+                        <span>Nuevo Oficial de Caseta</span>
                       </button>
                     </div>
                     <div className="overflow-x-auto">
@@ -6109,7 +6109,7 @@ export default function App() {
                           style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                         >
                           <IconUserPlus className="w-3.5 h-3.5" />
-                          <span>+ Agregar Trabajador</span>
+                          <span>Agregar Trabajador</span>
                         </button>
 
                       </div>
@@ -6187,7 +6187,7 @@ export default function App() {
                     <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b bg-slate-50" style={{ borderColor: "var(--color-border)" }}>
                       <h2 className="font-bold text-base text-slate-800">Unidades Vehiculares de {currentUser.empresaNombre}</h2>
                       <button onClick={() => setPortalScreen("alta")} className="text-xs px-4 py-2 rounded-xl font-semibold text-white transition-all hover:brightness-110 cursor-pointer" style={{ background: "var(--color-primary)" }}>
-                        + Agregar Vehículo
+                        Agregar Vehículo
                       </button>
                     </div>
                     <div className="overflow-x-auto">
@@ -6520,7 +6520,7 @@ export default function App() {
                         style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                       >
                         <IconUserPlus className="w-4 h-4" />
-                        <span>+ Registrar Trabajador</span>
+                        <span>Registrar Trabajador</span>
                       </button>
                     </div>
                   </div>
@@ -6573,7 +6573,7 @@ export default function App() {
                                       onClick={handleAbrirCrearTrabajador}
                                       className="mt-3 px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 cursor-pointer"
                                     >
-                                      + Dar de alta primer trabajador
+                                      Dar de alta primer trabajador
                                     </button>
                                   </td>
                                 </tr>
