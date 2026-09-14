@@ -15,6 +15,17 @@ interface SupervisorReglamentoEditorProps {
   isSaving: boolean;
 }
 
+interface ConfirmModalConfig {
+  isOpen: boolean;
+  title: string;
+  description: string;
+  confirmText: string;
+  cancelText?: string;
+  isDestructive?: boolean;
+  icon?: "reset" | "warning" | "info";
+  onConfirm: () => void;
+}
+
 export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProps> = ({
   reglamentoTexto,
   onUpdateReglamentoTexto,
@@ -26,6 +37,22 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
 }) => {
   const [activeTab, setActiveTab] = useState<"banderin" | "general">("banderin");
   const [hasChanges, setHasChanges] = useState(false);
+
+  // Estado del Modal de Confirmación Moderno
+  const [modalConfig, setModalConfig] = useState<ConfirmModalConfig>({
+    isOpen: false,
+    title: "",
+    description: "",
+    confirmText: "Aceptar",
+    cancelText: "Cancelar",
+    isDestructive: false,
+    icon: "info",
+    onConfirm: () => {},
+  });
+
+  const closeModal = () => {
+    setModalConfig((prev) => ({ ...prev, isOpen: false }));
+  };
 
   // Cálculo de Capacidad Física Real de la Tarjeta (13.0 × 17.5 cm = 151 mm útiles)
   const { totalSections, totalItems, totalChars, capacityPercent, isFull } = useMemo(() => {
@@ -47,7 +74,6 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
       });
     });
 
-    // La tarjeta física puede alojar cómodamente ~28-30 líneas antes del pie de página
     const maxLines = 28;
     const percent = Math.min(100, Math.round((estimatedLines / maxLines) * 100));
     const full = percent >= 100 || sectionsCount >= 10;
@@ -80,7 +106,15 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
 
   const handleAddItem = (secIndex: number) => {
     if (isFull) {
-      alert("Has alcanzado el límite físico de la tarjeta de 17.5 cm. Para agregar más normas, elimina o compacta alguna existente, o traslada el texto a la pestaña 'Términos y Condiciones Generales'.");
+      setModalConfig({
+        isOpen: true,
+        title: "Límite de Capacidad Física",
+        description: "La tarjeta de 13.0 × 17.5 cm ha alcanzado su capacidad máxima. Te sugerimos compactar textos existentes o redactar cláusulas extensas en la pestaña de 'Términos y Condiciones Generales'.",
+        confirmText: "Entendido",
+        icon: "warning",
+        isDestructive: false,
+        onConfirm: closeModal,
+      });
       return;
     }
     const updated = [...reglamentoSecciones];
@@ -102,7 +136,15 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
 
   const handleAddSection = () => {
     if (isFull) {
-      alert("La tarjeta física ha alcanzado su capacidad máxima (13.0 × 17.5 cm). No es posible agregar más secciones sin desbordar el documento al imprimir.");
+      setModalConfig({
+        isOpen: true,
+        title: "Capacidad Máxima Alcanzada",
+        description: "La tarjeta física no tiene más espacio vertical para añadir otra sección completa sin desbordar el documento al imprimir. Puedes editar o compactar las secciones actuales.",
+        confirmText: "Entendido",
+        icon: "warning",
+        isDestructive: false,
+        onConfirm: closeModal,
+      });
       return;
     }
     const nextNumber = reglamentoSecciones.length + 1;
@@ -116,12 +158,33 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
 
   const handleRemoveSection = (secIndex: number) => {
     if (reglamentoSecciones.length <= 1) {
-      alert("Debe existir al menos una sección en el banderín.");
+      setModalConfig({
+        isOpen: true,
+        title: "Sección Obligatoria",
+        description: "Debe existir al menos una sección de normas activa en el banderín impreso.",
+        confirmText: "Aceptar",
+        icon: "info",
+        isDestructive: false,
+        onConfirm: closeModal,
+      });
       return;
     }
-    const updated = reglamentoSecciones.filter((_, i) => i !== secIndex);
-    onUpdateReglamentoSecciones(updated);
-    setHasChanges(true);
+
+    setModalConfig({
+      isOpen: true,
+      title: "¿Eliminar Sección Completa?",
+      description: `Se eliminará la sección "${reglamentoSecciones[secIndex]?.title || 'Sección'}" y todas sus normas contenidas.`,
+      confirmText: "Eliminar Sección",
+      cancelText: "Conservar",
+      isDestructive: true,
+      icon: "warning",
+      onConfirm: () => {
+        const updated = reglamentoSecciones.filter((_, i) => i !== secIndex);
+        onUpdateReglamentoSecciones(updated);
+        setHasChanges(true);
+        closeModal();
+      },
+    });
   };
 
   const handleTextoGeneralChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -135,10 +198,20 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
   };
 
   const handleResetClick = () => {
-    if (window.confirm("¿Seguro que deseas restablecer tanto el banderín físico como el reglamento digital a sus valores de fábrica? Los cambios no guardados se perderán.")) {
-      onResetDefaults();
-      setHasChanges(true);
-    }
+    setModalConfig({
+      isOpen: true,
+      title: "¿Restablecer Valores de Fábrica?",
+      description: "¿Seguro que deseas restablecer tanto el banderín físico como el reglamento digital a sus valores de fábrica? Los cambios que no hayas guardado se perderán definitivamente.",
+      confirmText: "Sí, Restablecer Todo",
+      cancelText: "Cancelar",
+      isDestructive: true,
+      icon: "reset",
+      onConfirm: () => {
+        onResetDefaults();
+        setHasChanges(true);
+        closeModal();
+      },
+    });
   };
 
   return (
@@ -507,6 +580,80 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
                   El contratista tendrá la navegación deshabilitada hasta que marque la casilla de aceptación y registre su firma digital. La firma se guarda con timestamp en la base de datos.
                 </p>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL MODERNO DE CONFIRMACIÓN / ALERTAS */}
+      {modalConfig.isOpen && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div
+            className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 transform transition-all animate-in zoom-in-95 duration-150 space-y-4"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="flex items-start gap-4">
+              <div
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                  modalConfig.icon === "reset" || modalConfig.isDestructive
+                    ? "bg-rose-50 text-rose-600 border border-rose-100"
+                    : modalConfig.icon === "warning"
+                    ? "bg-amber-50 text-amber-600 border border-amber-100"
+                    : "bg-teal-50 text-[#0D6E5F] border border-teal-100"
+                }`}
+              >
+                {modalConfig.icon === "reset" ? (
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 3v5h5" />
+                  </svg>
+                ) : modalConfig.icon === "warning" ? (
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                ) : (
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                  </svg>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <h3 className="text-base font-black text-slate-900 leading-snug">
+                  {modalConfig.title}
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  {modalConfig.description}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+              {modalConfig.cancelText && (
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  {modalConfig.cancelText}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={modalConfig.onConfirm}
+                className={`px-5 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-sm hover:brightness-110 cursor-pointer ${
+                  modalConfig.isDestructive
+                    ? "bg-rose-600 hover:bg-rose-700 shadow-rose-600/20"
+                    : "bg-[#0D6E5F] hover:bg-[#0b5d50] shadow-[#0D6E5F]/20"
+                }`}
+              >
+                {modalConfig.confirmText}
+              </button>
             </div>
           </div>
         </div>
