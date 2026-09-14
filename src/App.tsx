@@ -643,10 +643,14 @@ function normalizeFotoUrl(url?: string | null): string {
   if (!url) return "";
   const trimmed = String(url).trim();
   if (!trimmed || trimmed === "null" || trimmed === "undefined") return "";
-  if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("data:") || trimmed.startsWith("blob:")) {
-    return trimmed;
-  }
-  if (trimmed.startsWith("/uploads/")) {
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("data:") ||
+    trimmed.startsWith("blob:") ||
+    trimmed.startsWith("/") ||
+    trimmed.startsWith("./")
+  ) {
     return trimmed;
   }
   if (trimmed.startsWith("uploads/")) {
@@ -4407,27 +4411,24 @@ export default function App() {
                                   {empVehicles.map((v) => (
                                     <tr key={v.id} className="hover:bg-slate-50/70 transition-colors">
                                       <td className="px-4 py-2.5">
-                                        {v.foto ? (
-                                          <button
-                                            type="button"
-                                            onClick={() => setSelectedFotoVehiculoPreview(v)}
-                                            className="cursor-pointer group block relative"
-                                            title="Clic para ver fotografía ampliada"
-                                          >
+                                        <div
+                                          onClick={() => setSelectedFotoVehiculoPreview(v)}
+                                          className="w-12 h-9 rounded-lg overflow-hidden border border-slate-200 shadow-2xs cursor-pointer hover:border-[#0D6E5F] hover:scale-105 transition-all relative group bg-slate-100 flex items-center justify-center shrink-0"
+                                          title="Clic para ver fotografía ampliada"
+                                        >
+                                          {v.foto ? (
                                             <img
                                               src={normalizeFotoUrl(v.foto)}
                                               alt={`${v.marca} ${v.modelo}`}
-                                              className="w-12 h-9 object-cover rounded-lg border border-slate-200 group-hover:border-[#0D6E5F] shadow-2xs group-hover:scale-105 transition-all"
-                                              onError={(e) => {
-                                                e.currentTarget.style.display = "none";
-                                              }}
+                                              className="w-full h-full object-cover"
                                             />
-                                          </button>
-                                        ) : (
-                                          <div className="w-12 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
-                                            <IconCar className="w-4 h-4" />
+                                          ) : (
+                                            <IconCar className="w-4 h-4 text-slate-400" />
+                                          )}
+                                          <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                            <IconEye className="w-3.5 h-3.5" />
                                           </div>
-                                        )}
+                                        </div>
                                       </td>
                                       <td className="px-4 py-2.5 font-semibold text-slate-900 text-xs">
                                         {v.marca} {v.modelo} <span className="text-slate-400 font-normal">({v.anio || v.año || "N/A"})</span>
@@ -6199,27 +6200,24 @@ export default function App() {
                           {vehicles.filter(v => v.empresaNombre === currentUser.empresaNombre).map((v) => (
                             <tr key={v.id} className="hover:bg-slate-50 transition-colors">
                               <td className="px-5 py-3">
-                                {v.foto ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => setSelectedFotoVehiculoPreview(v)}
-                                    className="cursor-pointer group block relative"
-                                    title="Clic para ver fotografía ampliada"
-                                  >
+                                <div
+                                  onClick={() => setSelectedFotoVehiculoPreview(v)}
+                                  className="w-14 h-10 rounded-lg overflow-hidden border border-slate-200 shadow-2xs cursor-pointer hover:border-[#0D6E5F] hover:scale-105 transition-all relative group bg-slate-100 flex items-center justify-center shrink-0"
+                                  title="Clic para ver fotografía ampliada"
+                                >
+                                  {v.foto ? (
                                     <img
                                       src={normalizeFotoUrl(v.foto)}
                                       alt={`${v.marca} ${v.modelo}`}
-                                      className="w-14 h-10 object-cover rounded-lg border border-slate-200 group-hover:border-[#0D6E5F] shadow-2xs group-hover:scale-105 transition-all"
-                                      onError={(e) => {
-                                        e.currentTarget.style.display = "none";
-                                      }}
+                                      className="w-full h-full object-cover"
                                     />
-                                  </button>
-                                ) : (
-                                  <div className="w-14 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
-                                    <IconCar className="w-5 h-5" />
+                                  ) : (
+                                    <IconCar className="w-5 h-5 text-slate-400" />
+                                  )}
+                                  <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                    <IconEye className="w-3.5 h-3.5" />
                                   </div>
-                                )}
+                                </div>
                               </td>
                               <td className="px-5 py-3 font-medium text-slate-900">{v.marca} {v.modelo} <span className="text-slate-400 font-normal">({v.anio})</span></td>
                               <td className="px-5 py-3 font-mono font-bold text-slate-800">{v.placas}</td>
@@ -6381,10 +6379,20 @@ export default function App() {
 
                           <div className="h-32 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
                             {nuevoVehiculoFoto ? (
-                              <div className="relative w-full h-full group">
+                              <div
+                                onClick={() => setGenericImagePreview({
+                                  isOpen: true,
+                                  src: nuevoVehiculoFoto,
+                                  title: "Fotografía de la Unidad Vehicular",
+                                  subtitle: "Vista previa del vehículo a registrar"
+                                })}
+                                className="relative w-full h-full group cursor-pointer"
+                                title="Clic para ampliar imagen"
+                              >
                                 <img src={nuevoVehiculoFoto} alt="Preview" className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
-                                  Foto Cargada ✓
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
+                                  <IconEye className="w-4 h-4" />
+                                  <span>Ampliar Foto</span>
                                 </div>
                               </div>
                             ) : (
@@ -8548,10 +8556,20 @@ export default function App() {
 
                   <div className="h-28 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
                     {trabajadorFotoUrl ? (
-                      <div className="relative w-full h-full group">
+                      <div
+                        onClick={() => setGenericImagePreview({
+                          isOpen: true,
+                          src: trabajadorFotoUrl,
+                          title: "Fotografía de Credencial",
+                          subtitle: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Nuevo Trabajador",
+                        })}
+                        className="relative w-full h-full group cursor-pointer"
+                        title="Clic para ampliar imagen"
+                      >
                         <img src={trabajadorFotoUrl} alt="Preview" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
-                          Foto Cargada ✓
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold gap-1">
+                          <IconEye className="w-3.5 h-3.5" />
+                          <span>Ampliar</span>
                         </div>
                       </div>
                     ) : (
@@ -8704,10 +8722,20 @@ export default function App() {
 
                   <div className="h-28 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
                     {trabajadorFotoUrl ? (
-                      <div className="relative w-full h-full group">
+                      <div
+                        onClick={() => setGenericImagePreview({
+                          isOpen: true,
+                          src: trabajadorFotoUrl,
+                          title: "Fotografía de Credencial",
+                          subtitle: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Trabajador",
+                        })}
+                        className="relative w-full h-full group cursor-pointer"
+                        title="Clic para ampliar imagen"
+                      >
                         <img src={trabajadorFotoUrl} alt="Preview" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
-                          Foto Actualizada ✓
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold gap-1">
+                          <IconEye className="w-3.5 h-3.5" />
+                          <span>Ampliar</span>
                         </div>
                       </div>
                     ) : (
@@ -8886,7 +8914,7 @@ export default function App() {
 
       {/* ─── MODAL VISTA PREVIA DE FOTOGRAFÍA DE CREDENCIAL ─── */}
       {selectedFotoTrabajadorPreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoTrabajadorPreview(null)}>
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoTrabajadorPreview(null)}>
           <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
@@ -8916,7 +8944,7 @@ export default function App() {
 
       {/* ─── MODAL VISTA PREVIA DE FOTOGRAFÍA DE OFICIAL DE CASETA ─── */}
       {selectedFotoGuardiaPreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoGuardiaPreview(null)}>
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoGuardiaPreview(null)}>
           <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-3">
@@ -9495,7 +9523,7 @@ export default function App() {
 
       {/* ─── MODAL VISTA PREVIA DE FOTOGRAFÍA DE VEHÍCULO ─── */}
       {selectedFotoVehiculoPreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoVehiculoPreview(null)}>
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoVehiculoPreview(null)}>
           <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-3">
@@ -9539,7 +9567,7 @@ export default function App() {
 
       {/* ─── MODAL VISOR GENERAL DE IMÁGENES Y EVIDENCIAS (LIGHTBOX) ─── */}
       {genericImagePreview && genericImagePreview.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setGenericImagePreview(null)}>
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setGenericImagePreview(null)}>
           <div className="max-w-3xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
