@@ -1365,6 +1365,13 @@ export default function App() {
   const isDeletingVehiculoRef = useRef(false);
 
   const [selectedFotoVehiculoPreview, setSelectedFotoVehiculoPreview] = useState<Vehicle | null>(null);
+  const [genericImagePreview, setGenericImagePreview] = useState<{
+    isOpen: boolean;
+    src: string;
+    title?: string;
+    subtitle?: string;
+    badge?: string;
+  } | null>(null);
 
   // Alertas flotantes de sanciones/infracciones aprobadas dirigidas al Contratista/Proveedor
   const [activeSancionAlertIndex, setActiveSancionAlertIndex] = useState<number>(0);
@@ -5364,7 +5371,25 @@ export default function App() {
                               </div>
                               <div className="grid grid-cols-2 gap-2">
                                 {inf.evidencias.map((foto, idx) => (
-                                  <img key={idx} src={foto} alt="Evidencia" className="w-full h-24 object-cover rounded-xl border border-slate-200 shadow-sm" />
+                                  <div
+                                    key={idx}
+                                    onClick={() => setGenericImagePreview({
+                                      isOpen: true,
+                                      src: foto,
+                                      title: `Evidencia Fotográfica #${idx + 1}`,
+                                      subtitle: `Infracción: ${inf.infraccionNombre} · Vehículo: ${inf.placas} (${inf.empresaNombre})`,
+                                      badge: `Folio: ${inf.folio || inf.id}`
+                                    })}
+                                    className="cursor-pointer group relative overflow-hidden rounded-xl border border-slate-200 shadow-2xs hover:border-[#0D6E5F] transition-all bg-slate-100"
+                                    title="Clic para ver fotografía ampliada"
+                                  >
+                                    <img src={foto} alt="Evidencia" className="w-full h-24 object-cover group-hover:scale-105 transition-transform" />
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 flex items-center justify-center transition-colors">
+                                      <span className="opacity-0 group-hover:opacity-100 text-[10px] font-bold bg-white/95 text-slate-800 px-2.5 py-1 rounded-lg shadow-sm transition-opacity">
+                                        Ampliar
+                                      </span>
+                                    </div>
+                                  </div>
                                 ))}
                               </div>
                             </div>
@@ -6175,14 +6200,21 @@ export default function App() {
                             <tr key={v.id} className="hover:bg-slate-50 transition-colors">
                               <td className="px-5 py-3">
                                 {v.foto ? (
-                                  <img
-                                    src={normalizeFotoUrl(v.foto)}
-                                    alt={`${v.marca} ${v.modelo}`}
-                                    className="w-14 h-10 object-cover rounded-lg border border-slate-200 shadow-sm"
-                                    onError={(e) => {
-                                      e.currentTarget.style.display = "none";
-                                    }}
-                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedFotoVehiculoPreview(v)}
+                                    className="cursor-pointer group block relative"
+                                    title="Clic para ver fotografía ampliada"
+                                  >
+                                    <img
+                                      src={normalizeFotoUrl(v.foto)}
+                                      alt={`${v.marca} ${v.modelo}`}
+                                      className="w-14 h-10 object-cover rounded-lg border border-slate-200 group-hover:border-[#0D6E5F] shadow-2xs group-hover:scale-105 transition-all"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = "none";
+                                      }}
+                                    />
+                                  </button>
                                 ) : (
                                   <div className="w-14 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
                                     <IconCar className="w-5 h-5" />
@@ -7590,7 +7622,17 @@ export default function App() {
                           <div className="space-y-3">
                             <div className="flex items-center gap-3">
                               {currentCasetaVehicle.foto && (
-                                <img src={currentCasetaVehicle.foto} alt="Vehículo" className="w-16 h-12 object-cover rounded-xl border border-slate-200 shadow-sm shrink-0" />
+                                <div
+                                  onClick={() => setSelectedFotoVehiculoPreview(currentCasetaVehicle)}
+                                  className="cursor-pointer group relative shrink-0"
+                                  title="Clic para ver fotografía del vehículo ampliada"
+                                >
+                                  <img
+                                    src={normalizeFotoUrl(currentCasetaVehicle.foto)}
+                                    alt="Vehículo"
+                                    className="w-16 h-12 object-cover rounded-xl border border-slate-200 shadow-sm group-hover:border-emerald-500 group-hover:scale-105 transition-all"
+                                  />
+                                </div>
                               )}
                               <div className="flex-1">
                                 <div className="font-bold text-sm text-slate-800">{currentCasetaVehicle.marca} {currentCasetaVehicle.modelo}</div>
@@ -8844,27 +8886,27 @@ export default function App() {
 
       {/* ─── MODAL VISTA PREVIA DE FOTOGRAFÍA DE CREDENCIAL ─── */}
       {selectedFotoTrabajadorPreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" onClick={() => setSelectedFotoTrabajadorPreview(null)}>
-          <div className="max-w-md w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoTrabajadorPreview(null)}>
+          <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h4 className="font-bold text-sm text-slate-900">{selectedFotoTrabajadorPreview.nombre} {selectedFotoTrabajadorPreview.apellidos}</h4>
+                <h4 className="font-bold text-base text-slate-900">{selectedFotoTrabajadorPreview.nombre} {selectedFotoTrabajadorPreview.apellidos}</h4>
                 <p className="text-xs text-slate-500 font-mono">Fotografía de Credencial · ID: #{selectedFotoTrabajadorPreview.id_trabajador}</p>
               </div>
-              <button onClick={() => setSelectedFotoTrabajadorPreview(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer text-sm p-1">✕</button>
+              <button onClick={() => setSelectedFotoTrabajadorPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
             </div>
 
-            <div className="w-full h-72 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center">
+            <div className="w-full h-[380px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2">
               {selectedFotoTrabajadorPreview.foto_url ? (
-                <img src={selectedFotoTrabajadorPreview.foto_url} alt="Credencial" className="w-full h-full object-cover" />
+                <img src={selectedFotoTrabajadorPreview.foto_url} alt="Credencial" className="max-w-full max-h-full object-contain rounded-xl shadow-lg" />
               ) : (
-                <IconUsers className="w-16 h-16 text-slate-300" />
+                <IconUsers className="w-20 h-20 text-slate-600" />
               )}
             </div>
 
-            <div className="flex justify-between items-center text-xs">
-              <span className="font-semibold text-slate-600">{selectedFotoTrabajadorPreview.empresaNombre}</span>
-              <span className={`px-2.5 py-0.5 rounded-full font-bold ${selectedFotoTrabajadorPreview.activo ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+            <div className="flex justify-between items-center text-xs pt-1">
+              <span className="font-semibold text-slate-700">{selectedFotoTrabajadorPreview.empresaNombre}</span>
+              <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoTrabajadorPreview.activo ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
                 {selectedFotoTrabajadorPreview.activo ? "Autorizado" : "Inactivo"}
               </span>
             </div>
@@ -8874,28 +8916,28 @@ export default function App() {
 
       {/* ─── MODAL VISTA PREVIA DE FOTOGRAFÍA DE OFICIAL DE CASETA ─── */}
       {selectedFotoGuardiaPreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" onClick={() => setSelectedFotoGuardiaPreview(null)}>
-          <div className="max-w-md w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b pb-3">
-              <div className="flex items-center gap-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoGuardiaPreview(null)}>
+          <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
                   <IconShield className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm text-slate-900">{selectedFotoGuardiaPreview.nombre}</h4>
+                  <h4 className="font-bold text-base text-slate-900">{selectedFotoGuardiaPreview.nombre}</h4>
                   <p className="text-xs text-slate-500 font-mono">Oficial de Caseta · ID: #{selectedFotoGuardiaPreview.id}</p>
                 </div>
               </div>
-              <button onClick={() => setSelectedFotoGuardiaPreview(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer text-sm p-1">✕</button>
+              <button onClick={() => setSelectedFotoGuardiaPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
             </div>
 
-            <div className="w-full h-72 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center relative">
+            <div className="w-full h-[380px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 relative">
               {selectedFotoGuardiaPreview.foto_url ? (
                 <>
                   <img
                     src={selectedFotoGuardiaPreview.foto_url}
                     alt={selectedFotoGuardiaPreview.nombre}
-                    className="w-full h-full object-cover"
+                    className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
                       const fallback = e.currentTarget.nextElementSibling as HTMLElement;
@@ -8903,18 +8945,18 @@ export default function App() {
                     }}
                   />
                   <div className="hidden flex-col items-center justify-center p-6 text-center text-slate-400">
-                    <IconUsers className="w-16 h-16 mb-2 text-slate-300" />
+                    <IconUsers className="w-20 h-20 mb-2 text-slate-600" />
                     <span className="text-xs font-medium">Fotografía no disponible</span>
                   </div>
                 </>
               ) : (
-                <IconUsers className="w-16 h-16 text-slate-300" />
+                <IconUsers className="w-20 h-20 text-slate-600" />
               )}
             </div>
 
             <div className="flex justify-between items-center text-xs">
-              <span className="font-mono text-slate-600">{selectedFotoGuardiaPreview.username}</span>
-              <span className={`px-2.5 py-0.5 rounded-full font-bold ${selectedFotoGuardiaPreview.activo !== false ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+              <span className="font-mono text-slate-600 font-semibold">{selectedFotoGuardiaPreview.username}</span>
+              <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoGuardiaPreview.activo !== false ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
                 {selectedFotoGuardiaPreview.activo !== false ? "En Servicio" : "Inactivo"}
               </span>
             </div>
@@ -9453,36 +9495,36 @@ export default function App() {
 
       {/* ─── MODAL VISTA PREVIA DE FOTOGRAFÍA DE VEHÍCULO ─── */}
       {selectedFotoVehiculoPreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" onClick={() => setSelectedFotoVehiculoPreview(null)}>
-          <div className="max-w-md w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b pb-3">
-              <div className="flex items-center gap-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoVehiculoPreview(null)}>
+          <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
                   <IconCar className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm text-slate-900">{selectedFotoVehiculoPreview.marca} {selectedFotoVehiculoPreview.modelo}</h4>
+                  <h4 className="font-bold text-base text-slate-900">{selectedFotoVehiculoPreview.marca} {selectedFotoVehiculoPreview.modelo}</h4>
                   <p className="text-xs text-slate-500 font-mono">Placas: {selectedFotoVehiculoPreview.placas} · Corbatín #{selectedFotoVehiculoPreview.corbatinNum}</p>
                 </div>
               </div>
-              <button onClick={() => setSelectedFotoVehiculoPreview(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer text-sm p-1">✕</button>
+              <button onClick={() => setSelectedFotoVehiculoPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
             </div>
 
-            <div className="w-full h-72 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center relative">
+            <div className="w-full h-[380px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 relative">
               {selectedFotoVehiculoPreview.foto ? (
                 <img
                   src={normalizeFotoUrl(selectedFotoVehiculoPreview.foto)}
                   alt={`${selectedFotoVehiculoPreview.marca} ${selectedFotoVehiculoPreview.modelo}`}
-                  className="w-full h-full object-cover"
+                  className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
                 />
               ) : (
-                <IconCar className="w-16 h-16 text-slate-300" />
+                <IconCar className="w-20 h-20 text-slate-600" />
               )}
             </div>
 
-            <div className="flex justify-between items-center text-xs">
+            <div className="flex justify-between items-center text-xs pt-1">
               <span className="font-semibold text-slate-700">{selectedFotoVehiculoPreview.empresaNombre}</span>
-              <span className={`px-2.5 py-0.5 rounded-full font-bold ${selectedFotoVehiculoPreview.status === "Habilitado"
+              <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoVehiculoPreview.status === "Habilitado"
                 ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                 : selectedFotoVehiculoPreview.status === "Suspendido"
                   ? "bg-red-50 text-red-700 border border-red-200"
@@ -9490,6 +9532,40 @@ export default function App() {
                 }`}>
                 {selectedFotoVehiculoPreview.status}
               </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL VISOR GENERAL DE IMÁGENES Y EVIDENCIAS (LIGHTBOX) ─── */}
+      {genericImagePreview && genericImagePreview.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setGenericImagePreview(null)}>
+          <div className="max-w-3xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h4 className="font-bold text-base text-slate-900">{genericImagePreview.title || "Fotografía de Evidencia"}</h4>
+                {genericImagePreview.subtitle && (
+                  <p className="text-xs text-slate-500 mt-0.5">{genericImagePreview.subtitle}</p>
+                )}
+              </div>
+              <button onClick={() => setGenericImagePreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
+            </div>
+
+            <div className="w-full h-[400px] sm:h-[500px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 relative">
+              <img
+                src={genericImagePreview.src}
+                alt="Vista Ampliada"
+                className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
+              />
+            </div>
+
+            <div className="flex justify-between items-center text-xs pt-1">
+              <span className="text-slate-400 font-mono text-[11px]">Alta Resolución</span>
+              {genericImagePreview.badge && (
+                <span className="px-3 py-1 rounded-full font-bold bg-[#0D6E5F]/10 text-[#0D6E5F] border border-[#0D6E5F]/20 font-mono">
+                  {genericImagePreview.badge}
+                </span>
+              )}
             </div>
           </div>
         </div>
