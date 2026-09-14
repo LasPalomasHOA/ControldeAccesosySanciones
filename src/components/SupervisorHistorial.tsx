@@ -1228,11 +1228,17 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                               <div className="bg-slate-900 text-white text-xs rounded-xl p-3 shadow-xl border border-slate-700 space-y-1.5 min-w-[150px]">
                                 <div className="font-bold text-slate-200 border-b border-slate-700 pb-1">{label}</div>
                                 <div className="flex items-center justify-between text-emerald-400 font-semibold">
-                                  <span>🟢 Entradas:</span>
+                                  <span className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+                                    Entradas:
+                                  </span>
                                   <span className="font-mono">{ent}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-sky-400 font-semibold">
-                                  <span>🔵 Salidas:</span>
+                                  <span className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-sky-400 inline-block" />
+                                    Salidas:
+                                  </span>
                                   <span className="font-mono">{sal}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-amber-300 font-bold pt-1 border-t border-slate-700">
@@ -1282,11 +1288,17 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                               <div className="bg-slate-900 text-white text-xs rounded-xl p-3 shadow-xl border border-slate-700 space-y-1.5 min-w-[150px]">
                                 <div className="font-bold text-slate-200 border-b border-slate-700 pb-1">{label}</div>
                                 <div className="flex items-center justify-between text-emerald-400 font-semibold">
-                                  <span>🟢 Entradas:</span>
+                                  <span className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+                                    Entradas:
+                                  </span>
                                   <span className="font-mono">{ent}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-sky-400 font-semibold">
-                                  <span>🔵 Salidas:</span>
+                                  <span className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-sky-400 inline-block" />
+                                    Salidas:
+                                  </span>
                                   <span className="font-mono">{sal}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-amber-300 font-bold pt-1 border-t border-slate-700">

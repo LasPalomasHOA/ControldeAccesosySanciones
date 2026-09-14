@@ -4250,11 +4250,11 @@ export default function App() {
                             ? "bg-amber-50 text-amber-800 border-amber-300"
                             : "bg-teal-50 text-teal-800 border-teal-300"
                             }`}>
-                            <span>🏷️ Corbatines #{emp.corbatin_rango_inicio} al #{emp.corbatin_rango_fin} ({empVehicles.length}/{emp.cuposTotales || (emp.corbatin_rango_fin - emp.corbatin_rango_inicio + 1)} cupos)</span>
+                            <span>Corbatines #{emp.corbatin_rango_inicio} al #{emp.corbatin_rango_fin} ({empVehicles.length}/{emp.cuposTotales || (emp.corbatin_rango_fin - emp.corbatin_rango_inicio + 1)} cupos)</span>
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
-                            <span>🏷️ Sin Rango Asignado</span>
+                            <span>Sin Rango Asignado</span>
                           </span>
                         )}
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
@@ -5729,7 +5729,7 @@ export default function App() {
                           }}
                           className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
                         >
-                          <option value="all">🏢 Todas las Empresas ({empresas.length})</option>
+                          <option value="all">Todas las Empresas ({empresas.length})</option>
                           {empresas.map((emp) => {
                             const empVehCount = vehicles.filter(v => v.empresaNombre === emp.nombre || v.empresaId === emp.id).length;
                             return (
@@ -5944,9 +5944,14 @@ export default function App() {
                               <button
                                 type="button"
                                 onClick={() => window.print()}
-                                className="px-6 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-sm transition-all"
+                                className="px-6 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-sm transition-all flex items-center gap-2"
                               >
-                                🖨️ Imprimir Corbatín
+                                <svg className="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <polyline points="6 9 6 2 18 2 18 9" />
+                                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                                  <rect x="6" y="14" width="12" height="8" />
+                                </svg>
+                                <span>Imprimir Corbatín</span>
                               </button>
                             </div>
                           </>
@@ -6281,7 +6286,7 @@ export default function App() {
                               }`}>
                               <div className="space-y-0.5">
                                 <div className="text-xs font-bold flex items-center gap-1.5 uppercase tracking-wider">
-                                  <span>🏷️ Rango de Corbatines Asignado</span>
+                                  <span>Rango de Corbatines Asignado</span>
                                 </div>
                                 <p className="text-xs">
                                   Números autorizados: <strong>#{rInicio}</strong> al <strong>#{rFin}</strong>. El sistema asignará el siguiente número disponible automáticamente.
@@ -6292,13 +6297,13 @@ export default function App() {
                                   {cuposOcupados} / {totalCupos} cupos
                                 </div>
                                 <div className="text-[10px] font-semibold opacity-80">
-                                  {isQuotaFull ? "⚠️ Límite Alcanzado" : `${(totalCupos ?? 0) - cuposOcupados} disponibles`}
+                                  {isQuotaFull ? "Límite Alcanzado" : `${(totalCupos ?? 0) - cuposOcupados} disponibles`}
                                 </div>
                               </div>
                             </div>
                           ) : (
                             <div className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 text-xs">
-                              ℹ️ <strong>Nota:</strong> Tu empresa aún no tiene un rango delimitado de corbatines por administración. El sistema asignará un número correlativo libre.
+                              <strong>Nota:</strong> Tu empresa aún no tiene un rango delimitado de corbatines por administración. El sistema asignará un número correlativo libre.
                             </div>
                           )}
 
@@ -9067,10 +9072,10 @@ export default function App() {
                   onChange={(e) => setVehiculoEditEstatus(e.target.value as any)}
                   className="w-full rounded-xl px-4 py-2.5 text-xs font-bold border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-blue-200 text-slate-800 cursor-pointer"
                 >
-                  <option value="HABILITADO">✅ HABILITADO - Acceso vehicular autorizado en casetas</option>
-                  <option value="DESHABILITADO">⚪ DESHABILITADO - Inactivo o en mantenimiento</option>
-                  <option value="SUSPENDIDO">⛔ SUSPENDIDO - Suspensión por sanción disciplinaria</option>
-                  <option value="RESTRINGIDO">🚫 RESTRINGIDO - Bloqueo definitivo de acceso</option>
+                  <option value="HABILITADO">HABILITADO — Acceso vehicular autorizado en casetas</option>
+                  <option value="DESHABILITADO">DESHABILITADO — Inactivo o en mantenimiento</option>
+                  <option value="SUSPENDIDO">SUSPENDIDO — Suspensión por sanción disciplinaria</option>
+                  <option value="RESTRINGIDO">RESTRINGIDO — Bloqueo definitivo de acceso</option>
                 </select>
                 <p className="text-[11px] text-slate-500">
                   Como supervisor o administrador, el cambio de estatus se refleja de forma instantánea en todas las casetas de control.
