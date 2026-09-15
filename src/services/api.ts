@@ -142,9 +142,33 @@ export const api = {
     return handleResponse(res);
   },
 
-  // 6. Corbatines
-  async getCorbatines() {
-    const res = await fetch(`${API_BASE_URL}/corbatines`);
+  // 6. Corbatines (Normales y Verdes)
+  async getCorbatines(params?: { tipo?: string; activo?: boolean }) {
+    const searchParams = new URLSearchParams();
+    if (params?.tipo) searchParams.append('tipo', params.tipo);
+    if (params?.activo !== undefined) searchParams.append('activo', String(params.activo));
+    const query = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    const res = await fetch(`${API_BASE_URL}/corbatines${query}`);
+    return handleResponse(res);
+  },
+  async createCorbatin(data: any) {
+    const res = await fetch(`${API_BASE_URL}/corbatines`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+  async updateCorbatin(id: string | number, data: any) {
+    const res = await fetch(`${API_BASE_URL}/corbatines/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+  async deleteCorbatin(id: string | number) {
+    const res = await fetch(`${API_BASE_URL}/corbatines/${id}`, { method: 'DELETE' });
     return handleResponse(res);
   },
 
