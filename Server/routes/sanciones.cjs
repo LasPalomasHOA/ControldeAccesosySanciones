@@ -9,15 +9,16 @@ router.get('/', async (req, res) => {
     const sanciones = await db.Sancion.findAll({
       limit: 100,
       include: [
-        { model: db.Vehiculo, as: 'vehiculo' },
-        { model: db.Empresa, as: 'empresa' },
+        { model: db.Vehiculo, as: 'vehiculo', attributes: ['id_vehiculo', 'placas', 'marca', 'modelo', 'color', 'estatus_acceso'] },
+        { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social', 'telefono', 'correo'] },
         { model: db.ReglaReincidencia, as: 'regla' },
         { 
           model: db.ReporteInfraccion, 
           as: 'reporte',
+          attributes: ['id_reporte', 'fecha_hora', 'id_infraccion', 'ubicacion_texto', 'descripcion_hechos', 'estatus_revision'],
           include: [
             { model: db.CatalogoInfraccion, as: 'infraccion' },
-            { model: db.Evidencia, as: 'evidencias' }
+            { model: db.Evidencia, as: 'evidencias', attributes: ['id_evidencia', 'descripcion', 'fecha_captura', 'activa'] }
           ]
         },
         { model: db.Usuario, as: 'usuario_aprobador', attributes: ['id_usuario', 'nombre'] }

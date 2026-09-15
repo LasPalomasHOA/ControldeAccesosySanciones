@@ -59,8 +59,9 @@ router.get('/', async (req, res) => {
         {
           model: db.Vehiculo,
           as: 'vehiculo',
+          attributes: ['id_vehiculo', 'placas', 'marca', 'modelo', 'color'],
           required: false,
-          include: [{ model: db.Empresa, as: 'empresa', required: false }]
+          include: [{ model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social', 'telefono', 'correo'], required: false }]
         }
       ],
       order: [['numero', 'ASC']]

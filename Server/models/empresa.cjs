@@ -46,6 +46,21 @@ const Empresa = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: true,
       comment: 'Número de corbatín final asignado a la empresa (ej. 5)'
+    },
+    seguro_vigencia_url: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'URL o Base64 Data URL del comprobante de seguro'
+    },
+    seguro_subido_por: {
+      type: DataTypes.STRING(120),
+      allowNull: true,
+      comment: 'Usuario o supervisor que adjuntó el comprobante'
+    },
+    seguro_subido_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: 'Fecha y hora en que se adjuntó el comprobante'
     }
   },
   {

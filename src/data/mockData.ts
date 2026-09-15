@@ -49,7 +49,17 @@ export const mockEmpresas: Empresa[] = [
     correo: 'carlos@construccionespuerto.com',
     estado: 'activo',
     totalTrabajadores: 4,
-    totalVehiculos: 2
+    totalVehiculos: 2,
+    corbatin_rango_inicio: 1,
+    corbatin_rango_fin: 5,
+    cuposTotales: 5,
+    seguro_vigencia_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+    seguro_vigencia_fecha: '2027-04-30',
+    seguro_poliza_numero: 'RP-IMSS-Y6219810-10',
+    seguro_aseguradora: 'IMSS (Emisión Mensual SUA)',
+    seguro_notas: 'Cédula de liquidación mensual y constancia de vigencia de derechos de cuadrilla.',
+    seguro_subido_por: 'Supervisor HOA',
+    seguro_subido_at: '2026-03-01T10:00:00Z'
   },
   {
     id: 'emp2',
@@ -60,7 +70,17 @@ export const mockEmpresas: Empresa[] = [
     correo: 'maria@bellavista.com',
     estado: 'activo',
     totalTrabajadores: 3,
-    totalVehiculos: 1
+    totalVehiculos: 1,
+    corbatin_rango_inicio: 6,
+    corbatin_rango_fin: 10,
+    cuposTotales: 5,
+    seguro_vigencia_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+    seguro_vigencia_fecha: '2026-11-15',
+    seguro_poliza_numero: 'RP-IMSS-A8941023-44',
+    seguro_aseguradora: 'IMSS (Opinión de Cumplimiento)',
+    seguro_notas: 'Opinión positiva 32-D y comprobante de pago bimestral al corriente.',
+    seguro_subido_por: 'Supervisor HOA',
+    seguro_subido_at: '2026-02-15T14:30:00Z'
   },
   {
     id: 'emp3',
@@ -71,7 +91,17 @@ export const mockEmpresas: Empresa[] = [
     correo: 'mendez@marinalimpieza.com',
     estado: 'suspendido',
     totalTrabajadores: 3,
-    totalVehiculos: 2
+    totalVehiculos: 2,
+    corbatin_rango_inicio: 11,
+    corbatin_rango_fin: 15,
+    cuposTotales: 5,
+    seguro_vigencia_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+    seguro_vigencia_fecha: '2026-08-01',
+    seguro_poliza_numero: 'ISSSTE-FOL-9981-25',
+    seguro_aseguradora: 'ISSSTE / Seguro de Salud',
+    seguro_notas: 'Constancia de vigencia vencida. Requiere comprobante de pago bimestral actualizado.',
+    seguro_subido_por: 'Supervisor HOA',
+    seguro_subido_at: '2025-10-01T09:15:00Z'
   },
   {
     id: 'emp4',
@@ -82,7 +112,17 @@ export const mockEmpresas: Empresa[] = [
     correo: 'luis@pinturasrocky.com',
     estado: 'activo',
     totalTrabajadores: 2,
-    totalVehiculos: 1
+    totalVehiculos: 1,
+    corbatin_rango_inicio: 16,
+    corbatin_rango_fin: 20,
+    cuposTotales: 5,
+    seguro_vigencia_url: null,
+    seguro_vigencia_fecha: null,
+    seguro_poliza_numero: null,
+    seguro_aseguradora: null,
+    seguro_notas: null,
+    seguro_subido_por: null,
+    seguro_subido_at: null
   }
 ];
 

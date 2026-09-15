@@ -20,13 +20,13 @@ router.get('/', async (req, res) => {
       where,
       include: [
         { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social'] },
-        { model: db.Corbatin, as: 'corbatines' },
+        { model: db.Corbatin, as: 'corbatines', attributes: ['id_corbatin', 'numero', 'estatus'] },
         { 
           model: db.ConductorVehiculo, 
           as: 'asignaciones_conductores',
-          include: [{ model: db.Trabajador, as: 'trabajador' }]
+          include: [{ model: db.Trabajador, as: 'trabajador', attributes: ['id_trabajador', 'nombre', 'apellidos', 'telefono'] }]
         },
-        { model: db.Sancion, as: 'sanciones', where: { estatus: 'ACTIVA' }, required: false }
+        { model: db.Sancion, as: 'sanciones', attributes: ['id_sancion', 'estatus', 'fecha_inicio', 'fecha_fin'], where: { estatus: 'ACTIVA' }, required: false }
       ],
       order: [['created_at', 'DESC']]
     });

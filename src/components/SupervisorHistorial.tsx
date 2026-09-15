@@ -794,9 +794,6 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                   Registros Actuales ({allAccesosDataset.length} registros)
                 </span>
               </div>
-              <p className="text-xs text-slate-500">
-                Auditoría analítica en tiempo real de entradas, salidas y resoluciones disciplinarias
-              </p>
             </div>
           </div>
 

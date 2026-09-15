@@ -20,6 +20,13 @@ export interface EmpresaDB {
   estatus: 'ACTIVA' | 'SUSPENDIDA' | 'RESTRINGIDA' | string;
   corbatin_rango_inicio?: number | null;
   corbatin_rango_fin?: number | null;
+  seguro_vigencia_url?: string | null;
+  seguro_vigencia_fecha?: string | null;
+  seguro_poliza_numero?: string | null;
+  seguro_aseguradora?: string | null;
+  seguro_notas?: string | null;
+  seguro_subido_por?: string | null;
+  seguro_subido_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -291,6 +298,16 @@ export interface Empresa {
   razon_social?: string;
   responsable_nombre?: string;
   estatus?: string;
+  corbatin_rango_inicio?: number | null;
+  corbatin_rango_fin?: number | null;
+  cuposTotales?: number | null;
+  seguro_vigencia_url?: string | null;
+  seguro_vigencia_fecha?: string | null;
+  seguro_poliza_numero?: string | null;
+  seguro_aseguradora?: string | null;
+  seguro_notas?: string | null;
+  seguro_subido_por?: string | null;
+  seguro_subido_at?: string | null;
 }
 
 export interface Trabajador {

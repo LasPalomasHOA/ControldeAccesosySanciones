@@ -54,12 +54,13 @@ router.get('/', async (req, res) => {
         {
           model: db.Vehiculo,
           as: 'vehiculo',
+          attributes: ['id_vehiculo', 'placas', 'marca', 'modelo', 'color'],
           include: [
-            { model: db.Empresa, as: 'empresa' },
-            { model: db.Corbatin, as: 'corbatines' }
+            { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social', 'telefono'] },
+            { model: db.Corbatin, as: 'corbatines', attributes: ['id_corbatin', 'numero', 'estatus'] }
           ]
         },
-        { model: db.Corbatin, as: 'corbatin' },
+        { model: db.Corbatin, as: 'corbatin', attributes: ['id_corbatin', 'numero', 'estatus'] },
         { model: db.CatalogoInfraccion, as: 'infraccion' },
         { model: db.Usuario, as: 'agente', attributes: ['id_usuario', 'nombre', 'correo'] },
         { model: db.Evidencia, as: 'evidencias' },
@@ -128,9 +129,14 @@ router.post('/', async (req, res) => {
     });
 
     if (evidencia_url) {
+      let archivoComprimido = evidencia_url;
+      if (typeof evidencia_url === 'string' && (evidencia_url.startsWith('data:image') || evidencia_url.length > 500)) {
+        archivoComprimido = await optimizeBase64Image(evidencia_url, 800, 70);
+      }
+
       await db.Evidencia.create({
         id_reporte: nuevoReporte.id_reporte,
-        archivo: evidencia_url,
+        archivo: archivoComprimido,
         descripcion: 'Evidencia fotográfica adjunta',
         fecha_captura: new Date(),
         id_usuario,

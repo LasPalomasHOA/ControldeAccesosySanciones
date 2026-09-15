@@ -77,6 +77,20 @@ async function ensureDbInit() {
           ADD COLUMN IF NOT EXISTS "foto_url" TEXT;
         `);
 
+        // Campos para comprobante de seguro en empresas
+        await db.sequelize.query(`
+          ALTER TABLE IF EXISTS "${schemaName}"."empresas" 
+          ADD COLUMN IF NOT EXISTS "seguro_vigencia_url" TEXT;
+        `).catch(() => {});
+        await db.sequelize.query(`
+          ALTER TABLE IF EXISTS "${schemaName}"."empresas" 
+          ADD COLUMN IF NOT EXISTS "seguro_subido_por" VARCHAR(120);
+        `).catch(() => {});
+        await db.sequelize.query(`
+          ALTER TABLE IF EXISTS "${schemaName}"."empresas" 
+          ADD COLUMN IF NOT EXISTS "seguro_subido_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+        `).catch(() => {});
+
         // Permitir que id_vehiculo e id_corbatin sean NULL para accesos peatonales
         await db.sequelize.query(`
           ALTER TABLE IF EXISTS "${schemaName}"."bitacora_accesos" 

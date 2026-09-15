@@ -9,20 +9,22 @@ router.get('/', async (req, res) => {
     const accesos = await db.BitacoraAcceso.findAll({
       limit: 100,
       include: [
-        { model: db.Caseta, as: 'caseta' },
+        { model: db.Caseta, as: 'caseta', attributes: ['id_caseta', 'nombre'] },
         { 
           model: db.Vehiculo, 
           as: 'vehiculo',
+          attributes: ['id_vehiculo', 'placas', 'marca', 'modelo', 'color'],
           include: [
-            { model: db.Empresa, as: 'empresa' },
-            { model: db.Corbatin, as: 'corbatines' }
+            { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social', 'telefono'] },
+            { model: db.Corbatin, as: 'corbatines', attributes: ['id_corbatin', 'numero', 'estatus'] }
           ]
         },
-        { model: db.Corbatin, as: 'corbatin' },
+        { model: db.Corbatin, as: 'corbatin', attributes: ['id_corbatin', 'numero', 'estatus'] },
         { 
           model: db.Trabajador, 
           as: 'conductor',
-          include: [{ model: db.Empresa, as: 'empresa' }]
+          attributes: ['id_trabajador', 'nombre', 'apellidos', 'telefono'],
+          include: [{ model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social', 'telefono'] }]
         },
         { model: db.Usuario, as: 'guardia', attributes: ['id_usuario', 'nombre'] }
       ],

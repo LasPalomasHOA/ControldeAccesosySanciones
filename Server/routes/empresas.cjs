@@ -2,11 +2,13 @@ const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
 const db = require('../models/index.cjs');
+const { optimizeBase64Image } = require('../utils/imageHandler.cjs');
 
-// GET /api/empresas - Listar empresas con conteos de trabajadores y vehículos
+// GET /api/empresas - Listar empresas con conteos de trabajadores y vehículos (excluye archivos pesados para ahorrar Egress)
 router.get('/', async (req, res) => {
   try {
     const empresas = await db.Empresa.findAll({
+      attributes: { exclude: ['seguro_vigencia_url'] },
       include: [
         { model: db.Trabajador, as: 'trabajadores', attributes: ['id_trabajador'] },
         { 
@@ -36,7 +38,8 @@ router.get('/', async (req, res) => {
         corbatin_rango_fin: fin,
         corbatinRangoInicio: inicio,
         corbatinRangoFin: fin,
-        cuposTotales: (inicio && fin && fin >= inicio) ? (fin - inicio + 1) : null
+        cuposTotales: (inicio && fin && fin >= inicio) ? (fin - inicio + 1) : null,
+        tiene_seguro: Boolean(plain.seguro_subido_at || plain.seguro_subido_por)
       };
     });
 
@@ -44,6 +47,26 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error al obtener empresas:', error);
     res.status(500).json({ error: 'Error al consultar empresas', details: error.message });
+  }
+});
+
+// GET /api/empresas/:id/seguro - Obtener únicamente el comprobante de seguro bajo demanda (Ahorro de Egress)
+router.get('/:id/seguro', async (req, res) => {
+  try {
+    const empresa = await db.Empresa.findByPk(req.params.id, {
+      attributes: ['id_empresa', 'razon_social', 'seguro_vigencia_url', 'seguro_subido_por', 'seguro_subido_at']
+    });
+    if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
+    res.json({
+      id_empresa: empresa.id_empresa,
+      razon_social: empresa.razon_social,
+      seguro_vigencia_url: empresa.seguro_vigencia_url,
+      seguro_subido_por: empresa.seguro_subido_por,
+      seguro_subido_at: empresa.seguro_subido_at
+    });
+  } catch (error) {
+    console.error('Error al obtener seguro de empresa:', error);
+    res.status(500).json({ error: 'Error al consultar seguro de la empresa' });
   }
 });
 
@@ -159,7 +182,10 @@ router.put('/:id', async (req, res) => {
       corbatin_rango_inicio,
       corbatin_rango_fin,
       corbatinRangoInicio,
-      corbatinRangoFin
+      corbatinRangoFin,
+      seguro_vigencia_url,
+      seguro_subido_por,
+      seguro_subido_at
     } = req.body;
 
     if (razon_social || nombre) empresa.razon_social = razon_social || nombre;
@@ -168,6 +194,10 @@ router.put('/:id', async (req, res) => {
     if (correo !== undefined) empresa.correo = correo;
     if (estatus !== undefined) empresa.estatus = estatus;
     else if (estado !== undefined) empresa.estatus = estado === 'activo' ? 'ACTIVA' : 'SUSPENDIDA';
+
+    if (seguro_vigencia_url !== undefined) empresa.seguro_vigencia_url = seguro_vigencia_url;
+    if (seguro_subido_por !== undefined) empresa.seguro_subido_por = seguro_subido_por;
+    if (seguro_subido_at !== undefined) empresa.seguro_subido_at = seguro_subido_at;
 
     const rangoInicio = corbatin_rango_inicio ?? corbatinRangoInicio;
     const rangoFin = corbatin_rango_fin ?? corbatinRangoFin;
@@ -209,6 +239,55 @@ router.put('/:id', async (req, res) => {
   } catch (error) {
     console.error('Error al actualizar empresa:', error);
     res.status(500).json({ error: 'Error al actualizar empresa', details: error.message });
+  }
+});
+
+// POST /api/empresas/:id/seguro - Adjuntar comprobante de seguro a una empresa
+router.post('/:id/seguro', async (req, res) => {
+  try {
+    const empresa = await db.Empresa.findByPk(req.params.id);
+    if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
+
+    const {
+      seguro_vigencia_url,
+      seguro_subido_por
+    } = req.body;
+
+    let finalSeguroUrl = seguro_vigencia_url;
+    if (finalSeguroUrl && typeof finalSeguroUrl === 'string' && finalSeguroUrl.startsWith('data:image')) {
+      finalSeguroUrl = await optimizeBase64Image(finalSeguroUrl, 1200, 75);
+    }
+
+    if (finalSeguroUrl !== undefined) empresa.seguro_vigencia_url = finalSeguroUrl;
+    empresa.seguro_subido_por = seguro_subido_por || 'Supervisor HOA';
+    empresa.seguro_subido_at = new Date();
+
+    await empresa.save();
+    res.json({
+      ...empresa.get({ plain: true }),
+      seguro_vigencia_url: finalSeguroUrl
+    });
+  } catch (error) {
+    console.error('Error al adjuntar seguro:', error);
+    res.status(500).json({ error: 'Error al adjuntar comprobante de seguro', details: error.message });
+  }
+});
+
+// DELETE /api/empresas/:id/seguro - Eliminar comprobante de seguro
+router.delete('/:id/seguro', async (req, res) => {
+  try {
+    const empresa = await db.Empresa.findByPk(req.params.id);
+    if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
+
+    empresa.seguro_vigencia_url = null;
+    empresa.seguro_subido_por = null;
+    empresa.seguro_subido_at = null;
+
+    await empresa.save();
+    res.json(empresa);
+  } catch (error) {
+    console.error('Error al eliminar seguro:', error);
+    res.status(500).json({ error: 'Error al eliminar comprobante de seguro', details: error.message });
   }
 });
 
