@@ -1,4 +1,4 @@
-import { Empresa, Trabajador, Vehiculo, Acceso, ReglamentoArticulo, InfraccionCat, Sancion, Usuario } from '../types';
+import { Empresa, Trabajador, Vehiculo, Acceso, ReglamentoArticulo, InfraccionCat, Sancion, Usuario, DocumentoFiscalProveedor } from '../types';
 
 export const mockUsuarios: Usuario[] = [
   {
@@ -29,6 +29,13 @@ export const mockUsuarios: Usuario[] = [
     rol: 'proveedor',
     empresaId: 'emp1',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150'
+  },
+  {
+    id: 'u5',
+    nombre: 'Lic. Marisol Mendoza (Contabilidad)',
+    correo: 'contabilidad@laspalomas.com',
+    rol: 'contabilidad',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150'
   }
 ];
 
@@ -496,5 +503,68 @@ export const mockSanciones: Sancion[] = [
     evidenciaUrl: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&q=80&w=300',
     comentarios: 'Reporte cargado por guardia desde la app móvil. Requiere aprobación de supervisor.',
     agenteNombre: 'Oficial Martínez'
+  }
+];
+
+export const mockDocumentosEmpresas: DocumentoFiscalProveedor[] = [
+  {
+    id: 'doc-emp1',
+    empresaId: 'emp1',
+    tipoDocumento: 'otro',
+    nombreDocumento: 'Expediente Documental de Proveedor',
+    descripcion: 'Documentación fiscal y administrativa integrada (RFC: CPU120304AA1)',
+    archivoUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+    formato: 'pdf',
+    tamañoKb: 540,
+    fechaSubida: '2026-02-15',
+    fechaVigencia: '2027-02-15',
+    estatus: 'vigente',
+    subidoPor: 'Ing. Carlos Ortega (Proveedor)',
+    notasAuditoria: 'Documento oficial suministrado y cotejado para el padrón HOA.'
+  },
+  {
+    id: 'doc-emp2',
+    empresaId: 'emp2',
+    tipoDocumento: 'otro',
+    nombreDocumento: 'Expediente Documental de Proveedor',
+    descripcion: 'Documento administrativo y fiscal (RFC: JBV980712BB2)',
+    archivoUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+    formato: 'pdf',
+    tamañoKb: 480,
+    fechaSubida: '2026-03-01',
+    fechaVigencia: '2027-03-01',
+    estatus: 'vigente',
+    subidoPor: 'María Elena Solares (Proveedor)',
+    notasAuditoria: 'Documento verificado y vigente.'
+  },
+  {
+    id: 'doc-emp3',
+    empresaId: 'emp3',
+    tipoDocumento: 'otro',
+    nombreDocumento: 'Expediente Documental de Proveedor',
+    descripcion: 'Documento vencido de empresa externa (RFC: LMR050915CC3)',
+    archivoUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+    formato: 'pdf',
+    tamañoKb: 390,
+    fechaSubida: '2025-11-10',
+    fechaVigencia: '2026-05-10',
+    estatus: 'vencido',
+    subidoPor: 'Roberto Méndez (Proveedor)',
+    notasAuditoria: 'Documento vencido. Requiere que el proveedor suba la versión actualizada.'
+  },
+  {
+    id: 'doc-emp4',
+    empresaId: 'emp4',
+    tipoDocumento: 'otro',
+    nombreDocumento: 'Expediente Documental de Proveedor',
+    descripcion: 'Documentación fiscal y legal de contratista (RFC: PRP141120DD4)',
+    archivoUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+    formato: 'pdf',
+    tamañoKb: 620,
+    fechaSubida: '2026-05-18',
+    fechaVigencia: '2027-05-18',
+    estatus: 'vigente',
+    subidoPor: 'Lic. Luis Gómez (Proveedor)',
+    notasAuditoria: 'Expediente al día.'
   }
 ];

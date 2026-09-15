@@ -29,6 +29,8 @@ export const Login: React.FC = () => {
         return <Shield className="w-5 h-5 text-emerald-500" />;
       case 'proveedor':
         return <User className="w-5 h-5 text-blue-500" />;
+      case 'contabilidad':
+        return <Building className="w-5 h-5 text-teal-400" />;
       default:
         return <HelpCircle className="w-5 h-5 text-slate-500" />;
     }
@@ -44,6 +46,8 @@ export const Login: React.FC = () => {
         return 'Bitácora en tiempo real, registro de ingresos/salidas y caseta virtual.';
       case 'proveedor':
         return 'Consulta de personal autorizado, vehículos y aceptación del reglamento.';
+      case 'contabilidad':
+        return 'Auditoría fiscal, padrón de empresas y consulta documental en solo lectura.';
       default:
         return '';
     }

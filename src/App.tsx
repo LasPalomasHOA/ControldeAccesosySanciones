@@ -7,6 +7,7 @@ import { compressImageClient } from "./utils/imageCompressor";
 import SupervisorHistorial from "./components/SupervisorHistorial";
 import SupervisorReglamentoEditor, { ReglamentoSection } from "./components/SupervisorReglamentoEditor";
 import ContratistaReglamentoView from "./components/ContratistaReglamentoView";
+import ContabilidadDashboard from "./components/ContabilidadDashboard";
 import QRScannerModal from "./components/QRScannerModal";
 import logoPng from "./assets/logo.png";
 
@@ -362,7 +363,7 @@ function IconCheckSimple({ className = "w-4 h-4" }: { className?: string }) {
 
 // ─── Types & Roles ────────────────────────────────────────────────────────────
 
-type UserRole = "admin" | "supervisor" | "contratista" | "caseta";
+type UserRole = "admin" | "supervisor" | "contratista" | "caseta" | "contabilidad";
 type PortalScreen = "reglamento" | "dashboard" | "alta" | "trabajadores" | "sanciones" | "consulta_reglamento";
 type SupervisorTab = "bandeja" | "apelaciones" | "proveedores" | "guardias" | "historial" | "reglamento" | "corbatines" | "corbatines_verdes";
 type AdminTab = "supervisores" | "proveedores" | "auditoria";
@@ -520,6 +521,7 @@ const INITIAL_USERS: UserAccount[] = [
   { id: "2", username: "supervisor@laspalomashoa.com", password: "123456", nombre: "Supervisor Operativo", email: "supervisor@laspalomashoa.com", role: "supervisor", turno: "Turno General 24/7", fechaCreacion: "2026-01-10", creadoPor: "Admin TI", activo: true },
   { id: "5", username: "proveedor@constructoraintegral.com", password: "123456", nombre: "Roberto Silva Morales", email: "proveedor@constructoraintegral.com", role: "contratista", empresaNombre: "Constructora Integral del Noroeste S.A. de C.V.", fechaCreacion: "2026-02-01", creadoPor: "Supervisor HOA", hasAcceptedReglamento: false, activo: true },
   { id: "4", username: "caseta@laspalomashoa.com", password: "123456", nombre: "Guardia Caseta Principal", email: "caseta@laspalomashoa.com", role: "caseta", turno: "Vespertino (14:00 - 22:00)", fechaCreacion: "2026-02-05", creadoPor: "Supervisor HOA", activo: true },
+  { id: "6", username: "contabilidad@laspalomashoa.com", password: "123456", nombre: "Lic. Marisol Mendoza", email: "contabilidad@laspalomashoa.com", role: "contabilidad", fechaCreacion: "2026-03-01", creadoPor: "Sistema Raíz", activo: true },
 ];
 
 const INITIAL_EMPRESAS: Empresa[] = [];
@@ -2413,7 +2415,7 @@ export default function App() {
           username: u.correo,
           nombre: u.nombre,
           email: u.correo,
-          role: (u.rol === "admin" ? "admin" : (u.rol === "supervisor" ? "supervisor" : (u.rol === "proveedor" ? "contratista" : "caseta"))) as UserRole,
+          role: (u.rol === "admin" ? "admin" : (u.rol === "supervisor" ? "supervisor" : (u.rol === "proveedor" ? "contratista" : (u.rol === "contabilidad" ? "contabilidad" : "caseta")))) as UserRole,
           empresaNombre: u.empresaNombre || "",
           fechaCreacion: u.created_at ? new Date(u.created_at).toISOString().split("T")[0] : "2026-01-01",
           creadoPor: "Administrador de Seguridad HOA",
@@ -2555,7 +2557,8 @@ export default function App() {
         const roleMapped: UserRole =
           data.rol === "admin" ? "admin" :
             data.rol === "supervisor" ? "supervisor" :
-              data.rol === "proveedor" ? "contratista" : "caseta";
+              data.rol === "proveedor" ? "contratista" :
+                data.rol === "contabilidad" ? "contabilidad" : "caseta";
 
         const isAccepted = roleMapped === "contratista"
           ? (data.hasAcceptedReglamento !== undefined ? data.hasAcceptedReglamento : (localStorage.getItem("hoa_accepted_reglamento_" + (data.id || data.id_usuario)) === "true"))
@@ -2616,6 +2619,7 @@ export default function App() {
       supervisor: "supervisor@laspalomashoa.com",
       contratista: "proveedor@constructoraintegral.com",
       caseta: "caseta@laspalomashoa.com",
+      contabilidad: "contabilidad@laspalomashoa.com",
     };
 
     const targetEmail = roleEmailMap[role];
@@ -4674,6 +4678,19 @@ export default function App() {
                   </button>
 
                   <button
+                    onClick={() => handleQuickLogin("contabilidad")}
+                    className="p-2.5 rounded-xl border border-teal-200 text-left hover:bg-teal-50/50 transition-all flex items-center gap-2 cursor-pointer bg-white"
+                  >
+                    <div className="p-1.5 rounded-lg bg-teal-50 text-[#0D6E5F] shrink-0">
+                      <IconFileText className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-800">Contabilidad</div>
+                      <div className="text-[10px] text-slate-500">Fiscal & Padrón</div>
+                    </div>
+                  </button>
+
+                  <button
                     onClick={() => handleQuickLogin("contratista")}
                     className="p-2.5 rounded-xl border border-slate-200 text-left hover:bg-slate-50 transition-all flex items-center gap-2 cursor-pointer bg-white"
                   >
@@ -4688,7 +4705,7 @@ export default function App() {
 
                   <button
                     onClick={() => handleQuickLogin("caseta")}
-                    className="p-2.5 rounded-xl border border-slate-200 text-left hover:bg-slate-50 transition-all flex items-center gap-2 cursor-pointer bg-white"
+                    className="p-2.5 rounded-xl border border-slate-200 text-left hover:bg-slate-50 transition-all flex items-center gap-2 cursor-pointer bg-white col-span-2"
                   >
                     <div className="p-1.5 rounded-lg bg-amber-50 text-amber-700 shrink-0">
                       <IconShield className="w-4 h-4" />
@@ -5284,8 +5301,8 @@ export default function App() {
                       type="button"
                       onClick={() => setOpenSupervisorDropdown(openSupervisorDropdown === "directorio" ? null : "directorio")}
                       className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${["proveedores", "guardias"].includes(supervisorTab)
-                          ? "bg-[#0D6E5F] text-white shadow-xs"
-                          : "text-slate-700 hover:bg-white hover:text-slate-900"
+                        ? "bg-[#0D6E5F] text-white shadow-xs"
+                        : "text-slate-700 hover:bg-white hover:text-slate-900"
                         }`}
                     >
                       <IconUsers className="w-3.5 h-3.5" />
@@ -5304,9 +5321,8 @@ export default function App() {
                             setSupervisorTab("proveedores");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
-                            supervisorTab === "proveedores" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
-                          }`}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "proveedores" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                            }`}
                         >
                           <div>
                             <div className="font-semibold">Proveedores / Contratistas</div>
@@ -5323,9 +5339,8 @@ export default function App() {
                             setSupervisorTab("guardias");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
-                            supervisorTab === "guardias" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
-                          }`}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "guardias" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                            }`}
                         >
                           <div>
                             <div className="font-semibold">Guardias de Caseta</div>
@@ -5345,8 +5360,8 @@ export default function App() {
                       type="button"
                       onClick={() => setOpenSupervisorDropdown(openSupervisorDropdown === "documentos" ? null : "documentos")}
                       className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${["corbatines", "corbatines_verdes", "reglamento"].includes(supervisorTab)
-                          ? "bg-[#0D6E5F] text-white shadow-xs"
-                          : "text-slate-700 hover:bg-white hover:text-slate-900"
+                        ? "bg-[#0D6E5F] text-white shadow-xs"
+                        : "text-slate-700 hover:bg-white hover:text-slate-900"
                         }`}
                     >
                       <IconFileText className="w-3.5 h-3.5" />
@@ -5365,9 +5380,8 @@ export default function App() {
                             setSupervisorTab("corbatines");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
-                            supervisorTab === "corbatines" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
-                          }`}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "corbatines" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                            }`}
                         >
                           <div>
                             <div className="font-semibold">Impresión de Corbatines</div>
@@ -5384,9 +5398,8 @@ export default function App() {
                             setSupervisorTab("corbatines_verdes");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
-                            supervisorTab === "corbatines_verdes" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
-                          }`}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "corbatines_verdes" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                            }`}
                         >
                           <div>
                             <div className="font-semibold">Corbatines Verdes</div>
@@ -5403,9 +5416,8 @@ export default function App() {
                             setSupervisorTab("reglamento");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
-                            supervisorTab === "reglamento" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
-                          }`}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "reglamento" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                            }`}
                         >
                           <div>
                             <div className="font-semibold">Reglamento & Banderines</div>
@@ -5422,8 +5434,8 @@ export default function App() {
                       type="button"
                       onClick={() => setOpenSupervisorDropdown(openSupervisorDropdown === "operacion" ? null : "operacion")}
                       className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${["bandeja", "apelaciones"].includes(supervisorTab)
-                          ? "bg-[#0D6E5F] text-white shadow-xs"
-                          : "text-slate-700 hover:bg-white hover:text-slate-900"
+                        ? "bg-[#0D6E5F] text-white shadow-xs"
+                        : "text-slate-700 hover:bg-white hover:text-slate-900"
                         }`}
                     >
                       <IconShield className="w-3.5 h-3.5" />
@@ -5447,9 +5459,8 @@ export default function App() {
                             setSupervisorTab("bandeja");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
-                            supervisorTab === "bandeja" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
-                          }`}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "bandeja" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                            }`}
                         >
                           <div>
                             <div className="font-semibold">Infracciones en Campo</div>
@@ -5472,9 +5483,8 @@ export default function App() {
                             setSupervisorTab("apelaciones");
                             setOpenSupervisorDropdown(null);
                           }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
-                            supervisorTab === "apelaciones" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
-                          }`}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "apelaciones" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                            }`}
                         >
                           <div>
                             <div className="font-semibold">Bandeja de Apelaciones</div>
@@ -5502,8 +5512,8 @@ export default function App() {
                       setOpenSupervisorDropdown(null);
                     }}
                     className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${supervisorTab === "historial"
-                        ? "bg-[#0D6E5F] text-white shadow-xs"
-                        : "text-slate-700 hover:bg-white hover:text-slate-900"
+                      ? "bg-[#0D6E5F] text-white shadow-xs"
+                      : "text-slate-700 hover:bg-white hover:text-slate-900"
                       }`}
                   >
                     <IconClock className="w-3.5 h-3.5" />
@@ -5573,6 +5583,13 @@ export default function App() {
                   </button>
                 </div>
               )}
+
+              {currentUser.role === "contabilidad" && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-teal-50 border border-teal-200 text-[#0D6E5F] text-xs font-bold shadow-xs">
+                  <IconFileText className="w-4 h-4" />
+                  <span>Auditoría & Expedientes Fiscales</span>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
@@ -5583,9 +5600,9 @@ export default function App() {
                 </div>
                 <div
                   className="text-[11px] text-slate-500 font-mono truncate"
-                  title={currentUser.role === "admin" ? "Administrador de Sistemas" : currentUser.role === "supervisor" ? "Supervisor de Seguridad HOA" : currentUser.role === "contratista" ? currentUser.empresaNombre : `Oficial de Caseta (${currentUser.turno})`}
+                  title={currentUser.role === "admin" ? "Administrador de Sistemas" : currentUser.role === "supervisor" ? "Supervisor de Seguridad HOA" : currentUser.role === "contabilidad" ? "Contabilidad & Finanzas HOA" : currentUser.role === "contratista" ? currentUser.empresaNombre : `Oficial de Caseta (${currentUser.turno})`}
                 >
-                  {currentUser.role === "admin" ? "Administrador de Sistemas" : currentUser.role === "supervisor" ? "Supervisor de Seguridad HOA" : currentUser.role === "contratista" ? currentUser.empresaNombre : `Oficial de Caseta (${currentUser.turno})`}
+                  {currentUser.role === "admin" ? "Administrador de Sistemas" : currentUser.role === "supervisor" ? "Supervisor de Seguridad HOA" : currentUser.role === "contabilidad" ? "Contabilidad & Finanzas HOA" : currentUser.role === "contratista" ? currentUser.empresaNombre : `Oficial de Caseta (${currentUser.turno})`}
                 </div>
               </div>
 
@@ -8999,6 +9016,17 @@ export default function App() {
             </div>
           </main>
         )}
+
+        {/* CONTABILIDAD */}
+        {currentUser.role === "contabilidad" && (
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <ContabilidadDashboard
+              empresas={empresas}
+              trabajadores={trabajadores}
+              vehicles={vehicles}
+            />
+          </main>
+        )}
       </div>
 
       {/* ─── MODAL TI: MODIFICAR / RESTABLECER CONTRASEÑA ─── */}
@@ -10911,11 +10939,10 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setNuevoCVModo("individual")}
-                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
-                  nuevoCVModo === "individual"
+                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${nuevoCVModo === "individual"
                     ? "bg-white text-[#0D6E5F] shadow-xs border border-slate-200"
                     : "text-slate-600 hover:text-slate-900"
-                }`}
+                  }`}
               >
                 Emisión Individual (1 Corbatín)
               </button>
@@ -10931,11 +10958,10 @@ export default function App() {
                     setNuevoCVRangoFin(String(start + 4).padStart(3, "0"));
                   }
                 }}
-                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
-                  nuevoCVModo === "lote"
+                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${nuevoCVModo === "lote"
                     ? "bg-white text-[#0D6E5F] shadow-xs border border-slate-200"
                     : "text-slate-600 hover:text-slate-900"
-                }`}
+                  }`}
               >
                 Emisión en Lote / Rango Consecutivo
               </button>
