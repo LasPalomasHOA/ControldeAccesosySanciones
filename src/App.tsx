@@ -887,9 +887,17 @@ function CorbatinDocument({ vehicle, sections }: { vehicle: Vehicle; sections?: 
   );
 }
 
+// ─── Helper de Formato de Corbatín Verde (Prefijo '00' obligatorio: 001, 002, 0010, 00100) ───
+export const formatCorbatinVerdeNum = (num: number | string): string => {
+  const cleanNum = parseInt(String(num).replace(/[^0-9]/g, ""), 10);
+  if (isNaN(cleanNum) || cleanNum <= 0) return "001";
+  return `00${cleanNum}`;
+};
+
 // ─── Tarjeta Corbatin Verde Printable Component (Larga Estancia / Empresas) ───
 function TarjetaCorbatinVerdePrintable({ corb, sections }: { corb: CorbatinVerde; sections?: ReglamentoSection[] }) {
-  const qrPayload = `LP-HOA|CORB-VERDE:${corb.corbatinNum}|EMP:${corb.empresaNombre}|TEL:${corb.telefono}|VIG:${corb.vigenciaTexto || "Vigente"}`;
+  const corbNumFormatted = formatCorbatinVerdeNum(corb.corbatinNum);
+  const qrPayload = `LP-HOA|CORB-VERDE:${corbNumFormatted}|EMP:${corb.empresaNombre}|TEL:${corb.telefono}|VIG:${corb.vigenciaTexto || "Vigente"}`;
   const docSections = sections && sections.length > 0 ? sections : DEFAULT_REGLAMENTO_SECTIONS;
 
   return (
@@ -932,7 +940,7 @@ function TarjetaCorbatinVerdePrintable({ corb, sections }: { corb: CorbatinVerde
                 </div>
                 <div style={{ borderTop: "2px solid #0D6E5F", borderBottom: "2px solid #0D6E5F", height: "4px", margin: "5px auto", width: "100%" }} />
                 <div style={{ fontSize: "64px", fontWeight: "bold", color: "#0D6E5F", lineHeight: "1", textAlign: "center", width: "100%", padding: "2px 0", fontFamily: "var(--font-mono, monospace)" }}>
-                  {corb.corbatinNum}
+                  {corbNumFormatted}
                 </div>
                 <div style={{ borderTop: "2px solid #0D6E5F", borderBottom: "2px solid #0D6E5F", height: "4px", margin: "5px auto", width: "100%" }} />
               </div>
@@ -996,7 +1004,7 @@ function TarjetaCorbatinVerdePrintable({ corb, sections }: { corb: CorbatinVerde
               <div style={{ borderTop: "1px solid #cccccc", paddingTop: "5px", marginTop: "4px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "8px", color: "#555555", gap: "8px", overflow: "hidden" }}>
                 <span style={{ flexShrink: 0, fontWeight: "600" }}>Las Palomas Rocky Point HOA</span>
                 <span style={{ fontFamily: "monospace", fontWeight: "bold", color: "#0D6E5F", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>
-                  Corbatín Verde #{corb.corbatinNum} · {corb.empresaNombre}
+                  Corbatín Verde #{corbNumFormatted} · {corb.empresaNombre}
                 </span>
               </div>
             </td>
@@ -2268,7 +2276,7 @@ export default function App() {
         });
         const mappedVerdes: CorbatinVerde[] = verdesList.map((c: any) => ({
           id: String(c.id_corbatin || c.id_corbatines || c.id),
-          corbatinNum: String(c.numero || c.corbatinNum || "").padStart(3, "0"),
+          corbatinNum: formatCorbatinVerdeNum(c.numero || c.corbatinNum || 1),
           empresaNombre: c.empresa_nombre || c.empresaNombre || "",
           telefono: c.telefono || "",
           email: c.email || "",
@@ -2984,7 +2992,8 @@ export default function App() {
     try {
       setIsGeneratingCorbatinVerdePDF(true);
 
-      const qrPayload = `LP-HOA|CORB-VERDE:${corb.corbatinNum}|EMP:${corb.empresaNombre}|TEL:${corb.telefono}|VIG:${corb.vigenciaTexto || "Vigente"}`;
+      const corbNumFormatted = formatCorbatinVerdeNum(corb.corbatinNum);
+      const qrPayload = `LP-HOA|CORB-VERDE:${corbNumFormatted}|EMP:${corb.empresaNombre}|TEL:${corb.telefono}|VIG:${corb.vigenciaTexto || "Vigente"}`;
 
       const [qrDataUrl, logoDataUrl] = await Promise.all([
         QRCode.toDataURL(qrPayload, {
@@ -3060,7 +3069,7 @@ export default function App() {
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(52);
       pdf.setTextColor(13, 110, 95);
-      pdf.text(corb.corbatinNum, leftCenterX, startY + 54.5, { align: "center" });
+      pdf.text(corbNumFormatted, leftCenterX, startY + 54.5, { align: "center" });
 
       // Double Line 3
       pdf.line(startX + 7, startY + 59.5, midX - 7, startY + 59.5);
@@ -3199,7 +3208,7 @@ export default function App() {
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(6.5);
       pdf.setTextColor(13, 110, 95);
-      pdf.text(`Corbatín Verde #${corb.corbatinNum} · ${corb.empresaNombre}`, startX + cardW - 8, startY + cardH - 5.5, { align: "right" });
+      pdf.text(`Corbatín Verde #${corbNumFormatted} · ${corb.empresaNombre}`, startX + cardW - 8, startY + cardH - 5.5, { align: "right" });
 
       if (isPrintOnly) {
         pdf.autoPrint({ variant: "non-conform" });
@@ -3223,8 +3232,8 @@ export default function App() {
           }, 300);
         };
       } else {
-        pdf.save(`Corbatin_Verde_${corb.corbatinNum}_${corb.empresaNombre.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`);
-        showToast(`Corbatín Verde #${corb.corbatinNum} generado y descargado exitosamente.`, "success", "PDF Generado");
+        pdf.save(`Corbatin_Verde_${corbNumFormatted}_${corb.empresaNombre.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`);
+        showToast(`Corbatín Verde #${corbNumFormatted} generado y descargado exitosamente.`, "success", "PDF Generado");
       }
     } catch (err: any) {
       console.error("Error generando PDF corbatín verde:", err);
@@ -3236,13 +3245,13 @@ export default function App() {
 
   const getNextCorbatinVerdeNum = (list: CorbatinVerde[]): string => {
     const existingSet = new Set(
-      list.map(c => parseInt(c.corbatinNum, 10)).filter(n => !isNaN(n) && n > 0)
+      list.map(c => parseInt(String(c.corbatinNum).replace(/[^0-9]/g, ""), 10)).filter(n => !isNaN(n) && n > 0)
     );
     let next = 1;
     while (existingSet.has(next)) {
       next++;
     }
-    return String(next).padStart(3, "0");
+    return formatCorbatinVerdeNum(next);
   };
 
   const handleGuardarNuevoCorbatinVerde = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -3296,12 +3305,12 @@ export default function App() {
       nuevosCorbatines.push(newCorb);
     } else {
       // Lote / Rango
-      let start = parseInt(nuevoCVRangoInicio, 10);
-      let end = parseInt(nuevoCVRangoFin, 10);
+      let start = parseInt(String(nuevoCVRangoInicio).replace(/[^0-9]/g, ""), 10);
+      let end = parseInt(String(nuevoCVRangoFin).replace(/[^0-9]/g, ""), 10);
 
       if (isNaN(start) || isNaN(end)) {
         // Fallback a cantidad
-        const nextStart = parseInt(getNextCorbatinVerdeNum(corbatinesVerdes), 10);
+        const nextStart = parseInt(String(getNextCorbatinVerdeNum(corbatinesVerdes)).replace(/[^0-9]/g, ""), 10) || 1;
         start = nextStart;
         end = nextStart + Math.max(1, nuevoCVCantidad) - 1;
       }
@@ -3312,7 +3321,7 @@ export default function App() {
       }
 
       for (let num = start; num <= end; num++) {
-        const numStr = String(num).padStart(3, "0");
+        const numStr = formatCorbatinVerdeNum(num);
         nuevosCorbatines.push({
           id: `cv-${Date.now()}-${num}-${Math.random().toString(36).substr(2, 4)}`,
           corbatinNum: numStr,
@@ -3334,7 +3343,7 @@ export default function App() {
       const apiPayload = nuevosCorbatines.map(c => ({
         tipo: "VERDE",
         tipos: "VERDE",
-        numero: parseInt(c.corbatinNum, 10),
+        numero: parseInt(String(c.corbatinNum).replace(/[^0-9]/g, ""), 10),
         corbatinNum: c.corbatinNum,
         empresaNombre: c.empresaNombre,
         empresa_nombre: c.empresaNombre,
