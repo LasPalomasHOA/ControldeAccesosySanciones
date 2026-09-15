@@ -114,15 +114,28 @@ export interface AceptacionReglamentoDB {
 
 // 9. corbatines
 export interface CorbatinDB {
-  id_corbatin: number;
-  id_vehiculo: number;
+  id_corbatin?: number;
+  id_corbatines?: number;
+  id_vehiculo?: number | null;
+  tipo?: 'NORMAL' | 'VERDE' | string;
+  tipos?: 'NORMAL' | 'VERDE' | string;
   numero: number;
-  qr_token: string;
+  qr_token?: string | null;
   fecha_emision: string;
   fecha_vencimiento?: string | null;
-  estatus: 'ACTIVO' | 'VENCIDO' | 'CANCELADO' | 'REEMPLAZADO' | string;
+  estatus: 'ACTIVO' | 'VENCIDO' | 'CANCELADO' | 'REEMPLAZADO' | 'DESHABILITADO' | string;
   fecha_impresion?: string | null;
   motivo_cancelacion?: string | null;
+  empresa_nombre?: string | null;
+  empresaNombre?: string;
+  telefono?: string | null;
+  email?: string | null;
+  vigencia_texto?: string | null;
+  vigenciaTexto?: string;
+  notas?: string | null;
+  creado_por?: string | null;
+  creadoPor?: string;
+  activo?: boolean;
   // Asociaciones opcionales
   vehiculo?: VehiculoDB;
 }

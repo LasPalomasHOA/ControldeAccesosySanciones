@@ -531,44 +531,7 @@ const INITIAL_VEHICLES: Vehicle[] = [];
 const INITIAL_SANCIONES: Sancion[] = [];
 const INITIAL_BITACORA: RegistroCaseta[] = [];
 const INITIAL_INFRACCIONES_PENDIENTES: InfraccionReporte[] = [];
-const INITIAL_CORBATINES_VERDES: CorbatinVerde[] = [
-  {
-    id: "cv-1",
-    corbatinNum: "001",
-    empresaNombre: "Constructora Integral del Noroeste S.A. de C.V.",
-    telefono: "638-102-4589",
-    email: "operaciones@constructoranoroeste.com",
-    fechaEmision: "2026-09-01",
-    vigenciaTexto: "6 Meses",
-    fechaVencimiento: "2027-03-01",
-    activo: true,
-    creadoPor: "Supervisor HOA",
-  },
-  {
-    id: "cv-2",
-    corbatinNum: "002",
-    empresaNombre: "Constructora Integral del Noroeste S.A. de C.V.",
-    telefono: "638-102-4589",
-    email: "operaciones@constructoranoroeste.com",
-    fechaEmision: "2026-09-01",
-    vigenciaTexto: "6 Meses",
-    fechaVencimiento: "2027-03-01",
-    activo: true,
-    creadoPor: "Supervisor HOA",
-  },
-  {
-    id: "cv-3",
-    corbatinNum: "003",
-    empresaNombre: "Mantenimiento y Climas del Pacífico",
-    telefono: "638-384-9921",
-    email: "contacto@climaspacifico.mx",
-    fechaEmision: "2026-08-15",
-    vigenciaTexto: "1 Año",
-    fechaVencimiento: "2027-08-15",
-    activo: true,
-    creadoPor: "Supervisor HOA",
-  }
-];
+const INITIAL_CORBATINES_VERDES: CorbatinVerde[] = [];
 
 const DEFAULT_REGLAMENTO_SECTIONS: ReglamentoSection[] = [
   { title: "1. INGRESO", items: ["Registrar: corbatín, compañía, vehículo, placas, nombre y celular.", "Indicar área de trabajo y horario.", "Portar uniforme, gafete visible y EPP obligatorio."] },
@@ -924,23 +887,23 @@ function TarjetaCorbatinVerdePrintable({ corb, sections }: { corb: CorbatinVerde
 
   return (
     <div
-      className="card-exact-print-root bg-white"
+      id="corbatin-verde-printable"
       style={{
         width: "760px",
-        height: "512px",
-        margin: "0 auto",
-        boxSizing: "border-box",
-        border: "3px solid #0D6E5F",
-        borderRadius: "14px",
-        overflow: "hidden",
-        boxShadow: "0 10px 30px rgba(13,110,95,0.12)",
         background: "#ffffff",
+        border: "2.5px solid #0D6E5F",
+        fontFamily: "Arial, Helvetica, sans-serif",
+        boxShadow: "0 8px 36px rgba(13,110,95,0.14)",
+        borderRadius: "4px",
+        overflow: "hidden",
+        boxSizing: "border-box",
+        margin: "0 auto",
       }}
     >
-      <table style={{ width: "100%", height: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", margin: 0, padding: 0 }}>
         <tbody>
           <tr>
-            {/* ANVERSO (LEFT) */}
+            {/* ANVERSO (LEFT FRONT — 50% WIDTH) */}
             <td
               style={{
                 width: "380px",
@@ -953,7 +916,7 @@ function TarjetaCorbatinVerdePrintable({ corb, sections }: { corb: CorbatinVerde
               }}
             >
               <div style={{ textAlign: "center", width: "100%" }}>
-                <div style={{ fontSize: "15px", fontWeight: "900", color: "#0D6E5F", textAlign: "center", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                <div style={{ fontSize: "17px", fontWeight: "bold", color: "#0D6E5F", textAlign: "center", letterSpacing: "0.5px" }}>
                   PROVEEDOR — LARGA ESTANCIA
                 </div>
                 <div style={{ borderTop: "2px solid #0D6E5F", borderBottom: "2px solid #0D6E5F", height: "4px", margin: "5px auto", width: "100%" }} />
@@ -961,7 +924,7 @@ function TarjetaCorbatinVerdePrintable({ corb, sections }: { corb: CorbatinVerde
                   <LPLogo size={150} />
                 </div>
                 <div style={{ borderTop: "2px solid #0D6E5F", borderBottom: "2px solid #0D6E5F", height: "4px", margin: "5px auto", width: "100%" }} />
-                <div style={{ fontSize: "64px", fontWeight: "900", color: "#0D6E5F", lineHeight: "1", textAlign: "center", width: "100%", padding: "2px 0", fontFamily: "var(--font-mono, monospace)" }}>
+                <div style={{ fontSize: "64px", fontWeight: "bold", color: "#0D6E5F", lineHeight: "1", textAlign: "center", width: "100%", padding: "2px 0", fontFamily: "var(--font-mono, monospace)" }}>
                   {corb.corbatinNum}
                 </div>
                 <div style={{ borderTop: "2px solid #0D6E5F", borderBottom: "2px solid #0D6E5F", height: "4px", margin: "5px auto", width: "100%" }} />
@@ -969,30 +932,30 @@ function TarjetaCorbatinVerdePrintable({ corb, sections }: { corb: CorbatinVerde
 
               <div style={{ textAlign: "center", fontSize: "11px", color: "#222222", lineHeight: "1.35", padding: "4px 0" }}>
                 <div style={{ fontWeight: "bold", fontSize: "13px", color: "#000", marginBottom: "1.5px" }}>{corb.empresaNombre}</div>
-                <div style={{ color: "#0D6E5F", fontWeight: "bold", fontSize: "11px" }}>Tel: {corb.telefono}</div>
-                <div style={{ color: "#555555", fontSize: "9.5px" }}>Email: {corb.email}</div>
+                <div style={{ color: "#0D6E5F", fontWeight: "bold", fontSize: "11.5px" }}>Tel: {corb.telefono}</div>
+                <div style={{ color: "#555555", fontSize: "10px" }}>Email: {corb.email}</div>
               </div>
 
               {/* QR CODE */}
               <div style={{ borderTop: "1px dashed #0D6E5F", paddingTop: "6px", marginTop: "4px", textAlign: "center" }}>
                 <div style={{ display: "inline-block", background: "#ffffff", padding: "5px", border: "2px solid #0D6E5F", borderRadius: "6px", boxShadow: "0 2px 6px rgba(0,0,0,0.06)" }}>
-                  <RealQRCode value={qrPayload} size={110} />
+                  <RealQRCode value={qrPayload} size={125} />
                 </div>
-                <div style={{ fontSize: "9.5px", fontWeight: "bold", color: "#0D6E5F", marginTop: "3px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                <div style={{ fontSize: "9.5px", fontWeight: "bold", color: "#0D6E5F", marginTop: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                   VIGENCIA: {corb.vigenciaTexto || "LARGA ESTANCIA"}
                 </div>
                 {corb.fechaVencimiento && (
-                  <div style={{ fontSize: "8px", color: "#666666", fontWeight: "600" }}>
-                    Válido hasta: {corb.fechaVencimiento}
+                  <div style={{ fontSize: "8.5px", color: "#666666", fontWeight: "600", marginTop: "1px" }}>
+                    Emisión: {corb.fechaEmision} · Vencimiento: {corb.fechaVencimiento}
                   </div>
                 )}
-                <div style={{ fontSize: "8.5px", fontWeight: "bold", color: "#000000", marginTop: "2px", textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: "1.2" }}>
+                <div style={{ fontSize: "9px", fontWeight: "bold", color: "#000000", marginTop: "3px", textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: "1.25" }}>
                   POR FAVOR DE COLOCAR<br />EN EL RETROVISOR
                 </div>
               </div>
             </td>
 
-            {/* REVERSO (RIGHT) */}
+            {/* REVERSO (RIGHT REVERSE — 50% WIDTH) */}
             <td
               style={{
                 width: "380px",
@@ -1009,15 +972,15 @@ function TarjetaCorbatinVerdePrintable({ corb, sections }: { corb: CorbatinVerde
               }}
             >
               <div style={{ overflow: "hidden" }}>
-                <div style={{ fontSize: "11px", fontWeight: "900", textAlign: "center", marginBottom: "8px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                <div style={{ fontSize: "11.5px", fontWeight: "900", textAlign: "center", marginBottom: "8px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                   Reglamento para externos en áreas comunes:
                 </div>
                 {docSections.map((sec, idx) => (
-                  <div key={sec.title || idx} style={{ marginBottom: "5.5px" }}>
-                    <div style={{ fontSize: "10px", fontWeight: "bold", color: "#000000", marginBottom: "1px" }}>{sec.title}</div>
-                    <ul style={{ margin: 0, paddingLeft: "13px", listStyleType: "disc" }}>
+                  <div key={sec.title || idx} style={{ marginBottom: "6px" }}>
+                    <div style={{ fontSize: "10.5px", fontWeight: "bold", color: "#000000", marginBottom: "1.5px" }}>{sec.title}</div>
+                    <ul style={{ margin: 0, paddingLeft: "14px", listStyleType: "disc" }}>
                       {sec.items.map((item, i) => (
-                        <li key={i} style={{ fontSize: "9.5px", color: "#222222", lineHeight: "1.3", marginBottom: "1px" }}>{item}</li>
+                        <li key={i} style={{ fontSize: "10px", color: "#222222", lineHeight: "1.35", marginBottom: "1.5px" }}>{item}</li>
                       ))}
                     </ul>
                   </div>
@@ -1533,9 +1496,14 @@ export default function App() {
   const [corbatinesVerdes, setCorbatinesVerdes] = useState<CorbatinVerde[]>(() => {
     try {
       const saved = localStorage.getItem("hoa_corbatines_verdes");
-      return saved ? JSON.parse(saved) : INITIAL_CORBATINES_VERDES;
+      if (!saved) return [];
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((c: any) => !["cv-1", "cv-2", "cv-3"].includes(c.id));
+      }
+      return [];
     } catch {
-      return INITIAL_CORBATINES_VERDES;
+      return [];
     }
   });
   const [selectedCorbatinVerdeId, setSelectedCorbatinVerdeId] = useState<string>("");
@@ -2037,7 +2005,7 @@ export default function App() {
 
     isFetchingDbRef.current = true;
     try {
-      const [resUsers, resEmpresas, resVehicles, resTrabajadores, resSanciones, resBitacora, resReportes, resReglamento] = await Promise.allSettled([
+      const [resUsers, resEmpresas, resVehicles, resTrabajadores, resSanciones, resBitacora, resReportes, resReglamento, resCorbatines] = await Promise.allSettled([
         api.getUsuarios(),
         api.getEmpresas(),
         api.getVehiculos(),
@@ -2046,6 +2014,7 @@ export default function App() {
         api.getBitacora(),
         api.getReportes(),
         api.getReglamentoVigente(),
+        api.getCorbatines(),
       ]);
 
       lastFetchTimestampRef.current = Date.now();
@@ -2260,6 +2229,31 @@ export default function App() {
             localStorage.setItem("hoa_reglamento_secciones", JSON.stringify(parsed));
           }
         }
+      }
+
+      // Cargar Corbatines (Tipos: Normales y Verdes) desde la Base de Datos
+      if (resCorbatines.status === "fulfilled" && Array.isArray(resCorbatines.value)) {
+        const verdesList = resCorbatines.value.filter((c: any) => {
+          const t = String(c.tipos || c.tipo || "").toUpperCase();
+          return t === "VERDE";
+        });
+        const mappedVerdes: CorbatinVerde[] = verdesList.map((c: any) => ({
+          id: String(c.id_corbatin || c.id_corbatines || c.id),
+          corbatinNum: String(c.numero || c.corbatinNum || "").padStart(3, "0"),
+          empresaNombre: c.empresa_nombre || c.empresaNombre || "",
+          telefono: c.telefono || "",
+          email: c.email || "",
+          fechaEmision: c.fecha_emision ? new Date(c.fecha_emision).toISOString().split("T")[0] : (c.fechaEmision || ""),
+          vigenciaTexto: c.vigencia_texto || c.vigenciaTexto || "6 Meses",
+          fechaVencimiento: c.fecha_vencimiento ? new Date(c.fecha_vencimiento).toISOString().split("T")[0] : (c.fechaVencimiento || ""),
+          activo: c.activo !== false && c.estatus !== "CANCELADO" && c.estatus !== "DESHABILITADO",
+          creadoPor: c.creado_por || c.creadoPor || "Supervisor HOA",
+          notas: c.notas || c.motivo_cancelacion || "",
+        }));
+        setCorbatinesVerdes(mappedVerdes);
+        try {
+          localStorage.setItem("hoa_corbatines_verdes", JSON.stringify(mappedVerdes));
+        } catch {}
       }
     } catch (err) {
       console.warn("Error cargando base de datos:", err);
@@ -2702,7 +2696,7 @@ export default function App() {
   };
 
   // Native Vector High-Resolution PDF Generator (Mathematically Centered, Exact Branding)
-  const handleDescargarPDFDirecto = async (veh: Vehicle) => {
+  const handleDescargarPDFDirecto = async (veh: Vehicle, isPrintOnly: boolean = false) => {
     try {
       setIsGeneratingPDF(true);
 
@@ -2770,12 +2764,12 @@ export default function App() {
         pdf.addImage(logoDataUrl, "PNG", leftCenterX - logoW / 2, startY + 19, logoW, logoH);
       } else {
         pdf.setFont("times", "bold");
-        pdf.setFontSize(14);
-        pdf.setTextColor(13, 110, 95);
-        pdf.text("Las Palomas", leftCenterX, startY + 26, { align: "center" });
-        pdf.setFontSize(8.5);
-        pdf.setTextColor(100, 116, 139);
-        pdf.text("Rocky Point HOA, A.C.", leftCenterX, startY + 30.5, { align: "center" });
+        pdf.setFontSize(15);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text("Las Palomas", leftCenterX, startY + 26.5, { align: "center" });
+        pdf.setFontSize(9);
+        pdf.setTextColor(80, 80, 80);
+        pdf.text("Rocky Point HOA, A.C.", leftCenterX, startY + 31.5, { align: "center" });
       }
 
       // Double Line 2
@@ -2923,8 +2917,31 @@ export default function App() {
       pdf.setFontSize(6.5);
       pdf.text(`Corb. #${veh.corbatinNum} · ${veh.placas} · Vig. ${currentYear}–${nextYear}`, startX + cardW - 8, startY + cardH - 5.5, { align: "right" });
 
-      // Save PDF directly to user download folder
-      pdf.save(`Corbatin_${veh.corbatinNum}_${veh.placas}.pdf`);
+      if (isPrintOnly) {
+        pdf.autoPrint({ variant: "non-conform" });
+        const blobUrl = pdf.output("bloburl");
+        const iframe = document.createElement("iframe");
+        iframe.style.position = "fixed";
+        iframe.style.right = "0";
+        iframe.style.bottom = "0";
+        iframe.style.width = "0";
+        iframe.style.height = "0";
+        iframe.style.border = "0";
+        iframe.src = String(blobUrl);
+        document.body.appendChild(iframe);
+        iframe.onload = () => {
+          setTimeout(() => {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+            setTimeout(() => {
+              try { document.body.removeChild(iframe); } catch {}
+            }, 60000);
+          }, 300);
+        };
+      } else {
+        // Save PDF directly to user download folder
+        pdf.save(`Corbatin_${veh.corbatinNum}_${veh.placas}.pdf`);
+      }
     } catch (err) {
       console.error("Error generating native PDF:", err);
       window.print();
@@ -2934,7 +2951,7 @@ export default function App() {
   };
 
   // ─── Native Vector PDF Generator para Corbatines Verdes (Larga Estancia) ───
-  const handleDescargarPDFCorbatinVerdeDirecto = async (corb: CorbatinVerde) => {
+  const handleDescargarPDFCorbatinVerdeDirecto = async (corb: CorbatinVerde, isPrintOnly: boolean = false) => {
     try {
       setIsGeneratingCorbatinVerdePDF(true);
 
@@ -3012,28 +3029,28 @@ export default function App() {
 
       // 3. NUMBER 001 - BOLD GREEN
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(54);
+      pdf.setFontSize(52);
       pdf.setTextColor(13, 110, 95);
-      pdf.text(corb.corbatinNum, leftCenterX, startY + 54, { align: "center" });
+      pdf.text(corb.corbatinNum, leftCenterX, startY + 54.5, { align: "center" });
 
       // Double Line 3
-      pdf.line(startX + 7, startY + 59, midX - 7, startY + 59);
-      pdf.line(startX + 7, startY + 60.3, midX - 7, startY + 60.3);
+      pdf.line(startX + 7, startY + 59.5, midX - 7, startY + 59.5);
+      pdf.line(startX + 7, startY + 60.8, midX - 7, startY + 60.8);
 
       // 4. Empresa & Contact Information
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(11);
+      pdf.setFontSize(10.5);
       pdf.setTextColor(0, 0, 0);
       const splitEmpresa = pdf.splitTextToSize(corb.empresaNombre, colW - 20);
-      pdf.text(splitEmpresa, leftCenterX, startY + 67, { align: "center" });
+      pdf.text(splitEmpresa, leftCenterX, startY + 67.5, { align: "center" });
 
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(9.5);
       pdf.setTextColor(13, 110, 95);
-      pdf.text(`Tel: ${corb.telefono}`, leftCenterX, startY + 75, { align: "center" });
+      pdf.text(`Tel: ${corb.telefono}`, leftCenterX, startY + 74.5, { align: "center" });
 
       pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(8);
+      pdf.setFontSize(8.5);
       pdf.setTextColor(60, 60, 60);
       pdf.text(`Email: ${corb.email}`, leftCenterX, startY + 80, { align: "center" });
 
@@ -3068,56 +3085,118 @@ export default function App() {
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(8);
       pdf.setTextColor(0, 0, 0);
-      pdf.text("POR FAVOR DE COLOCAR EN EL RETROVISOR", leftCenterX, startY + 154, { align: "center" });
+      pdf.text("POR FAVOR DE COLOCAR", leftCenterX, startY + 153, { align: "center" });
+      pdf.text("EN EL RETROVISOR", leftCenterX, startY + 157.5, { align: "center" });
 
-      // ── RIGHT SIDE: REVERSO (Reglamento Oficial) ──
+      // ── RIGHT SIDE: REVERSO (Reglamento Oficial - Proporción Dinámica Idéntica a Vista Web) ──
       const rightMargin = midX + 9;
-      const contentWidth = colW - 17;
+      const contentWidth = colW - 17; // 113 mm printable area for right side
+      const maxY = startY + cardH - 12; // 180.5 mm hard stop before footer line
       let textY = startY + 11.5;
 
       const activeSections = reglamentoSecciones && reglamentoSecciones.length > 0 ? reglamentoSecciones : DEFAULT_REGLAMENTO_SECTIONS;
 
-      // Header Reverso
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(10.5);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text("REGLAMENTO PARA EXTERNOS EN ÁREAS COMUNES:", rightMargin + contentWidth / 2, textY, { align: "center" });
-      textY += 6.5;
-
+      // 1. Calculate required line weight
+      let totalLineCount = 0;
       activeSections.forEach((sec) => {
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(8.5);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text(sec.title, rightMargin, textY);
-        textY += 4;
-
-        pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(7.5);
-        pdf.setTextColor(30, 30, 30);
-
-        sec.items.forEach((item) => {
-          const rawBullet = item.startsWith("•") ? item : `• ${item}`;
-          const lines = pdf.splitTextToSize(rawBullet, contentWidth - 3);
-          pdf.text(lines, rightMargin + 2, textY);
-          textY += lines.length * 3.3;
+        totalLineCount += 1.3; // section title weight
+        (sec.items || []).forEach((it) => {
+          const rawBullet = it.startsWith("•") ? it : `• ${it}`;
+          const lines = pdf.splitTextToSize(rawBullet, contentWidth);
+          totalLineCount += lines.length;
         });
-        textY += 1.5;
       });
 
-      // Footer Reverso
-      pdf.setDrawColor(200, 200, 200);
-      pdf.setLineWidth(0.4);
-      pdf.line(rightMargin, startY + cardH - 9, rightMargin + contentWidth, startY + cardH - 9);
+      // Available vertical space between header and footer: ~140 mm
+      const targetAvailableH = 138;
+      // Compute dynamic spacing per line so it spans the entire card naturally
+      const dynamicSpacing = Math.min(5.2, Math.max(3.3, targetAvailableH / Math.max(1, totalLineCount + activeSections.length * 0.4)));
+      const dynamicFontSize = Math.min(10.2, Math.max(7.2, dynamicSpacing * 1.96));
+      const dynamicTitleSize = Math.min(11.0, dynamicFontSize * 1.12);
+      const dynamicTitleSpacing = dynamicSpacing * 1.18;
+      const dynamicSecMargin = dynamicSpacing * 0.75;
 
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(7);
-      pdf.setTextColor(80, 80, 80);
-      pdf.text("Las Palomas Rocky Point HOA, A.C.", rightMargin, startY + cardH - 5);
       pdf.setFont("helvetica", "bold");
-      pdf.text(`Corbatín Verde #${corb.corbatinNum} · ${corb.empresaNombre}`, rightMargin + contentWidth, startY + cardH - 5, { align: "right" });
+      pdf.setFontSize(11.5);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text("REGLAMENTO PARA EXTERNOS EN ÁREAS COMUNES:", midX + colW / 2, textY, { align: "center" });
 
-      pdf.save(`Corbatin_Verde_${corb.corbatinNum}_${corb.empresaNombre.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`);
-      showToast(`Corbatín Verde #${corb.corbatinNum} generado y descargado exitosamente.`, "success", "PDF Generado");
+      textY += 8.5;
+
+      for (const sec of activeSections) {
+        if (textY + dynamicTitleSpacing >= maxY) break;
+
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(dynamicTitleSize);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(sec.title || "", rightMargin, textY);
+        textY += dynamicTitleSpacing;
+
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(dynamicFontSize);
+        pdf.setTextColor(25, 25, 25);
+
+        let itemStopped = false;
+        for (const it of (sec.items || [])) {
+          if (textY + dynamicSpacing >= maxY) {
+            itemStopped = true;
+            break;
+          }
+          const rawBullet = it.startsWith("•") ? it : `• ${it}`;
+          const lines = pdf.splitTextToSize(rawBullet, contentWidth);
+          for (const line of lines) {
+            if (textY + dynamicSpacing >= maxY) {
+              itemStopped = true;
+              break;
+            }
+            pdf.text(line, rightMargin + 1.5, textY);
+            textY += dynamicSpacing;
+          }
+        }
+        textY += dynamicSecMargin;
+        if (itemStopped || textY >= maxY) break;
+      }
+
+      // Bottom Footer (Always strictly anchored at card bottom)
+      pdf.setLineWidth(0.3);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(rightMargin, startY + cardH - 10, startX + cardW - 8, startY + cardH - 10);
+
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(6.5);
+      pdf.setTextColor(110, 110, 110);
+      pdf.text("Las Palomas Rocky Point HOA", rightMargin, startY + cardH - 5.5);
+
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(6.5);
+      pdf.setTextColor(13, 110, 95);
+      pdf.text(`Corbatín Verde #${corb.corbatinNum} · ${corb.empresaNombre}`, startX + cardW - 8, startY + cardH - 5.5, { align: "right" });
+
+      if (isPrintOnly) {
+        pdf.autoPrint({ variant: "non-conform" });
+        const blobUrl = pdf.output("bloburl");
+        const iframe = document.createElement("iframe");
+        iframe.style.position = "fixed";
+        iframe.style.right = "0";
+        iframe.style.bottom = "0";
+        iframe.style.width = "0";
+        iframe.style.height = "0";
+        iframe.style.border = "0";
+        iframe.src = String(blobUrl);
+        document.body.appendChild(iframe);
+        iframe.onload = () => {
+          setTimeout(() => {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+            setTimeout(() => {
+              try { document.body.removeChild(iframe); } catch {}
+            }, 60000);
+          }, 300);
+        };
+      } else {
+        pdf.save(`Corbatin_Verde_${corb.corbatinNum}_${corb.empresaNombre.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`);
+        showToast(`Corbatín Verde #${corb.corbatinNum} generado y descargado exitosamente.`, "success", "PDF Generado");
+      }
     } catch (err: any) {
       console.error("Error generando PDF corbatín verde:", err);
       showToast("Error al generar PDF: " + (err.message || err), "error");
@@ -3127,12 +3206,17 @@ export default function App() {
   };
 
   const getNextCorbatinVerdeNum = (list: CorbatinVerde[]): string => {
-    const existingNums = list.map(c => parseInt(c.corbatinNum, 10)).filter(n => !isNaN(n));
-    const maxNum = existingNums.length > 0 ? Math.max(...existingNums) : 0;
-    return String(maxNum + 1).padStart(3, "0");
+    const existingSet = new Set(
+      list.map(c => parseInt(c.corbatinNum, 10)).filter(n => !isNaN(n) && n > 0)
+    );
+    let next = 1;
+    while (existingSet.has(next)) {
+      next++;
+    }
+    return String(next).padStart(3, "0");
   };
 
-  const handleGuardarNuevoCorbatinVerde = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleGuardarNuevoCorbatinVerde = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setNuevoCVError("");
 
@@ -3216,11 +3300,52 @@ export default function App() {
       }
     }
 
+    // Persistir en base de datos PostgreSQL / Supabase
+    try {
+      const apiPayload = nuevosCorbatines.map(c => ({
+        tipo: "VERDE",
+        tipos: "VERDE",
+        numero: parseInt(c.corbatinNum, 10),
+        corbatinNum: c.corbatinNum,
+        empresaNombre: c.empresaNombre,
+        empresa_nombre: c.empresaNombre,
+        telefono: c.telefono,
+        email: c.email,
+        fechaEmision: c.fechaEmision,
+        fecha_emision: c.fechaEmision,
+        vigenciaTexto: c.vigenciaTexto,
+        vigencia_texto: c.vigenciaTexto,
+        fechaVencimiento: c.fechaVencimiento,
+        fecha_vencimiento: c.fechaVencimiento,
+        activo: true,
+        estatus: "ACTIVO",
+        creadoPor: c.creadoPor,
+        creado_por: c.creadoPor,
+        notas: c.notas || null
+      }));
+
+      const resApi = await api.createCorbatin(apiPayload.length === 1 ? apiPayload[0] : { items: apiPayload });
+      if (resApi) {
+        if (Array.isArray(resApi.corbatines) && resApi.corbatines.length === nuevosCorbatines.length) {
+          nuevosCorbatines = resApi.corbatines.map((item: any, idx: number) => ({
+            ...nuevosCorbatines[idx],
+            id: String(item.id_corbatin || item.id_corbatines || item.id || nuevosCorbatines[idx].id)
+          }));
+        } else if (resApi.id_corbatin || resApi.id_corbatines || resApi.id) {
+          nuevosCorbatines[0].id = String(resApi.id_corbatin || resApi.id_corbatines || resApi.id);
+        }
+      }
+    } catch (apiErr) {
+      console.warn("No se pudo conectar inmediatamente con PostgreSQL para corbatines verdes, persistido en memoria y local:", apiErr);
+    }
+
     const updated = [...corbatinesVerdes, ...nuevosCorbatines];
     setCorbatinesVerdes(updated);
     try {
       localStorage.setItem("hoa_corbatines_verdes", JSON.stringify(updated));
     } catch { }
+
+    loadDatabaseData(true).catch(() => {});
 
     setShowCreateCorbatinVerdeModal(false);
     setSelectedCorbatinVerdeId(nuevosCorbatines[0]?.id || "");
@@ -3234,23 +3359,34 @@ export default function App() {
     setNuevoCVError("");
 
     showToast(
-      `Se ${nuevosCorbatines.length === 1 ? "ha emitido el Corbatín Verde #" + nuevosCorbatines[0].corbatinNum : "han emitido " + nuevosCorbatines.length + " Corbatines Verdes (#" + nuevosCorbatines[0].corbatinNum + " al #" + nuevosCorbatines[nuevosCorbatines.length - 1].corbatinNum + ")"} para ${nuevoCVEmpresa}.`,
+      `Se ${nuevosCorbatines.length === 1 ? "ha emitido y guardado en base de datos el Corbatín Verde #" + nuevosCorbatines[0].corbatinNum : "han emitido y guardado en base de datos " + nuevosCorbatines.length + " Corbatines Verdes (#" + nuevosCorbatines[0].corbatinNum + " al #" + nuevosCorbatines[nuevosCorbatines.length - 1].corbatinNum + ")"} para ${nuevoCVEmpresa}.`,
       "success",
       "Corbatín(es) Verde(s) Emitido(s)"
     );
   };
 
-  const handleToggleActivoCorbatinVerde = (id: string) => {
-    const updated = corbatinesVerdes.map(c => c.id === id ? { ...c, activo: !c.activo } : c);
+  const handleToggleActivoCorbatinVerde = async (id: string) => {
+    const itemPrev = corbatinesVerdes.find(c => c.id === id);
+    const newActivo = !itemPrev?.activo;
+    const updated = corbatinesVerdes.map(c => c.id === id ? { ...c, activo: newActivo } : c);
     setCorbatinesVerdes(updated);
     try {
       localStorage.setItem("hoa_corbatines_verdes", JSON.stringify(updated));
     } catch { }
-    const item = updated.find(c => c.id === id);
-    showToast(`Corbatín Verde #${item?.corbatinNum} ${item?.activo ? "habilitado" : "deshabilitado"} exitosamente.`, "info");
+
+    try {
+      await api.updateCorbatin(id, {
+        activo: newActivo,
+        estatus: newActivo ? "ACTIVO" : "DESHABILITADO"
+      });
+    } catch (err) {
+      console.warn("Error al actualizar estatus de corbatín verde en API:", err);
+    }
+
+    showToast(`Corbatín Verde #${itemPrev?.corbatinNum} ${newActivo ? "habilitado" : "deshabilitado"} exitosamente en base de datos.`, "info");
   };
 
-  const handleEliminarCorbatinVerde = (id: string) => {
+  const handleEliminarCorbatinVerde = async (id: string) => {
     const item = corbatinesVerdes.find(c => c.id === id);
     if (!item) return;
     const updated = corbatinesVerdes.filter(c => c.id !== id);
@@ -3261,7 +3397,14 @@ export default function App() {
     if (selectedCorbatinVerdeId === id) {
       setSelectedCorbatinVerdeId(updated[0]?.id || "");
     }
-    showToast(`Corbatín Verde #${item.corbatinNum} (${item.empresaNombre}) eliminado permanentemente.`, "success");
+
+    try {
+      await api.deleteCorbatin(id);
+    } catch (err) {
+      console.warn("Error al eliminar corbatín verde en API:", err);
+    }
+
+    showToast(`Corbatín Verde #${item.corbatinNum} (${item.empresaNombre}) eliminado permanentemente de la base de datos.`, "success");
   };
 
   const handleCambiarAIngresoPeatonal = (veh?: Vehicle) => {
@@ -6599,15 +6742,16 @@ export default function App() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => window.print()}
-                                className="px-6 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-sm transition-all flex items-center gap-2"
+                                onClick={() => handleDescargarPDFDirecto(veh, true)}
+                                disabled={isGeneratingPDF}
+                                className="px-6 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
                               >
                                 <svg className="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                   <polyline points="6 9 6 2 18 2 18 9" />
                                   <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
                                   <rect x="6" y="14" width="12" height="8" />
                                 </svg>
-                                <span>Imprimir Corbatín</span>
+                                <span>{isGeneratingPDF ? "Preparando Impresión..." : "Imprimir Corbatín"}</span>
                               </button>
                             </div>
                           </>
@@ -6883,7 +7027,7 @@ export default function App() {
                               </div>
 
                               {/* Metadatos y Detalles Informativos */}
-                              <div className="p-4 bg-slate-50/70 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                              <div className="p-4 bg-slate-50/70 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs no-print">
                                 <div>
                                   <div className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Fecha Emisión</div>
                                   <div className="font-bold text-slate-800 mt-0.5">{activeItem.fechaEmision}</div>
@@ -6919,15 +7063,16 @@ export default function App() {
 
                                 <button
                                   type="button"
-                                  onClick={() => window.print()}
-                                  className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs transition-all flex items-center gap-2"
+                                  onClick={() => handleDescargarPDFCorbatinVerdeDirecto(activeItem, true)}
+                                  disabled={isGeneratingCorbatinVerdePDF}
+                                  className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs transition-all flex items-center gap-2 disabled:opacity-50"
                                 >
                                   <svg className="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <polyline points="6 9 6 2 18 2 18 9" />
                                     <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
                                     <rect x="6" y="14" width="12" height="8" />
                                   </svg>
-                                  <span>Imprimir Tarjeta</span>
+                                  <span>{isGeneratingCorbatinVerdePDF ? "Preparando Impresión..." : "Imprimir Tarjeta"}</span>
                                 </button>
                               </div>
 
