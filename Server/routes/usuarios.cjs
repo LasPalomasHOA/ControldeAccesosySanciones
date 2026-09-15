@@ -38,7 +38,8 @@ router.post('/login', async (req, res) => {
       'SUPERVISOR': 'supervisor',
       'AGENTE': 'guardia',
       'CASETA': 'guardia',
-      'PROVEEDOR': 'proveedor'
+      'PROVEEDOR': 'proveedor',
+      'CONTABILIDAD': 'contabilidad'
     };
 
     const resolvedFoto = resolveFotoToDataUrl(plain.foto_url);
@@ -98,7 +99,8 @@ router.get('/', async (req, res) => {
       'SUPERVISOR': 'supervisor',
       'AGENTE': 'guardia',
       'CASETA': 'guardia',
-      'PROVEEDOR': 'proveedor'
+      'PROVEEDOR': 'proveedor',
+      'CONTABILIDAD': 'contabilidad'
     };
 
     const resultado = usuarios.map(u => {

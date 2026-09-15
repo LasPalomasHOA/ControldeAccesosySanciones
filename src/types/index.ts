@@ -388,12 +388,28 @@ export interface Sancion {
   agenteNombre?: string;
 }
 
+export interface DocumentoFiscalProveedor {
+  id: string;
+  empresaId: string;
+  tipoDocumento: 'csf' | 'opinion_cumplimiento' | 'seguro_rc' | 'domicilio' | 'imss_sua' | 'otro';
+  nombreDocumento: string;
+  descripcion: string;
+  archivoUrl: string;
+  formato: 'pdf' | 'jpg' | 'png';
+  tamañoKb: number;
+  fechaSubida: string;
+  fechaVigencia?: string;
+  estatus: 'vigente' | 'por_vencer' | 'vencido' | 'en_revision';
+  subidoPor: string;
+  notasAuditoria?: string;
+}
+
 export interface Usuario {
   id: string;
   id_usuario?: number | string;
   nombre: string;
   correo: string;
-  rol: 'admin' | 'supervisor' | 'guardia' | 'proveedor' | string;
+  rol: 'admin' | 'supervisor' | 'guardia' | 'proveedor' | 'contabilidad' | string;
   empresaId?: string;
   avatar?: string;
 }

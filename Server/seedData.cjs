@@ -13,7 +13,8 @@ async function seedDatabase() {
       { id_rol: 2, nombre: 'SUPERVISOR', descripcion: 'Gestión de reportes, dictámenes y sanciones', activo: true },
       { id_rol: 3, nombre: 'AGENTE', descripcion: 'Levantamiento de reportes y evidencias en campo', activo: true },
       { id_rol: 4, nombre: 'CASETA', descripcion: 'Control y registro de accesos en casetas', activo: true },
-      { id_rol: 5, nombre: 'PROVEEDOR', descripcion: 'Gestión de colaboradores y vehículos de empresa externa', activo: true }
+      { id_rol: 5, nombre: 'PROVEEDOR', descripcion: 'Gestión de colaboradores y vehículos de empresa externa', activo: true },
+      { id_rol: 6, nombre: 'CONTABILIDAD', descripcion: 'Auditoría fiscal, padrón y visualización documental', activo: true }
     ];
 
     for (const r of rolesData) {
