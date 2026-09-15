@@ -2692,7 +2692,7 @@ export default function App() {
   };
 
   // Native Vector High-Resolution PDF Generator (Mathematically Centered, Exact Branding)
-  const handleDescargarPDFDirecto = async (veh: Vehicle) => {
+  const handleDescargarPDFDirecto = async (veh: Vehicle, isPrintOnly: boolean = false) => {
     try {
       setIsGeneratingPDF(true);
 
@@ -2760,12 +2760,12 @@ export default function App() {
         pdf.addImage(logoDataUrl, "PNG", leftCenterX - logoW / 2, startY + 19, logoW, logoH);
       } else {
         pdf.setFont("times", "bold");
-        pdf.setFontSize(14);
-        pdf.setTextColor(13, 110, 95);
-        pdf.text("Las Palomas", leftCenterX, startY + 26, { align: "center" });
-        pdf.setFontSize(8.5);
-        pdf.setTextColor(100, 116, 139);
-        pdf.text("Rocky Point HOA, A.C.", leftCenterX, startY + 30.5, { align: "center" });
+        pdf.setFontSize(15);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text("Las Palomas", leftCenterX, startY + 26.5, { align: "center" });
+        pdf.setFontSize(9);
+        pdf.setTextColor(80, 80, 80);
+        pdf.text("Rocky Point HOA, A.C.", leftCenterX, startY + 31.5, { align: "center" });
       }
 
       // Double Line 2
@@ -2913,8 +2913,31 @@ export default function App() {
       pdf.setFontSize(6.5);
       pdf.text(`Corb. #${veh.corbatinNum} · ${veh.placas} · Vig. ${currentYear}–${nextYear}`, startX + cardW - 8, startY + cardH - 5.5, { align: "right" });
 
-      // Save PDF directly to user download folder
-      pdf.save(`Corbatin_${veh.corbatinNum}_${veh.placas}.pdf`);
+      if (isPrintOnly) {
+        pdf.autoPrint({ variant: "non-conform" });
+        const blobUrl = pdf.output("bloburl");
+        const iframe = document.createElement("iframe");
+        iframe.style.position = "fixed";
+        iframe.style.right = "0";
+        iframe.style.bottom = "0";
+        iframe.style.width = "0";
+        iframe.style.height = "0";
+        iframe.style.border = "0";
+        iframe.src = String(blobUrl);
+        document.body.appendChild(iframe);
+        iframe.onload = () => {
+          setTimeout(() => {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+            setTimeout(() => {
+              try { document.body.removeChild(iframe); } catch {}
+            }, 60000);
+          }, 300);
+        };
+      } else {
+        // Save PDF directly to user download folder
+        pdf.save(`Corbatin_${veh.corbatinNum}_${veh.placas}.pdf`);
+      }
     } catch (err) {
       console.error("Error generating native PDF:", err);
       window.print();
@@ -2924,7 +2947,7 @@ export default function App() {
   };
 
   // ─── Native Vector PDF Generator para Corbatines Verdes (Larga Estancia) ───
-  const handleDescargarPDFCorbatinVerdeDirecto = async (corb: CorbatinVerde) => {
+  const handleDescargarPDFCorbatinVerdeDirecto = async (corb: CorbatinVerde, isPrintOnly: boolean = false) => {
     try {
       setIsGeneratingCorbatinVerdePDF(true);
 
@@ -3145,8 +3168,31 @@ export default function App() {
       pdf.setTextColor(13, 110, 95);
       pdf.text(`Corbatín Verde #${corb.corbatinNum} · ${corb.empresaNombre}`, startX + cardW - 8, startY + cardH - 5.5, { align: "right" });
 
-      pdf.save(`Corbatin_Verde_${corb.corbatinNum}_${corb.empresaNombre.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`);
-      showToast(`Corbatín Verde #${corb.corbatinNum} generado y descargado exitosamente.`, "success", "PDF Generado");
+      if (isPrintOnly) {
+        pdf.autoPrint({ variant: "non-conform" });
+        const blobUrl = pdf.output("bloburl");
+        const iframe = document.createElement("iframe");
+        iframe.style.position = "fixed";
+        iframe.style.right = "0";
+        iframe.style.bottom = "0";
+        iframe.style.width = "0";
+        iframe.style.height = "0";
+        iframe.style.border = "0";
+        iframe.src = String(blobUrl);
+        document.body.appendChild(iframe);
+        iframe.onload = () => {
+          setTimeout(() => {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+            setTimeout(() => {
+              try { document.body.removeChild(iframe); } catch {}
+            }, 60000);
+          }, 300);
+        };
+      } else {
+        pdf.save(`Corbatin_Verde_${corb.corbatinNum}_${corb.empresaNombre.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`);
+        showToast(`Corbatín Verde #${corb.corbatinNum} generado y descargado exitosamente.`, "success", "PDF Generado");
+      }
     } catch (err: any) {
       console.error("Error generando PDF corbatín verde:", err);
       showToast("Error al generar PDF: " + (err.message || err), "error");
@@ -6674,15 +6720,16 @@ export default function App() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => window.print()}
-                                className="px-6 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-sm transition-all flex items-center gap-2"
+                                onClick={() => handleDescargarPDFDirecto(veh, true)}
+                                disabled={isGeneratingPDF}
+                                className="px-6 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
                               >
                                 <svg className="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                   <polyline points="6 9 6 2 18 2 18 9" />
                                   <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
                                   <rect x="6" y="14" width="12" height="8" />
                                 </svg>
-                                <span>Imprimir Corbatín</span>
+                                <span>{isGeneratingPDF ? "Preparando Impresión..." : "Imprimir Corbatín"}</span>
                               </button>
                             </div>
                           </>
@@ -6958,7 +7005,7 @@ export default function App() {
                               </div>
 
                               {/* Metadatos y Detalles Informativos */}
-                              <div className="p-4 bg-slate-50/70 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                              <div className="p-4 bg-slate-50/70 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs no-print">
                                 <div>
                                   <div className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Fecha Emisión</div>
                                   <div className="font-bold text-slate-800 mt-0.5">{activeItem.fechaEmision}</div>
@@ -6994,15 +7041,16 @@ export default function App() {
 
                                 <button
                                   type="button"
-                                  onClick={() => window.print()}
-                                  className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs transition-all flex items-center gap-2"
+                                  onClick={() => handleDescargarPDFCorbatinVerdeDirecto(activeItem, true)}
+                                  disabled={isGeneratingCorbatinVerdePDF}
+                                  className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs transition-all flex items-center gap-2 disabled:opacity-50"
                                 >
                                   <svg className="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <polyline points="6 9 6 2 18 2 18 9" />
                                     <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
                                     <rect x="6" y="14" width="12" height="8" />
                                   </svg>
-                                  <span>Imprimir Tarjeta</span>
+                                  <span>{isGeneratingCorbatinVerdePDF ? "Preparando Impresión..." : "Imprimir Tarjeta"}</span>
                                 </button>
                               </div>
 

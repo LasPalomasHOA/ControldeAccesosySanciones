@@ -97,36 +97,66 @@ body,
 @media print {
   @page {
     size: landscape;
-    margin: 1cm;
+    margin: 0;
   }
 
+  *,
+  *::before,
+  *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  html,
   body {
-    background: white !important;
+    background: #ffffff !important;
     margin: 0 !important;
     padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide entire application and all UI elements by default */
+  body * {
+    visibility: hidden !important;
   }
 
   header,
+  nav,
+  aside,
   footer,
   button,
-  .no-print {
+  .no-print,
+  .no-print * {
     display: none !important;
+    visibility: hidden !important;
   }
 
-  #corbatin-container {
-    padding: 0 !important;
-    background: white !important;
-    border: none !important;
+  /* Expose ONLY the printable badge/corbatin card and its children */
+  #corbatin-printable,
+  #corbatin-printable *,
+  #corbatin-verde-printable,
+  #corbatin-verde-printable *,
+  .print-only,
+  .print-only * {
+    visibility: visible !important;
   }
 
-  #corbatin-printable {
-    margin: 0 auto !important;
+  #corbatin-printable,
+  #corbatin-verde-printable {
+    position: fixed !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) scale(1.29) !important;
+    transform-origin: center center !important;
+    margin: 0 !important;
     box-shadow: none !important;
-    border: 2px solid #000 !important;
-    max-width: 100% !important;
-    width: 780px !important;
-    display: grid !important;
-    grid-template-columns: 390px 390px !important;
     page-break-inside: avoid !important;
+    page-break-before: avoid !important;
+    page-break-after: avoid !important;
+    z-index: 9999999 !important;
   }
 }
