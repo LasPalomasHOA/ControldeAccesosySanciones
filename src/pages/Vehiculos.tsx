@@ -247,13 +247,12 @@ export const Vehiculos: React.FC = () => {
                     </td>
                     <td className="py-3.5 px-4 text-center">
                       <span
-                        className={`font-bold px-2 py-0.5 rounded-full text-xs ${
-                          (v.reincidencias || 0) >= 3
+                        className={`font-bold px-2 py-0.5 rounded-full text-xs ${(v.reincidencias || 0) >= 3
                             ? 'bg-rose-100 text-rose-700'
                             : (v.reincidencias || 0) > 0
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-slate-100 text-slate-500'
-                        }`}
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-slate-100 text-slate-500'
+                          }`}
                       >
                         {v.reincidencias || 0} faltas
                       </span>
@@ -309,27 +308,24 @@ export const Vehiculos: React.FC = () => {
             <div className="flex border-b border-slate-100 mb-6 text-xs font-bold uppercase tracking-wider text-slate-400">
               <button
                 onClick={() => setActiveTab('general')}
-                className={`flex items-center gap-1.5 px-4 py-2.5 border-b-2 -mb-px transition-colors ${
-                  activeTab === 'general' ? 'border-cyan-500 text-slate-800' : 'border-transparent hover:text-slate-700'
-                }`}
+                className={`flex items-center gap-1.5 px-4 py-2.5 border-b-2 -mb-px transition-colors ${activeTab === 'general' ? 'border-cyan-500 text-slate-800' : 'border-transparent hover:text-slate-700'
+                  }`}
               >
                 <Info size={14} />
                 General
               </button>
               <button
                 onClick={() => setActiveTab('sanciones')}
-                className={`flex items-center gap-1.5 px-4 py-2.5 border-b-2 -mb-px transition-colors ${
-                  activeTab === 'sanciones' ? 'border-cyan-500 text-slate-800' : 'border-transparent hover:text-slate-700'
-                }`}
+                className={`flex items-center gap-1.5 px-4 py-2.5 border-b-2 -mb-px transition-colors ${activeTab === 'sanciones' ? 'border-cyan-500 text-slate-800' : 'border-transparent hover:text-slate-700'
+                  }`}
               >
                 <ShieldAlert size={14} />
                 Historial Sanciones ({vehicleSanciones.length})
               </button>
               <button
                 onClick={() => setActiveTab('accesos')}
-                className={`flex items-center gap-1.5 px-4 py-2.5 border-b-2 -mb-px transition-colors ${
-                  activeTab === 'accesos' ? 'border-cyan-500 text-slate-800' : 'border-transparent hover:text-slate-700'
-                }`}
+                className={`flex items-center gap-1.5 px-4 py-2.5 border-b-2 -mb-px transition-colors ${activeTab === 'accesos' ? 'border-cyan-500 text-slate-800' : 'border-transparent hover:text-slate-700'
+                  }`}
               >
                 <History size={14} />
                 Historial Accesos ({vehicleAccesos.length})
@@ -397,13 +393,12 @@ export const Vehiculos: React.FC = () => {
                         <div className="text-xs font-medium space-y-1 w-full">
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-slate-800">{san.infraccionCodigo} ({san.infraccionDescripcion})</span>
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                              san.estado === 'activa'
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${san.estado === 'activa'
                                 ? 'bg-rose-50 text-rose-600'
                                 : san.estado === 'resuelta'
-                                ? 'bg-emerald-50 text-emerald-600'
-                                : 'bg-slate-150 text-slate-500'
-                            }`}>
+                                  ? 'bg-emerald-50 text-emerald-600'
+                                  : 'bg-slate-150 text-slate-500'
+                              }`}>
                               {san.estado}
                             </span>
                           </div>
@@ -429,9 +424,8 @@ export const Vehiculos: React.FC = () => {
                           <div className="text-slate-400 mt-0.5">Registró: {acc.agenteNombre}</div>
                         </div>
                         <div className="text-right">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            acc.tipo === 'entrada' ? 'bg-cyan-50 text-cyan-600' : 'bg-slate-150 text-slate-600'
-                          }`}>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${acc.tipo === 'entrada' ? 'bg-cyan-50 text-cyan-600' : 'bg-slate-150 text-slate-600'
+                            }`}>
                             {acc.tipo === 'entrada' ? 'ENTRADA' : 'SALIDA'}
                           </span>
                           <div className="text-slate-400 mt-1">{new Date(acc.fechaHora).toLocaleString([], { hour: '2-digit', minute: '2-digit' })}</div>

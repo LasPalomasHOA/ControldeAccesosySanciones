@@ -7,8 +7,11 @@ const db = require('../models/index.cjs');
 function formatCorbatin(c) {
   const plain = c.get ? c.get({ plain: true }) : c;
   const idStr = String(plain.id_corbatin || plain.id_corbatines || plain.id);
-  const numStr = String(plain.numero || '').padStart(3, '0');
   const tipoVal = (plain.tipos || plain.tipo || 'NORMAL').toUpperCase();
+  const cleanNum = parseInt(String(plain.numero || '').replace(/[^0-9]/g, ''), 10);
+  const numStr = tipoVal === 'VERDE'
+    ? (isNaN(cleanNum) ? '001' : `00${cleanNum}`)
+    : String(plain.numero || '').padStart(3, '0');
 
   return {
     ...plain,
@@ -128,7 +131,9 @@ router.post('/', async (req, res) => {
         numeroInt = next;
       }
 
-      const numFormatted = String(numeroInt).padStart(3, '0');
+      const numFormatted = tipo === 'VERDE'
+        ? (isNaN(numeroInt) ? '001' : `00${numeroInt}`)
+        : String(numeroInt).padStart(3, '0');
       const empresaNom = item.empresaNombre || item.empresa_nombre || item.empresa || '';
       const telefono = item.telefono || '';
       const email = item.email || '';
