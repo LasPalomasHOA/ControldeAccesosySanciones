@@ -3202,9 +3202,14 @@ export default function App() {
   };
 
   const getNextCorbatinVerdeNum = (list: CorbatinVerde[]): string => {
-    const existingNums = list.map(c => parseInt(c.corbatinNum, 10)).filter(n => !isNaN(n));
-    const maxNum = existingNums.length > 0 ? Math.max(...existingNums) : 0;
-    return String(maxNum + 1).padStart(3, "0");
+    const existingSet = new Set(
+      list.map(c => parseInt(c.corbatinNum, 10)).filter(n => !isNaN(n) && n > 0)
+    );
+    let next = 1;
+    while (existingSet.has(next)) {
+      next++;
+    }
+    return String(next).padStart(3, "0");
   };
 
   const handleGuardarNuevoCorbatinVerde = async (e: React.FormEvent<HTMLFormElement>) => {

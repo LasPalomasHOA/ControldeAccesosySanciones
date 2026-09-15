@@ -116,8 +116,16 @@ router.post('/', async (req, res) => {
       let numeroInt = parseInt(item.numero || item.corbatinNum, 10);
 
       if (isNaN(numeroInt)) {
-        const count = await db.Corbatin.count({ where: { tipos: tipo } });
-        numeroInt = count + 1;
+        const existingRecords = await db.Corbatin.findAll({
+          where: { tipos: tipo },
+          attributes: ['numero']
+        });
+        const existingSet = new Set(existingRecords.map(r => parseInt(r.numero, 10)).filter(n => !isNaN(n) && n > 0));
+        let next = 1;
+        while (existingSet.has(next)) {
+          next++;
+        }
+        numeroInt = next;
       }
 
       const numFormatted = String(numeroInt).padStart(3, '0');
