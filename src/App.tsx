@@ -391,6 +391,8 @@ interface Trabajador {
   apellidos: string;
   telefono?: string;
   foto_url?: string;
+  comprobante_seguro_url?: string;
+  dc3_documento_url?: string;
   activo: boolean;
   created_at: string;
   updated_at: string;
@@ -497,7 +499,8 @@ interface RegistroCaseta {
   trabajos: string;
   guardiaNombre: string;
   estado: "Dentro" | "Salida Registrada";
-  tipoAcceso?: "Vehicular" | "Peatonal";
+  tipoAcceso?: "Vehicular" | "Peatonal" | "Corbatín Verde" | string;
+  tipoCorbatin?: "NORMAL" | "VERDE" | string;
   observaciones?: string;
   num_pasajeros?: number;
 }
@@ -1464,6 +1467,17 @@ export default function App() {
   const [trabajadorApellidos, setTrabajadorApellidos] = useState("");
   const [trabajadorTelefono, setTrabajadorTelefono] = useState("");
   const [trabajadorFotoUrl, setTrabajadorFotoUrl] = useState("");
+  const [trabajadorSeguroUrl, setTrabajadorSeguroUrl] = useState("");
+  const [trabajadorSeguroFileName, setTrabajadorSeguroFileName] = useState("");
+  const [trabajadorDC3Url, setTrabajadorDC3Url] = useState("");
+  const [trabajadorDC3FileName, setTrabajadorDC3FileName] = useState("");
+  const [selectedDocTrabajadorPreview, setSelectedDocTrabajadorPreview] = useState<{
+    isOpen: boolean;
+    url: string;
+    title: string;
+    workerName: string;
+    type: "seguro" | "dc3";
+  } | null>(null);
   const [trabajadorActivo, setTrabajadorActivo] = useState(true);
   const [trabajadorFormError, setTrabajadorFormError] = useState("");
 
@@ -1506,23 +1520,9 @@ export default function App() {
   // Estados para Administrador / Supervisor: Gestión de Flotilla y Trabajadores por Empresa
   const [expandedEmpresaId, setExpandedEmpresaId] = useState<string | null>(null);
   const [empresaSearchTerm, setEmpresaSearchTerm] = useState("");
-  const [empresaSubTabMap, setEmpresaSubTabMap] = useState<Record<string, "vehiculos" | "trabajadores" | "seguro">>({});
-
-  // ─── Estados para Comprobante de Seguridad Social (IMSS / ISSSTE) (Exclusivo Supervisor) ───
-  const [showModalAdjuntarSeguro, setShowModalAdjuntarSeguro] = useState(false);
-  const [targetEmpresaSeguro, setTargetEmpresaSeguro] = useState<Empresa | null>(null);
-  const [seguroFileUrl, setSeguroFileUrl] = useState<string>("");
-  const [seguroFileName, setSeguroFileName] = useState<string>("");
-  const [seguroFileType, setSeguroFileType] = useState<"pdf" | "image" | "">("");
-  const [seguroVigenciaFecha, setSeguroVigenciaFecha] = useState<string>("");
-  const [seguroPolizaNumero, setSeguroPolizaNumero] = useState<string>("");
-  const [seguroAseguradora, setSeguroAseguradora] = useState<string>("");
-  const [seguroNotas, setSeguroNotas] = useState<string>("");
-  const [seguroFormError, setSeguroFormError] = useState<string>("");
-  const [isSubmittingSeguro, setIsSubmittingSeguro] = useState(false);
-  const isSubmittingSeguroRef = useRef(false);
-  const [selectedEmpresaSeguroPreview, setSelectedEmpresaSeguroPreview] = useState<Empresa | null>(null);
-  const [isLoadingSeguroPreview, setIsLoadingSeguroPreview] = useState(false);
+  const [empresaSubTabMap, setEmpresaSubTabMap] = useState<Record<string, "vehiculos" | "trabajadores">>({});
+  const [empresaVehiculosPageMap, setEmpresaVehiculosPageMap] = useState<Record<string, number>>({});
+  const [empresaTrabajadoresPageMap, setEmpresaTrabajadoresPageMap] = useState<Record<string, number>>({});
 
   // ─── Estados de Corbatines Verdes (Empresas / Larga Estancia) ───
   const [corbatinesVerdes, setCorbatinesVerdes] = useState<CorbatinVerde[]>(() => {
@@ -1538,7 +1538,7 @@ export default function App() {
       return [];
     }
   });
-  const [selectedCorbatinVerdeId, setSelectedCorbatinVerdeId] = useState<string>("");
+  const [selectedCorbatinVehicleId, setSelectedCorbatinVehicleId] = useState<string>("");
   const [showCreateCorbatinVerdeModal, setShowCreateCorbatinVerdeModal] = useState(false);
   const [corbatinVerdeSearch, setCorbatinVerdeSearch] = useState("");
   const [corbatinVerdeEmpresaFilter, setCorbatinVerdeEmpresaFilter] = useState("all");
@@ -1689,7 +1689,8 @@ export default function App() {
   // Caseta Registration Form States
   const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>("");
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
-  const [selectedCorbatinVehicleId, setSelectedCorbatinVehicleId] = useState<string>("");
+  const [selectedCorbatinVerdeId, setSelectedCorbatinVerdeId] = useState<string>("");
+  const [casetaPlacasVerde, setCasetaPlacasVerde] = useState<string>("");
   const [supervisorCorbatinEmpresaFilter, setSupervisorCorbatinEmpresaFilter] = useState<string>("all");
   const [supervisorCorbatinSearch, setSupervisorCorbatinSearch] = useState<string>("");
   const [supervisorCorbatinStatusFilter, setSupervisorCorbatinStatusFilter] = useState<string>("all");
@@ -1720,6 +1721,9 @@ export default function App() {
   const empresaVehicles = selectedEmpresaId ? vehicles.filter((v) => v.empresaId === selectedEmpresaId && v.status === "Habilitado") : [];
   const currentCasetaVehicle = selectedVehicleId
     ? (vehicles.find((v) => v.id === selectedVehicleId) || empresaVehicles.find((v) => v.id === selectedVehicleId))
+    : undefined;
+  const currentCasetaCorbatinVerde = selectedCorbatinVerdeId
+    ? corbatinesVerdes.find((c) => c.id === selectedCorbatinVerdeId)
     : undefined;
   const empresaTrabajadores = selectedEmpresaId
     ? trabajadores.filter((t) => (t.id_empresa === selectedEmpresaId || t.empresaNombre === currentEmpresa?.nombre) && t.activo !== false)
@@ -1753,23 +1757,32 @@ export default function App() {
     if (selectedEmpresaId && !empresas.some((e) => e.id === selectedEmpresaId)) {
       setSelectedEmpresaId("");
       setSelectedVehicleId("");
+      setSelectedCorbatinVerdeId("");
       setCasetaConductorId("");
       setCasetaConductorQuery("");
     }
   }, [empresas, selectedEmpresaId]);
 
-  // Lista filtrada para el buscador / dropdown inteligente de corbatín y placas
+  // Lista filtrada para el buscador / dropdown inteligente de corbatín y placas (Ordenada por relevancia y coincidencia exacta)
   const filteredCasetaVehicles = useMemo(() => {
     const raw = casetaCorbatin.trim();
     if (!raw) {
-      return vehicles;
+      return [...vehicles].sort((a, b) => {
+        const numA = parseInt(String(a.corbatinNum || "99999").replace(/[^0-9]/g, ""), 10);
+        const numB = parseInt(String(b.corbatinNum || "99999").replace(/[^0-9]/g, ""), 10);
+        return (isNaN(numA) ? 99999 : numA) - (isNaN(numB) ? 99999 : numB);
+      });
     }
     const q = raw.toLowerCase();
     const qNoHash = q.replace(/#/g, "").trim();
+    const qNoHashClean = qNoHash.replace(/^0+/, "") || "0";
     const qAlphaNum = q.replace(/[^a-z0-9]/gi, "");
 
-    return vehicles.filter((v) => {
+    const matches: { vehicle: Vehicle; score: number }[] = [];
+
+    for (const v of vehicles) {
       const vCorb = String(v.corbatinNum || "").toLowerCase().replace(/#/g, "").trim();
+      const vCorbClean = vCorb.replace(/^0+/, "") || "0";
       const vPlacas = String(v.placas || "").toLowerCase();
       const vPlacasAlpha = vPlacas.replace(/[^a-z0-9]/gi, "");
       const vMarca = String(v.marca || "").toLowerCase();
@@ -1778,20 +1791,124 @@ export default function App() {
       const vConductor = String(v.conductor || "").toLowerCase();
       const vColor = String(v.color || "").toLowerCase();
 
-      // 1. Coincidencia por número de corbatín (exacto o parcial)
-      if (qNoHash && (vCorb === qNoHash || vCorb.includes(qNoHash))) return true;
-      // 2. Coincidencia por placas (con o sin guiones)
-      if (vPlacas.includes(q) || (qAlphaNum.length >= 2 && vPlacasAlpha.includes(qAlphaNum))) return true;
-      // 3. Coincidencia por marca, modelo o color
-      if (vMarca.includes(q) || vModelo.includes(q) || `${vMarca} ${vModelo}`.toLowerCase().includes(q) || vColor.includes(q)) return true;
-      // 4. Coincidencia por empresa contratista
-      if (vEmp.includes(q)) return true;
-      // 5. Coincidencia por conductor
-      if (vConductor.includes(q)) return true;
+      let score = 0;
 
-      return false;
-    });
+      // 1. Coincidencia EXACTA por número de corbatín (ej. buscó "1" y corbatín es "1" o "001")
+      if (qNoHash && (vCorb === qNoHash || vCorbClean === qNoHashClean)) {
+        score = 10000;
+      }
+      // 2. Coincidencia EXACTA de placas
+      else if (qAlphaNum.length >= 2 && vPlacasAlpha === qAlphaNum) {
+        score = 9000;
+      }
+      // 3. Corbatín EMPIEZA con la búsqueda (ej. buscó "1", "10" vs "11") -> menor longitud tiene prioridad
+      else if (qNoHash && (vCorb.startsWith(qNoHash) || vCorbClean.startsWith(qNoHashClean))) {
+        score = 5000 - (vCorb.length * 50);
+      }
+      // 4. Placas EMPIEZAN con la búsqueda
+      else if (qAlphaNum.length >= 2 && vPlacasAlpha.startsWith(qAlphaNum)) {
+        score = 4000;
+      }
+      // 5. Placas CONTIENEN la búsqueda
+      else if (vPlacas.includes(q) || (qAlphaNum.length >= 2 && vPlacasAlpha.includes(qAlphaNum))) {
+        score = 3000;
+      }
+      // 6. Corbatín CONTIENE la búsqueda
+      else if (qNoHash && vCorb.includes(qNoHash)) {
+        score = 2500;
+      }
+      // 7. Marca / Modelo / Empresa EMPIEZAN con la búsqueda
+      else if (vMarca.startsWith(q) || vModelo.startsWith(q) || `${vMarca} ${vModelo}`.toLowerCase().startsWith(q) || vEmp.startsWith(q)) {
+        score = 2000;
+      }
+      // 8. Marca, Modelo, Color, Empresa o Conductor CONTIENEN la búsqueda
+      else if (vMarca.includes(q) || vModelo.includes(q) || `${vMarca} ${vModelo}`.toLowerCase().includes(q) || vColor.includes(q) || vEmp.includes(q) || vConductor.includes(q)) {
+        score = 1000;
+      }
+
+      if (score > 0) {
+        matches.push({ vehicle: v, score });
+      }
+    }
+
+    return matches
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        const numA = parseInt(String(a.vehicle.corbatinNum || "99999").replace(/[^0-9]/g, ""), 10);
+        const numB = parseInt(String(b.vehicle.corbatinNum || "99999").replace(/[^0-9]/g, ""), 10);
+        return (isNaN(numA) ? 99999 : numA) - (isNaN(numB) ? 99999 : numB);
+      })
+      .map((m) => m.vehicle);
   }, [vehicles, casetaCorbatin]);
+
+  // Lista filtrada de Corbatines Verdes (Proyectos / Larga Estancia) ordenada por coincidencia exacta
+  const filteredCasetaCorbatinesVerdes = useMemo(() => {
+    const raw = casetaCorbatin.trim();
+    if (!raw) {
+      return [...corbatinesVerdes].sort((a, b) => {
+        const numA = parseInt(String(a.corbatinNum || "99999").replace(/[^0-9]/g, ""), 10);
+        const numB = parseInt(String(b.corbatinNum || "99999").replace(/[^0-9]/g, ""), 10);
+        return (isNaN(numA) ? 99999 : numA) - (isNaN(numB) ? 99999 : numB);
+      });
+    }
+    const q = raw.toLowerCase();
+    const qNoHash = q.replace(/#/g, "").trim();
+    const qNoHashClean = qNoHash.replace(/^0+/, "") || "0";
+    const qNum = parseInt(qNoHash, 10);
+
+    const matches: { corbatin: CorbatinVerde; score: number }[] = [];
+
+    for (const c of corbatinesVerdes) {
+      const cNumStr = String(c.corbatinNum || "").toLowerCase().replace(/#/g, "").trim();
+      const cNumClean = cNumStr.replace(/^0+/, "") || "0";
+      const cNumInt = parseInt(cNumStr, 10);
+      const cEmp = String(c.empresaNombre || "").toLowerCase();
+      const cTel = String(c.telefono || "").toLowerCase();
+      const cEmail = String(c.email || "").toLowerCase();
+
+      let score = 0;
+
+      // 1. Coincidencia EXACTA de número de corbatín verde
+      if (!isNaN(qNum) && !isNaN(cNumInt) && (cNumInt === qNum || cNumClean === qNoHashClean)) {
+        score = 10000;
+      } else if (qNoHash && (cNumStr === qNoHash || cNumClean === qNoHashClean)) {
+        score = 10000;
+      }
+      // 2. Corbatín verde EMPIEZA con el número
+      else if (qNoHash && (cNumStr.startsWith(qNoHash) || cNumClean.startsWith(qNoHashClean))) {
+        score = 5000 - (cNumStr.length * 50);
+      }
+      // 3. Empresa de proyecto EMPIEZA con la búsqueda
+      else if (cEmp.startsWith(q)) {
+        score = 4000;
+      }
+      // 4. Empresa CONTIENE la búsqueda
+      else if (cEmp.includes(q)) {
+        score = 3000;
+      }
+      // 5. Corbatín CONTIENE el número
+      else if (qNoHash && cNumStr.includes(qNoHash)) {
+        score = 2500;
+      }
+      // 6. Teléfono, email o palabras clave (verde, proyecto)
+      else if (cTel.includes(q) || cEmail.includes(q) || q.includes("verd") || q.includes("proy")) {
+        score = 1000;
+      }
+
+      if (score > 0) {
+        matches.push({ corbatin: c, score });
+      }
+    }
+
+    return matches
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        const numA = parseInt(String(a.corbatin.corbatinNum || "99999").replace(/[^0-9]/g, ""), 10);
+        const numB = parseInt(String(b.corbatin.corbatinNum || "99999").replace(/[^0-9]/g, ""), 10);
+        return (isNaN(numA) ? 99999 : numA) - (isNaN(numB) ? 99999 : numB);
+      })
+      .map((m) => m.corbatin);
+  }, [corbatinesVerdes, casetaCorbatin]);
 
   // Lista filtrada de trabajadores de la empresa seleccionada para el buscador de chofer
   const filteredEmpresaTrabajadores = useMemo(() => {
@@ -1807,8 +1924,10 @@ export default function App() {
     });
   }, [empresaTrabajadores, casetaConductorQuery]);
 
-  // Selección explícita de un vehículo desde el dropdown / autocompletado
+  // Selección explícita de un vehículo regular desde el dropdown / autocompletado
   const handleSelectVehicleFromDropdown = (v: Vehicle) => {
+    setSelectedCorbatinVerdeId("");
+    setCasetaPlacasVerde("");
     if (v.empresaId) {
       setSelectedEmpresaId(v.empresaId);
     }
@@ -1843,15 +1962,39 @@ export default function App() {
     }
   };
 
+  // Selección explícita de un Corbatín Verde desde el dropdown / autocompletado
+  const handleSelectCorbatinVerdeFromDropdown = (c: CorbatinVerde) => {
+    setSelectedVehicleId("");
+    setSelectedCorbatinVerdeId(c.id);
+    const numFmt = formatCorbatinVerdeNum(c.corbatinNum);
+    setCasetaCorbatin(`VERDE #${numFmt}`);
+    setCasetaPlacasVerde("");
+    setCasetaConductorId("");
+    setCasetaConductorQuery("");
+    setCasetaTrabajos((prev) => prev ? prev : `Proyecto ${c.empresaNombre}`);
+    setIsCorbatinDropdownOpen(false);
+    setCorbatinHighlightedIndex(0);
+
+    if (!casetaHoraEntrada) {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mm = String(now.getMinutes()).padStart(2, "0");
+      setCasetaHoraEntrada(`${hh}:${mm} hrs`);
+    }
+  };
+
   // Cambio de texto en el buscador de corbatín / placas
   const handleCorbatinInputChange = (val: string) => {
     setCasetaCorbatin(val);
+    if (selectedCorbatinVerdeId) setSelectedCorbatinVerdeId("");
+    if (selectedVehicleId) setSelectedVehicleId("");
     setIsCorbatinDropdownOpen(true);
     setCorbatinHighlightedIndex(0);
   };
 
-  // Navegación por teclado para vehículo (Flecha Arriba/Abajo, Enter, Escape)
+  // Navegación por teclado para vehículo / corbatín verde (Flecha Arriba/Abajo, Enter, Escape)
   const handleCorbatinInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const totalCount = filteredCasetaVehicles.length + filteredCasetaCorbatinesVerdes.length;
     if (!isCorbatinDropdownOpen && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
       setIsCorbatinDropdownOpen(true);
       return;
@@ -1859,18 +2002,21 @@ export default function App() {
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setCorbatinHighlightedIndex((prev) =>
-        filteredCasetaVehicles.length > 0 ? (prev + 1) % filteredCasetaVehicles.length : 0
+        totalCount > 0 ? (prev + 1) % totalCount : 0
       );
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setCorbatinHighlightedIndex((prev) =>
-        filteredCasetaVehicles.length > 0 ? (prev - 1 + filteredCasetaVehicles.length) % filteredCasetaVehicles.length : 0
+        totalCount > 0 ? (prev - 1 + totalCount) % totalCount : 0
       );
     } else if (e.key === "Enter") {
       e.preventDefault();
-      if (filteredCasetaVehicles.length > 0) {
-        const itemToSelect = filteredCasetaVehicles[corbatinHighlightedIndex] || filteredCasetaVehicles[0];
-        handleSelectVehicleFromDropdown(itemToSelect);
+      if (filteredCasetaVehicles.length > 0 && corbatinHighlightedIndex < filteredCasetaVehicles.length) {
+        handleSelectVehicleFromDropdown(filteredCasetaVehicles[corbatinHighlightedIndex]);
+      } else if (filteredCasetaCorbatinesVerdes.length > 0) {
+        const adjustedIdx = Math.max(0, corbatinHighlightedIndex - filteredCasetaVehicles.length);
+        const itemToSelect = filteredCasetaCorbatinesVerdes[adjustedIdx] || filteredCasetaCorbatinesVerdes[0];
+        handleSelectCorbatinVerdeFromDropdown(itemToSelect);
       }
     } else if (e.key === "Escape") {
       setIsCorbatinDropdownOpen(false);
@@ -1923,7 +2069,7 @@ export default function App() {
     }
   };
 
-  // Procesar datos escaneados desde el código QR del Corbatín
+  // Procesar datos escaneados desde el código QR del Corbatín (Regular o Verde)
   const handleQRScanData = (qrRawData: string) => {
     setShowQRScannerModal(false);
     if (!qrRawData || !qrRawData.trim()) return;
@@ -1931,8 +2077,28 @@ export default function App() {
     const raw = qrRawData.trim();
     let targetCorbatinNum: number | null = null;
     let targetPlacas: string | null = null;
+    let isVerdeQR = raw.includes("CORB-VERDE");
 
-    // 1. Formato oficial: LP-HOA|CORB:2|PLACAS:MTY-0001-A|VIG:2026-2027
+    // 1. Formato oficial Corbatín Verde: LP-HOA|CORB-VERDE:001|EMP:Constructora|TEL:...
+    const corbVerdeMatch = raw.match(/CORB-VERDE:([0-9]+)/i);
+    if (corbVerdeMatch && corbVerdeMatch[1]) {
+      const numVerde = parseInt(corbVerdeMatch[1], 10);
+      const matchedVerde = corbatinesVerdes.find(
+        (c) => parseInt(String(c.corbatinNum).replace(/[^0-9]/g, ""), 10) === numVerde
+      );
+      if (matchedVerde) {
+        handleSelectCorbatinVerdeFromDropdown(matchedVerde);
+        setCasetaModoAcceso("vehicular");
+        showToast(
+          `Corbatín Verde #${matchedVerde.corbatinNum} (${matchedVerde.empresaNombre}) - Vigencia: ${matchedVerde.vigenciaTexto || "6 Meses"}`,
+          "success",
+          "✓ Corbatín Verde Escaneado"
+        );
+        return;
+      }
+    }
+
+    // 2. Formato oficial regular: LP-HOA|CORB:2|PLACAS:MTY-0001-A|VIG:2026-2027
     const corbMatch = raw.match(/CORB:(\d+)/i);
     const placasMatch = raw.match(/PLACAS:([^|]+)/i);
 
@@ -1943,16 +2109,17 @@ export default function App() {
       targetPlacas = placasMatch[1].trim();
     }
 
-    // 2. Formato JSON: { "corbatinNum": 2, ... }
+    // 3. Formato JSON: { "corbatinNum": 2, ... }
     if (!targetCorbatinNum && !targetPlacas && raw.startsWith("{")) {
       try {
         const parsed = JSON.parse(raw);
+        if (parsed.tipo === "VERDE" || parsed.tipos === "VERDE") isVerdeQR = true;
         if (parsed.corbatinNum || parsed.corbatin) targetCorbatinNum = Number(parsed.corbatinNum || parsed.corbatin);
         if (parsed.placas || parsed.placa) targetPlacas = String(parsed.placas || parsed.placa);
       } catch { }
     }
 
-    // 3. Formato simple: número (ej. "2" o "#2") o placas directas
+    // 4. Formato simple: número (ej. "2" o "#2") o placas directas
     if (!targetCorbatinNum && !targetPlacas) {
       const clean = raw.replace(/^#/, "").trim();
       if (/^\d+$/.test(clean)) {
@@ -1962,7 +2129,24 @@ export default function App() {
       }
     }
 
-    // Buscar vehículo en el catálogo
+    // Si viene identificado como verde o se busca por número verde
+    if (isVerdeQR && targetCorbatinNum !== null) {
+      const matchedVerde = corbatinesVerdes.find(
+        (c) => parseInt(String(c.corbatinNum).replace(/[^0-9]/g, ""), 10) === targetCorbatinNum
+      );
+      if (matchedVerde) {
+        handleSelectCorbatinVerdeFromDropdown(matchedVerde);
+        setCasetaModoAcceso("vehicular");
+        showToast(
+          `Corbatín Verde #${matchedVerde.corbatinNum} (${matchedVerde.empresaNombre})`,
+          "success",
+          "✓ Corbatín Verde Escaneado"
+        );
+        return;
+      }
+    }
+
+    // Buscar vehículo regular en el catálogo
     let matchedVehicle: Vehicle | undefined = undefined;
     if (targetCorbatinNum !== null) {
       matchedVehicle = vehicles.find((v) => Number(v.corbatinNum) === targetCorbatinNum);
@@ -1976,36 +2160,39 @@ export default function App() {
 
     if (matchedVehicle) {
       // Auto-seleccionar empresa y vehículo
-      if (matchedVehicle.empresaId) {
-        setSelectedEmpresaId(matchedVehicle.empresaId);
-      }
-      setSelectedVehicleId(matchedVehicle.id);
-      setCasetaCorbatin(matchedVehicle.corbatinNum ? `#${matchedVehicle.corbatinNum}` : (matchedVehicle.placas || ""));
+      handleSelectVehicleFromDropdown(matchedVehicle);
       setCasetaModoAcceso("vehicular");
-
-      // Dejar chofer vacío para que el guardia lo verifique/seleccione en el momento
-      setCasetaConductorId("");
-      setCasetaConductorQuery("");
-
-      if (!casetaHoraEntrada) {
-        const now = new Date();
-        const hh = String(now.getHours()).padStart(2, "0");
-        const mm = String(now.getMinutes()).padStart(2, "0");
-        setCasetaHoraEntrada(`${hh}:${mm} hrs`);
-      }
 
       showToast(
         `Vehículo: ${matchedVehicle.marca} ${matchedVehicle.modelo} (${matchedVehicle.empresaNombre}) - Corbatín #${matchedVehicle.corbatinNum}`,
         "success",
         "✓ Código QR Escaneado"
       );
-    } else {
-      showToast(
-        `Código QR leído ("${raw}"), pero no coincide con ningún vehículo registrado en el sistema.`,
-        "error",
-        "Vehículo No Encontrado"
-      );
+      return;
     }
+
+    // Si no se encontró vehículo, verificar si coincide con número de Corbatín Verde
+    if (targetCorbatinNum !== null) {
+      const matchedVerde = corbatinesVerdes.find(
+        (c) => parseInt(String(c.corbatinNum).replace(/[^0-9]/g, ""), 10) === targetCorbatinNum
+      );
+      if (matchedVerde) {
+        handleSelectCorbatinVerdeFromDropdown(matchedVerde);
+        setCasetaModoAcceso("vehicular");
+        showToast(
+          `Corbatín Verde #${matchedVerde.corbatinNum} (${matchedVerde.empresaNombre})`,
+          "success",
+          "✓ Corbatín Verde Escaneado"
+        );
+        return;
+      }
+    }
+
+    showToast(
+      `Código QR leído ("${raw}"), pero no coincide con ningún vehículo ni corbatín verde registrado.`,
+      "error",
+      "No Encontrado"
+    );
   };
 
   // Si el vehículo seleccionado ya no existe en el catálogo, limpiar selección
@@ -2141,6 +2328,8 @@ export default function App() {
             apellidos: t.apellidos,
             telefono: t.telefono,
             foto_url: t.foto_url,
+            comprobante_seguro_url: t.comprobante_seguro_url || undefined,
+            dc3_documento_url: t.dc3_documento_url || undefined,
             activo: t.activo !== false,
             created_at: t.created_at || new Date().toISOString(),
             updated_at: t.updated_at || new Date().toISOString(),
@@ -2399,6 +2588,8 @@ export default function App() {
           apellidos: t.apellidos,
           telefono: t.telefono,
           foto_url: t.foto_url,
+          comprobante_seguro_url: t.comprobante_seguro_url || undefined,
+          dc3_documento_url: t.dc3_documento_url || undefined,
           activo: t.activo !== false,
           created_at: t.created_at || new Date().toISOString(),
           updated_at: t.updated_at || new Date().toISOString(),
@@ -3626,9 +3817,61 @@ export default function App() {
         return;
       }
 
-      // Registro en Modalidad Vehicular
+      // Registro en Modalidad Corbatín Verde (Proyectos / Larga Estancia)
+      if (currentCasetaCorbatinVerde) {
+        if (!currentCasetaCorbatinVerde.activo && !casetaOverrideActive) {
+          showToast("Este Corbatín Verde se encuentra inactivo o deshabilitado.", "error", "Acceso Denegado");
+          return;
+        }
+
+        const numInt = parseInt(currentCasetaCorbatinVerde.id, 10);
+        const corbIdFinal = !isNaN(numInt) ? numInt : null;
+        const placasFinal = casetaPlacasVerde.trim() || "PROYECTO";
+        const choferFinal = casetaConductorQuery.trim() || "Chofer del Proyecto";
+        const numFormatted = formatCorbatinVerdeNum(currentCasetaCorbatinVerde.corbatinNum);
+
+        await api.registrarAcceso({
+          id_caseta: 1,
+          id_vehiculo: null,
+          id_corbatin: corbIdFinal,
+          id_conductor: null,
+          id_usuario: Number(currentUser?.id) || 4,
+          num_pasajeros: Math.max(0, Number(casetaNumPasajeros) || 0),
+          ubicacion_trabajo: casetaTrabajos || `Proyecto ${currentCasetaCorbatinVerde.empresaNombre}`,
+          estatus_acceso: casetaOverrideActive ? "AUTORIZADO_OVERRIDE" : "AUTORIZADO",
+          observaciones: `[CORBATÍN VERDE #${numFormatted}] Placas: ${placasFinal} | Chofer: ${choferFinal} | Tel: ${currentCasetaCorbatinVerde.telefono || "S/T"} | Empresa: ${currentCasetaCorbatinVerde.empresaNombre}`,
+          tipo: 'entrada'
+        });
+
+        await reloadBitacora();
+        // Reset completo del formulario
+        setSelectedEmpresaId("");
+        setSelectedVehicleId("");
+        setSelectedCorbatinVerdeId("");
+        setCasetaPlacasVerde("");
+        setCasetaCorbatin("");
+        setCasetaConductorId("");
+        setCasetaConductorQuery("");
+        setCasetaHoraEntrada("");
+        setCasetaHoraSalida("");
+        setCasetaTrabajos("");
+        setCasetaNumPasajeros("");
+        setCasetaPeatonalTrabajadorId("");
+        setCasetaPeatonalNombre("");
+        setCasetaPeatonalTelefono("");
+        setCasetaPeatonalObservaciones("");
+        setCasetaOverrideActive(false);
+        setIsCorbatinDropdownOpen(false);
+        setIsConductorDropdownOpen(false);
+        setCasetaSuccessMsg(true);
+        setTimeout(() => setCasetaSuccessMsg(false), 4000);
+        showToast(`Entrada registrada para ${currentCasetaCorbatinVerde.empresaNombre} (Corbatín Verde #${numFormatted}).`, "success");
+        return;
+      }
+
+      // Registro en Modalidad Vehicular Regular
       if (!currentCasetaVehicle) {
-        showToast("Selecciona un vehículo habilitado para registrar la entrada.", "warning");
+        showToast("Selecciona un vehículo o corbatín verde habilitado para registrar la entrada.", "warning");
         return;
       }
 
@@ -3654,6 +3897,8 @@ export default function App() {
       // Reset completo del formulario
       setSelectedEmpresaId("");
       setSelectedVehicleId("");
+      setSelectedCorbatinVerdeId("");
+      setCasetaPlacasVerde("");
       setCasetaCorbatin("");
       setCasetaConductorId("");
       setCasetaConductorQuery("");
@@ -4510,12 +4755,57 @@ export default function App() {
     }
   };
 
+  // ─── Handlers de Carga de Documentos y Fotografía para Trabajadores ───
+  const handleFotoTrabajadorUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const compressed = await compressImageClient(file, 640, 0.75);
+        setTrabajadorFotoUrl(compressed);
+      } catch (err) {
+        console.error("Error al procesar fotografía de trabajador:", err);
+      }
+    }
+  };
+
+  const handleSeguroTrabajadorUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setTrabajadorSeguroFileName(file.name);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setTrabajadorSeguroUrl(event.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDC3TrabajadorUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setTrabajadorDC3FileName(file.name);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setTrabajadorDC3Url(event.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleOpenEditarTrabajador = (t: Trabajador) => {
     setSelectedTrabajadorParaEditar(t);
     setTrabajadorNombre(t.nombre || "");
     setTrabajadorApellidos(t.apellidos || "");
     setTrabajadorTelefono(t.telefono || "");
     setTrabajadorFotoUrl(t.foto_url || "");
+    setTrabajadorSeguroUrl(t.comprobante_seguro_url || "");
+    setTrabajadorSeguroFileName(t.comprobante_seguro_url ? "Comprobante de Seguro Adjunto" : "");
+    setTrabajadorDC3Url(t.dc3_documento_url || "");
+    setTrabajadorDC3FileName(t.dc3_documento_url ? "Constancia DC-3 Adjunta" : "");
     setTrabajadorActivo(t.activo);
     setTrabajadorFormError("");
   };
@@ -4563,6 +4853,8 @@ export default function App() {
         apellidos: ape,
         telefono: tel || null,
         foto_url: defaultFoto,
+        comprobante_seguro_url: trabajadorSeguroUrl || null,
+        dc3_documento_url: trabajadorDC3Url || null,
         activo: trabajadorActivo,
       });
       await reloadTrabajadores();
@@ -4572,6 +4864,10 @@ export default function App() {
       setTrabajadorApellidos("");
       setTrabajadorTelefono("");
       setTrabajadorFotoUrl("");
+      setTrabajadorSeguroUrl("");
+      setTrabajadorSeguroFileName("");
+      setTrabajadorDC3Url("");
+      setTrabajadorDC3FileName("");
       setTrabajadorActivo(true);
       setTrabajadorFormError("");
       showToast(`Trabajador "${nom} ${ape}" registrado exitosamente en el sistema.`, "success", "Trabajador Registrado");
@@ -4624,11 +4920,17 @@ export default function App() {
         apellidos: ape,
         telefono: tel || null,
         foto_url: trabajadorFotoUrl || selectedTrabajadorParaEditar.foto_url,
+        comprobante_seguro_url: trabajadorSeguroUrl || selectedTrabajadorParaEditar.comprobante_seguro_url || null,
+        dc3_documento_url: trabajadorDC3Url || selectedTrabajadorParaEditar.dc3_documento_url || null,
         activo: trabajadorActivo,
       });
       await reloadTrabajadores();
       showToast(`Información de "${nom} ${ape}" actualizada con éxito en el sistema.`, "success", "Trabajador Actualizado");
       setSelectedTrabajadorParaEditar(null);
+      setTrabajadorSeguroUrl("");
+      setTrabajadorSeguroFileName("");
+      setTrabajadorDC3Url("");
+      setTrabajadorDC3FileName("");
       setTrabajadorFormError("");
     } catch (err: any) {
       setTrabajadorFormError("Error al actualizar: " + (err.message || err));
@@ -4743,231 +5045,6 @@ export default function App() {
     }
   };
 
-  const handleFotoTrabajadorUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTrabajadorFormError("");
-    const file = e.target.files?.[0];
-    if (file) {
-      try {
-        const compressed = await compressImageClient(file, 640, 0.75);
-        setTrabajadorFotoUrl(compressed);
-        setTrabajadorFormError("");
-      } catch (err) {
-        setTrabajadorFormError("Error al procesar la fotografía del colaborador.");
-      }
-    }
-  };
-
-  // ─── Lógica y Handlers para Archivo de Seguro Social (Exclusivo Supervisor) ───
-  const getSeguroStatus = (emp: Empresa) => {
-    const hasDoc = Boolean(emp.tiene_seguro || (emp.seguro_vigencia_url && String(emp.seguro_vigencia_url).trim().length > 10));
-    if (!hasDoc) {
-      return {
-        status: "sin_seguro" as const,
-        label: "Sin Seguro Social",
-        colorClass: "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200",
-        dotClass: "bg-slate-400"
-      };
-    }
-    return {
-      status: "vigente" as const,
-      label: "Comprobante de seguro Adjunto ✓",
-      colorClass: "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100",
-      dotClass: "bg-emerald-500"
-    };
-  };
-
-  const handleOpenAdjuntarSeguro = async (emp: Empresa) => {
-    setTargetEmpresaSeguro(emp);
-    let docUrl = (emp.seguro_vigencia_url && String(emp.seguro_vigencia_url).trim().length > 10) ? emp.seguro_vigencia_url : "";
-
-    if (!docUrl && emp.tiene_seguro) {
-      try {
-        const res = await api.getEmpresaSeguro(emp.id);
-        if (res?.seguro_vigencia_url) {
-          docUrl = res.seguro_vigencia_url;
-          setEmpresas(prev => prev.map(e => e.id === emp.id ? { ...e, seguro_vigencia_url: docUrl, tiene_seguro: true } : e));
-        }
-      } catch { }
-    }
-
-    setSeguroFileUrl(docUrl);
-    setSeguroFileName(
-      docUrl
-        ? (docUrl.startsWith("data:application/pdf") ? "seguro_social.pdf" : "seguro_social.png")
-        : ""
-    );
-    setSeguroFileType(
-      docUrl
-        ? (docUrl.startsWith("data:application/pdf") || docUrl.toLowerCase().endsWith(".pdf") ? "pdf" : "image")
-        : ""
-    );
-    setSeguroVigenciaFecha("");
-    setSeguroPolizaNumero("");
-    setSeguroAseguradora("");
-    setSeguroNotas("");
-    setSeguroFormError("");
-    setShowModalAdjuntarSeguro(true);
-  };
-
-  const handleOpenVisualizarSeguro = async (emp: Empresa) => {
-    if (emp.seguro_vigencia_url && String(emp.seguro_vigencia_url).trim().length > 10) {
-      setSelectedEmpresaSeguroPreview(emp);
-      return;
-    }
-
-    setSelectedEmpresaSeguroPreview({ ...emp, seguro_vigencia_url: null });
-    setIsLoadingSeguroPreview(true);
-
-    try {
-      const res = await api.getEmpresaSeguro(emp.id);
-      if (res && res.seguro_vigencia_url) {
-        const updated = { ...emp, seguro_vigencia_url: res.seguro_vigencia_url, tiene_seguro: true };
-        setEmpresas(prev => prev.map(e => e.id === emp.id ? updated : e));
-        setSelectedEmpresaSeguroPreview(updated);
-      } else {
-        showToast("Esta empresa no cuenta con un comprobante de seguro adjunto.", "info");
-        setSelectedEmpresaSeguroPreview(null);
-      }
-    } catch (err) {
-      console.error("Error al cargar documento de seguro:", err);
-      showToast("Error al cargar el archivo de seguro.", "error");
-      setSelectedEmpresaSeguroPreview(null);
-    } finally {
-      setIsLoadingSeguroPreview(false);
-    }
-  };
-
-  const handleSeguroFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSeguroFormError("");
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 15 * 1024 * 1024) {
-      setSeguroFormError("El archivo no debe exceder 15 MB.");
-      return;
-    }
-
-    setSeguroFileName(file.name);
-
-    if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
-      setSeguroFileType("pdf");
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setSeguroFileUrl(result);
-      };
-      reader.onerror = () => {
-        setSeguroFormError("Error al leer el archivo PDF.");
-      };
-      reader.readAsDataURL(file);
-    } else if (file.type.startsWith("image/") || /\.(jpg|jpeg|png|webp)$/i.test(file.name)) {
-      setSeguroFileType("image");
-      try {
-        const compressed = await compressImageClient(file, 1200, 0.82);
-        setSeguroFileUrl(compressed);
-      } catch {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          setSeguroFileUrl(event.target?.result as string);
-        };
-        reader.readAsDataURL(file);
-      }
-    } else {
-      setSeguroFormError("Formato no admitido. Sube un archivo PDF o imagen (PNG/JPG/WEBP).");
-    }
-  };
-
-  const handleGuardarSeguro = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (isSubmittingSeguroRef.current || !targetEmpresaSeguro) return;
-
-    if (!seguroFileUrl) {
-      setSeguroFormError("Es obligatorio seleccionar un archivo (PDF o Imagen).");
-      return;
-    }
-
-    isSubmittingSeguroRef.current = true;
-    setIsSubmittingSeguro(true);
-    setSeguroFormError("");
-
-    const payload = {
-      tiene_seguro: true,
-      seguro_vigencia_url: seguroFileUrl,
-      seguro_vigencia_fecha: null,
-      seguro_poliza_numero: null,
-      seguro_aseguradora: null,
-      seguro_notas: null,
-      seguro_subido_por: currentUser?.nombre || "Supervisor HOA",
-      seguro_subido_at: new Date().toISOString()
-    };
-
-    try {
-      await fetch(`/api/empresas/${targetEmpresaSeguro.id}/seguro`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-    } catch (err) {
-      console.warn("Error guardando seguro en backend:", err);
-    }
-
-    // Actualizar estado local reactivo
-    setEmpresas(prev => prev.map(emp => {
-      if (emp.id === targetEmpresaSeguro.id) {
-        return {
-          ...emp,
-          ...payload
-        };
-      }
-      return emp;
-    }));
-
-    // Actualizar preview si está seleccionado
-    setSelectedEmpresaSeguroPreview(prev => {
-      if (prev && prev.id === targetEmpresaSeguro.id) {
-        return { ...prev, ...payload };
-      }
-      return prev;
-    });
-
-    try {
-      const updated = empresas.map(emp => emp.id === targetEmpresaSeguro.id ? { ...emp, ...payload } : emp);
-      localStorage.setItem("hoa_empresas_seguros", JSON.stringify(updated.map(e => ({ id: e.id, ...payload }))));
-    } catch { }
-
-    setShowModalAdjuntarSeguro(false);
-    setTargetEmpresaSeguro(null);
-    setIsSubmittingSeguro(false);
-    isSubmittingSeguroRef.current = false;
-    showToast("Archivo de Seguro Social guardado exitosamente.", "success", "Archivo Adjunto");
-  };
-
-  const handleEliminarSeguro = async (emp: Empresa) => {
-    if (!window.confirm(`¿Estás seguro de eliminar el comprobante de seguridad social (IMSS/ISSSTE) de la empresa "${emp.nombre}"?`)) return;
-
-    try {
-      await fetch(`/api/empresas/${emp.id}/seguro`, {
-        method: "DELETE"
-      });
-    } catch (err) {
-      console.warn("Error eliminando seguro en backend:", err);
-    }
-
-    const cleared = {
-      tiene_seguro: false,
-      seguro_vigencia_url: null,
-      seguro_vigencia_fecha: null,
-      seguro_poliza_numero: null,
-      seguro_aseguradora: null,
-      seguro_notas: null,
-      seguro_subido_por: null,
-      seguro_subido_at: null
-    };
-
-    setEmpresas(prev => prev.map(e => e.id === emp.id ? { ...e, ...cleared } : e));
-    setSelectedEmpresaSeguroPreview(null);
-    showToast("Comprobante de seguridad social eliminado.", "info");
-  };
 
   if (!currentUser) {
     return (
@@ -5240,6 +5317,18 @@ export default function App() {
               const empTrabajadores = trabajadores.filter((t) => t.id_empresa === emp.id || t.empresaNombre === emp.nombre);
               const activeSubTab = empresaSubTabMap[emp.id] || "vehiculos";
 
+              const ITEMS_PER_PAGE_EMPRESA = 5;
+
+              const rawVehPage = empresaVehiculosPageMap[emp.id] || 1;
+              const totalVehiculosPages = Math.max(1, Math.ceil(empVehicles.length / ITEMS_PER_PAGE_EMPRESA));
+              const currentVehiculosPage = Math.min(rawVehPage, totalVehiculosPages);
+              const paginatedVehicles = empVehicles.slice((currentVehiculosPage - 1) * ITEMS_PER_PAGE_EMPRESA, currentVehiculosPage * ITEMS_PER_PAGE_EMPRESA);
+
+              const rawTrabPage = empresaTrabajadoresPageMap[emp.id] || 1;
+              const totalTrabajadoresPages = Math.max(1, Math.ceil(empTrabajadores.length / ITEMS_PER_PAGE_EMPRESA));
+              const currentTrabajadoresPage = Math.min(rawTrabPage, totalTrabajadoresPages);
+              const paginatedTrabajadores = empTrabajadores.slice((currentTrabajadoresPage - 1) * ITEMS_PER_PAGE_EMPRESA, currentTrabajadoresPage * ITEMS_PER_PAGE_EMPRESA);
+
               return (
                 <div
                   key={emp.id}
@@ -5286,30 +5375,6 @@ export default function App() {
                           <IconUsers className="w-3.5 h-3.5" />
                           <span>{empTrabajadores.length} Trabajadores</span>
                         </span>
-
-                        {/* Badge de Estatus de Seguro (Exclusivo Supervisor) */}
-                        {(() => {
-                          const seguroInfo = getSeguroStatus(emp);
-                          const hasDoc = Boolean(emp.tiene_seguro || (emp.seguro_vigencia_url && String(emp.seguro_vigencia_url).trim().length > 10));
-                          return (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (hasDoc) {
-                                  handleOpenVisualizarSeguro(emp);
-                                } else {
-                                  handleOpenAdjuntarSeguro(emp);
-                                }
-                              }}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold border shrink-0 transition-all hover:scale-105 cursor-pointer ${seguroInfo.colorClass}`}
-                              title={hasDoc ? "Clic para ver comprobante de Seguro Social" : "Clic para adjuntar comprobante de Seguro Social"}
-                            >
-                              <IconShield className="w-3.5 h-3.5" />
-                              <span>{seguroInfo.label}</span>
-                            </button>
-                          );
-                        })()}
                       </div>
 
                       {/* Botón Eliminar Empresa (a la izquierda de Editar) */}
@@ -5410,18 +5475,6 @@ export default function App() {
                             <IconUsers className="w-4 h-4" />
                             <span>Plantilla de Trabajadores ({empTrabajadores.length})</span>
                           </button>
-
-                          <button
-                            type="button"
-                            onClick={() => setEmpresaSubTabMap((prev) => ({ ...prev, [emp.id]: "seguro" }))}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${activeSubTab === "seguro"
-                              ? "bg-[#0D6E5F] text-white shadow-xs"
-                              : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
-                              }`}
-                          >
-                            <IconShield className="w-4 h-4" />
-                            <span>Seguro Social {Boolean(emp.tiene_seguro || (emp.seguro_vigencia_url && String(emp.seguro_vigencia_url).trim().length > 10)) ? "✓" : ""}</span>
-                          </button>
                         </div>
 
                         <div className="flex items-center gap-2 flex-wrap justify-end">
@@ -5440,7 +5493,7 @@ export default function App() {
                               <IconCar className="w-3.5 h-3.5" />
                               <span>Agregar Vehículo a {emp.nombre}</span>
                             </button>
-                          ) : activeSubTab === "trabajadores" ? (
+                          ) : (
                             <button
                               type="button"
                               onClick={() => {
@@ -5449,6 +5502,10 @@ export default function App() {
                                 setTrabajadorApellidos("");
                                 setTrabajadorTelefono("");
                                 setTrabajadorFotoUrl("");
+                                setTrabajadorSeguroUrl("");
+                                setTrabajadorSeguroFileName("");
+                                setTrabajadorDC3Url("");
+                                setTrabajadorDC3FileName("");
                                 setTrabajadorActivo(true);
                                 setTrabajadorFormError("");
                                 setShowCreateTrabajadorModal(true);
@@ -5459,28 +5516,6 @@ export default function App() {
                               <IconUserPlus className="w-3.5 h-3.5" />
                               <span>Agregar Colaborador a {emp.nombre}</span>
                             </button>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              {Boolean(emp.seguro_vigencia_url || emp.seguro_subido_at || emp.seguro_subido_por) && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenVisualizarSeguro(emp)}
-                                  className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                                >
-                                  <IconEye className="w-3.5 h-3.5" />
-                                  <span>Visualizar Archivo</span>
-                                </button>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => handleOpenAdjuntarSeguro(emp)}
-                                className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer shadow-xs"
-                                style={{ background: "var(--color-primary)" }}
-                              >
-                                <IconShield className="w-3.5 h-3.5" />
-                                <span>{Boolean(emp.seguro_vigencia_url || emp.seguro_subido_at || emp.seguro_subido_por) ? "Reemplazar Archivo" : "Adjuntar Archivo"}</span>
-                              </button>
-                            </div>
                           )}
                         </div>
                       </div>
@@ -5495,108 +5530,160 @@ export default function App() {
                               <p className="text-[11px] text-slate-400 mt-0.5">Haz clic en "Agregar Vehículo" para registrar la primera unidad autorizada.</p>
                             </div>
                           ) : (
-                            <div className="overflow-x-auto rounded-2xl border bg-white" style={{ borderColor: "var(--color-border)" }}>
-                              <table className="w-full text-sm">
-                                <thead>
-                                  <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
-                                    {["Foto", "Vehículo", "Placas", "Color", "Corbatín", "Teléfono", "Estatus Acceso", "Acciones (Supervisor)"].map((h) => (
-                                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
-                                    ))}
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                  {empVehicles.map((v) => (
-                                    <tr key={v.id} className="hover:bg-slate-50/70 transition-colors">
-                                      <td className="px-4 py-2.5">
-                                        <div
-                                          onClick={() => setSelectedFotoVehiculoPreview(v)}
-                                          className="w-12 h-9 rounded-lg overflow-hidden border border-slate-200 shadow-2xs cursor-pointer hover:border-[#0D6E5F] hover:scale-105 transition-all relative group bg-slate-100 flex items-center justify-center shrink-0"
-                                          title="Clic para ver fotografía ampliada"
-                                        >
-                                          {v.foto ? (
-                                            <img
-                                              src={normalizeFotoUrl(v.foto)}
-                                              alt={`${v.marca} ${v.modelo}`}
-                                              className="w-full h-full object-cover"
-                                            />
-                                          ) : (
-                                            <IconCar className="w-4 h-4 text-slate-400" />
-                                          )}
-                                          <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                                            <IconEye className="w-3.5 h-3.5" />
-                                          </div>
-                                        </div>
-                                      </td>
-                                      <td className="px-4 py-2.5 font-semibold text-slate-900 text-xs">
-                                        {v.marca} {v.modelo} <span className="text-slate-400 font-normal">({v.anio || v.año || "N/A"})</span>
-                                      </td>
-                                      <td className="px-4 py-2.5 font-mono font-bold text-xs text-slate-800">{v.placas}</td>
-                                      <td className="px-4 py-2.5 text-xs text-slate-600">{v.color}</td>
-                                      <td className="px-4 py-2.5 font-mono font-bold text-xs" style={{ color: "var(--color-primary)" }}>#{v.corbatinNum}</td>
-                                      <td className="px-4 py-2.5 font-mono text-xs text-slate-500">
-                                        <CopyableInlineText text={v.telefono} label="Teléfono" onCopyToast={showToast} />
-                                      </td>
-                                      <td className="px-4 py-2.5">
-                                        {v.status === "Habilitado" ? (
-                                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 shadow-2xs">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                            <span>Habilitado</span>
-                                          </span>
-                                        ) : v.status === "Suspendido" ? (
-                                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-300 shadow-2xs">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                                            <span>Suspendido</span>
-                                          </span>
-                                        ) : v.status === "Restringido" ? (
-                                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-300 shadow-2xs">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                                            <span>Restringido</span>
-                                          </span>
-                                        ) : (
-                                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-300 shadow-2xs">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                                            <span>Deshabilitado</span>
-                                          </span>
-                                        )}
-                                      </td>
-                                      <td className="px-4 py-2.5">
-                                        <div className="flex items-center gap-1.5">
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setSelectedCorbatinVehicleId(v.id);
-                                              setSupervisorCorbatinEmpresaFilter(v.empresaNombre || "all");
-                                              setSupervisorTab("corbatines");
-                                            }}
-                                            className="px-2.5 py-1 rounded-lg text-xs font-bold text-teal-700 bg-teal-50 hover:bg-[#0D6E5F] hover:text-white border border-teal-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
-                                            title="Ver, descargar e imprimir corbatín"
-                                          >
-                                            <IconFileText className="w-3.5 h-3.5" />
-                                            <span>Corbatín</span>
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => handleOpenEditarVehiculo(v)}
-                                            className="px-2.5 py-1 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white border border-blue-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
-                                            title="Editar datos y cambiar estatus de acceso"
-                                          >
-                                            <IconEdit className="w-3.5 h-3.5" />
-                                            <span>Editar</span>
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => setSelectedVehiculoParaEliminar(v)}
-                                            className="p-1 px-2 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-600 hover:text-white border border-red-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
-                                            title="Eliminar vehículo"
-                                          >
-                                            <IconTrash className="w-3.5 h-3.5" />
-                                          </button>
-                                        </div>
-                                      </td>
+                            <div className="overflow-hidden rounded-2xl border bg-white shadow-2xs" style={{ borderColor: "var(--color-border)" }}>
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                  <thead>
+                                    <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
+                                      {["Foto", "Vehículo", "Placas", "Color", "Corbatín", "Teléfono", "Estatus Acceso", "Acciones (Supervisor)"].map((h) => (
+                                        <th key={h} className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
+                                      ))}
                                     </tr>
-                                  ))}
-                                </tbody>
-                              </table>
+                                  </thead>
+                                  <tbody className="divide-y divide-slate-100">
+                                    {paginatedVehicles.map((v) => (
+                                      <tr key={v.id} className="hover:bg-slate-50/70 transition-colors">
+                                        <td className="px-4 py-2.5">
+                                          <div
+                                            onClick={() => setSelectedFotoVehiculoPreview(v)}
+                                            className="w-12 h-9 rounded-lg overflow-hidden border border-slate-200 shadow-2xs cursor-pointer hover:border-[#0D6E5F] hover:scale-105 transition-all relative group bg-slate-100 flex items-center justify-center shrink-0"
+                                            title="Clic para ver fotografía ampliada"
+                                          >
+                                            {v.foto ? (
+                                              <img
+                                                src={normalizeFotoUrl(v.foto)}
+                                                alt={`${v.marca} ${v.modelo}`}
+                                                className="w-full h-full object-cover"
+                                              />
+                                            ) : (
+                                              <IconCar className="w-4 h-4 text-slate-400" />
+                                            )}
+                                            <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                              <IconEye className="w-3.5 h-3.5" />
+                                            </div>
+                                          </div>
+                                        </td>
+                                        <td className="px-4 py-2.5 font-semibold text-slate-900 text-xs">
+                                          {v.marca} {v.modelo} <span className="text-slate-400 font-normal">({v.anio || v.año || "N/A"})</span>
+                                        </td>
+                                        <td className="px-4 py-2.5 font-mono font-bold text-xs text-slate-800">{v.placas}</td>
+                                        <td className="px-4 py-2.5 text-xs text-slate-600">{v.color}</td>
+                                        <td className="px-4 py-2.5 font-mono font-bold text-xs" style={{ color: "var(--color-primary)" }}>#{v.corbatinNum}</td>
+                                        <td className="px-4 py-2.5 font-mono text-xs text-slate-500">
+                                          <CopyableInlineText text={v.telefono} label="Teléfono" onCopyToast={showToast} />
+                                        </td>
+                                        <td className="px-4 py-2.5">
+                                          {v.status === "Habilitado" ? (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 shadow-2xs">
+                                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                              <span>Habilitado</span>
+                                            </span>
+                                          ) : v.status === "Suspendido" ? (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-300 shadow-2xs">
+                                              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                              <span>Suspendido</span>
+                                            </span>
+                                          ) : v.status === "Restringido" ? (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-300 shadow-2xs">
+                                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                              <span>Restringido</span>
+                                            </span>
+                                          ) : (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-300 shadow-2xs">
+                                              <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                              <span>Deshabilitado</span>
+                                            </span>
+                                          )}
+                                        </td>
+                                        <td className="px-4 py-2.5">
+                                          <div className="flex items-center gap-1.5">
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                setSelectedCorbatinVehicleId(v.id);
+                                                setSupervisorCorbatinEmpresaFilter(v.empresaNombre || "all");
+                                                setSupervisorTab("corbatines");
+                                              }}
+                                              className="px-2.5 py-1 rounded-lg text-xs font-bold text-teal-700 bg-teal-50 hover:bg-[#0D6E5F] hover:text-white border border-teal-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                              title="Ver, descargar e imprimir corbatín"
+                                            >
+                                              <IconFileText className="w-3.5 h-3.5" />
+                                              <span>Corbatín</span>
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => handleOpenEditarVehiculo(v)}
+                                              className="px-2.5 py-1 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white border border-blue-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                              title="Editar datos y cambiar estatus de acceso"
+                                            >
+                                              <IconEdit className="w-3.5 h-3.5" />
+                                              <span>Editar</span>
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => setSelectedVehiculoParaEliminar(v)}
+                                              className="p-1 px-2 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-600 hover:text-white border border-red-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                              title="Eliminar vehículo"
+                                            >
+                                              <IconTrash className="w-3.5 h-3.5" />
+                                            </button>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+
+                              {/* Paginación de Vehículos (5 por página) */}
+                              {empVehicles.length > ITEMS_PER_PAGE_EMPRESA && (
+                                <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                                  <span className="text-slate-500 font-medium">
+                                    Mostrando <strong className="text-slate-800">{(currentVehiculosPage - 1) * ITEMS_PER_PAGE_EMPRESA + 1}–{Math.min(currentVehiculosPage * ITEMS_PER_PAGE_EMPRESA, empVehicles.length)}</strong> de <strong className="text-slate-800">{empVehicles.length}</strong> vehículos
+                                  </span>
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => setEmpresaVehiculosPageMap((prev) => ({ ...prev, [emp.id]: Math.max(1, currentVehiculosPage - 1) }))}
+                                      disabled={currentVehiculosPage <= 1}
+                                      className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all flex items-center gap-1 ${currentVehiculosPage <= 1
+                                          ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+                                          : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100 cursor-pointer shadow-2xs"
+                                        }`}
+                                    >
+                                      <IconChevronLeft className="w-3.5 h-3.5" />
+                                      <span>Anterior</span>
+                                    </button>
+
+                                    {Array.from({ length: totalVehiculosPages }, (_, i) => i + 1).map((pageNum) => (
+                                      <button
+                                        key={pageNum}
+                                        type="button"
+                                        onClick={() => setEmpresaVehiculosPageMap((prev) => ({ ...prev, [emp.id]: pageNum }))}
+                                        className={`w-7 h-7 rounded-lg text-xs font-bold transition-all flex items-center justify-center cursor-pointer ${pageNum === currentVehiculosPage
+                                            ? "bg-[#0D6E5F] text-white shadow-xs"
+                                            : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
+                                          }`}
+                                      >
+                                        {pageNum}
+                                      </button>
+                                    ))}
+
+                                    <button
+                                      type="button"
+                                      onClick={() => setEmpresaVehiculosPageMap((prev) => ({ ...prev, [emp.id]: Math.min(totalVehiculosPages, currentVehiculosPage + 1) }))}
+                                      disabled={currentVehiculosPage >= totalVehiculosPages}
+                                      className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all flex items-center gap-1 ${currentVehiculosPage >= totalVehiculosPages
+                                          ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+                                          : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100 cursor-pointer shadow-2xs"
+                                        }`}
+                                    >
+                                      <span>Siguiente</span>
+                                      <IconChevronRight className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
@@ -5612,204 +5699,202 @@ export default function App() {
                               <p className="text-[11px] text-slate-400 mt-0.5">Haz clic en "Agregar Colaborador" para dar de alta al personal autorizado.</p>
                             </div>
                           ) : (
-                            <div className="overflow-x-auto rounded-2xl border bg-white" style={{ borderColor: "var(--color-border)" }}>
-                              <table className="w-full text-sm">
-                                <thead>
-                                  <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
-                                    {["Foto", "Nombre Completo", "Teléfono", "Fecha Registro", "Estatus Acceso", "Acciones (Supervisor)"].map((h) => (
-                                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
-                                    ))}
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                  {empTrabajadores.map((t) => (
-                                    <tr key={t.id_trabajador} className="hover:bg-slate-50/70 transition-colors">
-                                      <td className="px-4 py-2.5">
-                                        {t.foto_url ? (
-                                          <button
-                                            type="button"
-                                            onClick={() => setSelectedFotoTrabajadorPreview(t)}
-                                            className="cursor-pointer group block relative"
-                                            title="Clic para ver credencial ampliada"
-                                          >
-                                            <img
-                                              src={t.foto_url}
-                                              alt={`${t.nombre} ${t.apellidos}`}
-                                              className="w-10 h-10 object-cover rounded-xl border border-slate-200 group-hover:border-[#0D6E5F] shadow-2xs group-hover:scale-105 transition-all"
-                                              onError={(e) => {
-                                                e.currentTarget.style.display = "none";
-                                              }}
-                                            />
-                                          </button>
-                                        ) : (
-                                          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs border border-slate-200">
-                                            {t.nombre.charAt(0)}
-                                          </div>
-                                        )}
-                                      </td>
-                                      <td className="px-4 py-2.5">
-                                        <div className="font-bold text-xs text-slate-900">{t.nombre} {t.apellidos}</div>
-                                        <div className="text-[11px] text-slate-400 font-mono">ID: #{t.id_trabajador}</div>
-                                      </td>
-                                      <td className="px-4 py-2.5 font-mono text-xs text-slate-600">
-                                        <CopyableInlineText text={t.telefono} label="Teléfono" onCopyToast={showToast} />
-                                      </td>
-                                      <td className="px-4 py-2.5 text-xs text-slate-500">
-                                        {t.created_at ? new Date(t.created_at).toISOString().split("T")[0] : "2026-02-01"}
-                                      </td>
-                                      <td className="px-4 py-2.5">
-                                        <button
-                                          type="button"
-                                          onClick={() => handleToggleActivoTrabajador(t)}
-                                          disabled={Boolean(togglingTrabajadorIds[t.id_trabajador])}
-                                          className={`cursor-pointer group flex items-center gap-1.5 transition-all ${togglingTrabajadorIds[t.id_trabajador] ? "opacity-50 pointer-events-none" : ""
-                                            }`}
-                                          title={t.activo ? "Clic para desactivar acceso" : "Clic para activar acceso"}
-                                        >
-                                          {t.activo ? (
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 shadow-2xs transition-all">
-                                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                              <span>Autorizado</span>
-                                            </span>
-                                          ) : (
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-300 hover:bg-red-100 hover:border-red-400 shadow-2xs transition-all">
-                                              <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                                              <span>Inactivo</span>
-                                            </span>
-                                          )}
-                                        </button>
-                                      </td>
-                                      <td className="px-4 py-2.5">
-                                        <div className="flex items-center gap-1.5">
-                                          <button
-                                            type="button"
-                                            onClick={() => handleOpenEditarTrabajador(t)}
-                                            className="px-2.5 py-1 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white border border-blue-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
-                                            title="Modificar datos del trabajador"
-                                          >
-                                            <IconEdit className="w-3.5 h-3.5" />
-                                            <span>Editar</span>
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => setSelectedTrabajadorParaEliminar(t)}
-                                            className="p-1 px-2 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-600 hover:text-white border border-red-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
-                                            title="Eliminar trabajador"
-                                          >
-                                            <IconTrash className="w-3.5 h-3.5" />
-                                          </button>
-                                        </div>
-                                      </td>
+                            <div className="overflow-hidden rounded-2xl border bg-white shadow-2xs" style={{ borderColor: "var(--color-border)" }}>
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                  <thead>
+                                    <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
+                                      {["Foto", "Nombre Completo", "Teléfono", "Documentación (IMSS / DC-3)", "Fecha Registro", "Estatus Acceso", "Acciones (Supervisor)"].map((h) => (
+                                        <th key={h} className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
+                                      ))}
                                     </tr>
-                                  ))}
-                                </tbody>
-                              </table>
+                                  </thead>
+                                  <tbody className="divide-y divide-slate-100">
+                                    {paginatedTrabajadores.map((t) => (
+                                      <tr key={t.id_trabajador} className="hover:bg-slate-50/70 transition-colors">
+                                        <td className="px-4 py-2.5">
+                                          {t.foto_url ? (
+                                            <button
+                                              type="button"
+                                              onClick={() => setSelectedFotoTrabajadorPreview(t)}
+                                              className="cursor-pointer group block relative"
+                                              title="Clic para ver credencial ampliada"
+                                            >
+                                              <img
+                                                src={t.foto_url}
+                                                alt={`${t.nombre} ${t.apellidos}`}
+                                                className="w-10 h-10 object-cover rounded-xl border border-slate-200 group-hover:border-[#0D6E5F] shadow-2xs group-hover:scale-105 transition-all"
+                                                onError={(e) => {
+                                                  e.currentTarget.style.display = "none";
+                                                }}
+                                              />
+                                            </button>
+                                          ) : (
+                                            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs border border-slate-200">
+                                              {t.nombre.charAt(0)}
+                                            </div>
+                                          )}
+                                        </td>
+                                        <td className="px-4 py-2.5">
+                                          <div className="font-bold text-xs text-slate-900">{t.nombre} {t.apellidos}</div>
+                                          <div className="text-[11px] text-slate-400 font-mono">ID: #{t.id_trabajador}</div>
+                                        </td>
+                                        <td className="px-4 py-2.5 font-mono text-xs text-slate-600">
+                                          <CopyableInlineText text={t.telefono} label="Teléfono" onCopyToast={showToast} />
+                                        </td>
+                                        <td className="px-4 py-2.5">
+                                          <div className="flex items-center gap-1.5 flex-wrap">
+                                            {t.comprobante_seguro_url ? (
+                                              <button
+                                                type="button"
+                                                onClick={() => setSelectedDocTrabajadorPreview({
+                                                  isOpen: true,
+                                                  url: t.comprobante_seguro_url!,
+                                                  title: "Comprobante de Seguro Social (IMSS)",
+                                                  workerName: `${t.nombre} ${t.apellidos}`,
+                                                  type: "seguro"
+                                                })}
+                                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-teal-50 text-teal-800 border border-teal-300 hover:bg-teal-100 shadow-2xs transition-all cursor-pointer"
+                                                title="Ver comprobante de seguro social (IMSS)"
+                                              >
+                                                <IconShield className="w-3 h-3 text-teal-600" />
+                                                <span>IMSS ✓</span>
+                                              </button>
+                                            ) : (
+                                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium text-slate-400 bg-slate-50 border border-slate-200">
+                                                Sin IMSS
+                                              </span>
+                                            )}
+
+                                            {t.dc3_documento_url ? (
+                                              <button
+                                                type="button"
+                                                onClick={() => setSelectedDocTrabajadorPreview({
+                                                  isOpen: true,
+                                                  url: t.dc3_documento_url!,
+                                                  title: "Constancia de Competencias Laborales DC-3",
+                                                  workerName: `${t.nombre} ${t.apellidos}`,
+                                                  type: "dc3"
+                                                })}
+                                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-50 text-indigo-800 border border-indigo-300 hover:bg-indigo-100 shadow-2xs transition-all cursor-pointer"
+                                                title="Ver constancia de competencias DC-3"
+                                              >
+                                                <IconFileText className="w-3 h-3 text-indigo-600" />
+                                                <span>DC-3 ✓</span>
+                                              </button>
+                                            ) : (
+                                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium text-slate-400 bg-slate-50 border border-slate-200">
+                                                Sin DC-3
+                                              </span>
+                                            )}
+                                          </div>
+                                        </td>
+                                        <td className="px-4 py-2.5 text-xs text-slate-500">
+                                          {t.created_at ? new Date(t.created_at).toISOString().split("T")[0] : "2026-02-01"}
+                                        </td>
+                                        <td className="px-4 py-2.5">
+                                          <button
+                                            type="button"
+                                            onClick={() => handleToggleActivoTrabajador(t)}
+                                            disabled={Boolean(togglingTrabajadorIds[t.id_trabajador])}
+                                            className={`cursor-pointer group flex items-center gap-1.5 transition-all ${togglingTrabajadorIds[t.id_trabajador] ? "opacity-50 pointer-events-none" : ""
+                                              }`}
+                                            title={t.activo ? "Clic para desactivar acceso" : "Clic para activar acceso"}
+                                          >
+                                            {t.activo ? (
+                                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 shadow-2xs transition-all">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                                <span>Autorizado</span>
+                                              </span>
+                                            ) : (
+                                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-300 hover:bg-red-100 hover:border-red-400 shadow-2xs transition-all">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                                                <span>Inactivo</span>
+                                              </span>
+                                            )}
+                                          </button>
+                                        </td>
+                                        <td className="px-4 py-2.5">
+                                          <div className="flex items-center gap-1.5">
+                                            <button
+                                              type="button"
+                                              onClick={() => handleOpenEditarTrabajador(t)}
+                                              className="px-2.5 py-1 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white border border-blue-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                              title="Modificar datos del trabajador"
+                                            >
+                                              <IconEdit className="w-3.5 h-3.5" />
+                                              <span>Editar</span>
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => setSelectedTrabajadorParaEliminar(t)}
+                                              className="p-1 px-2 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-600 hover:text-white border border-red-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                              title="Eliminar trabajador"
+                                            >
+                                              <IconTrash className="w-3.5 h-3.5" />
+                                            </button>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+
+                              {/* Paginación de Trabajadores (5 por página) */}
+                              {empTrabajadores.length > ITEMS_PER_PAGE_EMPRESA && (
+                                <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                                  <span className="text-slate-500 font-medium">
+                                    Mostrando <strong className="text-slate-800">{(currentTrabajadoresPage - 1) * ITEMS_PER_PAGE_EMPRESA + 1}–{Math.min(currentTrabajadoresPage * ITEMS_PER_PAGE_EMPRESA, empTrabajadores.length)}</strong> de <strong className="text-slate-800">{empTrabajadores.length}</strong> colaboradores
+                                  </span>
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => setEmpresaTrabajadoresPageMap((prev) => ({ ...prev, [emp.id]: Math.max(1, currentTrabajadoresPage - 1) }))}
+                                      disabled={currentTrabajadoresPage <= 1}
+                                      className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all flex items-center gap-1 ${currentTrabajadoresPage <= 1
+                                          ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+                                          : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100 cursor-pointer shadow-2xs"
+                                        }`}
+                                    >
+                                      <IconChevronLeft className="w-3.5 h-3.5" />
+                                      <span>Anterior</span>
+                                    </button>
+
+                                    {Array.from({ length: totalTrabajadoresPages }, (_, i) => i + 1).map((pageNum) => (
+                                      <button
+                                        key={pageNum}
+                                        type="button"
+                                        onClick={() => setEmpresaTrabajadoresPageMap((prev) => ({ ...prev, [emp.id]: pageNum }))}
+                                        className={`w-7 h-7 rounded-lg text-xs font-bold transition-all flex items-center justify-center cursor-pointer ${pageNum === currentTrabajadoresPage
+                                            ? "bg-[#0D6E5F] text-white shadow-xs"
+                                            : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
+                                          }`}
+                                      >
+                                        {pageNum}
+                                      </button>
+                                    ))}
+
+                                    <button
+                                      type="button"
+                                      onClick={() => setEmpresaTrabajadoresPageMap((prev) => ({ ...prev, [emp.id]: Math.min(totalTrabajadoresPages, currentTrabajadoresPage + 1) }))}
+                                      disabled={currentTrabajadoresPage >= totalTrabajadoresPages}
+                                      className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all flex items-center gap-1 ${currentTrabajadoresPage >= totalTrabajadoresPages
+                                          ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+                                          : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100 cursor-pointer shadow-2xs"
+                                        }`}
+                                    >
+                                      <span>Siguiente</span>
+                                      <IconChevronRight className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
                       )}
 
-                      {/* SUB-TAB 3: ARCHIVO DE SEGURO SOCIAL */}
-                      {activeSubTab === "seguro" && (() => {
-                        const hasDoc = Boolean(emp.tiene_seguro || (emp.seguro_vigencia_url && String(emp.seguro_vigencia_url).trim().length > 10));
-                        return (
-                          <div className="space-y-4">
-                            {hasDoc ? (
-                              <div className="rounded-2xl border bg-white p-5 sm:p-6 shadow-2xs space-y-4" style={{ borderColor: "var(--color-border)" }}>
-                                {/* Header del Archivo */}
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4" style={{ borderColor: "var(--color-border)" }}>
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-2xl bg-teal-50 text-[#0D6E5F] border border-teal-200 flex items-center justify-center font-bold shadow-2xs">
-                                      <IconFileText className="w-6 h-6" />
-                                    </div>
-                                    <div>
-                                      <div className="flex items-center gap-2">
-                                        <h4 className="font-bold text-sm text-slate-900">
-                                          Comprobante de Seguro Social Adjunto
-                                        </h4>
-                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
-                                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                          <span>Archivo Guardado ✓</span>
-                                        </span>
-                                      </div>
-                                      <p className="text-xs text-slate-500 mt-0.5">
-                                        Tipo: <strong className="text-slate-800">{emp.seguro_vigencia_url ? (emp.seguro_vigencia_url.startsWith("data:application/pdf") ? "Documento PDF" : "Imagen") : "Comprobante Oficial Guardado"}</strong>
-                                      </p>
-                                    </div>
-                                  </div>
-
-                                  <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenVisualizarSeguro(emp)}
-                                      className="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#094E43] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-                                    >
-                                      <IconEye className="w-3.5 h-3.5" />
-                                      <span>Visualizar Archivo</span>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenAdjuntarSeguro(emp)}
-                                      className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                                    >
-                                      <IconEdit className="w-3.5 h-3.5" />
-                                      <span>Reemplazar</span>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleEliminarSeguro(emp)}
-                                      className="p-2 rounded-xl text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
-                                      title="Eliminar archivo adjunto"
-                                    >
-                                      <IconTrash className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                </div>
-
-                                {/* Barra inferior con acceso rápido a visor */}
-                                <div className="p-3.5 rounded-xl bg-slate-100 flex items-center justify-between gap-3 text-xs">
-                                  <div className="flex items-center gap-2 text-slate-700">
-                                    <IconShield className="w-4 h-4 text-[#0D6E5F]" />
-                                    <span className="font-medium">
-                                      Comprobante oficial disponible para consulta del Supervisor
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenVisualizarSeguro(emp)}
-                                      className="text-xs font-bold text-[#0D6E5F] hover:underline flex items-center gap-1 cursor-pointer"
-                                    >
-                                      <IconEye className="w-3.5 h-3.5" />
-                                      <span>Abrir Visor</span>
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="p-10 text-center rounded-2xl bg-white border border-slate-200 space-y-3">
-                                <div className="w-14 h-14 rounded-3xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
-                                  <IconFileText className="w-7 h-7" />
-                                </div>
-                                <div className="space-y-1">
-                                  <h4 className="font-bold text-sm text-slate-800">Esta empresa no tiene archivo de seguro social adjunto</h4>
-                                  <p className="text-xs text-slate-500 max-w-md mx-auto">
-                                    Adjunta el archivo del comprobante (PDF o imagen) para el control de acceso del contratista.
-                                  </p>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenAdjuntarSeguro(emp)}
-                                  className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#094E43] transition-all inline-flex items-center gap-2 cursor-pointer shadow-xs mt-2"
-                                >
-                                  <IconShield className="w-4 h-4" />
-                                  <span>Adjuntar Archivo</span>
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })()}
                     </div>
                   )}
                 </div>
@@ -8734,69 +8819,140 @@ export default function App() {
                                 </div>
                               </div>
 
-                              {/* MENÚ DESPLEGABLE DE VEHÍCULOS */}
+                              {/* MENÚ DESPLEGABLE DE VEHÍCULOS Y CORBATINES VERDES */}
                               {isCorbatinDropdownOpen && (
-                                <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border-2 border-emerald-400 shadow-2xl overflow-hidden max-h-64 overflow-y-auto">
+                                <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border-2 border-emerald-400 shadow-2xl overflow-hidden max-h-72 overflow-y-auto">
                                   <div className="px-3 py-1.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-[11px] font-semibold text-slate-600 sticky top-0 z-10">
                                     <span>
                                       {casetaCorbatin.trim()
-                                        ? `${filteredCasetaVehicles.length} ${filteredCasetaVehicles.length === 1 ? "unidad encontrada" : "unidades encontradas"}`
-                                        : `Vehículos registrados (${vehicles.length})`}
+                                        ? `${filteredCasetaVehicles.length + filteredCasetaCorbatinesVerdes.length} registros encontrados`
+                                        : `Vehículos y Corbatines (${vehicles.length + corbatinesVerdes.length})`}
                                     </span>
                                     <span className="text-[10px] text-slate-400 hidden sm:inline">
                                       Usa ↑ ↓ y Enter
                                     </span>
                                   </div>
 
-                                  {filteredCasetaVehicles.length > 0 ? (
-                                    <div className="divide-y divide-slate-100">
-                                      {filteredCasetaVehicles.map((v, idx) => {
-                                        const isSelected = selectedVehicleId === v.id;
-                                        const isHighlighted = corbatinHighlightedIndex === idx;
-                                        return (
-                                          <div
-                                            key={v.id}
-                                            onClick={() => handleSelectVehicleFromDropdown(v)}
-                                            onMouseEnter={() => setCorbatinHighlightedIndex(idx)}
-                                            className={`p-2.5 cursor-pointer transition-colors border-l-4 ${isSelected
-                                              ? "bg-emerald-100/70 border-l-emerald-600"
-                                              : isHighlighted
-                                                ? "bg-emerald-50/80 border-l-emerald-400"
-                                                : "hover:bg-slate-50 border-l-transparent"
-                                              }`}
-                                          >
-                                            <div className="flex items-center justify-between gap-2">
-                                              <div className="flex items-center gap-1.5 flex-wrap">
-                                                <span className="px-1.5 py-0.5 rounded-md bg-emerald-700 text-white font-mono font-bold text-xs">
-                                                  #{v.corbatinNum}
-                                                </span>
-                                                <span className="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-900 font-mono font-bold text-xs tracking-wider">
-                                                  {v.placas}
-                                                </span>
-                                                <span className="font-bold text-slate-900 text-xs truncate max-w-[130px]">
-                                                  {v.marca} {v.modelo}
+                                  {/* SECCIÓN 1: VEHÍCULOS REGULARES (CORBATINES REGULARES / NARANJA) */}
+                                  {filteredCasetaVehicles.length > 0 && (
+                                    <div>
+                                      <div className="px-3 py-1 bg-slate-100 border-y border-slate-200 text-[10px] font-extrabold uppercase tracking-wider text-slate-700 flex items-center justify-between">
+                                        <span className="flex items-center gap-1.5">
+                                          <IconCar className="w-3.5 h-3.5 text-slate-600" />
+                                          <span>Vehículos Registrados con Corbatín Regular ({filteredCasetaVehicles.length})</span>
+                                        </span>
+                                        <span className="text-slate-500 lowercase font-medium">acceso frecuente</span>
+                                      </div>
+                                      <div className="divide-y divide-slate-100">
+                                        {filteredCasetaVehicles.map((v, idx) => {
+                                          const isSelected = selectedVehicleId === v.id;
+                                          const isHighlighted = corbatinHighlightedIndex === idx;
+                                          return (
+                                            <div
+                                              key={v.id}
+                                              onClick={() => handleSelectVehicleFromDropdown(v)}
+                                              onMouseEnter={() => setCorbatinHighlightedIndex(idx)}
+                                              className={`p-2.5 cursor-pointer transition-colors border-l-4 ${isSelected
+                                                ? "bg-emerald-100/70 border-l-emerald-600"
+                                                : isHighlighted
+                                                  ? "bg-emerald-50/80 border-l-emerald-400"
+                                                  : "hover:bg-slate-50 border-l-transparent"
+                                                }`}
+                                            >
+                                              <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                  <span className="px-1.5 py-0.5 rounded-md bg-teal-800 text-white font-mono font-bold text-xs">
+                                                    #{v.corbatinNum}
+                                                  </span>
+                                                  <span className="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-900 font-mono font-bold text-xs tracking-wider">
+                                                    {v.placas}
+                                                  </span>
+                                                  <span className="font-bold text-slate-900 text-xs truncate max-w-[130px]">
+                                                    {v.marca} {v.modelo}
+                                                  </span>
+                                                </div>
+                                                <span
+                                                  className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${v.status === "Habilitado"
+                                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                                    : "bg-rose-50 text-rose-700 border-rose-200"
+                                                    }`}
+                                                >
+                                                  {v.status === "Habilitado" ? "✓" : "⛔"}
                                                 </span>
                                               </div>
-                                              <span
-                                                className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${v.status === "Habilitado"
-                                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                                  : "bg-rose-50 text-rose-700 border-rose-200"
-                                                  }`}
-                                              >
-                                                {v.status === "Habilitado" ? "✓" : "⛔"}
-                                              </span>
+                                              <div className="mt-0.5 text-[11px] text-slate-500 truncate flex items-center gap-1">
+                                                <IconBuilding className="w-3 h-3 text-slate-400 shrink-0" />
+                                                {v.empresaNombre}
+                                              </div>
                                             </div>
-                                            <div className="mt-0.5 text-[11px] text-slate-500 truncate flex items-center gap-1">
-                                              <IconBuilding className="w-3 h-3 text-slate-400 shrink-0" />
-                                              {v.empresaNombre}
-                                            </div>
-                                          </div>
-                                        );
-                                      })}
+                                          );
+                                        })}
+                                      </div>
                                     </div>
-                                  ) : (
-                                    <div className="p-3 text-center text-xs text-slate-500">
-                                      No hay vehículos con "{casetaCorbatin}"
+                                  )}
+
+                                  {/* SECCIÓN 2: CORBATINES VERDES (PROYECTOS / LARGA ESTANCIA) */}
+                                  {filteredCasetaCorbatinesVerdes.length > 0 && (
+                                    <div>
+                                      <div className="px-3 py-1 bg-emerald-100/70 border-y border-emerald-200 text-[10px] font-extrabold uppercase tracking-wider text-emerald-900 flex items-center justify-between">
+                                        <span className="flex items-center gap-1.5">
+                                          <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                                          <span>Corbatines Verdes · Proyectos / Larga Estancia ({filteredCasetaCorbatinesVerdes.length})</span>
+                                        </span>
+                                        <span className="text-emerald-700 lowercase font-medium">acceso temporal</span>
+                                      </div>
+                                      <div className="divide-y divide-emerald-50">
+                                        {filteredCasetaCorbatinesVerdes.map((c, idx) => {
+                                          const isSelected = selectedCorbatinVerdeId === c.id;
+                                          const isHighlighted = corbatinHighlightedIndex === (idx + filteredCasetaVehicles.length);
+                                          return (
+                                            <div
+                                              key={`corb-verde-${c.id}`}
+                                              onClick={() => handleSelectCorbatinVerdeFromDropdown(c)}
+                                              onMouseEnter={() => setCorbatinHighlightedIndex(idx + filteredCasetaVehicles.length)}
+                                              className={`p-2.5 cursor-pointer transition-colors border-l-4 ${isSelected
+                                                ? "bg-emerald-100/90 border-l-emerald-600"
+                                                : isHighlighted
+                                                  ? "bg-emerald-50/80 border-l-emerald-400"
+                                                  : "bg-emerald-50/40 hover:bg-emerald-100/60 border-l-emerald-500"
+                                                }`}
+                                            >
+                                              <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                  <span className="px-2 py-0.5 rounded-md bg-emerald-700 text-white font-mono font-extrabold text-xs shadow-2xs">
+                                                    VERDE #{formatCorbatinVerdeNum(c.corbatinNum)}
+                                                  </span>
+                                                  <span className="font-bold text-slate-900 text-xs truncate max-w-[150px]">
+                                                    {c.empresaNombre}
+                                                  </span>
+                                                  <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-200">
+                                                    {c.vigenciaTexto || "6 Meses"}
+                                                  </span>
+                                                </div>
+                                                <span
+                                                  className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${c.activo !== false
+                                                    ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                                    : "bg-rose-50 text-rose-700 border-rose-200"
+                                                    }`}
+                                                >
+                                                  {c.activo !== false ? "✓ Activo" : "⛔ Inactivo"}
+                                                </span>
+                                              </div>
+                                              <div className="mt-0.5 text-[11px] text-slate-500 truncate flex items-center justify-between">
+                                                <span className="truncate">📞 {c.telefono || "Sin teléfono registrado"}</span>
+                                                <span className="text-[10px] text-slate-400 font-mono">Vence: {c.fechaVencimiento || "Vigente"}</span>
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {filteredCasetaVehicles.length === 0 && filteredCasetaCorbatinesVerdes.length === 0 && (
+                                    <div className="p-4 text-center text-xs text-slate-500 space-y-1">
+                                      <p className="font-bold text-slate-700">No hay vehículos ni corbatines verdes con "{casetaCorbatin}"</p>
+                                      <p className="text-[11px] text-slate-400">Verifica el número de corbatín o nombre de la empresa.</p>
                                     </div>
                                   )}
                                 </div>
@@ -8811,9 +8967,11 @@ export default function App() {
                                   <span>Conductor / Chofer</span>
                                 </label>
                                 <span className="text-[10px] text-slate-400 truncate max-w-[140px]">
-                                  {selectedEmpresaId
-                                    ? `${currentEmpresa?.nombre ? currentEmpresa.nombre.split(" ")[0] : "Empresa"} (${empresaTrabajadores.length})`
-                                    : `Todos (${empresaTrabajadores.length})`}
+                                  {currentCasetaCorbatinVerde
+                                    ? "Chofer del Proyecto"
+                                    : selectedEmpresaId
+                                      ? `${currentEmpresa?.nombre ? currentEmpresa.nombre.split(" ")[0] : "Empresa"} (${empresaTrabajadores.length})`
+                                      : `Todos (${empresaTrabajadores.length})`}
                                 </span>
                               </div>
 
@@ -8828,9 +8986,11 @@ export default function App() {
                                   onKeyDown={handleConductorInputKeyDown}
                                   onFocus={() => setIsConductorDropdownOpen(true)}
                                   placeholder={
-                                    selectedEmpresaId
-                                      ? (empresaTrabajadores.length > 0 ? "Escribe o selecciona el chofer..." : "Sin colaboradores registrados")
-                                      : "Escribe o busca conductor..."
+                                    currentCasetaCorbatinVerde
+                                      ? "Escribe el nombre del chofer que ingresa hoy..."
+                                      : selectedEmpresaId
+                                        ? (empresaTrabajadores.length > 0 ? "Escribe o selecciona el chofer..." : "Sin colaboradores registrados")
+                                        : "Escribe o busca conductor..."
                                   }
                                   className="w-full rounded-xl pl-9 pr-16 py-2.5 text-sm font-bold text-slate-900 bg-white border-2 border-emerald-400 shadow-xs outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-600 transition-all placeholder:text-slate-400 placeholder:font-normal placeholder:text-xs"
                                 />
@@ -8852,7 +9012,7 @@ export default function App() {
                                   <button
                                     type="button"
                                     onClick={() => setIsConductorDropdownOpen(!isConductorDropdownOpen)}
-                                    title="Desplegar choferes de la empresa"
+                                    title="Desplegar choferes"
                                     className="p-1 rounded-md text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100/60 transition-colors cursor-pointer"
                                   >
                                     {isConductorDropdownOpen ? (
@@ -8869,7 +9029,9 @@ export default function App() {
                                 <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border-2 border-emerald-400 shadow-2xl overflow-hidden max-h-64 overflow-y-auto">
                                   <div className="px-3 py-1.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-[11px] font-semibold text-slate-600 sticky top-0 z-10">
                                     <span className="truncate">
-                                      Colaboradores de {currentEmpresa?.nombre || "la empresa"} ({filteredEmpresaTrabajadores.length})
+                                      {currentCasetaCorbatinVerde
+                                        ? `Chofer para ${currentCasetaCorbatinVerde.empresaNombre}`
+                                        : `Colaboradores de ${currentEmpresa?.nombre || "la empresa"} (${filteredEmpresaTrabajadores.length})`}
                                     </span>
                                     <span className="text-[10px] text-slate-400 hidden sm:inline shrink-0">
                                       Usa ↑ ↓ y Enter
@@ -8912,11 +9074,17 @@ export default function App() {
                                     </div>
                                   ) : (
                                     <div className="p-3 text-center text-xs text-slate-500 space-y-1">
-                                      <p className="font-bold text-slate-700">No hay colaboradores con "{casetaConductorQuery}"</p>
+                                      <p className="font-bold text-slate-700">
+                                        {currentCasetaCorbatinVerde
+                                          ? `Puedes capturar libremente el nombre del chofer arriba.`
+                                          : `No hay colaboradores con "${casetaConductorQuery}"`}
+                                      </p>
                                       <p className="text-[11px] text-slate-400">
-                                        {empresaTrabajadores.length === 0
-                                          ? `No hay colaboradores registrados para ${currentEmpresa?.nombre || "esta empresa"}.`
-                                          : "Puedes escribir el nombre manualmente si cuenta con autorización especial."}
+                                        {currentCasetaCorbatinVerde
+                                          ? "Los corbatines verdes de proyecto permiten registrar cualquier chofer acreditado al momento."
+                                          : (empresaTrabajadores.length === 0
+                                            ? `No hay colaboradores registrados para ${currentEmpresa?.nombre || "esta empresa"}.`
+                                            : "Puedes escribir el nombre manualmente si cuenta con autorización especial.")}
                                       </p>
                                     </div>
                                   )}
@@ -8926,82 +9094,152 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* 2. SELECCIÓN DE EMPRESA Y VEHÍCULO */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                              2. Empresa Contratista
-                            </label>
-                            <select
-                              value={selectedEmpresaId}
-                              onChange={(e) => {
-                                const newEmpId = e.target.value;
-                                setSelectedEmpresaId(newEmpId);
-                                setSelectedVehicleId("");
-                                setCasetaCorbatin("");
-                                setCasetaConductorId("");
-                                setCasetaConductorQuery("");
-                              }}
-                              className="w-full rounded-xl px-3.5 py-2 text-xs sm:text-sm border border-slate-300 bg-white font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-200"
-                            >
-                              <option value="">-- Seleccionar Empresa Contratista --</option>
-                              {empresas.map((emp) => (
-                                <option key={emp.id} value={emp.id}>{emp.nombre}</option>
-                              ))}
-                            </select>
-                          </div>
+                        {/* 2. SELECCIÓN DE EMPRESA Y VEHÍCULO / CORBATÍN VERDE */}
+                        {currentCasetaCorbatinVerde ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-2xl bg-emerald-50/80 border-2 border-emerald-300 shadow-2xs">
+                            <div>
+                              <div className="flex items-center justify-between mb-1">
+                                <label className="block text-xs font-extrabold uppercase tracking-wider text-emerald-950">
+                                  2. Empresa / Proyecto (Corbatín Verde)
+                                </label>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-900 border border-emerald-400">
+                                  Larga Estancia
+                                </span>
+                              </div>
+                              <div className="px-3.5 py-2.5 rounded-xl bg-white border border-emerald-300 text-sm font-bold text-slate-900 flex items-center gap-2 shadow-2xs">
+                                <IconBuilding className="w-4 h-4 text-emerald-700 shrink-0" />
+                                <span className="truncate">{currentCasetaCorbatinVerde.empresaNombre}</span>
+                              </div>
+                            </div>
 
-                          <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                              3. Vehículo Asignado
-                            </label>
-                            <select
-                              value={selectedVehicleId}
-                              onChange={(e) => {
-                                const newVehId = e.target.value;
-                                setSelectedVehicleId(newVehId);
-                                const foundVeh = vehicles.find((v) => v.id === newVehId);
-                                if (foundVeh) {
-                                  setCasetaCorbatin(foundVeh.corbatinNum ? `#${foundVeh.corbatinNum}` : (foundVeh.placas || ""));
-                                  if (foundVeh.conductor && foundVeh.conductor !== "N/A" && foundVeh.conductor.trim()) {
-                                    setCasetaConductorQuery(foundVeh.conductor);
-                                    const match = empresaTrabajadores.find((t) => `${t.nombre} ${t.apellidos}`.toLowerCase() === foundVeh.conductor?.toLowerCase());
-                                    setCasetaConductorId(match ? String(match.id_trabajador) : "");
-                                  } else {
-                                    setCasetaConductorId("");
-                                    setCasetaConductorQuery("");
-                                  }
-                                } else {
+                            <div>
+                              <label className="block text-xs font-extrabold uppercase tracking-wider text-emerald-950 mb-1">
+                                3. Placas de la Unidad (Opcional / Identificación)
+                              </label>
+                              <div className="relative">
+                                <input
+                                  type="text"
+                                  value={casetaPlacasVerde}
+                                  onChange={(e) => setCasetaPlacasVerde(e.target.value.toUpperCase())}
+                                  placeholder="Ej. ABC-1234 o Camioneta Blanca"
+                                  className="w-full rounded-xl px-3.5 py-2.5 text-xs sm:text-sm border border-emerald-300 bg-white font-mono font-bold text-slate-900 outline-none focus:ring-2 focus:ring-emerald-400 shadow-2xs placeholder:font-sans placeholder:font-normal placeholder:text-slate-400"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                                2. Empresa Contratista
+                              </label>
+                              <select
+                                value={selectedEmpresaId}
+                                onChange={(e) => {
+                                  const newEmpId = e.target.value;
+                                  setSelectedEmpresaId(newEmpId);
+                                  setSelectedVehicleId("");
+                                  setSelectedCorbatinVerdeId("");
                                   setCasetaCorbatin("");
                                   setCasetaConductorId("");
                                   setCasetaConductorQuery("");
-                                }
-                              }}
-                              className="w-full rounded-xl px-3.5 py-2 text-xs sm:text-sm border border-slate-300 bg-white font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-200"
-                            >
-                              <option value="">-- Seleccionar Vehículo Asignado --</option>
-                              {empresaVehicles.length === 0 && selectedEmpresaId ? (
-                                <option value="" disabled>(Sin vehículos habilitados para esta empresa)</option>
-                              ) : (
-                                empresaVehicles.map((v) => (
-                                  <option key={v.id} value={v.id}>
-                                    {v.marca} {v.modelo} · Placas: {v.placas} · Corbatín #{v.corbatinNum}
-                                  </option>
-                                ))
-                              )}
-                            </select>
-                          </div>
-                        </div>
+                                }}
+                                className="w-full rounded-xl px-3.5 py-2 text-xs sm:text-sm border border-slate-300 bg-white font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-200"
+                              >
+                                <option value="">-- Seleccionar Empresa Contratista --</option>
+                                {empresas.map((emp) => (
+                                  <option key={emp.id} value={emp.id}>{emp.nombre}</option>
+                                ))}
+                              </select>
+                            </div>
 
-                        {/* 3. DATOS AUTOCOMPLETADOS DE LA UNIDAD */}
+                            <div>
+                              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                                3. Vehículo Asignado
+                              </label>
+                              <select
+                                value={selectedVehicleId}
+                                onChange={(e) => {
+                                  const newVehId = e.target.value;
+                                  setSelectedVehicleId(newVehId);
+                                  setSelectedCorbatinVerdeId("");
+                                  const foundVeh = vehicles.find((v) => v.id === newVehId);
+                                  if (foundVeh) {
+                                    setCasetaCorbatin(foundVeh.corbatinNum ? `#${foundVeh.corbatinNum}` : (foundVeh.placas || ""));
+                                    if (foundVeh.conductor && foundVeh.conductor !== "N/A" && foundVeh.conductor.trim()) {
+                                      setCasetaConductorQuery(foundVeh.conductor);
+                                      const match = empresaTrabajadores.find((t) => `${t.nombre} ${t.apellidos}`.toLowerCase() === foundVeh.conductor?.toLowerCase());
+                                      setCasetaConductorId(match ? String(match.id_trabajador) : "");
+                                    } else {
+                                      setCasetaConductorId("");
+                                      setCasetaConductorQuery("");
+                                    }
+                                  } else {
+                                    setCasetaCorbatin("");
+                                    setCasetaConductorId("");
+                                    setCasetaConductorQuery("");
+                                  }
+                                }}
+                                className="w-full rounded-xl px-3.5 py-2 text-xs sm:text-sm border border-slate-300 bg-white font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-200"
+                              >
+                                <option value="">-- Seleccionar Vehículo Asignado --</option>
+                                {empresaVehicles.length === 0 && selectedEmpresaId ? (
+                                  <option value="" disabled>(Sin vehículos habilitados para esta empresa)</option>
+                                ) : (
+                                  empresaVehicles.map((v) => (
+                                    <option key={v.id} value={v.id}>
+                                      {v.marca} {v.modelo} · Placas: {v.placas} · Corbatín #{v.corbatinNum}
+                                    </option>
+                                  ))
+                                )}
+                              </select>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 3. DATOS AUTOCOMPLETADOS DE LA UNIDAD / CORBATÍN VERDE */}
                         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                           <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
                             <span>Datos Autocompletados de la Unidad</span>
                             <span className="font-mono text-emerald-700 font-bold">
-                              {currentCasetaVehicle?.corbatinNum ? `Corbatín #${currentCasetaVehicle.corbatinNum}` : (casetaCorbatin ? `Corbatín ${casetaCorbatin}` : "—")}
+                              {currentCasetaCorbatinVerde
+                                ? `Corbatín Verde #${formatCorbatinVerdeNum(currentCasetaCorbatinVerde.corbatinNum)}`
+                                : currentCasetaVehicle?.corbatinNum
+                                  ? `Corbatín #${currentCasetaVehicle.corbatinNum}`
+                                  : (casetaCorbatin ? `Corbatín ${casetaCorbatin}` : "—")}
                             </span>
                           </div>
-                          {currentCasetaVehicle ? (
+                          {currentCasetaCorbatinVerde ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                              <div>
+                                <span className="text-slate-400 block text-[10px] uppercase font-bold">Modalidad:</span>
+                                <span className="font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded text-[11px]">
+                                  Corbatín Verde
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 block text-[10px] uppercase font-bold">Vigencia:</span>
+                                <span className="font-semibold text-slate-800">
+                                  {currentCasetaCorbatinVerde.vigenciaTexto || "6 Meses"}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 block text-[10px] uppercase font-bold">Conductor:</span>
+                                <span className="font-semibold text-slate-800 truncate block">
+                                  {casetaConductorQuery || "Chofer del Proyecto"}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 block text-[10px] uppercase font-bold">Teléfono:</span>
+                                <CopyableInlineText
+                                  text={currentCasetaCorbatinVerde.telefono || ""}
+                                  label="Teléfono"
+                                  className="font-mono text-slate-800 font-semibold"
+                                  onCopyToast={showToast}
+                                />
+                              </div>
+                            </div>
+                          ) : currentCasetaVehicle ? (
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
                               <div>
                                 <span className="text-slate-400 block text-[10px] uppercase font-bold">Placas:</span>
@@ -9031,7 +9269,7 @@ export default function App() {
                             </div>
                           ) : (
                             <div className="text-center py-2 text-xs text-slate-400">
-                              Selecciona un vehículo o escribe corbatín / placas para autocompletar la información.
+                              Selecciona un vehículo, corbatín verde o escribe corbatín / placas para autocompletar la información.
                             </div>
                           )}
                         </div>
@@ -9152,7 +9390,7 @@ export default function App() {
                               disabled={isSubmittingEntrada}
                               className={`w-full py-3 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 ${isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
                                 }`}
-                              style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
+                              style={{ background: currentCasetaCorbatinVerde ? "linear-gradient(135deg, #0D6E5F, #059669)" : "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                             >
                               {isSubmittingEntrada ? (
                                 <>
@@ -9160,7 +9398,11 @@ export default function App() {
                                   <span>Registrando Entrada...</span>
                                 </>
                               ) : (
-                                <span>{casetaOverrideActive ? "Autorizar Ingreso Vehicular con Anulación" : "Permitir Entrada Vehicular y Registrar"}</span>
+                                <span>
+                                  {currentCasetaCorbatinVerde
+                                    ? (casetaOverrideActive ? "Autorizar Entrada (Corbatín Verde) con Anulación" : "Permitir Entrada (Corbatín Verde) y Registrar")
+                                    : (casetaOverrideActive ? "Autorizar Ingreso Vehicular con Anulación" : "Permitir Entrada Vehicular y Registrar")}
+                                </span>
                               )}
                             </button>
                           )}
@@ -9390,8 +9632,52 @@ export default function App() {
                               </div>
                             )}
                           </div>
+                        ) : currentCasetaCorbatinVerde ? (
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-12 rounded-xl bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-800 font-mono font-black text-sm shrink-0 shadow-sm">
+                                #{formatCorbatinVerdeNum(currentCasetaCorbatinVerde.corbatinNum)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                    Corbatín Verde · Proyecto
+                                  </span>
+                                </div>
+                                <div className="font-bold text-sm text-slate-800 truncate mt-0.5" title={currentCasetaCorbatinVerde.empresaNombre}>
+                                  {currentCasetaCorbatinVerde.empresaNombre || "Empresa de Proyecto"}
+                                </div>
+                                <div className="text-[11px] text-slate-500 truncate font-mono">
+                                  {casetaPlacasVerde ? `Placas: ${casetaPlacasVerde}` : "(Pendiente capturar placas)"}
+                                </div>
+                              </div>
+                              <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                {currentCasetaCorbatinVerde.activo !== false ? "Activo" : "Inactivo"}
+                              </span>
+                            </div>
+
+                            <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-emerald-900 text-xs space-y-1.5">
+                              <div className="font-bold flex items-center gap-1.5 text-emerald-950">
+                                <IconCheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                                <span>Proyecto Temporal / Larga Estancia Habilitado</span>
+                              </div>
+                              <p className="text-[11px] text-emerald-800 leading-relaxed">
+                                Este corbatín verde está autorizado para acceso de proveedores de proyectos.
+                              </p>
+                              {currentCasetaCorbatinVerde.vigenciaTexto && (
+                                <div className="text-[11px] pt-1 text-emerald-900 font-medium">
+                                  <strong>Vigencia:</strong> {currentCasetaCorbatinVerde.vigenciaTexto}
+                                </div>
+                              )}
+                              {currentCasetaCorbatinVerde.telefono && (
+                                <div className="text-[11px] text-emerald-900 font-mono">
+                                  <strong>Contacto:</strong> {currentCasetaCorbatinVerde.telefono}
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         ) : (
-                          <p className="text-xs text-slate-500">Selecciona un vehículo para verificar estatus.</p>
+                          <p className="text-xs text-slate-500">Selecciona un vehículo o corbatín verde para verificar estatus.</p>
                         )
                       ) : (
                         <div className="space-y-3">
@@ -9492,6 +9778,11 @@ export default function App() {
                                       <IconWalk className="w-3 h-3 shrink-0" />
                                       <span>Peatonal</span>
                                     </span>
+                                  ) : b.tipoCorbatin === "VERDE" || b.tipoAcceso === "Corbatín Verde" ? (
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                                      <span>C. Verde</span>
+                                    </span>
                                   ) : (
                                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
                                       <IconCar className="w-3 h-3 shrink-0" />
@@ -9527,8 +9818,16 @@ export default function App() {
                                     </span>
                                   )}
                                 </td>
-                                <td className="px-1 py-2 text-center text-xs font-mono font-bold truncate" style={{ color: "var(--color-primary)" }}>
-                                  {b.corbatinNum && b.corbatinNum !== "—" ? (b.corbatinNum.startsWith("#") ? b.corbatinNum : `#${b.corbatinNum}`) : "—"}
+                                <td className="px-1 py-2 text-center text-xs font-mono font-bold truncate">
+                                  {b.tipoCorbatin === "VERDE" || b.tipoAcceso === "Corbatín Verde" ? (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                                      {b.corbatinNum && b.corbatinNum !== "—" ? (b.corbatinNum.startsWith("#") ? b.corbatinNum : `#${b.corbatinNum}`) : "—"}
+                                    </span>
+                                  ) : (
+                                    <span style={{ color: "var(--color-primary)" }}>
+                                      {b.corbatinNum && b.corbatinNum !== "—" ? (b.corbatinNum.startsWith("#") ? b.corbatinNum : `#${b.corbatinNum}`) : "—"}
+                                    </span>
+                                  )}
                                 </td>
                                 <td className="px-1 py-2 text-center text-[11px] text-slate-700 font-mono truncate" title={horaEntradaLimpia}>
                                   {horaEntradaLimpia}
@@ -10298,6 +10597,164 @@ export default function App() {
                 </div>
               </div>
 
+              {/* 1. Comprobante de Seguro Social (IMSS, ISSSTE, etc.) */}
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <IconShield className="w-3.5 h-3.5 text-[#0D6E5F]" />
+                    <span>Comprobante de Seguro (IMSS, etc.)</span>
+                  </label>
+                  {trabajadorSeguroUrl && (
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      Adjunto en Base64 ✓
+                    </span>
+                  )}
+                </div>
+
+                <div className="border-2 border-dashed border-slate-300 hover:border-[#0D6E5F] rounded-2xl p-4 bg-slate-50/70 hover:bg-teal-50/20 transition-all text-center relative group">
+                  <input
+                    type="file"
+                    accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
+                    onChange={handleSeguroTrabajadorUpload}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
+                  {trabajadorSeguroUrl ? (
+                    <div className="flex items-center justify-between gap-3 p-1">
+                      <div className="flex items-center gap-2.5 min-w-0 text-left">
+                        <div className="w-9 h-9 rounded-xl bg-teal-100 text-[#0D6E5F] flex items-center justify-center shrink-0 shadow-2xs">
+                          <IconShield className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
+                            {trabajadorSeguroFileName || "Comprobante de Seguro Adjunto"}
+                          </div>
+                          <div className="text-[10px] text-teal-700 font-semibold">
+                            {trabajadorSeguroUrl.startsWith("data:application/pdf") ? "Documento PDF" : "Imagen"} en Base64
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 relative z-20">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDocTrabajadorPreview({
+                              isOpen: true,
+                              url: trabajadorSeguroUrl,
+                              title: "Comprobante de Seguro Social (IMSS)",
+                              workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Nuevo Trabajador",
+                              type: "seguro"
+                            });
+                          }}
+                          className="px-2.5 py-1 text-xs font-bold text-teal-800 bg-white border border-teal-300 rounded-lg hover:bg-teal-50 cursor-pointer shadow-2xs flex items-center gap-1"
+                          title="Visualizar documento"
+                        >
+                          <IconEye className="w-3.5 h-3.5" />
+                          <span>Ver</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTrabajadorSeguroUrl("");
+                            setTrabajadorSeguroFileName("");
+                          }}
+                          className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
+                          title="Quitar archivo"
+                        >
+                          <IconTrash className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="py-2 flex flex-col items-center gap-1">
+                      <IconShield className="w-6 h-6 text-slate-400 group-hover:text-[#0D6E5F] transition-colors" />
+                      <span className="text-xs font-bold text-slate-700">Subir Comprobante de Seguro (IMSS, ISSSTE, etc.)</span>
+                      <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Base64)</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 2. Constancia de Competencias Laborales DC-3 */}
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <IconFileText className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Constancia de Competencias DC-3</span>
+                  </label>
+                  {trabajadorDC3Url && (
+                    <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                      Adjunto en Base64 ✓
+                    </span>
+                  )}
+                </div>
+
+                <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-4 bg-slate-50/70 hover:bg-blue-50/20 transition-all text-center relative group">
+                  <input
+                    type="file"
+                    accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
+                    onChange={handleDC3TrabajadorUpload}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
+                  {trabajadorDC3Url ? (
+                    <div className="flex items-center justify-between gap-3 p-1">
+                      <div className="flex items-center gap-2.5 min-w-0 text-left">
+                        <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 shadow-2xs">
+                          <IconFileText className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
+                            {trabajadorDC3FileName || "Constancia DC-3 Adjunta"}
+                          </div>
+                          <div className="text-[10px] text-blue-700 font-semibold">
+                            {trabajadorDC3Url.startsWith("data:application/pdf") ? "Documento PDF" : "Imagen"} en Base64
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 relative z-20">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDocTrabajadorPreview({
+                              isOpen: true,
+                              url: trabajadorDC3Url,
+                              title: "Constancia de Competencias Laborales DC-3",
+                              workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Nuevo Trabajador",
+                              type: "dc3"
+                            });
+                          }}
+                          className="px-2.5 py-1 text-xs font-bold text-blue-800 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 cursor-pointer shadow-2xs flex items-center gap-1"
+                          title="Visualizar documento"
+                        >
+                          <IconEye className="w-3.5 h-3.5" />
+                          <span>Ver</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTrabajadorDC3Url("");
+                            setTrabajadorDC3FileName("");
+                          }}
+                          className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
+                          title="Quitar archivo"
+                        >
+                          <IconTrash className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="py-2 flex flex-col items-center gap-1">
+                      <IconFileText className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                      <span className="text-xs font-bold text-slate-700">Subir Constancia DC-3</span>
+                      <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Base64)</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Estatus Activo */}
               <div className="pt-2 border-t border-slate-100">
                 <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl bg-slate-50 border border-slate-200">
@@ -10461,6 +10918,164 @@ export default function App() {
                       </div>
                     )}
                   </div>
+                </div>
+              </div>
+
+              {/* 1. Comprobante de Seguro Social (IMSS, ISSSTE, etc.) */}
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <IconShield className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Comprobante de Seguro Social (IMSS, etc.)</span>
+                  </label>
+                  {trabajadorSeguroUrl && (
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      Adjunto en Base64 ✓
+                    </span>
+                  )}
+                </div>
+
+                <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-4 bg-slate-50/70 hover:bg-blue-50/20 transition-all text-center relative group">
+                  <input
+                    type="file"
+                    accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
+                    onChange={handleSeguroTrabajadorUpload}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
+                  {trabajadorSeguroUrl ? (
+                    <div className="flex items-center justify-between gap-3 p-1">
+                      <div className="flex items-center gap-2.5 min-w-0 text-left">
+                        <div className="w-9 h-9 rounded-xl bg-teal-100 text-[#0D6E5F] flex items-center justify-center shrink-0 shadow-2xs">
+                          <IconShield className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
+                            {trabajadorSeguroFileName || "Comprobante de Seguro Adjunto"}
+                          </div>
+                          <div className="text-[10px] text-teal-700 font-semibold">
+                            {trabajadorSeguroUrl.startsWith("data:application/pdf") ? "Documento PDF" : "Imagen"} en Base64
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 relative z-20">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDocTrabajadorPreview({
+                              isOpen: true,
+                              url: trabajadorSeguroUrl,
+                              title: "Comprobante de Seguro Social (IMSS)",
+                              workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Trabajador",
+                              type: "seguro"
+                            });
+                          }}
+                          className="px-2.5 py-1 text-xs font-bold text-teal-800 bg-white border border-teal-300 rounded-lg hover:bg-teal-50 cursor-pointer shadow-2xs flex items-center gap-1"
+                          title="Visualizar documento"
+                        >
+                          <IconEye className="w-3.5 h-3.5" />
+                          <span>Ver</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTrabajadorSeguroUrl("");
+                            setTrabajadorSeguroFileName("");
+                          }}
+                          className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
+                          title="Quitar archivo"
+                        >
+                          <IconTrash className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="py-2 flex flex-col items-center gap-1">
+                      <IconShield className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                      <span className="text-xs font-bold text-slate-700">Actualizar / Reemplazar Comprobante de Seguro</span>
+                      <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Base64)</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 2. Constancia de Competencias Laborales DC-3 */}
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <IconFileText className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Constancia de Competencias DC-3</span>
+                  </label>
+                  {trabajadorDC3Url && (
+                    <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                      Adjunto en Base64 ✓
+                    </span>
+                  )}
+                </div>
+
+                <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-4 bg-slate-50/70 hover:bg-blue-50/20 transition-all text-center relative group">
+                  <input
+                    type="file"
+                    accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
+                    onChange={handleDC3TrabajadorUpload}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
+                  {trabajadorDC3Url ? (
+                    <div className="flex items-center justify-between gap-3 p-1">
+                      <div className="flex items-center gap-2.5 min-w-0 text-left">
+                        <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 shadow-2xs">
+                          <IconFileText className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
+                            {trabajadorDC3FileName || "Constancia DC-3 Adjunta"}
+                          </div>
+                          <div className="text-[10px] text-blue-700 font-semibold">
+                            {trabajadorDC3Url.startsWith("data:application/pdf") ? "Documento PDF" : "Imagen"} en Base64
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 relative z-20">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDocTrabajadorPreview({
+                              isOpen: true,
+                              url: trabajadorDC3Url,
+                              title: "Constancia de Competencias Laborales DC-3",
+                              workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Trabajador",
+                              type: "dc3"
+                            });
+                          }}
+                          className="px-2.5 py-1 text-xs font-bold text-blue-800 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 cursor-pointer shadow-2xs flex items-center gap-1"
+                          title="Visualizar documento"
+                        >
+                          <IconEye className="w-3.5 h-3.5" />
+                          <span>Ver</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTrabajadorDC3Url("");
+                            setTrabajadorDC3FileName("");
+                          }}
+                          className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
+                          title="Quitar archivo"
+                        >
+                          <IconTrash className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="py-2 flex flex-col items-center gap-1">
+                      <IconFileText className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                      <span className="text-xs font-bold text-slate-700">Actualizar / Reemplazar Constancia DC-3</span>
+                      <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Base64)</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -10653,6 +11268,109 @@ export default function App() {
               <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoTrabajadorPreview.activo ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
                 {selectedFotoTrabajadorPreview.activo ? "Autorizado" : "Inactivo"}
               </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL VISTA PREVIA DE DOCUMENTOS DE TRABAJADOR (SEGURO IMSS / CONSTANCIA DC-3) ─── */}
+      {selectedDocTrabajadorPreview && selectedDocTrabajadorPreview.isOpen && (
+        <div
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-3 sm:p-5 backdrop-blur-md animate-in fade-in duration-150"
+          onClick={() => setSelectedDocTrabajadorPreview(null)}
+        >
+          <div
+            className="w-full max-w-4xl bg-white rounded-3xl overflow-hidden shadow-2xl border border-slate-200 flex flex-col max-h-[92vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="px-6 py-4 border-b bg-slate-50 flex items-center justify-between gap-4" style={{ borderColor: "var(--color-border)" }}>
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold shrink-0 border ${
+                  selectedDocTrabajadorPreview.type === "seguro"
+                    ? "bg-teal-50 text-[#0D6E5F] border-teal-200"
+                    : "bg-indigo-50 text-indigo-700 border-indigo-200"
+                }`}>
+                  {selectedDocTrabajadorPreview.type === "seguro" ? (
+                    <IconShield className="w-5 h-5" />
+                  ) : (
+                    <IconFileText className="w-5 h-5" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-900 truncate">
+                      {selectedDocTrabajadorPreview.title}
+                    </h3>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 shrink-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      <span>Documento Oficial ✓</span>
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5 truncate">
+                    Colaborador: <strong className="text-slate-800">{selectedDocTrabajadorPreview.workerName}</strong>
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedDocTrabajadorPreview(null)}
+                className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Document Viewer Body */}
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-100/50 flex flex-col items-center justify-center">
+              <div className="w-full rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm flex items-center justify-center min-h-[420px]">
+                {selectedDocTrabajadorPreview.url ? (
+                  selectedDocTrabajadorPreview.url.startsWith("data:application/pdf") || selectedDocTrabajadorPreview.url.toLowerCase().endsWith(".pdf") ? (
+                    <div className="w-full flex flex-col items-center">
+                      <iframe
+                        src={selectedDocTrabajadorPreview.url}
+                        className="w-full h-[540px] border-none"
+                        title={selectedDocTrabajadorPreview.title}
+                      />
+                    </div>
+                  ) : (
+                    <div className="p-4 flex items-center justify-center max-h-[540px]">
+                      <img
+                        src={selectedDocTrabajadorPreview.url}
+                        alt={selectedDocTrabajadorPreview.title}
+                        className="max-h-[500px] w-auto object-contain rounded-xl shadow-xs"
+                      />
+                    </div>
+                  )
+                ) : (
+                  <div className="p-8 text-center text-slate-400 text-xs">
+                    No se encontró documento adjunto disponible.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-3.5 border-t bg-slate-50 flex items-center justify-between gap-3" style={{ borderColor: "var(--color-border)" }}>
+              <button
+                type="button"
+                onClick={() => setSelectedDocTrabajadorPreview(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200 bg-slate-100 transition-colors cursor-pointer"
+              >
+                Cerrar
+              </button>
+
+              {selectedDocTrabajadorPreview.url && (
+                <a
+                  href={selectedDocTrabajadorPreview.url}
+                  download={`${selectedDocTrabajadorPreview.type === "seguro" ? "comprobante_seguro" : "constancia_dc3"}_${selectedDocTrabajadorPreview.workerName.toLowerCase().replace(/\s+/g, "_")}.${selectedDocTrabajadorPreview.url.startsWith("data:application/pdf") ? "pdf" : "png"}`}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#094E43] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <IconDownload className="w-3.5 h-3.5" />
+                  <span>Descargar Archivo</span>
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -11748,235 +12466,7 @@ export default function App() {
         </div>
       )}
 
-      {/* ─── MODAL: ADJUNTAR ARCHIVO DE SEGURO SOCIAL (SUPERVISOR) ─── */}
-      {showModalAdjuntarSeguro && targetEmpresaSeguro && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b pb-3.5" style={{ borderColor: "var(--color-border)" }}>
-              <div className="flex items-center gap-2.5">
-                <div className="p-2.5 rounded-2xl bg-teal-50 text-[#0D6E5F] border border-teal-200">
-                  <IconShield className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-tight">
-                    {targetEmpresaSeguro.seguro_vigencia_url ? "Reemplazar Archivo de Seguro Social" : "Adjuntar Archivo de Seguro Social"}
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Empresa: <strong className="text-slate-800">{targetEmpresaSeguro.nombre}</strong>
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowModalAdjuntarSeguro(false);
-                  setTargetEmpresaSeguro(null);
-                  setSeguroFormError("");
-                }}
-                className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
-              >
-                ✕
-              </button>
-            </div>
 
-            {/* Error banner */}
-            {seguroFormError && (
-              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-semibold flex items-center gap-2">
-                <IconAlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
-                <span>{seguroFormError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleGuardarSeguro} className="space-y-4">
-              {/* Carga de Archivo (PDF o Imagen) */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Archivo de Comprobante / Seguro Social <span className="text-rose-500">*</span>
-                </label>
-                <div className="border-2 border-dashed border-slate-300 hover:border-[#0D6E5F] rounded-2xl p-6 bg-slate-50/70 hover:bg-teal-50/30 transition-all text-center relative group">
-                  <input
-                    type="file"
-                    accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
-                    onChange={handleSeguroFileChange}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                  />
-                  {seguroFileUrl ? (
-                    <div className="space-y-2.5">
-                      <div className="w-14 h-14 rounded-2xl bg-teal-100 text-[#0D6E5F] flex items-center justify-center mx-auto shadow-2xs">
-                        <IconFileText className="w-7 h-7" />
-                      </div>
-                      <div className="font-bold text-xs text-slate-800 truncate max-w-sm mx-auto">
-                        {seguroFileName || "Documento Adjunto Seleccionado"}
-                      </div>
-                      <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300">
-                        {seguroFileType === "pdf" ? "Documento PDF Listo" : "Imagen Lista"}
-                      </span>
-                      <p className="text-[11px] text-slate-400">Haz clic o arrastra para reemplazar el archivo</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-200 text-slate-500 flex items-center justify-center mx-auto group-hover:scale-105 transition-transform">
-                        <IconFileText className="w-6 h-6" />
-                      </div>
-                      <div className="text-xs font-bold text-slate-700">
-                        Haz clic para seleccionar o arrastra el archivo aquí
-                      </div>
-                      <p className="text-[11px] text-slate-400">
-                        Soporta formatos PDF o imágenes PNG, JPG, JPEG, WEBP (Máx. 15 MB)
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Botones */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowModalAdjuntarSeguro(false);
-                    setTargetEmpresaSeguro(null);
-                    setSeguroFormError("");
-                  }}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
-                >
-                  Cancelar
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={isSubmittingSeguro || !seguroFileUrl}
-                  style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-xs active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer ${isSubmittingSeguro || !seguroFileUrl ? "opacity-60 cursor-not-allowed" : ""
-                    }`}
-                >
-                  {isSubmittingSeguro ? (
-                    <>
-                      <IconSpinner className="w-4 h-4 text-white" />
-                      <span>Guardando Archivo...</span>
-                    </>
-                  ) : (
-                    <>
-                      <IconShield className="w-4 h-4" />
-                      <span>Guardar Archivo</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ─── MODAL: VISUALIZADOR DE ARCHIVO DE SEGURO SOCIAL (SUPERVISOR) ─── */}
-      {selectedEmpresaSeguroPreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-3 sm:p-5 backdrop-blur-sm">
-          <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-150">
-            {/* Header */}
-            <div className="px-6 py-4 border-b bg-slate-50 flex items-center justify-between gap-4" style={{ borderColor: "var(--color-border)" }}>
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-2xl bg-teal-50 text-[#0D6E5F] border border-teal-200 flex items-center justify-center font-bold shrink-0">
-                  <IconShield className="w-5 h-5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-slate-900 truncate">
-                      Comprobante de Seguro Social · {selectedEmpresaSeguroPreview.nombre}
-                    </h3>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 shrink-0">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      <span>Adjunto ✓</span>
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-0.5 truncate">
-                    Archivo oficial registrado para acceso de contratistas
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setSelectedEmpresaSeguroPreview(null)}
-                className="text-slate-400 hover:text-slate-700 text-sm cursor-pointer p-1.5 rounded-xl hover:bg-slate-200 transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Document Viewer Body */}
-            <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-100/50 flex flex-col items-center justify-center">
-              <div className="w-full rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm flex items-center justify-center min-h-[420px]">
-                {isLoadingSeguroPreview ? (
-                  <div className="flex flex-col items-center justify-center p-12 gap-3">
-                    <IconSpinner className="w-8 h-8 text-[#0D6E5F] animate-spin" />
-                    <span className="text-xs font-semibold text-slate-600">Cargando comprobante de seguro social...</span>
-                  </div>
-                ) : selectedEmpresaSeguroPreview.seguro_vigencia_url ? (
-                  selectedEmpresaSeguroPreview.seguro_vigencia_url.startsWith("data:application/pdf") || selectedEmpresaSeguroPreview.seguro_vigencia_url.toLowerCase().endsWith(".pdf") ? (
-                    <div className="w-full flex flex-col items-center">
-                      <iframe
-                        src={selectedEmpresaSeguroPreview.seguro_vigencia_url}
-                        className="w-full h-[520px] border-none"
-                        title="Visor PDF de Seguro Social"
-                      />
-                    </div>
-                  ) : (
-                    <div className="p-4 flex items-center justify-center max-h-[520px]">
-                      <img
-                        src={selectedEmpresaSeguroPreview.seguro_vigencia_url}
-                        alt="Comprobante de Seguro Social"
-                        className="max-h-[500px] w-auto object-contain rounded-xl shadow-xs"
-                      />
-                    </div>
-                  )
-                ) : (
-                  <div className="p-8 text-center text-slate-400 text-xs">
-                    No se encontró archivo adjunto disponible.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="px-6 py-3.5 border-t bg-slate-50 flex items-center justify-between gap-3" style={{ borderColor: "var(--color-border)" }}>
-              <button
-                type="button"
-                onClick={() => setSelectedEmpresaSeguroPreview(null)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200 bg-slate-100 transition-colors cursor-pointer"
-              >
-                Cerrar
-              </button>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const emp = selectedEmpresaSeguroPreview;
-                    setSelectedEmpresaSeguroPreview(null);
-                    handleOpenAdjuntarSeguro(emp);
-                  }}
-                  className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                >
-                  <IconEdit className="w-3.5 h-3.5" />
-                  <span>Reemplazar Archivo</span>
-                </button>
-
-                {selectedEmpresaSeguroPreview.seguro_vigencia_url && (
-                  <a
-                    href={selectedEmpresaSeguroPreview.seguro_vigencia_url}
-                    download={`seguro_social_${selectedEmpresaSeguroPreview.nombre.toLowerCase().replace(/\s+/g, '_')}.${selectedEmpresaSeguroPreview.seguro_vigencia_url.startsWith("data:application/pdf") ? "pdf" : "png"}`}
-                    className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#094E43] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-                  >
-                    <IconDownload className="w-3.5 h-3.5" />
-                    <span>Descargar Archivo</span>
-                  </a>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ─── MODAL DE ESCANEO QR PARA CASETA ─── */}
       <QRScannerModal

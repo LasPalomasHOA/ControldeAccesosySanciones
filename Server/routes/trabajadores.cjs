@@ -60,13 +60,28 @@ router.get('/:id', async (req, res) => {
 // POST /api/trabajadores - Registrar nuevo trabajador
 router.post('/', async (req, res) => {
   try {
-    const { id_empresa, nombre, apellidos, telefono, foto_url, activo } = req.body;
+    const {
+      id_empresa,
+      nombre,
+      apellidos,
+      telefono,
+      foto_url,
+      comprobante_seguro_url,
+      comprobante_seguro,
+      seguro_imss_url,
+      dc3_documento_url,
+      dc3_url,
+      dc3_documento,
+      activo
+    } = req.body;
 
     if (!id_empresa || !nombre || !apellidos) {
       return res.status(400).json({ error: 'id_empresa, nombre y apellidos son campos obligatorios' });
     }
 
     const optimizedFoto = foto_url ? await saveBase64Image(foto_url) : null;
+    const seguroDoc = comprobante_seguro_url || comprobante_seguro || seguro_imss_url || null;
+    const dc3Doc = dc3_documento_url || dc3_url || dc3_documento || null;
 
     const nuevo = await db.Trabajador.create({
       id_empresa,
@@ -74,6 +89,8 @@ router.post('/', async (req, res) => {
       apellidos,
       telefono: telefono || null,
       foto_url: optimizedFoto,
+      comprobante_seguro_url: seguroDoc,
+      dc3_documento_url: dc3Doc,
       activo: activo !== undefined ? activo : true
     });
 
@@ -92,7 +109,19 @@ router.post('/', async (req, res) => {
 // PUT /api/trabajadores/:id - Modificar trabajador existente
 router.put('/:id', async (req, res) => {
   try {
-    const { nombre, apellidos, telefono, foto_url, activo } = req.body;
+    const {
+      nombre,
+      apellidos,
+      telefono,
+      foto_url,
+      comprobante_seguro_url,
+      comprobante_seguro,
+      seguro_imss_url,
+      dc3_documento_url,
+      dc3_url,
+      dc3_documento,
+      activo
+    } = req.body;
     const trabajador = await db.Trabajador.findByPk(req.params.id);
 
     if (!trabajador) {
@@ -104,6 +133,12 @@ router.put('/:id', async (req, res) => {
     if (telefono !== undefined) trabajador.telefono = telefono;
     if (foto_url !== undefined) {
       trabajador.foto_url = foto_url ? await saveBase64Image(foto_url) : null;
+    }
+    if (comprobante_seguro_url !== undefined || comprobante_seguro !== undefined || seguro_imss_url !== undefined) {
+      trabajador.comprobante_seguro_url = comprobante_seguro_url || comprobante_seguro || seguro_imss_url || null;
+    }
+    if (dc3_documento_url !== undefined || dc3_url !== undefined || dc3_documento !== undefined) {
+      trabajador.dc3_documento_url = dc3_documento_url || dc3_url || dc3_documento || null;
     }
     if (activo !== undefined) trabajador.activo = activo;
 

@@ -37,10 +37,6 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}/empresas/${id}`);
     return handleResponse(res);
   },
-  async getEmpresaSeguro(id: string | number) {
-    const res = await fetch(`${API_BASE_URL}/empresas/${id}/seguro`);
-    return handleResponse(res);
-  },
   async createEmpresa(data: any) {
     const res = await fetch(`${API_BASE_URL}/empresas`, {
       method: 'POST',

@@ -20,4 +20,4 @@ function broadcastEvent(eventType, payload) {
   });
 }
 
-module.exports = { addClient, removeClient, broadcastEvent };
+module.exports = { addClient, removeClient, broadcastEvent, emitChange: broadcastEvent };
