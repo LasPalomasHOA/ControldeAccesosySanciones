@@ -425,6 +425,7 @@ interface Empresa {
   corbatin_rango_inicio?: number | null;
   corbatin_rango_fin?: number | null;
   cuposTotales?: number | null;
+  tiene_seguro?: boolean;
   seguro_vigencia_url?: string | null;
   seguro_vigencia_fecha?: string | null;
   seguro_poliza_numero?: string | null;
@@ -1521,6 +1522,7 @@ export default function App() {
   const [isSubmittingSeguro, setIsSubmittingSeguro] = useState(false);
   const isSubmittingSeguroRef = useRef(false);
   const [selectedEmpresaSeguroPreview, setSelectedEmpresaSeguroPreview] = useState<Empresa | null>(null);
+  const [isLoadingSeguroPreview, setIsLoadingSeguroPreview] = useState(false);
 
   // ─── Estados de Corbatines Verdes (Empresas / Larga Estancia) ───
   const [corbatinesVerdes, setCorbatinesVerdes] = useState<CorbatinVerde[]>(() => {
@@ -2073,6 +2075,7 @@ export default function App() {
           const rInicio = e.corbatin_rango_inicio !== undefined && e.corbatin_rango_inicio !== null ? Number(e.corbatin_rango_inicio) : null;
           const rFin = e.corbatin_rango_fin !== undefined && e.corbatin_rango_fin !== null ? Number(e.corbatin_rango_fin) : null;
           const cupos = (rInicio !== null && rFin !== null && rFin >= rInicio) ? (rFin - rInicio + 1) : null;
+          const tieneDoc = Boolean(e.tiene_seguro === true || e.tiene_seguro === "true" || (e.seguro_vigencia_url && String(e.seguro_vigencia_url).trim().length > 10));
           return {
             id: String(e.id_empresa || e.id),
             nombre: e.razon_social || e.nombre,
@@ -2085,6 +2088,7 @@ export default function App() {
             corbatin_rango_inicio: rInicio,
             corbatin_rango_fin: rFin,
             cuposTotales: cupos,
+            tiene_seguro: tieneDoc,
             seguro_vigencia_url: e.seguro_vigencia_url || null,
             seguro_vigencia_fecha: e.seguro_vigencia_fecha ? String(e.seguro_vigencia_fecha).split("T")[0] : null,
             seguro_poliza_numero: e.seguro_poliza_numero || null,
@@ -2415,6 +2419,7 @@ export default function App() {
           const rInicio = e.corbatin_rango_inicio !== undefined && e.corbatin_rango_inicio !== null ? Number(e.corbatin_rango_inicio) : null;
           const rFin = e.corbatin_rango_fin !== undefined && e.corbatin_rango_fin !== null ? Number(e.corbatin_rango_fin) : null;
           const cupos = (rInicio !== null && rFin !== null && rFin >= rInicio) ? (rFin - rInicio + 1) : null;
+          const tieneDoc = Boolean(e.tiene_seguro === true || e.tiene_seguro === "true" || (e.seguro_vigencia_url && String(e.seguro_vigencia_url).trim().length > 10));
           return {
             id: String(e.id_empresa || e.id),
             nombre: e.razon_social || e.nombre,
@@ -2427,6 +2432,10 @@ export default function App() {
             corbatin_rango_inicio: rInicio,
             corbatin_rango_fin: rFin,
             cuposTotales: cupos,
+            tiene_seguro: tieneDoc,
+            seguro_vigencia_url: e.seguro_vigencia_url || null,
+            seguro_subido_por: e.seguro_subido_por || null,
+            seguro_subido_at: e.seguro_subido_at || null,
           };
         });
         setEmpresas(mappedEmp);
@@ -4750,7 +4759,7 @@ export default function App() {
 
   // ─── Lógica y Handlers para Archivo de Seguro Social (Exclusivo Supervisor) ───
   const getSeguroStatus = (emp: Empresa) => {
-    const hasDoc = Boolean(emp.seguro_vigencia_url || emp.seguro_subido_at || emp.seguro_subido_por);
+    const hasDoc = Boolean(emp.tiene_seguro || (emp.seguro_vigencia_url && String(emp.seguro_vigencia_url).trim().length > 10));
     if (!hasDoc) {
       return {
         status: "sin_seguro" as const,
@@ -4769,14 +4778,14 @@ export default function App() {
 
   const handleOpenAdjuntarSeguro = async (emp: Empresa) => {
     setTargetEmpresaSeguro(emp);
-    let docUrl = emp.seguro_vigencia_url || "";
+    let docUrl = (emp.seguro_vigencia_url && String(emp.seguro_vigencia_url).trim().length > 10) ? emp.seguro_vigencia_url : "";
 
-    if (!docUrl && (emp.seguro_subido_at || emp.seguro_subido_por)) {
+    if (!docUrl && emp.tiene_seguro) {
       try {
         const res = await api.getEmpresaSeguro(emp.id);
         if (res?.seguro_vigencia_url) {
           docUrl = res.seguro_vigencia_url;
-          setEmpresas(prev => prev.map(e => e.id === emp.id ? { ...e, seguro_vigencia_url: docUrl } : e));
+          setEmpresas(prev => prev.map(e => e.id === emp.id ? { ...e, seguro_vigencia_url: docUrl, tiene_seguro: true } : e));
         }
       } catch { }
     }
@@ -4801,21 +4810,30 @@ export default function App() {
   };
 
   const handleOpenVisualizarSeguro = async (emp: Empresa) => {
-    if (emp.seguro_vigencia_url) {
+    if (emp.seguro_vigencia_url && String(emp.seguro_vigencia_url).trim().length > 10) {
       setSelectedEmpresaSeguroPreview(emp);
-    } else {
-      try {
-        const res = await api.getEmpresaSeguro(emp.id);
-        if (res && res.seguro_vigencia_url) {
-          const updated = { ...emp, seguro_vigencia_url: res.seguro_vigencia_url };
-          setEmpresas(prev => prev.map(e => e.id === emp.id ? { ...e, seguro_vigencia_url: res.seguro_vigencia_url } : e));
-          setSelectedEmpresaSeguroPreview(updated);
-        } else {
-          setSelectedEmpresaSeguroPreview(emp);
-        }
-      } catch {
-        setSelectedEmpresaSeguroPreview(emp);
+      return;
+    }
+
+    setSelectedEmpresaSeguroPreview({ ...emp, seguro_vigencia_url: null });
+    setIsLoadingSeguroPreview(true);
+
+    try {
+      const res = await api.getEmpresaSeguro(emp.id);
+      if (res && res.seguro_vigencia_url) {
+        const updated = { ...emp, seguro_vigencia_url: res.seguro_vigencia_url, tiene_seguro: true };
+        setEmpresas(prev => prev.map(e => e.id === emp.id ? updated : e));
+        setSelectedEmpresaSeguroPreview(updated);
+      } else {
+        showToast("Esta empresa no cuenta con un comprobante de seguro adjunto.", "info");
+        setSelectedEmpresaSeguroPreview(null);
       }
+    } catch (err) {
+      console.error("Error al cargar documento de seguro:", err);
+      showToast("Error al cargar el archivo de seguro.", "error");
+      setSelectedEmpresaSeguroPreview(null);
+    } finally {
+      setIsLoadingSeguroPreview(false);
     }
   };
 
@@ -4873,6 +4891,7 @@ export default function App() {
     setSeguroFormError("");
 
     const payload = {
+      tiene_seguro: true,
       seguro_vigencia_url: seguroFileUrl,
       seguro_vigencia_fecha: null,
       seguro_poliza_numero: null,
@@ -4935,6 +4954,7 @@ export default function App() {
     }
 
     const cleared = {
+      tiene_seguro: false,
       seguro_vigencia_url: null,
       seguro_vigencia_fecha: null,
       seguro_poliza_numero: null,
@@ -5270,19 +5290,20 @@ export default function App() {
                         {/* Badge de Estatus de Seguro (Exclusivo Supervisor) */}
                         {(() => {
                           const seguroInfo = getSeguroStatus(emp);
+                          const hasDoc = Boolean(emp.tiene_seguro || (emp.seguro_vigencia_url && String(emp.seguro_vigencia_url).trim().length > 10));
                           return (
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (emp.seguro_vigencia_url) {
+                                if (hasDoc) {
                                   handleOpenVisualizarSeguro(emp);
                                 } else {
                                   handleOpenAdjuntarSeguro(emp);
                                 }
                               }}
                               className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold border shrink-0 transition-all hover:scale-105 cursor-pointer ${seguroInfo.colorClass}`}
-                              title={emp.seguro_vigencia_url ? "Clic para ver comprobante de vigencia de seguro" : "Clic para adjuntar comprobante de seguro"}
+                              title={hasDoc ? "Clic para ver comprobante de Seguro Social" : "Clic para adjuntar comprobante de Seguro Social"}
                             >
                               <IconShield className="w-3.5 h-3.5" />
                               <span>{seguroInfo.label}</span>
@@ -5399,7 +5420,7 @@ export default function App() {
                               }`}
                           >
                             <IconShield className="w-4 h-4" />
-                            <span>Seguro Social {Boolean(emp.seguro_vigencia_url || emp.seguro_subido_at || emp.seguro_subido_por) ? "✓" : ""}</span>
+                            <span>Seguro Social {Boolean(emp.tiene_seguro || (emp.seguro_vigencia_url && String(emp.seguro_vigencia_url).trim().length > 10)) ? "✓" : ""}</span>
                           </button>
                         </div>
 
@@ -5689,112 +5710,106 @@ export default function App() {
                       )}
 
                       {/* SUB-TAB 3: ARCHIVO DE SEGURO SOCIAL */}
-                      {activeSubTab === "seguro" && (
-                        <div className="space-y-4">
-                          {emp.seguro_vigencia_url ? (
-                            <div className="rounded-2xl border bg-white p-5 sm:p-6 shadow-2xs space-y-4" style={{ borderColor: "var(--color-border)" }}>
-                              {/* Header del Archivo */}
-                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4" style={{ borderColor: "var(--color-border)" }}>
-                                <div className="flex items-center gap-3">
-                                  <div className="w-12 h-12 rounded-2xl bg-teal-50 text-[#0D6E5F] border border-teal-200 flex items-center justify-center font-bold shadow-2xs">
-                                    <IconFileText className="w-6 h-6" />
-                                  </div>
-                                  <div>
-                                    <div className="flex items-center gap-2">
-                                      <h4 className="font-bold text-sm text-slate-900">
-                                        Comprobante de Seguro Social Adjunto
-                                      </h4>
-                                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                        <span>Archivo Guardado ✓</span>
-                                      </span>
+                      {activeSubTab === "seguro" && (() => {
+                        const hasDoc = Boolean(emp.tiene_seguro || (emp.seguro_vigencia_url && String(emp.seguro_vigencia_url).trim().length > 10));
+                        return (
+                          <div className="space-y-4">
+                            {hasDoc ? (
+                              <div className="rounded-2xl border bg-white p-5 sm:p-6 shadow-2xs space-y-4" style={{ borderColor: "var(--color-border)" }}>
+                                {/* Header del Archivo */}
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4" style={{ borderColor: "var(--color-border)" }}>
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-2xl bg-teal-50 text-[#0D6E5F] border border-teal-200 flex items-center justify-center font-bold shadow-2xs">
+                                      <IconFileText className="w-6 h-6" />
                                     </div>
-                                    <p className="text-xs text-slate-500 mt-0.5">
-                                      Tipo: <strong className="text-slate-800">{emp.seguro_vigencia_url.startsWith("data:application/pdf") ? "Documento PDF" : "Imagen"}</strong>
-                                    </p>
+                                    <div>
+                                      <div className="flex items-center gap-2">
+                                        <h4 className="font-bold text-sm text-slate-900">
+                                          Comprobante de Seguro Social Adjunto
+                                        </h4>
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                          <span>Archivo Guardado ✓</span>
+                                        </span>
+                                      </div>
+                                      <p className="text-xs text-slate-500 mt-0.5">
+                                        Tipo: <strong className="text-slate-800">{emp.seguro_vigencia_url ? (emp.seguro_vigencia_url.startsWith("data:application/pdf") ? "Documento PDF" : "Imagen") : "Comprobante Oficial Guardado"}</strong>
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenVisualizarSeguro(emp)}
+                                      className="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#094E43] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                                    >
+                                      <IconEye className="w-3.5 h-3.5" />
+                                      <span>Visualizar Archivo</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenAdjuntarSeguro(emp)}
+                                      className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                                    >
+                                      <IconEdit className="w-3.5 h-3.5" />
+                                      <span>Reemplazar</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleEliminarSeguro(emp)}
+                                      className="p-2 rounded-xl text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
+                                      title="Eliminar archivo adjunto"
+                                    >
+                                      <IconTrash className="w-4 h-4" />
+                                    </button>
                                   </div>
                                 </div>
 
-                                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenVisualizarSeguro(emp)}
-                                    className="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#094E43] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-                                  >
-                                    <IconEye className="w-3.5 h-3.5" />
-                                    <span>Visualizar Archivo</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenAdjuntarSeguro(emp)}
-                                    className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                                  >
-                                    <IconEdit className="w-3.5 h-3.5" />
-                                    <span>Reemplazar</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleEliminarSeguro(emp)}
-                                    className="p-2 rounded-xl text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
-                                    title="Eliminar archivo adjunto"
-                                  >
-                                    <IconTrash className="w-4 h-4" />
-                                  </button>
+                                {/* Barra inferior con acceso rápido a visor */}
+                                <div className="p-3.5 rounded-xl bg-slate-100 flex items-center justify-between gap-3 text-xs">
+                                  <div className="flex items-center gap-2 text-slate-700">
+                                    <IconShield className="w-4 h-4 text-[#0D6E5F]" />
+                                    <span className="font-medium">
+                                      Comprobante oficial disponible para consulta del Supervisor
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenVisualizarSeguro(emp)}
+                                      className="text-xs font-bold text-[#0D6E5F] hover:underline flex items-center gap-1 cursor-pointer"
+                                    >
+                                      <IconEye className="w-3.5 h-3.5" />
+                                      <span>Abrir Visor</span>
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
-
-                              {/* Barra inferior con descarga directa */}
-                              <div className="p-3.5 rounded-xl bg-slate-100 flex items-center justify-between gap-3 text-xs">
-                                <div className="flex items-center gap-2 text-slate-700">
-                                  <IconShield className="w-4 h-4 text-[#0D6E5F]" />
-                                  <span className="font-medium">
-                                    Comprobante oficial disponible para consulta del Supervisor
-                                  </span>
+                            ) : (
+                              <div className="p-10 text-center rounded-2xl bg-white border border-slate-200 space-y-3">
+                                <div className="w-14 h-14 rounded-3xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                                  <IconFileText className="w-7 h-7" />
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenVisualizarSeguro(emp)}
-                                    className="text-xs font-bold text-[#0D6E5F] hover:underline flex items-center gap-1 cursor-pointer"
-                                  >
-                                    <IconEye className="w-3.5 h-3.5" />
-                                    <span>Abrir Visor</span>
-                                  </button>
-                                  <span>·</span>
-                                  <a
-                                    href={emp.seguro_vigencia_url}
-                                    download={`seguro_social_${emp.nombre.toLowerCase().replace(/\s+/g, '_')}.${emp.seguro_vigencia_url.startsWith("data:application/pdf") ? "pdf" : "png"}`}
-                                    className="text-xs font-bold text-slate-700 hover:text-slate-900 hover:underline flex items-center gap-1 cursor-pointer"
-                                  >
-                                    <IconDownload className="w-3.5 h-3.5" />
-                                    <span>Descargar Archivo</span>
-                                  </a>
+                                <div className="space-y-1">
+                                  <h4 className="font-bold text-sm text-slate-800">Esta empresa no tiene archivo de seguro social adjunto</h4>
+                                  <p className="text-xs text-slate-500 max-w-md mx-auto">
+                                    Adjunta el archivo del comprobante (PDF o imagen) para el control de acceso del contratista.
+                                  </p>
                                 </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenAdjuntarSeguro(emp)}
+                                  className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#094E43] transition-all inline-flex items-center gap-2 cursor-pointer shadow-xs mt-2"
+                                >
+                                  <IconShield className="w-4 h-4" />
+                                  <span>Adjuntar Archivo</span>
+                                </button>
                               </div>
-                            </div>
-                          ) : (
-                            <div className="p-10 text-center rounded-2xl bg-white border border-slate-200 space-y-3">
-                              <div className="w-14 h-14 rounded-3xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
-                                <IconFileText className="w-7 h-7" />
-                              </div>
-                              <div className="space-y-1">
-                                <h4 className="font-bold text-sm text-slate-800">Esta empresa no tiene archivo de seguro social adjunto</h4>
-                                <p className="text-xs text-slate-500 max-w-md mx-auto">
-                                  Adjunta el archivo del comprobante (PDF o imagen) para el control de acceso del contratista.
-                                </p>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => handleOpenAdjuntarSeguro(emp)}
-                                className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#094E43] transition-all inline-flex items-center gap-2 cursor-pointer shadow-xs mt-2"
-                              >
-                                <IconShield className="w-4 h-4" />
-                                <span>Adjuntar Archivo</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
@@ -11892,7 +11907,12 @@ export default function App() {
             {/* Document Viewer Body */}
             <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-100/50 flex flex-col items-center justify-center">
               <div className="w-full rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm flex items-center justify-center min-h-[420px]">
-                {selectedEmpresaSeguroPreview.seguro_vigencia_url ? (
+                {isLoadingSeguroPreview ? (
+                  <div className="flex flex-col items-center justify-center p-12 gap-3">
+                    <IconSpinner className="w-8 h-8 text-[#0D6E5F] animate-spin" />
+                    <span className="text-xs font-semibold text-slate-600">Cargando comprobante de seguro social...</span>
+                  </div>
+                ) : selectedEmpresaSeguroPreview.seguro_vigencia_url ? (
                   selectedEmpresaSeguroPreview.seguro_vigencia_url.startsWith("data:application/pdf") || selectedEmpresaSeguroPreview.seguro_vigencia_url.toLowerCase().endsWith(".pdf") ? (
                     <div className="w-full flex flex-col items-center">
                       <iframe

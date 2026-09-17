@@ -34,11 +34,24 @@ function expressServerPlugin(): Plugin {
     }
   }
 
+  const restartServer = () => {
+    killServer()
+    setTimeout(() => {
+      startServer()
+    }, 400)
+  }
+
   return {
     name: 'express-server-runner',
     apply: 'serve',
     configureServer(server) {
       startServer()
+
+      server.watcher.on('change', (file) => {
+        if (file.includes('Server') || file.includes('server')) {
+          restartServer()
+        }
+      })
 
       server.httpServer?.on('close', killServer)
       process.once('SIGINT', () => {

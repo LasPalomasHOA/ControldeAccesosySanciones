@@ -8,7 +8,15 @@ const { optimizeBase64Image } = require('../utils/imageHandler.cjs');
 router.get('/', async (req, res) => {
   try {
     const empresas = await db.Empresa.findAll({
-      attributes: { exclude: ['seguro_vigencia_url'] },
+      attributes: {
+        include: [
+          [
+            db.Sequelize.literal("CASE WHEN seguro_vigencia_url IS NOT NULL AND LENGTH(TRIM(seguro_vigencia_url)) > 10 THEN true ELSE false END"),
+            'tiene_seguro'
+          ]
+        ],
+        exclude: ['seguro_vigencia_url']
+      },
       include: [
         { model: db.Trabajador, as: 'trabajadores', attributes: ['id_trabajador'] },
         { 
@@ -26,6 +34,7 @@ router.get('/', async (req, res) => {
       const plain = emp.get({ plain: true });
       const inicio = plain.corbatin_rango_inicio != null ? parseInt(plain.corbatin_rango_inicio, 10) : null;
       const fin = plain.corbatin_rango_fin != null ? parseInt(plain.corbatin_rango_fin, 10) : null;
+      const tieneDoc = Boolean(plain.tiene_seguro === true || plain.tiene_seguro === 'true' || plain.tiene_seguro === 1);
       return {
         ...plain,
         id: String(plain.id_empresa),
@@ -39,7 +48,8 @@ router.get('/', async (req, res) => {
         corbatinRangoInicio: inicio,
         corbatinRangoFin: fin,
         cuposTotales: (inicio && fin && fin >= inicio) ? (fin - inicio + 1) : null,
-        tiene_seguro: Boolean(plain.seguro_subido_at || plain.seguro_subido_por)
+        tiene_seguro: tieneDoc,
+        seguro_vigencia_url: null
       };
     });
 
@@ -57,10 +67,12 @@ router.get('/:id/seguro', async (req, res) => {
       attributes: ['id_empresa', 'razon_social', 'seguro_vigencia_url', 'seguro_subido_por', 'seguro_subido_at']
     });
     if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
+    const tieneDoc = Boolean(empresa.seguro_vigencia_url && String(empresa.seguro_vigencia_url).trim().length > 10);
     res.json({
       id_empresa: empresa.id_empresa,
       razon_social: empresa.razon_social,
-      seguro_vigencia_url: empresa.seguro_vigencia_url,
+      tiene_seguro: tieneDoc,
+      seguro_vigencia_url: tieneDoc ? empresa.seguro_vigencia_url : null,
       seguro_subido_por: empresa.seguro_subido_por,
       seguro_subido_at: empresa.seguro_subido_at
     });

@@ -20,6 +20,7 @@ export interface EmpresaDB {
   estatus: 'ACTIVA' | 'SUSPENDIDA' | 'RESTRINGIDA' | string;
   corbatin_rango_inicio?: number | null;
   corbatin_rango_fin?: number | null;
+  tiene_seguro?: boolean;
   seguro_vigencia_url?: string | null;
   seguro_vigencia_fecha?: string | null;
   seguro_poliza_numero?: string | null;
@@ -301,6 +302,7 @@ export interface Empresa {
   corbatin_rango_inicio?: number | null;
   corbatin_rango_fin?: number | null;
   cuposTotales?: number | null;
+  tiene_seguro?: boolean;
   seguro_vigencia_url?: string | null;
   seguro_vigencia_fecha?: string | null;
   seguro_poliza_numero?: string | null;
