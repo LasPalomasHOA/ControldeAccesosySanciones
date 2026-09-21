@@ -270,7 +270,7 @@ app.use(async (req, res, next) => {
         error: 'Error de conexión con la base de datos PostgreSQL / Supabase',
         details: err.message,
         path: req.path,
-        hint: 'Verifica la variable POSTGRES_URL en el panel de Vercel (Project Settings -> Environment Variables)'
+        hint: 'Verifica la variable CUSTOM_DB_URL en el panel de Vercel (Project Settings -> Environment Variables)'
       });
     }
   }

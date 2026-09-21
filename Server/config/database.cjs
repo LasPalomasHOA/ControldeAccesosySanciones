@@ -16,12 +16,12 @@ if (fs.existsSync(envPathRoot)) {
 
 let sequelize;
 
-// Solo permitimos CUSTOM_DB_URL (Vercel) o POSTGRES_URL (local .env)
-const postgresUrl = process.env.CUSTOM_DB_URL || process.env.POSTGRES_URL;
+// Usar única y exclusivamente CUSTOM_DB_URL
+const postgresUrl = process.env.CUSTOM_DB_URL;
 const schema = process.env.DB_SCHEMA || 'control_acceso';
 
 if (!postgresUrl) {
-  throw new Error('Configuración incompleta: Debe definirse CUSTOM_DB_URL o POSTGRES_URL.');
+  throw new Error('Configuración incompleta: Debe definirse la variable de entorno CUSTOM_DB_URL con el usuario admin_acceso.');
 }
 
 function resolveServerlessDbUrl(rawUrl) {
