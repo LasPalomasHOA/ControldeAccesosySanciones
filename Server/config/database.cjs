@@ -16,7 +16,7 @@ if (fs.existsSync(envPathRoot)) {
 
 let sequelize;
 
-const postgresUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.SUPABASE_POSTGRES_URL || process.env.DB_URL;
+const postgresUrl = process.env.CUSTOM_DB_URL || process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.SUPABASE_POSTGRES_URL || process.env.DB_URL;
 const schema = process.env.DB_SCHEMA || 'control_acceso';
 
 function resolveServerlessDbUrl(rawUrl) {
@@ -95,8 +95,8 @@ if (postgresUrl) {
   // Conexión por variables individuales (fallback con credenciales operativas de Supabase Pooler 6543)
   sequelize = new Sequelize(
     process.env.DB_NAME || 'postgres',
-    process.env.DB_USER || 'postgres.iocpmwzyvkangytybcwh',
-    process.env.DB_PASSWORD || 'Laspalomas26',
+    process.env.DB_USER || 'admin_acceso.iocpmwzyvkangytybcwh',
+    process.env.DB_PASSWORD || 'ControlAcceso2026!',
     {
       host: dbHost,
       port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 6543,
