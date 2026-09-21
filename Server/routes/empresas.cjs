@@ -4,19 +4,10 @@ const { Op } = require('sequelize');
 const db = require('../models/index.cjs');
 const { optimizeBase64Image } = require('../utils/imageHandler.cjs');
 
-// GET /api/empresas - Listar empresas con conteos de trabajadores y vehículos (excluye archivos pesados para ahorrar Egress)
+// GET /api/empresas - Listar empresas con conteos de trabajadores y vehículos
 router.get('/', async (req, res) => {
   try {
     const empresas = await db.Empresa.findAll({
-      attributes: {
-        include: [
-          [
-            db.Sequelize.literal("CASE WHEN seguro_vigencia_url IS NOT NULL AND LENGTH(TRIM(seguro_vigencia_url)) > 10 THEN true ELSE false END"),
-            'tiene_seguro'
-          ]
-        ],
-        exclude: ['seguro_vigencia_url']
-      },
       include: [
         { model: db.Trabajador, as: 'trabajadores', attributes: ['id_trabajador'] },
         { 
@@ -34,7 +25,6 @@ router.get('/', async (req, res) => {
       const plain = emp.get({ plain: true });
       const inicio = plain.corbatin_rango_inicio != null ? parseInt(plain.corbatin_rango_inicio, 10) : null;
       const fin = plain.corbatin_rango_fin != null ? parseInt(plain.corbatin_rango_fin, 10) : null;
-      const tieneDoc = Boolean(plain.tiene_seguro === true || plain.tiene_seguro === 'true' || plain.tiene_seguro === 1);
       return {
         ...plain,
         id: String(plain.id_empresa),
@@ -47,9 +37,7 @@ router.get('/', async (req, res) => {
         corbatin_rango_fin: fin,
         corbatinRangoInicio: inicio,
         corbatinRangoFin: fin,
-        cuposTotales: (inicio && fin && fin >= inicio) ? (fin - inicio + 1) : null,
-        tiene_seguro: tieneDoc,
-        seguro_vigencia_url: null
+        cuposTotales: (inicio && fin && fin >= inicio) ? (fin - inicio + 1) : null
       };
     });
 
@@ -57,28 +45,6 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error al obtener empresas:', error);
     res.status(500).json({ error: 'Error al consultar empresas', details: error.message });
-  }
-});
-
-// GET /api/empresas/:id/seguro - Obtener únicamente el comprobante de seguro bajo demanda (Ahorro de Egress)
-router.get('/:id/seguro', async (req, res) => {
-  try {
-    const empresa = await db.Empresa.findByPk(req.params.id, {
-      attributes: ['id_empresa', 'razon_social', 'seguro_vigencia_url', 'seguro_subido_por', 'seguro_subido_at']
-    });
-    if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
-    const tieneDoc = Boolean(empresa.seguro_vigencia_url && String(empresa.seguro_vigencia_url).trim().length > 10);
-    res.json({
-      id_empresa: empresa.id_empresa,
-      razon_social: empresa.razon_social,
-      tiene_seguro: tieneDoc,
-      seguro_vigencia_url: tieneDoc ? empresa.seguro_vigencia_url : null,
-      seguro_subido_por: empresa.seguro_subido_por,
-      seguro_subido_at: empresa.seguro_subido_at
-    });
-  } catch (error) {
-    console.error('Error al obtener seguro de empresa:', error);
-    res.status(500).json({ error: 'Error al consultar seguro de la empresa' });
   }
 });
 

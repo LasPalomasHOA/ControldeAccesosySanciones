@@ -57,7 +57,8 @@ export interface BitacoraItem {
   trabajos: string;
   guardiaNombre: string;
   estado: 'Dentro' | 'Salida Registrada';
-  tipoAcceso?: 'Vehicular' | 'Peatonal';
+  tipoAcceso?: 'Vehicular' | 'Peatonal' | 'Corbatín Verde' | string;
+  tipoCorbatin?: 'NORMAL' | 'VERDE' | string;
   observaciones?: string;
   num_pasajeros?: number;
 }

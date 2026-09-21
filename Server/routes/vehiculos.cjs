@@ -284,7 +284,9 @@ router.delete('/:id', async (req, res) => {
       estatus_acceso: 'RESTRINGIDO'
     });
 
-    events.emitChange('vehiculos', { action: 'delete', id_vehiculo: idVeh });
+    try {
+      events.broadcastEvent('VEHICULO_ELIMINADO', { action: 'delete', id_vehiculo: idVeh });
+    } catch (e) {}
 
     res.json({ message: 'Vehículo eliminado correctamente (lógico)', id_vehiculo: idVeh, eliminado: true });
   } catch (error) {

@@ -35,6 +35,16 @@ const Trabajador = sequelize.define(
       allowNull: true,
       comment: 'Fotografía en Base64 o URL directa'
     },
+    comprobante_seguro_url: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Comprobante de Seguro Social (IMSS, etc.) en Base64 o URL'
+    },
+    dc3_documento_url: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Constancia de Competencias Laborales DC-3 en Base64 o URL'
+    },
     activo: {
       type: DataTypes.BOOLEAN,
       allowNull: false,

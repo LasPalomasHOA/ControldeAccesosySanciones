@@ -19,7 +19,11 @@ router.get('/', async (req, res) => {
             { model: db.Corbatin, as: 'corbatines', attributes: ['id_corbatin', 'numero', 'estatus'] }
           ]
         },
-        { model: db.Corbatin, as: 'corbatin', attributes: ['id_corbatin', 'numero', 'estatus'] },
+        { 
+          model: db.Corbatin, 
+          as: 'corbatin', 
+          attributes: ['id_corbatin', 'numero', 'estatus', 'tipos', 'empresa_nombre', 'telefono', 'vigencia_texto'] 
+        },
         { 
           model: db.Trabajador, 
           as: 'conductor',
@@ -33,11 +37,42 @@ router.get('/', async (req, res) => {
 
     const resultado = accesos.map(a => {
       const plain = a.get({ plain: true });
-      const empNombre = plain.vehiculo?.empresa?.razon_social || plain.conductor?.empresa?.razon_social || '';
-      const conductorNombre = plain.conductor ? `${plain.conductor.nombre} ${plain.conductor.apellidos}` : (plain.observaciones?.includes('Peatonal') ? 'Colaborador Peatonal' : 'Conductor Acreditado');
-      const corbatinNum = plain.corbatin?.numero 
-        ? String(plain.corbatin.numero) 
-        : (plain.vehiculo?.corbatines?.[0]?.numero ? String(plain.vehiculo.corbatines[0].numero) : '');
+      const isCorbatinVerde = (plain.corbatin?.tipos || '').toUpperCase() === 'VERDE' || Boolean(plain.observaciones && plain.observaciones.includes('CORBATÍN VERDE'));
+      const empNombre = plain.corbatin?.empresa_nombre || plain.vehiculo?.empresa?.razon_social || plain.conductor?.empresa?.razon_social || '';
+      
+      let conductorNombre = 'Conductor Acreditado';
+      if (plain.conductor) {
+        conductorNombre = `${plain.conductor.nombre} ${plain.conductor.apellidos}`;
+      } else if (plain.observaciones && plain.observaciones.includes('Chofer:')) {
+        const m = plain.observaciones.match(/Chofer:\s*([^|\]]+)/i);
+        if (m && m[1]) conductorNombre = m[1].trim();
+      } else if (plain.observaciones && plain.observaciones.includes('Chofer [')) {
+        const m = plain.observaciones.match(/Chofer\s*\[([^\]]+)\]/i);
+        if (m && m[1]) conductorNombre = m[1].trim();
+      } else if (plain.observaciones && plain.observaciones.includes('Peatonal')) {
+        conductorNombre = 'Colaborador Peatonal';
+      }
+
+      let corbatinNum = '';
+      if (plain.corbatin?.numero) {
+        corbatinNum = isCorbatinVerde
+          ? `00${parseInt(String(plain.corbatin.numero).replace(/[^0-9]/g, ''), 10) || plain.corbatin.numero}`
+          : String(plain.corbatin.numero);
+      } else if (plain.vehiculo?.corbatines?.[0]?.numero) {
+        corbatinNum = String(plain.vehiculo.corbatines[0].numero);
+      } else if (plain.observaciones && plain.observaciones.includes('CORBATÍN VERDE #')) {
+        const m = plain.observaciones.match(/CORBATÍN VERDE #([0-9]+)/i);
+        if (m && m[1]) corbatinNum = `00${parseInt(m[1], 10)}`;
+      }
+
+      let placasFinal = plain.vehiculo?.placas;
+      if (!placasFinal && plain.observaciones && plain.observaciones.includes('Placas:')) {
+        const m = plain.observaciones.match(/Placas:\s*([^|\]]+)/i);
+        if (m && m[1]) placasFinal = m[1].trim();
+      }
+      if (!placasFinal) {
+        placasFinal = isCorbatinVerde ? 'PROYECTO' : (plain.id_vehiculo ? 'VEHICULAR' : 'PEATONAL');
+      }
 
       const rawHoraEntrada = plain.hora_entrada
         ? (plain.hora_entrada instanceof Date ? plain.hora_entrada.toISOString() : new Date(plain.hora_entrada).toISOString())
@@ -48,21 +83,24 @@ router.get('/', async (req, res) => {
 
       const trabajoLimpio = (plain.ubicacion_trabajo && plain.ubicacion_trabajo.trim() !== 'x')
         ? plain.ubicacion_trabajo.trim()
-        : (plain.observaciones && plain.observaciones.trim() !== 'x' && !plain.observaciones.startsWith('Chofer [') && !plain.observaciones.startsWith('Peatonal [')
+        : (plain.observaciones && plain.observaciones.trim() !== 'x' && !plain.observaciones.startsWith('Chofer [') && !plain.observaciones.startsWith('Peatonal [') && !plain.observaciones.startsWith('[CORBATÍN VERDE')
           ? plain.observaciones.trim()
-          : (plain.id_vehiculo ? 'Mantenimiento / Acceso regular' : 'Labores y mantenimiento a pie'));
+          : (isCorbatinVerde ? `Proyecto Temporal — ${empNombre || 'Contratista'}` : (plain.id_vehiculo ? 'Mantenimiento / Acceso regular' : 'Labores y mantenimiento a pie')));
+
+      const tipoFinal = isCorbatinVerde ? 'Corbatín Verde' : (plain.id_vehiculo ? 'Vehicular' : 'Peatonal');
 
       return {
         ...plain,
         id: String(plain.id_acceso),
         num_pasajeros: plain.num_pasajeros !== undefined && plain.num_pasajeros !== null ? Number(plain.num_pasajeros) : 0,
-        placa: plain.vehiculo?.placas || 'PEATONAL',
+        placa: placasFinal,
         empresaNombre: empNombre,
         conductor: conductorNombre,
         trabajadorNombre: conductorNombre,
-        telefono: plain.vehiculo?.empresa?.telefono || plain.conductor?.telefono || '',
+        telefono: plain.corbatin?.telefono || plain.vehiculo?.empresa?.telefono || plain.conductor?.telefono || '',
         corbatinNumero: corbatinNum || '—',
         corbatinNum: corbatinNum || '—',
+        tipoCorbatin: isCorbatinVerde ? 'VERDE' : 'NORMAL',
         ubicacion_trabajo: trabajoLimpio,
         trabajos: trabajoLimpio,
         raw_hora_entrada: rawHoraEntrada || plain.hora_entrada,
@@ -71,7 +109,8 @@ router.get('/', async (req, res) => {
         hora_entrada: rawHoraEntrada || (plain.hora_entrada ? new Date(plain.hora_entrada).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' hrs' : ''),
         hora_salida: rawHoraSalida || (plain.hora_salida ? new Date(plain.hora_salida).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' hrs' : null),
         fechaHora: rawHoraEntrada || (plain.created_at ? new Date(plain.created_at).toISOString() : new Date().toISOString()),
-        tipo: plain.id_vehiculo ? 'Vehicular' : 'Peatonal',
+        tipo: tipoFinal,
+        tipoAcceso: tipoFinal,
         estado: plain.hora_salida ? 'Salida Registrada' : 'Dentro',
         agenteNombre: plain.guardia?.nombre || 'Oficial en Caseta',
         guardiaNombre: plain.guardia?.nombre || 'Oficial de Turno',

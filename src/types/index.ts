@@ -20,14 +20,6 @@ export interface EmpresaDB {
   estatus: 'ACTIVA' | 'SUSPENDIDA' | 'RESTRINGIDA' | string;
   corbatin_rango_inicio?: number | null;
   corbatin_rango_fin?: number | null;
-  tiene_seguro?: boolean;
-  seguro_vigencia_url?: string | null;
-  seguro_vigencia_fecha?: string | null;
-  seguro_poliza_numero?: string | null;
-  seguro_aseguradora?: string | null;
-  seguro_notas?: string | null;
-  seguro_subido_por?: string | null;
-  seguro_subido_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -56,6 +48,8 @@ export interface TrabajadorDB {
   apellidos: string;
   telefono?: string | null;
   foto_url?: string | null;
+  comprobante_seguro_url?: string | null;
+  dc3_documento_url?: string | null;
   activo: boolean;
   created_at: string;
   updated_at: string;
@@ -302,14 +296,6 @@ export interface Empresa {
   corbatin_rango_inicio?: number | null;
   corbatin_rango_fin?: number | null;
   cuposTotales?: number | null;
-  tiene_seguro?: boolean;
-  seguro_vigencia_url?: string | null;
-  seguro_vigencia_fecha?: string | null;
-  seguro_poliza_numero?: string | null;
-  seguro_aseguradora?: string | null;
-  seguro_notas?: string | null;
-  seguro_subido_por?: string | null;
-  seguro_subido_at?: string | null;
 }
 
 export interface Trabajador {
@@ -320,6 +306,8 @@ export interface Trabajador {
   apellidos: string;
   telefono?: string;
   foto_url?: string;
+  comprobante_seguro_url?: string;
+  dc3_documento_url?: string;
   activo?: boolean;
   created_at?: string;
   updated_at?: string;
