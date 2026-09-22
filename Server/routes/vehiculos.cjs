@@ -140,14 +140,17 @@ router.post('/', async (req, res) => {
     const rangoInicio = empresa.corbatin_rango_inicio != null ? parseInt(empresa.corbatin_rango_inicio, 10) : null;
     const rangoFin = empresa.corbatin_rango_fin != null ? parseInt(empresa.corbatin_rango_fin, 10) : null;
 
-    if (rangoInicio !== null && rangoFin !== null && rangoFin >= rangoInicio) {
-      // Buscar corbatines activos actualmente asignados
-      const corbatinesOcupados = await db.Corbatin.findAll({
-        where: { estatus: 'ACTIVO' },
-        attributes: ['numero']
-      });
-      const numerosOcupados = new Set(corbatinesOcupados.map(c => Number(c.numero)));
+    // Buscar corbatines que actualmente están ocupados (activos y asignados a un vehículo)
+    const corbatinesOcupados = await db.Corbatin.findAll({
+      where: {
+        estatus: 'ACTIVO',
+        id_vehiculo: { [Op.ne]: null }
+      },
+      attributes: ['numero']
+    });
+    const numerosOcupados = new Set(corbatinesOcupados.map(c => Number(c.numero)));
 
+    if (rangoInicio !== null && rangoFin !== null && rangoFin >= rangoInicio) {
       let numeroLibre = null;
       for (let n = rangoInicio; n <= rangoFin; n++) {
         if (!numerosOcupados.has(n)) {
@@ -165,11 +168,6 @@ router.post('/', async (req, res) => {
       corbatinNum = numeroLibre;
     } else {
       // Fallback si la empresa no tiene rango configurado aún
-      const corbatinesOcupados = await db.Corbatin.findAll({
-        where: { estatus: 'ACTIVO' },
-        attributes: ['numero']
-      });
-      const numerosOcupados = new Set(corbatinesOcupados.map(c => Number(c.numero)));
       let n = 1;
       while (numerosOcupados.has(n)) {
         n++;
@@ -191,15 +189,35 @@ router.post('/', async (req, res) => {
       estatus_acceso: estatus_acceso || 'HABILITADO'
     });
 
-    // Generar corbatín oficial con el número asignado del rango
-    const nuevoCorbatin = await db.Corbatin.create({
-      id_vehiculo: nuevoVehiculo.id_vehiculo,
-      numero: corbatinNum,
-      qr_token: `CORB-${corbatinNum}-${finalPlacas}-${new Date().getFullYear()}`,
-      fecha_emision: new Date(),
-      fecha_vencimiento: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-      estatus: 'ACTIVO'
+    // Asignar o reutilizar registro de corbatín para evitar duplicados por constraint único (tipos, numero)
+    let nuevoCorbatin = await db.Corbatin.findOne({
+      where: {
+        numero: corbatinNum,
+        [Op.or]: [{ tipos: 'NORMAL' }, { tipos: null }]
+      }
     });
+
+    if (nuevoCorbatin) {
+      await nuevoCorbatin.update({
+        id_vehiculo: nuevoVehiculo.id_vehiculo,
+        qr_token: `CORB-${corbatinNum}-${finalPlacas}-${new Date().getFullYear()}`,
+        fecha_emision: new Date(),
+        fecha_vencimiento: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+        estatus: 'ACTIVO',
+        activo: true
+      });
+    } else {
+      nuevoCorbatin = await db.Corbatin.create({
+        id_vehiculo: nuevoVehiculo.id_vehiculo,
+        numero: corbatinNum,
+        tipos: 'NORMAL',
+        qr_token: `CORB-${corbatinNum}-${finalPlacas}-${new Date().getFullYear()}`,
+        fecha_emision: new Date(),
+        fecha_vencimiento: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+        estatus: 'ACTIVO',
+        activo: true
+      });
+    }
 
     // Asignar conductor si se especificó
     if (id_conductor) {
