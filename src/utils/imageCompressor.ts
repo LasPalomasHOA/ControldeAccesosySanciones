@@ -1,17 +1,17 @@
 /**
- * Utilidad de compresión client-side para imágenes en Base64.
+ * Utilidad de compresión client-side para imágenes antes de enviar al servidor/Storage.
  * Reduce drásticamente el peso de las fotografías (de 2-5 MB a 30-60 KB)
  * manteniendo excelente nitidez para credenciales, placas y evidencias.
  */
 export async function compressImageClient(
   fileOrDataUrl: File | Blob | string,
-  maxDimension: number = 640,
-  quality: number = 0.75
+  maxDimension: number = 800,
+  quality: number = 0.65
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const processDataUrl = (dataUrl: string) => {
-      // Si ya es un SVG o no es imagen válida, devolver tal cual
-      if (dataUrl.startsWith('data:image/svg+xml')) {
+      // Si ya es un SVG o URL remota http/https, devolver tal cual
+      if (dataUrl.startsWith('data:image/svg+xml') || dataUrl.startsWith('http://') || dataUrl.startsWith('https://')) {
         return resolve(dataUrl);
       }
 
@@ -38,12 +38,16 @@ export async function compressImageClient(
             return resolve(dataUrl);
           }
 
-          // Fondo blanco para imágenes transparentes que se convierten a JPEG
+          // Fondo blanco para imágenes transparentes que se convierten
           ctx.fillStyle = '#FFFFFF';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-          const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+          // Preferir WebP para máxima compresión y calidad
+          let compressedBase64 = canvas.toDataURL('image/webp', quality);
+          if (!compressedBase64.startsWith('data:image/webp')) {
+            compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+          }
           resolve(compressedBase64);
         } catch (err) {
           console.warn('Fallo compresión en canvas, usando original:', err);

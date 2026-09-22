@@ -178,7 +178,7 @@ router.post('/', async (req, res) => {
     }
 
     const rawFoto = foto_url || foto || null;
-    const optimizedFoto = rawFoto ? await saveBase64Image(rawFoto) : null;
+    const optimizedFoto = rawFoto ? await saveBase64Image(rawFoto, 'vehiculo') : null;
 
     const nuevoVehiculo = await db.Vehiculo.create({
       id_empresa: empId,
@@ -235,7 +235,7 @@ router.put('/:id', async (req, res) => {
     if (color !== undefined) vehiculo.color = color;
     if (foto_url !== undefined || foto !== undefined) {
       const incoming = foto_url || foto;
-      vehiculo.foto_url = incoming ? await saveBase64Image(incoming) : null;
+      vehiculo.foto_url = incoming ? await saveBase64Image(incoming, 'vehiculo') : null;
     }
     if (estatus_acceso !== undefined) vehiculo.estatus_acceso = estatus_acceso;
     else if (estadoAcceso !== undefined) {

@@ -79,7 +79,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'id_empresa, nombre y apellidos son campos obligatorios' });
     }
 
-    const optimizedFoto = foto_url ? await saveBase64Image(foto_url) : null;
+    const optimizedFoto = foto_url ? await saveBase64Image(foto_url, 'trabajador') : null;
     const seguroDoc = comprobante_seguro_url || comprobante_seguro || seguro_imss_url || null;
     const dc3Doc = dc3_documento_url || dc3_url || dc3_documento || null;
 
@@ -132,7 +132,7 @@ router.put('/:id', async (req, res) => {
     if (apellidos !== undefined) trabajador.apellidos = apellidos;
     if (telefono !== undefined) trabajador.telefono = telefono;
     if (foto_url !== undefined) {
-      trabajador.foto_url = foto_url ? await saveBase64Image(foto_url) : null;
+      trabajador.foto_url = foto_url ? await saveBase64Image(foto_url, 'trabajador') : null;
     }
     if (comprobante_seguro_url !== undefined || comprobante_seguro !== undefined || seguro_imss_url !== undefined) {
       trabajador.comprobante_seguro_url = comprobante_seguro_url || comprobante_seguro || seguro_imss_url || null;

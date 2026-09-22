@@ -4,6 +4,7 @@ const { Op } = require('sequelize');
 const db = require('../models/index.cjs');
 
 const events = require('../events.cjs');
+const { saveBase64Image } = require('../utils/imageHandler.cjs');
 
 // GET /api/reportes/stream - Canal SSE para actualizaciones en vivo
 router.get('/stream', (req, res) => {
@@ -129,14 +130,11 @@ router.post('/', async (req, res) => {
     });
 
     if (evidencia_url) {
-      let archivoComprimido = evidencia_url;
-      if (typeof evidencia_url === 'string' && (evidencia_url.startsWith('data:image') || evidencia_url.length > 500)) {
-        archivoComprimido = await optimizeBase64Image(evidencia_url, 800, 70);
-      }
+      const archivoStorageUrl = await saveBase64Image(evidencia_url, 'evidencia');
 
       await db.Evidencia.create({
         id_reporte: nuevoReporte.id_reporte,
-        archivo: archivoComprimido,
+        archivo: archivoStorageUrl,
         descripcion: 'Evidencia fotográfica adjunta',
         fecha_captura: new Date(),
         id_usuario,

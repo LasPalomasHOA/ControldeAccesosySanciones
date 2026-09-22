@@ -17,7 +17,7 @@ if (fs.existsSync(envPathRoot)) {
 let sequelize;
 
 // Usar única y exclusivamente CUSTOM_DB_URL
-const postgresUrl = process.env.CUSTOM_DB_URL;
+const postgresUrl = process.env.CUSTOM_DB_URL || process.env.DATABASE_URL || process.env.POSTGRES_URL;
 const schema = process.env.DB_SCHEMA || 'control_acceso';
 
 if (!postgresUrl) {

@@ -152,7 +152,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'La fotografía del oficial de caseta es obligatoria.' });
     }
 
-    const finalFotoUrl = foto_url ? await saveBase64Image(foto_url) : null;
+    const finalFotoUrl = foto_url ? await saveBase64Image(foto_url, 'usuario') : null;
 
     const rawPassword = password || password_hash || '123456';
     const hash = bcrypt.hashSync(rawPassword, 10);
@@ -194,7 +194,7 @@ router.put('/:id', async (req, res) => {
     if (activo !== undefined) usuario.activo = activo;
     if (id_rol !== undefined) usuario.id_rol = id_rol;
     if (id_empresa !== undefined) usuario.id_empresa = id_empresa;
-    if (foto_url !== undefined) usuario.foto_url = foto_url ? await saveBase64Image(foto_url) : null;
+    if (foto_url !== undefined) usuario.foto_url = foto_url ? await saveBase64Image(foto_url, 'usuario') : null;
 
     await usuario.save();
     const plain = usuario.get({ plain: true });
