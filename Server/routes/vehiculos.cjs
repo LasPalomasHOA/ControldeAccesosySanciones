@@ -96,7 +96,12 @@ router.get('/:id', async (req, res) => {
     });
 
     if (!vehiculo) return res.status(404).json({ error: 'Vehículo no encontrado' });
-    res.json(vehiculo);
+    const plain = vehiculo.get({ plain: true });
+    res.json({
+      ...plain,
+      foto_url: plain.foto_url || null,
+      foto: plain.foto_url || null,
+    });
   } catch (error) {
     console.error('Error al obtener vehículo:', error);
     res.status(500).json({ error: 'Error al consultar vehículo' });

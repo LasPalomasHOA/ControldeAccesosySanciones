@@ -13,8 +13,15 @@ function formatCorbatin(c) {
     ? (isNaN(cleanNum) ? '001' : `00${cleanNum}`)
     : String(plain.numero || '').padStart(3, '0');
 
+  const veh = plain.vehiculo ? {
+    ...plain.vehiculo,
+    foto_url: plain.vehiculo.foto_url || plain.vehiculo.foto || null,
+    foto: plain.vehiculo.foto_url || plain.vehiculo.foto || null,
+  } : null;
+
   return {
     ...plain,
+    vehiculo: veh,
     id: idStr,
     id_corbatin: plain.id_corbatin || plain.id_corbatines || plain.id,
     id_corbatines: plain.id_corbatin || plain.id_corbatines || plain.id,
@@ -37,9 +44,11 @@ function formatCorbatin(c) {
 // GET /api/corbatines - Listar todos los corbatines (soporta filtro ?tipos=VERDE o ?tipos=NORMAL)
 router.get('/', async (req, res) => {
   try {
-    const { tipo, tipos, activo, estatus } = req.query;
+    const { tipo, tipos, activo, estatus, numero, id_vehiculo } = req.query;
     const tipoFiltro = (tipos || tipo || '').toUpperCase();
     const where = {};
+    if (numero) where.numero = parseInt(numero, 10);
+    if (id_vehiculo) where.id_vehiculo = id_vehiculo;
 
     if (tipoFiltro) {
       where[Op.or] = [
@@ -62,7 +71,7 @@ router.get('/', async (req, res) => {
         {
           model: db.Vehiculo,
           as: 'vehiculo',
-          attributes: ['id_vehiculo', 'placas', 'marca', 'modelo', 'color'],
+          attributes: ['id_vehiculo', 'id_empresa', 'placas', 'marca', 'modelo', 'color', 'año', 'foto_url', 'estatus_acceso'],
           required: false,
           include: [{ model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social', 'telefono', 'correo'], required: false }]
         }
