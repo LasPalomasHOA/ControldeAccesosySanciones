@@ -427,14 +427,6 @@ interface Empresa {
   corbatin_rango_inicio?: number | null;
   corbatin_rango_fin?: number | null;
   cuposTotales?: number | null;
-  tiene_seguro?: boolean;
-  seguro_vigencia_url?: string | null;
-  seguro_vigencia_fecha?: string | null;
-  seguro_poliza_numero?: string | null;
-  seguro_aseguradora?: string | null;
-  seguro_notas?: string | null;
-  seguro_subido_por?: string | null;
-  seguro_subido_at?: string | null;
 }
 
 interface Vehicle {
@@ -2262,7 +2254,6 @@ export default function App() {
           const rInicio = e.corbatin_rango_inicio !== undefined && e.corbatin_rango_inicio !== null ? Number(e.corbatin_rango_inicio) : null;
           const rFin = e.corbatin_rango_fin !== undefined && e.corbatin_rango_fin !== null ? Number(e.corbatin_rango_fin) : null;
           const cupos = (rInicio !== null && rFin !== null && rFin >= rInicio) ? (rFin - rInicio + 1) : null;
-          const tieneDoc = Boolean(e.tiene_seguro === true || e.tiene_seguro === "true" || (e.seguro_vigencia_url && String(e.seguro_vigencia_url).trim().length > 10));
           return {
             id: String(e.id_empresa || e.id),
             nombre: e.razon_social || e.nombre,
@@ -2275,14 +2266,6 @@ export default function App() {
             corbatin_rango_inicio: rInicio,
             corbatin_rango_fin: rFin,
             cuposTotales: cupos,
-            tiene_seguro: tieneDoc,
-            seguro_vigencia_url: e.seguro_vigencia_url || null,
-            seguro_vigencia_fecha: e.seguro_vigencia_fecha ? String(e.seguro_vigencia_fecha).split("T")[0] : null,
-            seguro_poliza_numero: e.seguro_poliza_numero || null,
-            seguro_aseguradora: e.seguro_aseguradora || null,
-            seguro_notas: e.seguro_notas || null,
-            seguro_subido_por: e.seguro_subido_por || null,
-            seguro_subido_at: e.seguro_subido_at || null,
           };
         });
         setEmpresas(mappedEmp);
@@ -2610,7 +2593,6 @@ export default function App() {
           const rInicio = e.corbatin_rango_inicio !== undefined && e.corbatin_rango_inicio !== null ? Number(e.corbatin_rango_inicio) : null;
           const rFin = e.corbatin_rango_fin !== undefined && e.corbatin_rango_fin !== null ? Number(e.corbatin_rango_fin) : null;
           const cupos = (rInicio !== null && rFin !== null && rFin >= rInicio) ? (rFin - rInicio + 1) : null;
-          const tieneDoc = Boolean(e.tiene_seguro === true || e.tiene_seguro === "true" || (e.seguro_vigencia_url && String(e.seguro_vigencia_url).trim().length > 10));
           return {
             id: String(e.id_empresa || e.id),
             nombre: e.razon_social || e.nombre,
@@ -2623,10 +2605,6 @@ export default function App() {
             corbatin_rango_inicio: rInicio,
             corbatin_rango_fin: rFin,
             cuposTotales: cupos,
-            tiene_seguro: tieneDoc,
-            seguro_vigencia_url: e.seguro_vigencia_url || null,
-            seguro_subido_por: e.seguro_subido_por || null,
-            seguro_subido_at: e.seguro_subido_at || null,
           };
         });
         setEmpresas(mappedEmp);
