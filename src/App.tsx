@@ -11078,7 +11078,7 @@ export default function App() {
         </div>
       )}
 
-      {/* ─── MODAL ALTA TRABAJADOR (CONTRATISTA - DICCIONARIO DE DATOS) ─── */}
+      {/* ─── MODAL ALTA TRABAJADOR (SUPERVISOR / CONTRATISTA) ─── */}
       {showCreateTrabajadorModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
@@ -11089,7 +11089,9 @@ export default function App() {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 uppercase">Alta de Nuevo Trabajador</h3>
-                  <p className="text-xs text-slate-500">Empresa: {currentUser?.empresaNombre || ""}</p>
+                  <p className="text-xs text-slate-500">
+                    Empresa: <strong className="text-slate-800">{targetEmpresaParaNuevoTrabajador?.nombre || currentUser?.empresaNombre || "Empresa Contratista"}</strong>
+                  </p>
                 </div>
               </div>
               <button onClick={() => setShowCreateTrabajadorModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
@@ -11168,7 +11170,7 @@ export default function App() {
                       />
                     </label>
                     <p className="text-[11px] text-slate-400">
-                      Fotografía nítida tipo credencial del colaborador (JPG o PNG).
+                      Fotografía nítida tipo credencial del colaborador (JPG o PNG · Supabase Storage).
                     </p>
                   </div>
 
@@ -11209,7 +11211,7 @@ export default function App() {
                   </label>
                   {trabajadorSeguroUrl && (
                     <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                      Adjunto en Base64 ✓
+                      Documento Listo ✓
                     </span>
                   )}
                 </div>
@@ -11232,7 +11234,7 @@ export default function App() {
                             {trabajadorSeguroFileName || "Comprobante de Seguro Adjunto"}
                           </div>
                           <div className="text-[10px] text-teal-700 font-semibold">
-                            {trabajadorSeguroUrl.startsWith("data:application/pdf") ? "Documento PDF" : "Imagen"} en Base64
+                            {trabajadorSeguroUrl.startsWith("data:application/pdf") || trabajadorSeguroUrl.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
                           </div>
                         </div>
                       </div>
@@ -11273,7 +11275,7 @@ export default function App() {
                     <div className="py-2 flex flex-col items-center gap-1">
                       <IconShield className="w-6 h-6 text-slate-400 group-hover:text-[#0D6E5F] transition-colors" />
                       <span className="text-xs font-bold text-slate-700">Subir Comprobante de Seguro (IMSS, ISSSTE, etc.)</span>
-                      <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Base64)</span>
+                      <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
                     </div>
                   )}
                 </div>
@@ -11288,7 +11290,7 @@ export default function App() {
                   </label>
                   {trabajadorDC3Url && (
                     <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                      Adjunto en Base64 ✓
+                      Documento Listo ✓
                     </span>
                   )}
                 </div>
@@ -11311,7 +11313,7 @@ export default function App() {
                             {trabajadorDC3FileName || "Constancia DC-3 Adjunta"}
                           </div>
                           <div className="text-[10px] text-blue-700 font-semibold">
-                            {trabajadorDC3Url.startsWith("data:application/pdf") ? "Documento PDF" : "Imagen"} en Base64
+                            {trabajadorDC3Url.startsWith("data:application/pdf") || trabajadorDC3Url.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
                           </div>
                         </div>
                       </div>
@@ -11352,7 +11354,7 @@ export default function App() {
                     <div className="py-2 flex flex-col items-center gap-1">
                       <IconFileText className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
                       <span className="text-xs font-bold text-slate-700">Subir Constancia DC-3</span>
-                      <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Base64)</span>
+                      <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
                     </div>
                   )}
                 </div>
@@ -11492,7 +11494,7 @@ export default function App() {
                       />
                     </label>
                     <p className="text-[11px] text-slate-400">
-                      Fotografía nítida tipo credencial del colaborador (JPG o PNG).
+                      Fotografía nítida tipo credencial del colaborador (JPG o PNG · Supabase Storage).
                     </p>
                   </div>
 
@@ -11533,7 +11535,7 @@ export default function App() {
                   </label>
                   {trabajadorSeguroUrl && (
                     <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                      Adjunto en Base64 ✓
+                      Documento Listo ✓
                     </span>
                   )}
                 </div>
@@ -11556,7 +11558,7 @@ export default function App() {
                             {trabajadorSeguroFileName || "Comprobante de Seguro Adjunto"}
                           </div>
                           <div className="text-[10px] text-teal-700 font-semibold">
-                            {trabajadorSeguroUrl.startsWith("data:application/pdf") ? "Documento PDF" : "Imagen"} en Base64
+                            {trabajadorSeguroUrl.startsWith("data:application/pdf") || trabajadorSeguroUrl.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
                           </div>
                         </div>
                       </div>
@@ -11597,7 +11599,7 @@ export default function App() {
                     <div className="py-2 flex flex-col items-center gap-1">
                       <IconShield className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
                       <span className="text-xs font-bold text-slate-700">Actualizar / Reemplazar Comprobante de Seguro</span>
-                      <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Base64)</span>
+                      <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
                     </div>
                   )}
                 </div>
@@ -11612,7 +11614,7 @@ export default function App() {
                   </label>
                   {trabajadorDC3Url && (
                     <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                      Adjunto en Base64 ✓
+                      Documento Listo ✓
                     </span>
                   )}
                 </div>
@@ -11635,7 +11637,7 @@ export default function App() {
                             {trabajadorDC3FileName || "Constancia DC-3 Adjunta"}
                           </div>
                           <div className="text-[10px] text-blue-700 font-semibold">
-                            {trabajadorDC3Url.startsWith("data:application/pdf") ? "Documento PDF" : "Imagen"} en Base64
+                            {trabajadorDC3Url.startsWith("data:application/pdf") || trabajadorDC3Url.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
                           </div>
                         </div>
                       </div>
@@ -11676,7 +11678,7 @@ export default function App() {
                     <div className="py-2 flex flex-col items-center gap-1">
                       <IconFileText className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
                       <span className="text-xs font-bold text-slate-700">Actualizar / Reemplazar Constancia DC-3</span>
-                      <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Base64)</span>
+                      <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
                     </div>
                   )}
                 </div>
@@ -11928,7 +11930,7 @@ export default function App() {
             <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-100/50 flex flex-col items-center justify-center">
               <div className="w-full rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm flex items-center justify-center min-h-[420px]">
                 {selectedDocTrabajadorPreview.url ? (
-                  selectedDocTrabajadorPreview.url.startsWith("data:application/pdf") || selectedDocTrabajadorPreview.url.toLowerCase().endsWith(".pdf") ? (
+                  (selectedDocTrabajadorPreview.url.startsWith("data:application/pdf") || selectedDocTrabajadorPreview.url.toLowerCase().includes(".pdf")) ? (
                     <div className="w-full flex flex-col items-center">
                       <iframe
                         src={selectedDocTrabajadorPreview.url}
@@ -11964,14 +11966,27 @@ export default function App() {
               </button>
 
               {selectedDocTrabajadorPreview.url && (
-                <a
-                  href={selectedDocTrabajadorPreview.url}
-                  download={`${selectedDocTrabajadorPreview.type === "seguro" ? "comprobante_seguro" : "constancia_dc3"}_${selectedDocTrabajadorPreview.workerName.toLowerCase().replace(/\s+/g, "_")}.${selectedDocTrabajadorPreview.url.startsWith("data:application/pdf") ? "pdf" : "png"}`}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#094E43] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <IconDownload className="w-3.5 h-3.5" />
-                  <span>Descargar Archivo</span>
-                </a>
+                <div className="flex items-center gap-2">
+                  {selectedDocTrabajadorPreview.url.startsWith("http") && (
+                    <a
+                      href={selectedDocTrabajadorPreview.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3.5 py-2 rounded-xl text-xs font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    >
+                      <IconEye className="w-3.5 h-3.5" />
+                      <span>Abrir en Nueva Pestaña</span>
+                    </a>
+                  )}
+                  <a
+                    href={selectedDocTrabajadorPreview.url}
+                    download={`${selectedDocTrabajadorPreview.type === "seguro" ? "comprobante_seguro" : "constancia_dc3"}_${selectedDocTrabajadorPreview.workerName.toLowerCase().replace(/\s+/g, "_")}.${(selectedDocTrabajadorPreview.url.startsWith("data:application/pdf") || selectedDocTrabajadorPreview.url.toLowerCase().includes(".pdf")) ? "pdf" : "png"}`}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#094E43] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  >
+                    <IconDownload className="w-3.5 h-3.5" />
+                    <span>Descargar Archivo</span>
+                  </a>
+                </div>
               )}
             </div>
           </div>

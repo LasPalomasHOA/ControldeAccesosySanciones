@@ -221,6 +221,8 @@ export const HOAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         apellidos: nuevo.apellidos || '',
         telefono: nuevo.telefono || null,
         foto_url: nuevo.foto_url || nuevo.foto || null,
+        comprobante_seguro_url: nuevo.comprobante_seguro_url || null,
+        dc3_documento_url: nuevo.dc3_documento_url || null,
         activo: nuevo.activo !== undefined ? nuevo.activo : true
       });
       await recargarDatos();
@@ -247,6 +249,8 @@ export const HOAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           apellidos: editado.apellidos,
           telefono: editado.telefono,
           foto_url: editado.foto_url || editado.foto,
+          comprobante_seguro_url: editado.comprobante_seguro_url || null,
+          dc3_documento_url: editado.dc3_documento_url || null,
           activo: editado.activo
         });
         await recargarDatos();

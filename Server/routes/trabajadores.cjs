@@ -80,8 +80,10 @@ router.post('/', async (req, res) => {
     }
 
     const optimizedFoto = foto_url ? await saveBase64Image(foto_url, 'trabajador') : null;
-    const seguroDoc = comprobante_seguro_url || comprobante_seguro || seguro_imss_url || null;
-    const dc3Doc = dc3_documento_url || dc3_url || dc3_documento || null;
+    const rawSeguro = comprobante_seguro_url || comprobante_seguro || seguro_imss_url || null;
+    const seguroDoc = rawSeguro ? await saveBase64Image(rawSeguro, 'seguro_imss') : null;
+    const rawDc3 = dc3_documento_url || dc3_url || dc3_documento || null;
+    const dc3Doc = rawDc3 ? await saveBase64Image(rawDc3, 'dc3_documento') : null;
 
     const nuevo = await db.Trabajador.create({
       id_empresa,
@@ -135,10 +137,12 @@ router.put('/:id', async (req, res) => {
       trabajador.foto_url = foto_url ? await saveBase64Image(foto_url, 'trabajador') : null;
     }
     if (comprobante_seguro_url !== undefined || comprobante_seguro !== undefined || seguro_imss_url !== undefined) {
-      trabajador.comprobante_seguro_url = comprobante_seguro_url || comprobante_seguro || seguro_imss_url || null;
+      const rawSeguro = comprobante_seguro_url || comprobante_seguro || seguro_imss_url || null;
+      trabajador.comprobante_seguro_url = rawSeguro ? await saveBase64Image(rawSeguro, 'seguro_imss') : null;
     }
     if (dc3_documento_url !== undefined || dc3_url !== undefined || dc3_documento !== undefined) {
-      trabajador.dc3_documento_url = dc3_documento_url || dc3_url || dc3_documento || null;
+      const rawDc3 = dc3_documento_url || dc3_url || dc3_documento || null;
+      trabajador.dc3_documento_url = rawDc3 ? await saveBase64Image(rawDc3, 'dc3_documento') : null;
     }
     if (activo !== undefined) trabajador.activo = activo;
 

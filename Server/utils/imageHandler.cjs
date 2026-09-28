@@ -44,8 +44,28 @@ try {
  */
 function getBucketForPrefix(prefix) {
   const p = String(prefix || '').toLowerCase();
+  if (
+    p.includes('seguro') ||
+    p.includes('dc3') ||
+    p.includes('doc') ||
+    p.includes('documento') ||
+    p.includes('comprobante') ||
+    p.includes('pdf') ||
+    p.includes('contrato')
+  ) {
+    return 'documentos';
+  }
   if (p.includes('vehiculo') || p.includes('auto') || p.includes('car')) return 'vehiculos';
-  if (p.includes('trabajador') || p.includes('usuario') || p.includes('guardia') || p.includes('perfil') || p.includes('user') || p.includes('avatar')) return 'usuarios';
+  if (
+    p.includes('trabajador') ||
+    p.includes('usuario') ||
+    p.includes('guardia') ||
+    p.includes('perfil') ||
+    p.includes('user') ||
+    p.includes('avatar')
+  ) {
+    return 'usuarios';
+  }
   return 'evidencias';
 }
 
@@ -58,7 +78,7 @@ function resolveFotoToDataUrl(fotoUrl) {
   const str = String(fotoUrl).trim();
   
   // Si ya es URL remota http/https o Data URL Base64, devolver directamente
-  if (str.startsWith('http://') || str.startsWith('https://') || str.startsWith('data:image')) {
+  if (str.startsWith('http://') || str.startsWith('https://') || str.startsWith('data:image') || str.startsWith('data:application/pdf')) {
     return str;
   }
 
@@ -74,11 +94,11 @@ function resolveFotoToDataUrl(fotoUrl) {
     if (fs.existsSync(p)) {
       try {
         const ext = path.extname(p).toLowerCase().replace('.', '') || 'jpeg';
-        const mime = ext === 'jpg' ? 'image/jpeg' : 'image/' + ext;
+        const mime = ext === 'jpg' ? 'image/jpeg' : (ext === 'pdf' ? 'application/pdf' : 'image/' + ext);
         const base64Data = fs.readFileSync(p).toString('base64');
         return 'data:' + mime + ';base64,' + base64Data;
       } catch (e) {
-        console.warn('Error leyendo imagen local para Base64:', e.message);
+        console.warn('Error leyendo archivo local para Base64:', e.message);
       }
     }
   }
@@ -113,8 +133,8 @@ async function comprimirBuffer(buffer, maxWidth = 800, quality = 65) {
 async function optimizeBase64Image(base64Str, maxWidth = 800, quality = 65) {
   if (!base64Str || typeof base64Str !== 'string') return base64Str;
   
-  // Si ya es URL remota http/https, no tocar
-  if (base64Str.startsWith('http://') || base64Str.startsWith('https://')) {
+  // Si ya es URL remota http/https o PDF, no tocar
+  if (base64Str.startsWith('http://') || base64Str.startsWith('https://') || base64Str.startsWith('data:application/pdf')) {
     return base64Str;
   }
 
@@ -141,9 +161,63 @@ async function optimizeBase64Image(base64Str, maxWidth = 800, quality = 65) {
 }
 
 /**
- * Comprime la imagen a WebP y la sube directamente a Supabase Storage.
- * Retorna la URL pública permanente (ej. https://.../vehiculos/vehiculo_123.webp)
- * para almacenar en la base de datos con consumo mínimo de almacenamiento y 0 Egress repetido.
+ * Helper unificado para subir cualquier archivo (PDF, WebP, PNG, etc.) a Supabase Storage.
+ * Si el bucket solicitado tiene restricciones RLS o error, intenta automáticamente en los buckets de respaldo disponibles (ej. 'usuarios' o 'evidencias').
+ */
+async function uploadBufferToSupabase(buffer, targetBucket, filePath, contentType) {
+  if (!supabase || !buffer) return null;
+
+  // 1. Intentar en el bucket destino primario
+  try {
+    const { error: primaryErr } = await supabase.storage
+      .from(targetBucket)
+      .upload(filePath, buffer, {
+        contentType,
+        cacheControl: '31536000',
+        upsert: true,
+      });
+
+    if (!primaryErr) {
+      const { data } = supabase.storage.from(targetBucket).getPublicUrl(filePath);
+      if (data && data.publicUrl) return data.publicUrl;
+    } else {
+      console.warn(`[imageHandler] Bucket primario '${targetBucket}' no disponible (${primaryErr.message}). Usando almacenamiento en bucket de respaldo...`);
+    }
+  } catch (err) {
+    console.warn(`[imageHandler] Excepción en bucket '${targetBucket}':`, err.message);
+  }
+
+  // 2. Fallbacks a buckets disponibles ('usuarios' o 'evidencias')
+  const fallbackBuckets = ['usuarios', 'evidencias', 'vehiculos'].filter(b => b !== targetBucket);
+  for (const fb of fallbackBuckets) {
+    try {
+      const fallbackPath = `${targetBucket}/${filePath}`;
+      const { error: fbErr } = await supabase.storage
+        .from(fb)
+        .upload(fallbackPath, buffer, {
+          contentType,
+          cacheControl: '31536000',
+          upsert: true,
+        });
+
+      if (!fbErr) {
+        const { data } = supabase.storage.from(fb).getPublicUrl(fallbackPath);
+        if (data && data.publicUrl) {
+          return data.publicUrl;
+        }
+      }
+    } catch (fbException) {
+      // Intentar con siguiente bucket
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Procesa y sube archivos (Imágenes o Documentos PDF) directamente a Supabase Storage.
+ * Retorna la URL pública permanente (ej. https://.../documentos/seguro_imss_123.pdf)
+ * para almacenar en la base de datos con consumo mínimo de almacenamiento.
  */
 async function saveBase64Image(dataString, prefix = 'img', options = {}) {
   if (!dataString) return null;
@@ -154,7 +228,32 @@ async function saveBase64Image(dataString, prefix = 'img', options = {}) {
     return str;
   }
 
-  // 2. Extraer el Buffer de la imagen
+  const isPdf = str.startsWith('data:application/pdf') || str.includes('application/pdf') || options.isPdf;
+
+  // 2. Manejo de Documentos PDF
+  if (isPdf) {
+    const b64 = str.replace(/^data:[^;]+;base64,/, '');
+    let buffer = null;
+    try {
+      buffer = Buffer.from(b64, 'base64');
+    } catch (e) {
+      console.warn('[imageHandler] Error decodificando PDF Base64:', e.message);
+      return str;
+    }
+
+    if (supabase && buffer) {
+      const bucket = options.bucket || getBucketForPrefix(prefix);
+      const timestamp = Date.now();
+      const randomSuffix = Math.random().toString(36).substring(2, 7);
+      const fileName = `${prefix}_${timestamp}_${randomSuffix}.pdf`;
+
+      const publicUrl = await uploadBufferToSupabase(buffer, bucket, fileName, 'application/pdf');
+      if (publicUrl) return publicUrl;
+    }
+    return str; // Fallback Base64 solo si no hay Supabase
+  }
+
+  // 3. Manejo de Imágenes (JPG, PNG, WebP)
   let buffer = null;
   const match = str.match(/^data:([A-Za-z0-9\-+/.]+);base64,(.+)$/);
   if (match) {
@@ -164,7 +263,6 @@ async function saveBase64Image(dataString, prefix = 'img', options = {}) {
       buffer = Buffer.from(str, 'base64');
     } catch { }
   } else if (str.startsWith('/') || str.startsWith('uploads/')) {
-    // Es ruta local a archivo
     const resolved = resolveFotoToDataUrl(str);
     if (resolved && resolved.startsWith('data:image')) {
       const b64 = resolved.replace(/^data:image\/\w+;base64,/, '');
@@ -176,59 +274,23 @@ async function saveBase64Image(dataString, prefix = 'img', options = {}) {
     return str;
   }
 
-  // 3. Comprimir a WebP a máximo 800px de ancho y calidad 65%
+  // 4. Comprimir a WebP a máximo 800px de ancho y calidad 65%
   const maxWidth = options.maxWidth || 800;
   const quality = options.quality || 65;
   const compressedBuffer = await comprimirBuffer(buffer, maxWidth, quality);
 
-  // 4. Subir a Supabase Storage si el cliente está disponible
+  // 5. Subir a Supabase Storage con el mismo método
   if (supabase) {
     const bucket = options.bucket || getBucketForPrefix(prefix);
     const timestamp = Date.now();
     const randomSuffix = Math.random().toString(36).substring(2, 7);
-    const fileName = prefix + '_' + timestamp + '_' + randomSuffix + '.webp';
-    const storagePath = fileName;
+    const fileName = `${prefix}_${timestamp}_${randomSuffix}.webp`;
 
-    try {
-      let { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(storagePath, compressedBuffer, {
-          contentType: 'image/webp',
-          cacheControl: '31536000',
-          upsert: true,
-        });
-
-      // Si el bucket primario no existe, intentar con bucket fallback 'evidencias'
-      if (uploadError && bucket !== 'evidencias') {
-        const fallbackRes = await supabase.storage
-          .from('evidencias')
-          .upload(bucket + '/' + storagePath, compressedBuffer, {
-            contentType: 'image/webp',
-            cacheControl: '31536000',
-            upsert: true,
-          });
-        if (!fallbackRes.error) {
-          const { data: fbUrl } = supabase.storage
-            .from('evidencias')
-            .getPublicUrl(bucket + '/' + storagePath);
-          if (fbUrl && fbUrl.publicUrl) return fbUrl.publicUrl;
-        }
-      }
-
-      if (!uploadError) {
-        const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(storagePath);
-        if (urlData && urlData.publicUrl) {
-          return urlData.publicUrl;
-        }
-      } else {
-        console.warn('[imageHandler] Error subiendo imagen a bucket ' + bucket + ':', uploadError.message);
-      }
-    } catch (storageErr) {
-      console.warn('[imageHandler] Excepción al interactuar con Supabase Storage:', storageErr.message);
-    }
+    const publicUrl = await uploadBufferToSupabase(compressedBuffer, bucket, fileName, 'image/webp');
+    if (publicUrl) return publicUrl;
   }
 
-  // 5. Fallback seguro: Retornar string Base64 WebP optimizado
+  // 6. Fallback seguro: Retornar string Base64 WebP optimizado
   return 'data:image/webp;base64,' + compressedBuffer.toString('base64');
 }
 
