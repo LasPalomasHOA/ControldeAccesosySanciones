@@ -175,6 +175,28 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}/corbatines/${id}`, { method: 'DELETE' });
     return handleResponse(res);
   },
+  async vincularCorbatinVerde(id: string | number, data: any) {
+    const res = await fetch(`${API_BASE_URL}/corbatines/${id}/vincular`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+  async desvincularCorbatinVerde(id: string | number) {
+    const res = await fetch(`${API_BASE_URL}/corbatines/${id}/desvincular`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return handleResponse(res);
+  },
+  async inicializarPoolCorbatinesVerdes() {
+    const res = await fetch(`${API_BASE_URL}/corbatines/verdes/inicializar-pool`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return handleResponse(res);
+  },
 
   // 7. Reglamentos & Aceptación
   async getReglamentos() {

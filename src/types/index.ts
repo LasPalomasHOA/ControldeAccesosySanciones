@@ -119,13 +119,16 @@ export interface CorbatinDB {
   id_corbatin?: number;
   id_corbatines?: number;
   id_vehiculo?: number | null;
+  id_empresa?: number | string | null;
   tipo?: 'NORMAL' | 'VERDE' | string;
   tipos?: 'NORMAL' | 'VERDE' | string;
   numero: number;
   qr_token?: string | null;
   fecha_emision: string;
+  fecha_asignacion?: string | null;
   fecha_vencimiento?: string | null;
   estatus: 'ACTIVO' | 'VENCIDO' | 'CANCELADO' | 'REEMPLAZADO' | 'DESHABILITADO' | string;
+  estatus_inventario?: 'DISPONIBLE' | 'ASIGNADO' | 'VENCIDO' | 'INACTIVO' | string;
   fecha_impresion?: string | null;
   motivo_cancelacion?: string | null;
   empresa_nombre?: string | null;
@@ -134,12 +137,42 @@ export interface CorbatinDB {
   email?: string | null;
   vigencia_texto?: string | null;
   vigenciaTexto?: string;
+  placas_asignadas?: string | null;
+  conductor_asignado?: string | null;
   notas?: string | null;
   creado_por?: string | null;
   creadoPor?: string;
+  asignado_por?: string | null;
   activo?: boolean;
   // Asociaciones opcionales
   vehiculo?: VehiculoDB;
+  empresa?: EmpresaDB;
+}
+
+export interface CorbatinVerde {
+  id: string;
+  id_corbatin?: number | string;
+  id_corbatines?: number | string;
+  id_empresa?: string | number | null;
+  corbatinNum: string; // "001", "002", ..., "0010", "0020"
+  numero: number;
+  tipos?: 'VERDE' | string;
+  tipo?: 'VERDE' | string;
+  estatus_inventario?: 'DISPONIBLE' | 'ASIGNADO' | 'VENCIDO' | 'INACTIVO' | string;
+  empresaNombre: string;
+  telefono: string;
+  email: string;
+  fechaEmision: string;
+  fechaAsignacion?: string;
+  fechaVencimiento?: string;
+  vigenciaTexto?: string;
+  placasAsignadas?: string;
+  conductorAsignado?: string;
+  notasAsignacion?: string;
+  activo: boolean;
+  creadoPor?: string;
+  asignadoPor?: string;
+  notas?: string;
 }
 
 // 10. casetas
