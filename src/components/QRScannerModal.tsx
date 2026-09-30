@@ -148,33 +148,33 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-slate-950/75 backdrop-blur-xs">
       <div
-        className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-150"
+        className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[92vh] animate-in fade-in zoom-in-95 duration-150"
         style={{ borderColor: "var(--color-border)" }}
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b bg-slate-50 flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-lg">
+        <div className="px-4 py-3 sm:px-6 sm:py-4 border-b bg-slate-50 flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-base sm:text-lg shrink-0">
               📷
             </div>
-            <div>
-              <h2 className="font-bold text-sm sm:text-base text-slate-900">{title}</h2>
-              <p className="text-[11px] text-slate-500">{subtitle}</p>
+            <div className="min-w-0">
+              <h2 className="font-bold text-xs sm:text-base text-slate-900 truncate">{title}</h2>
+              <p className="text-[10px] sm:text-[11px] text-slate-500 truncate">{subtitle}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-200/70 hover:bg-slate-300 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full bg-slate-200/70 hover:bg-slate-300 text-slate-600 flex items-center justify-center transition-colors cursor-pointer shrink-0 ml-2"
           >
             ✕
           </button>
         </div>
 
         {/* Visor de Cámara directo */}
-        <div className="p-6 flex-1 overflow-y-auto space-y-4">
+        <div className="p-3.5 sm:p-6 flex-1 overflow-y-auto space-y-3 sm:space-y-4">
           <div className="relative aspect-square sm:aspect-4/3 w-full bg-slate-950 rounded-2xl overflow-hidden flex items-center justify-center shadow-inner">
             {/* Video feed */}
             <video
@@ -234,12 +234,12 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 border-t bg-slate-50 flex items-center justify-between text-xs text-slate-500">
-          <span>Sistema de Validación de Acceso HOA</span>
+        <div className="px-4 py-2.5 sm:px-6 sm:py-3 border-t bg-slate-50 flex items-center justify-between text-xs text-slate-500">
+          <span className="text-[11px] sm:text-xs truncate">Sistema de Validación HOA</span>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 font-semibold text-slate-700 cursor-pointer"
+            className="px-3.5 py-1.5 rounded-xl border border-slate-300 hover:bg-slate-100 font-semibold text-slate-700 cursor-pointer text-xs shrink-0 ml-2"
           >
             Cancelar
           </button>
