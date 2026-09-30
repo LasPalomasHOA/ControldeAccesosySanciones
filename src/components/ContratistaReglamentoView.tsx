@@ -123,11 +123,10 @@ export const ContratistaReglamentoView: React.FC<ContratistaReglamentoViewProps>
           <button
             type="button"
             onClick={() => setActiveTab("banderin")}
-            className={`pb-3 px-4 text-xs font-bold transition-all border-b-2 cursor-pointer flex items-center gap-2 ${
-              activeTab === "banderin"
+            className={`pb-3 px-4 text-xs font-bold transition-all border-b-2 cursor-pointer flex items-center gap-2 ${activeTab === "banderin"
                 ? "border-[#0D6E5F] text-[#0D6E5F]"
                 : "border-transparent text-slate-500 hover:text-slate-800"
-            }`}
+              }`}
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="4" width="18" height="16" rx="2" />
@@ -144,11 +143,10 @@ export const ContratistaReglamentoView: React.FC<ContratistaReglamentoViewProps>
           <button
             type="button"
             onClick={() => setActiveTab("general")}
-            className={`pb-3 px-4 text-xs font-bold transition-all border-b-2 cursor-pointer flex items-center gap-2 ${
-              activeTab === "general"
+            className={`pb-3 px-4 text-xs font-bold transition-all border-b-2 cursor-pointer flex items-center gap-2 ${activeTab === "general"
                 ? "border-[#0D6E5F] text-[#0D6E5F]"
                 : "border-transparent text-slate-500 hover:text-slate-800"
-            }`}
+              }`}
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -228,9 +226,8 @@ export const ContratistaReglamentoView: React.FC<ContratistaReglamentoViewProps>
                     {sec.items.map((item, itemIdx) => (
                       <div
                         key={itemIdx}
-                        className={`flex items-start gap-3 text-xs leading-relaxed text-slate-700 ${
-                          itemIdx === 0 ? "pb-3" : itemIdx === sec.items.length - 1 ? "pt-3" : "py-3"
-                        }`}
+                        className={`flex items-start gap-3 text-xs leading-relaxed text-slate-700 ${itemIdx === 0 ? "pb-3" : itemIdx === sec.items.length - 1 ? "pt-3" : "py-3"
+                          }`}
                       >
                         <span className="font-mono font-bold text-slate-400 shrink-0 text-[11px] mt-0.5">
                           {idx + 1}.{itemIdx + 1}
@@ -254,9 +251,7 @@ export const ContratistaReglamentoView: React.FC<ContratistaReglamentoViewProps>
               <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
                 Documento Legal de Términos y Condiciones
               </h2>
-              <p className="text-xs text-slate-500">
-                Texto oficial suscrito digitalmente al registrar la cuenta de contratista en el sistema HOA.
-              </p>
+
             </div>
 
             <div className="flex items-center gap-2">

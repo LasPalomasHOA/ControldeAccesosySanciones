@@ -32,12 +32,16 @@ import {
   FileCheck2,
   CheckCircle2,
   FileSpreadsheet,
+  FileText,
+  Printer,
   Download,
   RefreshCw,
   Calendar,
   Layers
 } from 'lucide-react';
 import { exportSupervisorReportToExcel } from '../utils/excelReportExporter';
+import { downloadBitacoraPDF } from '../utils/pdfBitacoraExporter';
+import { ReporteBitacoraModal } from './ReporteBitacoraModal';
 
 export interface BitacoraItem {
   id: string;
@@ -116,6 +120,8 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('graficas');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isExportingExcel, setIsExportingExcel] = useState(false);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [showReporteModal, setShowReporteModal] = useState(false);
 
   // Filtros de tiempo para la gráfica
   const [periodo, setPeriodo] = useState<PeriodFilter>('dia');
@@ -725,6 +731,55 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
     }
   };
 
+  // Exportación Oficial a PDF Vectorial
+  const handleExportarPDF = async () => {
+    if (isExportingPDF) return;
+    setIsExportingPDF(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const periodoNombre = chartAnalytics.title || `Periodo: ${periodo.toUpperCase()}`;
+
+      const mappedBitacora = allAccesosDataset.map((b) => ({
+        id: String(b.id),
+        fecha: b.fecha || getRecordDate(b) || today,
+        tipoAcceso: b.tipoAcceso || (b.vehicleId === "PEATONAL" ? "Peatonal" : "Vehicular"),
+        empresaNombre: b.empresaNombre || '—',
+        placas: b.placas || 'PEATONAL',
+        color: b.color || 'N/A',
+        conductor: b.conductor || 'Personal Acreditado',
+        telefono: b.telefono || 'N/A',
+        corbatinNum: b.corbatinNum || '—',
+        num_pasajeros: Number(b.num_pasajeros) || 0,
+        horaEntrada: formatHoraVisual(b.horaEntrada || b.raw_hora_entrada),
+        horaSalida: b.horaSalida ? formatHoraVisual(b.horaSalida || b.raw_hora_salida) : 'Dentro',
+        trabajos: b.trabajos || 'Mantenimiento / Acceso regular',
+        guardiaNombre: b.guardiaNombre || 'Oficial en Caseta',
+        estado: b.estado || (b.horaSalida ? 'Salida Registrada' : 'Dentro'),
+        observaciones: b.observaciones || 'Sin observaciones'
+      }));
+
+      await downloadBitacoraPDF({
+        periodoNombre,
+        supervisorNombre: 'Supervisor de Seguridad HOA',
+        empresaFiltro: selectedEmpresa === 'todas' ? 'Todas las Empresas' : selectedEmpresa,
+        records: mappedBitacora,
+        kpis: {
+          totalMovimientos: chartAnalytics.totalMovimientos,
+          totalEntradas: chartAnalytics.totalEntradas,
+          totalSalidas: chartAnalytics.totalSalidas,
+          balanceDentro: chartAnalytics.balanceDentro,
+          vehiculares: chartAnalytics.dataPieTipo.find(m => m.name.toLowerCase().includes('vehic'))?.value || 0,
+          peatonales: chartAnalytics.dataPieTipo.find(m => m.name.toLowerCase().includes('peaton'))?.value || 0
+        }
+      });
+    } catch (err) {
+      console.error('Error al generar PDF oficial:', err);
+      alert('Hubo un error al generar el PDF oficial.');
+    } finally {
+      setIsExportingPDF(false);
+    }
+  };
+
   // Helpers para cambiar fecha en día/semana/mes
   const handleNextDate = () => {
     if (periodo === 'dia' || periodo === 'semana') {
@@ -826,7 +881,7 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
               ) : (
                 <>
                   <FileSpreadsheet className="w-4 h-4 text-emerald-200" />
-                  <span>Exportar a Excel</span>
+                  <span>Exportar a Excel (.xlsx)</span>
                 </>
               )}
             </button>
@@ -1778,6 +1833,15 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
           </div>
         </div>
       )}
+
+      {/* Modal Oficial de Reportes de Bitácora */}
+      <ReporteBitacoraModal
+        isOpen={showReporteModal}
+        onClose={() => setShowReporteModal(false)}
+        bitacora={allAccesosDataset}
+        currentUserRole="supervisor"
+        currentUserName="Supervisor de Seguridad HOA"
+      />
     </div>
   );
 };

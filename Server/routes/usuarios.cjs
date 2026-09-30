@@ -87,6 +87,7 @@ router.post('/login', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const usuarios = await db.Usuario.findAll({
+      attributes: { exclude: ['password_hash'] },
       include: [
         { model: db.Rol, as: 'rol' },
         { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social'] }

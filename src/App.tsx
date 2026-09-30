@@ -9,9 +9,20 @@ import SupervisorReglamentoEditor, { ReglamentoSection } from "./components/Supe
 import ContratistaReglamentoView from "./components/ContratistaReglamentoView";
 import ContabilidadDashboard from "./components/ContabilidadDashboard";
 import QRScannerModal from "./components/QRScannerModal";
+import ReporteBitacoraModal from "./components/ReporteBitacoraModal";
+import { downloadBitacoraPDF } from "./utils/pdfBitacoraExporter";
+import { exportBitacoraCasetaToExcel } from "./utils/excelReportExporter";
 import logoPng from "./assets/logo.png";
 
 // ─── SVG Icons (Clean, Modern, Vector) ────────────────────────────────────────
+function IconSparkles({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+    </svg>
+  );
+}
+
 function IconSpinner({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={`${className} animate-spin`} viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -321,6 +332,24 @@ function IconChevronRight({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="9 18 15 12 9 6" />
+    </svg>
+  );
+}
+
+function IconChevronsLeft({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="11 17 6 12 11 7" />
+      <polyline points="18 17 13 12 18 7" />
+    </svg>
+  );
+}
+
+function IconChevronsRight({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="13 17 18 12 13 7" />
+      <polyline points="6 17 11 12 6 7" />
     </svg>
   );
 }
@@ -1505,6 +1534,13 @@ export default function App() {
 
   // PDF Generation State
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [showReporteBitacoraModal, setShowReporteBitacoraModal] = useState(false);
+  const [isGeneratingBitacoraPDF, setIsGeneratingBitacoraPDF] = useState(false);
+  const [isGeneratingBitacoraExcel, setIsGeneratingBitacoraExcel] = useState(false);
+  const [casetaBitacoraPage, setCasetaBitacoraPage] = useState(1);
+  const [casetaBitacoraSearch, setCasetaBitacoraSearch] = useState("");
+  const [casetaBitacoraStatusFilter, setCasetaBitacoraStatusFilter] = useState<"todos" | "dentro" | "salida">("todos");
+  const [casetaBitacoraPageSize, setCasetaBitacoraPageSize] = useState(10);
 
   // Modals
   const [showCreateSupervisorModal, setShowCreateSupervisorModal] = useState(false);
@@ -1562,6 +1598,8 @@ export default function App() {
   const [corbatinVerdeEmpresaFilter, setCorbatinVerdeEmpresaFilter] = useState("all");
   const [corbatinVerdeStatusFilter, setCorbatinVerdeStatusFilter] = useState<"all" | "disponibles" | "asignados" | "vencidos">("all");
   const [isGeneratingCorbatinVerdePDF, setIsGeneratingCorbatinVerdePDF] = useState(false);
+  const [corbatinVerdePage, setCorbatinVerdePage] = useState(1);
+  const [corbatinVerdePageSize, setCorbatinVerdePageSize] = useState(10);
 
   // Estados del Modal de Vinculación Temporal
   const [showVincularCorbatinModal, setShowVincularCorbatinModal] = useState(false);
@@ -4026,65 +4064,86 @@ export default function App() {
     }
   };
 
-  const handleExportarBitacoraExcel = () => {
+  const handleExportarBitacoraPDF = async () => {
     if (bitacora.length === 0) {
       showToast("No hay registros en la bitácora para exportar.", "warning", "Bitácora Vacía");
       return;
     }
+    setIsGeneratingBitacoraPDF(true);
+    try {
+      const mapped = bitacora.map((b) => ({
+        id: b.id,
+        fecha: b.fecha || new Date().toISOString().split("T")[0],
+        tipoAcceso: b.tipoAcceso || (b.vehicleId === "PEATONAL" ? "Peatonal" : "Vehicular"),
+        empresaNombre: b.empresaNombre || "—",
+        placas: b.placas || (b.vehicleId === "PEATONAL" ? "PEATONAL" : "—"),
+        color: b.color || "N/A",
+        conductor: b.conductor || "Personal Acreditado",
+        telefono: b.telefono || "N/A",
+        corbatinNum: b.corbatinNum || "—",
+        num_pasajeros: Number(b.num_pasajeros) || 0,
+        horaEntrada: formatHoraLocal(b.horaEntrada),
+        horaSalida: b.horaSalida ? formatHoraLocal(b.horaSalida) : "Dentro",
+        trabajos: b.trabajos || b.observaciones || "Mantenimiento / Acceso regular",
+        guardiaNombre: b.guardiaNombre || currentUser?.nombre || "Oficial en Caseta",
+        estado: b.estado || (b.horaSalida ? "Salida Registrada" : "Dentro"),
+        observaciones: b.observaciones || "Sin observaciones",
+        vehicleId: b.vehicleId
+      }));
 
-    const headers = [
-      "Folio",
-      "Modalidad de Acceso",
-      "Empresa Contratista",
-      "Vehículo / Placas / Identificación",
-      "Color Unidad",
-      "Conductor / Colaborador",
-      "Pasajeros (sin chofer)",
-      "Teléfono Celular",
-      "Corbatín / Gafete",
-      "Hora Entrada",
-      "Hora Salida",
-      "Trabajos / Motivo de Acceso",
-      "Oficial en Turno",
-      "Estatus",
-      "Observaciones de Seguridad"
-    ];
+      await downloadBitacoraPDF({
+        periodoNombre: `Jornada ${new Date().toLocaleDateString("es-MX")}`,
+        guardiaNombre: currentUser?.nombre || "Oficial en Caseta",
+        records: mapped
+      });
+      showToast("Reporte oficial de bitácora generado en PDF vectorial.", "success", "PDF Oficial");
+    } catch (err: any) {
+      console.error("Error al exportar PDF de bitácora:", err);
+      showToast("Hubo un error al generar el PDF de la bitácora.", "error");
+    } finally {
+      setIsGeneratingBitacoraPDF(false);
+    }
+  };
 
-    const rows = bitacora.map((b) => [
-      b.id,
-      b.tipoAcceso || (b.vehicleId === "PEATONAL" ? "Peatonal (A pie)" : "Vehicular"),
-      b.empresaNombre,
-      b.placas,
-      b.color || "N/A",
-      b.conductor,
-      b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? "0" : String(b.num_pasajeros ?? 0),
-      b.telefono || "N/A",
-      b.corbatinNum ? `#${b.corbatinNum}` : "N/A",
-      formatHoraLocal(b.horaEntrada),
-      b.horaSalida ? formatHoraLocal(b.horaSalida) : "Dentro (Sin salida aún)",
-      b.trabajos,
-      b.guardiaNombre,
-      b.estado,
-      b.observaciones || "Sin observaciones"
-    ]);
+  const handleExportarBitacoraExcel = async () => {
+    if (bitacora.length === 0) {
+      showToast("No hay registros en la bitácora para exportar.", "warning", "Bitácora Vacía");
+      return;
+    }
+    setIsGeneratingBitacoraExcel(true);
+    try {
+      const mapped = bitacora.map((b) => ({
+        id: b.id,
+        fecha: b.fecha || new Date().toISOString().split("T")[0],
+        tipoAcceso: b.tipoAcceso || (b.vehicleId === "PEATONAL" ? "Peatonal" : "Vehicular"),
+        empresaNombre: b.empresaNombre || "—",
+        placas: b.placas || (b.vehicleId === "PEATONAL" ? "PEATONAL" : "—"),
+        color: b.color || "N/A",
+        conductor: b.conductor || "Personal Acreditado",
+        telefono: b.telefono || "N/A",
+        corbatinNum: b.corbatinNum || "—",
+        num_pasajeros: Number(b.num_pasajeros) || 0,
+        horaEntrada: formatHoraLocal(b.horaEntrada),
+        horaSalida: b.horaSalida ? formatHoraLocal(b.horaSalida) : "Dentro",
+        trabajos: b.trabajos || b.observaciones || "Mantenimiento / Acceso regular",
+        guardiaNombre: b.guardiaNombre || currentUser?.nombre || "Oficial en Caseta",
+        estado: b.estado || (b.horaSalida ? "Salida Registrada" : "Dentro"),
+        observaciones: b.observaciones || "Sin observaciones",
+        vehicleId: b.vehicleId
+      }));
 
-    // CSV con UTF-8 BOM para compatibilidad total con Microsoft Excel
-    const csvContent = "\uFEFF" + [
-      headers.map((h) => `"${h.replace(/"/g, '""')}"`).join(","),
-      ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
-    ].join("\r\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    const today = new Date().toISOString().split("T")[0];
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Bitacora_Caseta_LasPalomas_${today}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    showToast("Bitácora exportada exitosamente en formato Excel / CSV.", "success");
+      await exportBitacoraCasetaToExcel({
+        periodoNombre: `Jornada ${new Date().toLocaleDateString("es-MX")}`,
+        guardiaNombre: currentUser?.nombre || "Oficial en Caseta",
+        records: mapped
+      });
+      showToast("Bitácora exportada exitosamente en formato Microsoft Excel (.xlsx).", "success", "Excel Descargado");
+    } catch (err: any) {
+      console.error("Error al exportar Excel de bitácora:", err);
+      showToast("Hubo un error al generar el archivo Excel.", "error");
+    } finally {
+      setIsGeneratingBitacoraExcel(false);
+    }
   };
 
   const handleToggleEstatusVehiculo = async (v: Vehicle) => {
@@ -7649,9 +7708,7 @@ export default function App() {
                                 <IconFileText className="w-5 h-5 text-[#0D6E5F]" />
                                 <span>Control de Corbatines Verdes (Inventario Físico)</span>
                               </h2>
-                              <p className="text-xs text-slate-500 mt-0.5">
-                                Pool institucional de corbatines físicos (#001 a #{formatCorbatinVerdeNum(totalCount || 20)}). Vincula temporalmente cualquier corbatín a una empresa o libéralo sin alterar el tarjetón físico.
-                              </p>
+
                             </div>
 
                             {/* Acciones Globales del Pool */}
@@ -7715,10 +7772,13 @@ export default function App() {
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             <button
                               type="button"
-                              onClick={() => setCorbatinVerdeStatusFilter("all")}
+                              onClick={() => {
+                                setCorbatinVerdeStatusFilter("all");
+                                setCorbatinVerdePage(1);
+                              }}
                               className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${corbatinVerdeStatusFilter === "all"
-                                  ? "bg-teal-50/80 border-[#0D6E5F] ring-2 ring-[#0D6E5F]/20"
-                                  : "bg-slate-50/70 border-slate-200 hover:bg-slate-100"
+                                ? "bg-teal-50/80 border-[#0D6E5F] ring-2 ring-[#0D6E5F]/20"
+                                : "bg-slate-50/70 border-slate-200 hover:bg-slate-100"
                                 }`}
                             >
                               <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total en Pool</div>
@@ -7728,10 +7788,13 @@ export default function App() {
 
                             <button
                               type="button"
-                              onClick={() => setCorbatinVerdeStatusFilter("disponibles")}
+                              onClick={() => {
+                                setCorbatinVerdeStatusFilter("disponibles");
+                                setCorbatinVerdePage(1);
+                              }}
                               className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${corbatinVerdeStatusFilter === "disponibles"
-                                  ? "bg-emerald-50 border-emerald-500 ring-2 ring-emerald-500/20"
-                                  : "bg-emerald-50/40 border-emerald-200/80 hover:bg-emerald-50"
+                                ? "bg-emerald-50 border-emerald-500 ring-2 ring-emerald-500/20"
+                                : "bg-emerald-50/40 border-emerald-200/80 hover:bg-emerald-50"
                                 }`}
                             >
                               <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1.5">
@@ -7744,10 +7807,13 @@ export default function App() {
 
                             <button
                               type="button"
-                              onClick={() => setCorbatinVerdeStatusFilter("asignados")}
+                              onClick={() => {
+                                setCorbatinVerdeStatusFilter("asignados");
+                                setCorbatinVerdePage(1);
+                              }}
                               className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${corbatinVerdeStatusFilter === "asignados"
-                                  ? "bg-amber-50 border-amber-500 ring-2 ring-amber-500/20"
-                                  : "bg-amber-50/40 border-amber-200/80 hover:bg-amber-50"
+                                ? "bg-amber-50 border-amber-500 ring-2 ring-amber-500/20"
+                                : "bg-amber-50/40 border-amber-200/80 hover:bg-amber-50"
                                 }`}
                             >
                               <div className="text-[11px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
@@ -7760,10 +7826,13 @@ export default function App() {
 
                             <button
                               type="button"
-                              onClick={() => setCorbatinVerdeStatusFilter("vencidos")}
+                              onClick={() => {
+                                setCorbatinVerdeStatusFilter("vencidos");
+                                setCorbatinVerdePage(1);
+                              }}
                               className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${corbatinVerdeStatusFilter === "vencidos"
-                                  ? "bg-red-50 border-red-500 ring-2 ring-red-500/20"
-                                  : "bg-red-50/40 border-red-200/80 hover:bg-red-50"
+                                ? "bg-red-50 border-red-500 ring-2 ring-red-500/20"
+                                : "bg-red-50/40 border-red-200/80 hover:bg-red-50"
                                 }`}
                             >
                               <div className="text-[11px] font-bold text-red-700 uppercase tracking-wider flex items-center gap-1.5">
@@ -7781,7 +7850,10 @@ export default function App() {
                               <label className="block text-xs font-bold text-slate-600 mb-1">Filtrar por Estatus:</label>
                               <select
                                 value={corbatinVerdeStatusFilter}
-                                onChange={(e) => setCorbatinVerdeStatusFilter(e.target.value as any)}
+                                onChange={(e) => {
+                                  setCorbatinVerdeStatusFilter(e.target.value as any);
+                                  setCorbatinVerdePage(1);
+                                }}
                                 className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
                               >
                                 <option value="all">Todos los corbatines ({totalCount})</option>
@@ -7795,7 +7867,10 @@ export default function App() {
                               <label className="block text-xs font-bold text-slate-600 mb-1">Filtrar por Empresa:</label>
                               <select
                                 value={corbatinVerdeEmpresaFilter}
-                                onChange={(e) => setCorbatinVerdeEmpresaFilter(e.target.value)}
+                                onChange={(e) => {
+                                  setCorbatinVerdeEmpresaFilter(e.target.value);
+                                  setCorbatinVerdePage(1);
+                                }}
                                 className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
                               >
                                 <option value="all">Todas las empresas vinculadas</option>
@@ -7813,11 +7888,27 @@ export default function App() {
                                 <input
                                   type="text"
                                   value={corbatinVerdeSearch}
-                                  onChange={(e) => setCorbatinVerdeSearch(e.target.value)}
+                                  onChange={(e) => {
+                                    setCorbatinVerdeSearch(e.target.value);
+                                    setCorbatinVerdePage(1);
+                                  }}
                                   placeholder="Buscar #001, #0010, empresa, chofer, placas..."
-                                  className="w-full text-xs font-semibold pl-8 pr-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                                  className="w-full text-xs font-semibold pl-8 pr-7 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
                                 />
                                 <IconSearch className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                                {corbatinVerdeSearch && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setCorbatinVerdeSearch("");
+                                      setCorbatinVerdePage(1);
+                                    }}
+                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                                    title="Limpiar búsqueda"
+                                  >
+                                    <IconX className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -8153,155 +8244,304 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* Tabla Completa de Padrón e Inventario Físico */}
-                        <div className="rounded-2xl border overflow-hidden bg-white shadow-sm mt-8 no-print" style={{ borderColor: "var(--color-border)" }}>
-                          <div className="px-5 py-4 border-b bg-slate-50 flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
-                            <div>
-                              <h3 className="font-bold text-sm text-slate-800">Inventario de Corbatines Verdes</h3>
-                              <p className="text-xs text-slate-400 mt-0.5">Control de correlativos con prefijo obligatorio "00", estatus de disponibilidad y empresas asignadas.</p>
-                            </div>
-                            <span className="text-xs font-bold text-[#0D6E5F] bg-teal-50 border border-teal-200 px-3 py-1 rounded-full">
-                              {totalCount} Unidades en Pool
-                            </span>
-                          </div>
+                        {/* Tabla Completa de Padrón e Inventario Físico con Paginación */}
+                        {(() => {
+                          const filteredTableCorbatines = corbatinesVerdes.filter((c) => {
+                            const matchEmp = corbatinVerdeEmpresaFilter === "all" || Boolean(c.empresaNombre && c.empresaNombre.toLowerCase() === corbatinVerdeEmpresaFilter.toLowerCase());
+                            const isDisp = Boolean(c.estatus_inventario === "DISPONIBLE" || (!c.empresaNombre && c.activo));
+                            const isAsig = Boolean(c.estatus_inventario === "ASIGNADO" && c.empresaNombre);
+                            const isVenc = Boolean(c.estatus_inventario === "VENCIDO");
+                            let matchStatus = true;
+                            if (corbatinVerdeStatusFilter === "disponibles") matchStatus = isDisp;
+                            else if (corbatinVerdeStatusFilter === "asignados") matchStatus = isAsig;
+                            else if (corbatinVerdeStatusFilter === "vencidos") matchStatus = isVenc;
 
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left">
-                              <thead>
-                                <tr className="border-b bg-slate-50/70 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
-                                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider"># Correlativo</th>
-                                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider">Estatus Inventario</th>
-                                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider">Empresa Vinculada</th>
-                                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider">Contacto</th>
-                                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider">Vigencia</th>
-                                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider">Vencimiento</th>
-                                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-right">Acciones Rápidas</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-slate-100">
-                                {corbatinesVerdes.length === 0 ? (
-                                  <tr>
-                                    <td colSpan={7} className="py-8 text-center text-slate-400">
-                                      No hay corbatines en el inventario. Haz clic en "+ Expandir Pool" para inicializar las unidades.
-                                    </td>
-                                  </tr>
-                                ) : (
-                                  corbatinesVerdes.map((c) => {
-                                    const isDisp = c.estatus_inventario === "DISPONIBLE" || (!c.empresaNombre && c.activo);
-                                    const isAsig = c.estatus_inventario === "ASIGNADO" && c.empresaNombre;
-                                    const isVenc = c.estatus_inventario === "VENCIDO";
-                                    const numFmt = formatCorbatinVerdeNum(c.corbatinNum);
+                            const q = corbatinVerdeSearch.trim().toLowerCase();
+                            const matchQ = !q ||
+                              c.corbatinNum.toLowerCase().includes(q) ||
+                              (c.empresaNombre && c.empresaNombre.toLowerCase().includes(q)) ||
+                              (c.telefono && c.telefono.toLowerCase().includes(q)) ||
+                              (c.conductorAsignado && c.conductorAsignado.toLowerCase().includes(q)) ||
+                              (c.placasAsignadas && c.placasAsignadas.toLowerCase().includes(q)) ||
+                              (c.notas && c.notas.toLowerCase().includes(q));
 
-                                    return (
-                                      <tr
-                                        key={c.id}
-                                        onClick={() => setSelectedCorbatinVerdeId(c.id)}
-                                        className={`hover:bg-teal-50/50 cursor-pointer transition-colors ${selectedCorbatinVerdeId === c.id ? "bg-teal-50/60" : ""}`}
-                                      >
-                                        <td className="px-5 py-3">
-                                          <span className="font-mono font-bold text-xs text-[#0D6E5F] bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200">
-                                            #{numFmt}
-                                          </span>
-                                        </td>
-                                        <td className="px-5 py-3">
-                                          {isDisp && (
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                              <span>Disponible</span>
-                                            </span>
-                                          )}
-                                          {isAsig && (
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                              <span>Asignado</span>
-                                            </span>
-                                          )}
-                                          {isVenc && (
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
-                                              <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                                              <span>Vencido</span>
-                                            </span>
-                                          )}
-                                          {!c.activo && (
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                                              <span>Inactivo</span>
-                                            </span>
-                                          )}
-                                        </td>
-                                        <td className="px-5 py-3 font-bold text-xs text-slate-900">
-                                          {c.empresaNombre ? (
-                                            <span>{c.empresaNombre}</span>
-                                          ) : (
-                                            <span className="text-slate-400 italic font-normal">Libre para asignación</span>
-                                          )}
-                                        </td>
-                                        <td className="px-5 py-3 font-mono text-xs text-slate-600">
-                                          {c.telefono ? (
-                                            <CopyableInlineText text={c.telefono} label="Teléfono" onCopyToast={showToast} />
-                                          ) : (
-                                            <span className="text-slate-300 font-sans">—</span>
-                                          )}
-                                        </td>
-                                        <td className="px-5 py-3 text-xs text-slate-600 font-medium">
-                                          {c.vigenciaTexto || (isDisp ? "—" : "Temporal")}
-                                        </td>
-                                        <td className="px-5 py-3 text-xs text-slate-500">
-                                          {c.fechaVencimiento || (isDisp ? "—" : "Indefinida")}
-                                        </td>
-                                        <td className="px-5 py-3 text-right">
-                                          <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-                                            {isDisp ? (
-                                              <button
-                                                type="button"
-                                                onClick={() => handleAbrirModalVincular(c)}
-                                                className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0a574b] transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
-                                                title="Vincular a Empresa"
-                                              >
-                                                <span>🔗 Vincular</span>
-                                              </button>
-                                            ) : (
-                                              <>
-                                                <button
-                                                  type="button"
-                                                  onClick={() => handleAbrirModalVincular(c)}
-                                                  className="p-1.5 px-2 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all cursor-pointer"
-                                                  title="Editar asignación"
-                                                >
-                                                  <IconEdit className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button
-                                                  type="button"
-                                                  onClick={() => {
-                                                    if (confirm(`¿Liberar el Corbatín #${numFmt} de "${c.empresaNombre}" y devolverlo al inventario Disponible?`)) {
-                                                      handleDesvincularCorbatinVerde(c.id);
-                                                    }
-                                                  }}
-                                                  className="p-1.5 px-2 rounded-lg text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-all cursor-pointer"
-                                                  title="Liberar corbatín"
-                                                >
-                                                  <span>Liberar</span>
-                                                </button>
-                                              </>
-                                            )}
+                            return matchEmp && matchStatus && matchQ;
+                          });
 
-                                            <button
-                                              type="button"
-                                              onClick={() => handleDescargarPDFCorbatinVerdeDirecto(c, false)}
-                                              className="px-2 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all cursor-pointer flex items-center gap-1"
-                                              title="Descargar PDF"
-                                            >
-                                              <IconDownload className="w-3.5 h-3.5" />
-                                            </button>
-                                          </div>
+                          const cvPageSize = corbatinVerdePageSize || 10;
+                          const totalCVPages = Math.max(1, Math.ceil(filteredTableCorbatines.length / cvPageSize));
+                          const safeCVPage = Math.min(Math.max(1, corbatinVerdePage), totalCVPages);
+                          const cvStartIndex = (safeCVPage - 1) * cvPageSize;
+                          const paginatedCVList = filteredTableCorbatines.slice(cvStartIndex, cvStartIndex + cvPageSize);
+
+                          return (
+                            <div className="rounded-2xl border overflow-hidden bg-white shadow-sm mt-8 no-print" style={{ borderColor: "var(--color-border)" }}>
+                              <div className="px-5 py-4 border-b bg-slate-50 flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
+                                <div>
+                                  <h3 className="font-bold text-sm text-slate-800">Inventario de Corbatines Verdes</h3>
+                                </div>
+                                <span className="text-xs font-bold text-[#0D6E5F] bg-teal-50 border border-teal-200 px-3 py-1 rounded-full">
+                                  {filteredTableCorbatines.length === totalCount
+                                    ? `${totalCount} Unidades en Pool`
+                                    : `${filteredTableCorbatines.length} de ${totalCount} Unidades`}
+                                </span>
+                              </div>
+
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-sm text-left">
+                                  <thead>
+                                    <tr className="border-b bg-slate-50/70 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
+                                      <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider"># Correlativo</th>
+                                      <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider">Estatus Inventario</th>
+                                      <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider">Empresa Vinculada</th>
+                                      <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider">Contacto</th>
+                                      <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider">Vigencia</th>
+                                      <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider">Vencimiento</th>
+                                      <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-right">Acciones Rápidas</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-slate-100">
+                                    {paginatedCVList.length === 0 ? (
+                                      <tr>
+                                        <td colSpan={7} className="py-8 text-center text-slate-400">
+                                          {corbatinesVerdes.length === 0
+                                            ? "No hay corbatines en el inventario. Haz clic en '+ Expandir Pool' para inicializar las unidades."
+                                            : "No se encontraron corbatines que coincidan con los filtros aplicados."}
                                         </td>
                                       </tr>
-                                    );
-                                  })
-                                )}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
+                                    ) : (
+                                      paginatedCVList.map((c) => {
+                                        const isDisp = c.estatus_inventario === "DISPONIBLE" || (!c.empresaNombre && c.activo);
+                                        const isAsig = c.estatus_inventario === "ASIGNADO" && c.empresaNombre;
+                                        const isVenc = c.estatus_inventario === "VENCIDO";
+                                        const numFmt = formatCorbatinVerdeNum(c.corbatinNum);
+
+                                        return (
+                                          <tr
+                                            key={c.id}
+                                            onClick={() => setSelectedCorbatinVerdeId(c.id)}
+                                            className={`hover:bg-teal-50/50 cursor-pointer transition-colors ${selectedCorbatinVerdeId === c.id ? "bg-teal-50/60" : ""}`}
+                                          >
+                                            <td className="px-5 py-3">
+                                              <span className="font-mono font-bold text-xs text-[#0D6E5F] bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200">
+                                                #{numFmt}
+                                              </span>
+                                            </td>
+                                            <td className="px-5 py-3">
+                                              {isDisp && (
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                  <span>Disponible</span>
+                                                </span>
+                                              )}
+                                              {isAsig && (
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                                  <span>Asignado</span>
+                                                </span>
+                                              )}
+                                              {isVenc && (
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
+                                                  <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                                  <span>Vencido</span>
+                                                </span>
+                                              )}
+                                              {!c.activo && (
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                                  <span>Inactivo</span>
+                                                </span>
+                                              )}
+                                            </td>
+                                            <td className="px-5 py-3 font-bold text-xs text-slate-900">
+                                              {c.empresaNombre ? (
+                                                <span>{c.empresaNombre}</span>
+                                              ) : (
+                                                <span className="text-slate-400 italic font-normal">Libre para asignación</span>
+                                              )}
+                                            </td>
+                                            <td className="px-5 py-3 font-mono text-xs text-slate-600">
+                                              {c.telefono ? (
+                                                <CopyableInlineText text={c.telefono} label="Teléfono" onCopyToast={showToast} />
+                                              ) : (
+                                                <span className="text-slate-300 font-sans">—</span>
+                                              )}
+                                            </td>
+                                            <td className="px-5 py-3 text-xs text-slate-600 font-medium">
+                                              {c.vigenciaTexto || (isDisp ? "—" : "Temporal")}
+                                            </td>
+                                            <td className="px-5 py-3 text-xs text-slate-500">
+                                              {c.fechaVencimiento || (isDisp ? "—" : "Indefinida")}
+                                            </td>
+                                            <td className="px-5 py-3 text-right">
+                                              <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                                {isDisp ? (
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => handleAbrirModalVincular(c)}
+                                                    className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0a574b] transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                                                    title="Vincular a Empresa"
+                                                  >
+                                                    <span>🔗 Vincular</span>
+                                                  </button>
+                                                ) : (
+                                                  <>
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => handleAbrirModalVincular(c)}
+                                                      className="p-1.5 px-2 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all cursor-pointer"
+                                                      title="Editar asignación"
+                                                    >
+                                                      <IconEdit className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => {
+                                                        if (confirm(`¿Liberar el Corbatín #${numFmt} de "${c.empresaNombre}" y devolverlo al inventario Disponible?`)) {
+                                                          handleDesvincularCorbatinVerde(c.id);
+                                                        }
+                                                      }}
+                                                      className="p-1.5 px-2 rounded-lg text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-all cursor-pointer"
+                                                      title="Liberar corbatín"
+                                                    >
+                                                      <span>Liberar</span>
+                                                    </button>
+                                                  </>
+                                                )}
+
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleDescargarPDFCorbatinVerdeDirecto(c, false)}
+                                                  className="px-2 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all cursor-pointer flex items-center gap-1"
+                                                  title="Descargar PDF"
+                                                >
+                                                  <IconDownload className="w-3.5 h-3.5" />
+                                                </button>
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        );
+                                      })
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
+
+                              {/* Footer de Paginación Robusto (10 registros por página) */}
+                              {filteredTableCorbatines.length > 0 && (
+                                <div className="px-5 py-3.5 border-t bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600" style={{ borderColor: "var(--color-border)" }}>
+                                  <div className="flex items-center gap-3">
+                                    <div>
+                                      Mostrando <strong className="text-slate-800">{cvStartIndex + 1}</strong> – <strong className="text-slate-800">{Math.min(cvStartIndex + cvPageSize, filteredTableCorbatines.length)}</strong> de <strong className="text-slate-800">{filteredTableCorbatines.length}</strong> {filteredTableCorbatines.length === 1 ? "corbatín" : "corbatines"}
+                                    </div>
+                                    <div className="hidden md:flex items-center gap-1 text-[11px] text-slate-500">
+                                      <span>•</span>
+                                      <label htmlFor="corbatines-page-size-select" className="text-slate-500">Ver:</label>
+                                      <select
+                                        id="corbatines-page-size-select"
+                                        value={cvPageSize}
+                                        onChange={(e) => {
+                                          setCorbatinVerdePageSize(Number(e.target.value));
+                                          setCorbatinVerdePage(1);
+                                        }}
+                                        className="bg-white border border-slate-300 rounded px-1.5 py-0.5 font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0D6E5F]"
+                                      >
+                                        <option value={10}>10 por pág.</option>
+                                        <option value={20}>20 por pág.</option>
+                                        <option value={50}>50 por pág.</option>
+                                      </select>
+                                    </div>
+                                  </div>
+
+                                  {totalCVPages > 1 && (
+                                    <div className="flex items-center gap-1.5">
+                                      {/* Primera Página */}
+                                      <button
+                                        type="button"
+                                        onClick={() => setCorbatinVerdePage(1)}
+                                        disabled={safeCVPage <= 1}
+                                        className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors cursor-pointer shadow-2xs"
+                                        title="Primera página"
+                                      >
+                                        <IconChevronsLeft className="w-3.5 h-3.5" />
+                                      </button>
+
+                                      {/* Anterior */}
+                                      <button
+                                        type="button"
+                                        onClick={() => setCorbatinVerdePage((p) => Math.max(1, p - 1))}
+                                        disabled={safeCVPage <= 1}
+                                        className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
+                                        title="Página anterior"
+                                      >
+                                        <IconChevronLeft className="w-3.5 h-3.5" />
+                                        <span className="hidden sm:inline">Anterior</span>
+                                      </button>
+
+                                      {/* Botones de Números de Página */}
+                                      <div className="flex items-center gap-1">
+                                        {Array.from({ length: totalCVPages }, (_, i) => i + 1).map((pageNum) => {
+                                          if (
+                                            totalCVPages > 7 &&
+                                            pageNum !== 1 &&
+                                            pageNum !== totalCVPages &&
+                                            Math.abs(pageNum - safeCVPage) > 1
+                                          ) {
+                                            if (pageNum === 2 || pageNum === totalCVPages - 1) {
+                                              return <span key={pageNum} className="px-1 text-slate-400">...</span>;
+                                            }
+                                            return null;
+                                          }
+
+                                          const isActive = pageNum === safeCVPage;
+                                          return (
+                                            <button
+                                              key={pageNum}
+                                              type="button"
+                                              onClick={() => setCorbatinVerdePage(pageNum)}
+                                              className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${isActive
+                                                ? "bg-[#0D6E5F] text-white shadow-xs"
+                                                : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-100"
+                                                }`}
+                                            >
+                                              {pageNum}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+
+                                      {/* Siguiente */}
+                                      <button
+                                        type="button"
+                                        onClick={() => setCorbatinVerdePage((p) => Math.min(totalCVPages, p + 1))}
+                                        disabled={safeCVPage >= totalCVPages}
+                                        className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
+                                        title="Página siguiente"
+                                      >
+                                        <span className="hidden sm:inline">Siguiente</span>
+                                        <IconChevronRight className="w-3.5 h-3.5" />
+                                      </button>
+
+                                      {/* Última Página */}
+                                      <button
+                                        type="button"
+                                        onClick={() => setCorbatinVerdePage(totalCVPages)}
+                                        disabled={safeCVPage >= totalCVPages}
+                                        className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors cursor-pointer shadow-2xs"
+                                        title="Última página"
+                                      >
+                                        <IconChevronsRight className="w-3.5 h-3.5" />
+                                      </button>
+
+                                      <span className="text-[11px] text-slate-400 font-mono pl-1 hidden lg:inline">
+                                        Pág. {safeCVPage} / {totalCVPages}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </>
                     );
                   })()}
@@ -9277,8 +9517,6 @@ export default function App() {
         {/* CASETA */}
         {currentUser.role === "caseta" && (
           <main>
-            <PageHero img={IMG_GATE} title="Registro de Caseta de Vigilancia" subtitle="Formulario ultrarrápido con validación de suspensiones en tiempo real, acceso peatonal y exportación de bitácora" />
-
             <div className={`mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-6 min-h-[calc(100vh-16rem)] ${casetaTab === "bitacora" ? "max-w-[1600px] w-full" : "max-w-7xl"}`}>
               {casetaTab === "registro" && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -10306,175 +10544,408 @@ export default function App() {
               )}
 
               {/* ─── TAB BITÁCORA DE CASETA ─── */}
-              {casetaTab === "bitacora" && (
-                <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
-                  <div className="px-5 py-4 border-b bg-slate-50 flex flex-wrap items-center justify-between gap-3" style={{ borderColor: "var(--color-border)" }}>
-                    <div>
-                      <h2 className="font-bold text-sm text-slate-800">Bitácora Oficial de Accesos en Caseta</h2>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={handleExportarBitacoraExcel}
-                        className="px-4 py-2 rounded-xl text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 flex items-center gap-2 transition-all cursor-pointer shadow-sm hover:shadow"
-                        title="Exportar bitácora completa en formato compatible con Excel (.xlsx / .csv)"
-                      >
-                        <IconFileSpreadsheet className="w-4 h-4 text-emerald-700" />
-                        <span>Exportar a Excel (.xlsx / .csv)</span>
-                        <IconDownload className="w-3.5 h-3.5 text-emerald-600" />
-                      </button>
-                      <span className="text-xs text-slate-500 font-mono bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">{bitacora.length} registros</span>
-                    </div>
-                  </div>
-                  <div className="overflow-x-auto overflow-y-auto max-h-[620px] scrollbar-thin">
-                    <table className="w-full table-fixed text-xs">
-                      <colgroup>
-                        <col className="w-[4%]" />
-                        <col className="w-[8%]" />
-                        <col className="w-[14%]" />
-                        <col className="w-[9%]" />
-                        <col className="w-[13%]" />
-                        <col className="w-[7%]" />
-                        <col className="w-[6%]" />
-                        <col className="w-[7%]" />
-                        <col className="w-[7%]" />
-                        <col className="w-[11%]" />
-                        <col className="w-[7%]" />
-                        <col className="w-[7%]" />
-                      </colgroup>
-                      <thead className="sticky top-0 z-10 bg-slate-50 shadow-xs">
-                        <tr className="border-b bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ borderColor: "var(--color-border)" }}>
-                          <th className="text-center px-1.5 py-3">Folio</th>
-                          <th className="text-center px-1 py-3">Modalidad</th>
-                          <th className="text-left px-2.5 py-3">Empresa</th>
-                          <th className="text-left px-2 py-3">Vehículo / Placas</th>
-                          <th className="text-left px-2.5 py-3">Conductor</th>
-                          <th className="text-center px-1 py-3">Pasajeros</th>
-                          <th className="text-center px-1 py-3">Corbatín</th>
-                          <th className="text-center px-1 py-3">Entrada</th>
-                          <th className="text-center px-1 py-3">Salida</th>
-                          <th className="text-left px-2.5 py-3">Trabajos / Destino</th>
-                          <th className="text-center px-1 py-3">Estatus</th>
-                          <th className="text-center px-1.5 py-3">Acción</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {bitacora.length === 0 ? (
-                          <tr>
-                            <td colSpan={12} className="px-5 py-8 text-center text-xs text-slate-500">
-                              <IconShield className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                              No hay registros de accesos en la bitácora de PostgreSQL.
-                            </td>
-                          </tr>
-                        ) : (
-                          bitacora.map((b) => {
-                            const trabajoTexto = (b.trabajos && b.trabajos !== "x") ? b.trabajos : (b.observaciones || "Acceso regular");
-                            const horaEntradaLimpia = formatHoraLocal(b.horaEntrada);
-                            const horaSalidaLimpia = b.horaSalida ? formatHoraLocal(b.horaSalida) : "";
+              {casetaTab === "bitacora" && (() => {
+                const q = casetaBitacoraSearch.trim().toLowerCase();
+                const filteredBitacora = bitacora.filter((b) => {
+                  const matchesSearch = !q || (
+                    String(b.id || "").toLowerCase().includes(q) ||
+                    String(b.empresaNombre || "").toLowerCase().includes(q) ||
+                    String(b.conductor || "").toLowerCase().includes(q) ||
+                    String(b.placas || "").toLowerCase().includes(q) ||
+                    String(b.corbatinNum || "").toLowerCase().includes(q) ||
+                    String(b.trabajos || "").toLowerCase().includes(q) ||
+                    String(b.telefono || "").toLowerCase().includes(q)
+                  );
+                  const matchesStatus = casetaBitacoraStatusFilter === "todos"
+                    ? true
+                    : casetaBitacoraStatusFilter === "dentro"
+                      ? b.estado === "Dentro"
+                      : b.estado !== "Dentro";
+                  return matchesSearch && matchesStatus;
+                });
 
-                            return (
-                              <tr key={b.id} className="hover:bg-slate-50 transition-colors">
-                                <td className="px-1.5 py-2 font-mono text-xs font-bold text-slate-700 text-center truncate">{b.id}</td>
-                                <td className="px-1 py-2 text-center">
-                                  {b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? (
-                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
-                                      <IconWalk className="w-3 h-3 shrink-0" />
-                                      <span>Peatonal</span>
-                                    </span>
-                                  ) : b.tipoCorbatin === "VERDE" || b.tipoAcceso === "Corbatín Verde" ? (
-                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                                      <span>C. Verde</span>
-                                    </span>
-                                  ) : (
-                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                                      <IconCar className="w-3 h-3 shrink-0" />
-                                      <span>Vehicular</span>
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="px-2.5 py-2 text-xs font-semibold text-slate-900 truncate" title={b.empresaNombre}>
-                                  {b.empresaNombre}
-                                </td>
-                                <td className="px-2 py-2 text-xs font-mono font-bold text-slate-800 truncate" title={b.placas}>
-                                  {b.placas === "PEATONAL (A PIE)" ? (
-                                    <span className="text-sky-700 font-sans font-semibold text-[11px]">A Pie</span>
-                                  ) : (
-                                    b.placas
-                                  )}
-                                </td>
-                                <td className="px-2.5 py-2 text-xs text-slate-700 font-medium">
-                                  <div className="truncate font-semibold text-slate-800" title={b.conductor}>{b.conductor}</div>
-                                  {b.telefono && (
-                                    <div className="text-[10px] text-slate-400 font-mono truncate">
-                                      <CopyableInlineText text={b.telefono} label="Teléfono" onCopyToast={showToast} />
-                                    </div>
-                                  )}
-                                </td>
-                                <td className="px-1 py-2 text-center">
-                                  {b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? (
-                                    <span className="text-slate-400 text-xs">—</span>
-                                  ) : (
-                                    <span className={`inline-flex items-center justify-center font-semibold px-1.5 py-0.5 rounded text-[10px] ${(b.num_pasajeros || 0) > 0 ? "bg-amber-50 text-amber-800 border border-amber-200" : "text-slate-500 bg-slate-50"
-                                      }`} title={`${b.num_pasajeros || 0} pasajeros adicionales`}>
-                                      {(b.num_pasajeros || 0) > 0 ? `+${b.num_pasajeros} extra` : "0 (Solo)"}
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="px-1 py-2 text-center text-xs font-mono font-bold truncate">
-                                  {b.tipoCorbatin === "VERDE" || b.tipoAcceso === "Corbatín Verde" ? (
-                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
-                                      {b.corbatinNum && b.corbatinNum !== "—" ? (b.corbatinNum.startsWith("#") ? b.corbatinNum : `#${b.corbatinNum}`) : "—"}
-                                    </span>
-                                  ) : (
-                                    <span style={{ color: "var(--color-primary)" }}>
-                                      {b.corbatinNum && b.corbatinNum !== "—" ? (b.corbatinNum.startsWith("#") ? b.corbatinNum : `#${b.corbatinNum}`) : "—"}
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="px-1 py-2 text-center text-[11px] text-slate-700 font-mono truncate" title={horaEntradaLimpia}>
-                                  {horaEntradaLimpia}
-                                </td>
-                                <td className="px-1 py-2 text-center text-[11px] text-slate-500 font-mono truncate" title={horaSalidaLimpia || "Dentro"}>
-                                  {horaSalidaLimpia || "—"}
-                                </td>
-                                <td className="px-2.5 py-2 text-xs text-slate-600 truncate" title={trabajoTexto}>
-                                  {trabajoTexto}
-                                </td>
-                                <td className="px-1 py-2 text-center">
-                                  <StatusBadge status={b.estado} />
-                                </td>
-                                <td className="px-1.5 py-2 text-center">
-                                  {b.estado === "Dentro" ? (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleMarcarSalida(b.id)}
-                                      disabled={Boolean(marcandoSalidaIds[b.id])}
-                                      className={`w-full py-1 text-[11px] font-bold rounded-lg bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 cursor-pointer flex items-center justify-center gap-1 shadow-sm transition-all whitespace-nowrap ${marcandoSalidaIds[b.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                                        }`}
-                                    >
-                                      {marcandoSalidaIds[b.id] ? (
-                                        <>
-                                          <IconSpinner className="w-3 h-3" />
-                                          <span>...</span>
-                                        </>
-                                      ) : (
-                                        <span>Salida</span>
-                                      )}
-                                    </button>
-                                  ) : (
-                                    <span className="text-[11px] text-slate-400 font-medium">Completado</span>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })
+                const pageSize = casetaBitacoraPageSize || 10;
+                const totalCasetaBitacoraPages = Math.max(1, Math.ceil(filteredBitacora.length / pageSize));
+                const safeCasetaBitacoraPage = Math.min(Math.max(1, casetaBitacoraPage), totalCasetaBitacoraPages);
+                const casetaBitacoraStartIndex = (safeCasetaBitacoraPage - 1) * pageSize;
+                const paginatedCasetaBitacora = filteredBitacora.slice(casetaBitacoraStartIndex, casetaBitacoraStartIndex + pageSize);
+
+                const totalDentro = bitacora.filter(b => b.estado === "Dentro").length;
+                const totalSalida = bitacora.filter(b => b.estado !== "Dentro").length;
+
+                return (
+                  <div className="rounded-2xl border overflow-hidden bg-white shadow-sm space-y-0" style={{ borderColor: "var(--color-border)" }}>
+                    {/* Header y Filtros */}
+                    <div className="px-5 py-4 border-b bg-slate-50 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3" style={{ borderColor: "var(--color-border)" }}>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h2 className="font-bold text-sm sm:text-base text-slate-800">Bitácora Oficial de Accesos en Caseta</h2>
+                        <span className="text-xs text-slate-500 font-mono bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
+                          {filteredBitacora.length === bitacora.length ? `${bitacora.length} registros` : `${filteredBitacora.length} de ${bitacora.length} registros`}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        {/* Buscador Rápido */}
+                        <div className="relative min-w-[220px] flex-1 sm:flex-none">
+                          <IconSearch className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                          <input
+                            type="text"
+                            value={casetaBitacoraSearch}
+                            onChange={(e) => {
+                              setCasetaBitacoraSearch(e.target.value);
+                              setCasetaBitacoraPage(1);
+                            }}
+                            placeholder="Buscar folio, placa, conductor..."
+                            className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/30 focus:border-[#0D6E5F] text-slate-700 placeholder:text-slate-400"
+                          />
+                          {casetaBitacoraSearch && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCasetaBitacoraSearch("");
+                                setCasetaBitacoraPage(1);
+                              }}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                              title="Limpiar búsqueda"
+                            >
+                              <IconX className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Filtro de Estado */}
+                        <div className="flex items-center rounded-xl border border-slate-300 bg-white p-0.5 text-xs font-semibold">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCasetaBitacoraStatusFilter("todos");
+                              setCasetaBitacoraPage(1);
+                            }}
+                            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${casetaBitacoraStatusFilter === "todos"
+                              ? "bg-slate-800 text-white font-bold shadow-2xs"
+                              : "text-slate-600 hover:text-slate-900"
+                              }`}
+                          >
+                            Todos ({bitacora.length})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCasetaBitacoraStatusFilter("dentro");
+                              setCasetaBitacoraPage(1);
+                            }}
+                            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${casetaBitacoraStatusFilter === "dentro"
+                              ? "bg-amber-500 text-white font-bold shadow-2xs"
+                              : "text-slate-600 hover:text-slate-900"
+                              }`}
+                          >
+                            Dentro ({totalDentro})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCasetaBitacoraStatusFilter("salida");
+                              setCasetaBitacoraPage(1);
+                            }}
+                            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${casetaBitacoraStatusFilter === "salida"
+                              ? "bg-emerald-600 text-white font-bold shadow-2xs"
+                              : "text-slate-600 hover:text-slate-900"
+                              }`}
+                          >
+                            Salidas ({totalSalida})
+                          </button>
+                        </div>
+
+                        {/* Botón Único de Exportación a Excel */}
+                        <button
+                          type="button"
+                          onClick={handleExportarBitacoraExcel}
+                          disabled={isGeneratingBitacoraExcel || bitacora.length === 0}
+                          className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0A5448] shadow-sm hover:shadow flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                          title="Exportar reporte de bitácora formateado en Microsoft Excel (.xlsx)"
+                        >
+                          {isGeneratingBitacoraExcel ? (
+                            <>
+                              <IconSpinner className="w-3.5 h-3.5 text-emerald-200 animate-spin" />
+                              <span>Generando Excel...</span>
+                            </>
+                          ) : (
+                            <>
+                              <IconFileSpreadsheet className="w-3.5 h-3.5 text-emerald-200" />
+                              <span>Exportar a Excel (.xlsx)</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Tabla de Registros (Exactamente 10 por página) */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full table-fixed text-xs">
+                        <colgroup>
+                          <col className="w-[4%]" />
+                          <col className="w-[8%]" />
+                          <col className="w-[14%]" />
+                          <col className="w-[9%]" />
+                          <col className="w-[13%]" />
+                          <col className="w-[7%]" />
+                          <col className="w-[6%]" />
+                          <col className="w-[7%]" />
+                          <col className="w-[7%]" />
+                          <col className="w-[11%]" />
+                          <col className="w-[7%]" />
+                          <col className="w-[7%]" />
+                        </colgroup>
+                        <thead className="sticky top-0 z-10 bg-slate-50 shadow-xs">
+                          <tr className="border-b bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ borderColor: "var(--color-border)" }}>
+                            <th className="text-center px-1.5 py-3">Folio</th>
+                            <th className="text-center px-1 py-3">Modalidad</th>
+                            <th className="text-left px-2.5 py-3">Empresa</th>
+                            <th className="text-left px-2 py-3">Vehículo / Placas</th>
+                            <th className="text-left px-2.5 py-3">Conductor</th>
+                            <th className="text-center px-1 py-3">Pasajeros</th>
+                            <th className="text-center px-1 py-3">Corbatín</th>
+                            <th className="text-center px-1 py-3">Entrada</th>
+                            <th className="text-center px-1 py-3">Salida</th>
+                            <th className="text-left px-2.5 py-3">Trabajos / Destino</th>
+                            <th className="text-center px-1 py-3">Estatus</th>
+                            <th className="text-center px-1.5 py-3">Acción</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {paginatedCasetaBitacora.length === 0 ? (
+                            <tr>
+                              <td colSpan={12} className="px-5 py-10 text-center text-xs text-slate-500">
+                                <IconShield className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                                {q || casetaBitacoraStatusFilter !== "todos"
+                                  ? "No se encontraron registros que coincidan con los filtros aplicados."
+                                  : "No hay registros de accesos en la bitácora de PostgreSQL."}
+                              </td>
+                            </tr>
+                          ) : (
+                            paginatedCasetaBitacora.map((b) => {
+                              const trabajoTexto = (b.trabajos && b.trabajos !== "x") ? b.trabajos : (b.observaciones || "Acceso regular");
+                              const horaEntradaLimpia = formatHoraLocal(b.horaEntrada);
+                              const horaSalidaLimpia = b.horaSalida ? formatHoraLocal(b.horaSalida) : "";
+
+                              return (
+                                <tr key={b.id} className="hover:bg-slate-50 transition-colors">
+                                  <td className="px-1.5 py-2.5 font-mono text-xs font-bold text-slate-700 text-center truncate">{b.id}</td>
+                                  <td className="px-1 py-2.5 text-center">
+                                    {b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? (
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                                        <IconWalk className="w-3 h-3 shrink-0" />
+                                        <span>Peatonal</span>
+                                      </span>
+                                    ) : b.tipoCorbatin === "VERDE" || b.tipoAcceso === "Corbatín Verde" ? (
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                                        <span>C. Verde</span>
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                        <IconCar className="w-3 h-3 shrink-0" />
+                                        <span>Vehicular</span>
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="px-2.5 py-2.5 text-xs font-semibold text-slate-900 truncate" title={b.empresaNombre}>
+                                    {b.empresaNombre}
+                                  </td>
+                                  <td className="px-2 py-2.5 text-xs font-mono font-bold text-slate-800 truncate" title={b.placas}>
+                                    {b.placas === "PEATONAL (A PIE)" ? (
+                                      <span className="text-sky-700 font-sans font-semibold text-[11px]">A Pie</span>
+                                    ) : (
+                                      b.placas
+                                    )}
+                                  </td>
+                                  <td className="px-2.5 py-2.5 text-xs text-slate-700 font-medium">
+                                    <div className="truncate font-semibold text-slate-800" title={b.conductor}>{b.conductor}</div>
+                                    {b.telefono && (
+                                      <div className="text-[10px] text-slate-400 font-mono truncate">
+                                        <CopyableInlineText text={b.telefono} label="Teléfono" onCopyToast={showToast} />
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="px-1 py-2.5 text-center">
+                                    {b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? (
+                                      <span className="text-slate-400 text-xs">—</span>
+                                    ) : (
+                                      <span className={`inline-flex items-center justify-center font-semibold px-1.5 py-0.5 rounded text-[10px] ${(b.num_pasajeros || 0) > 0 ? "bg-amber-50 text-amber-800 border border-amber-200" : "text-slate-500 bg-slate-50"
+                                        }`} title={`${b.num_pasajeros || 0} pasajeros adicionales`}>
+                                        {(b.num_pasajeros || 0) > 0 ? `+${b.num_pasajeros} extra` : "0 (Solo)"}
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="px-1 py-2.5 text-center text-xs font-mono font-bold truncate">
+                                    {b.tipoCorbatin === "VERDE" || b.tipoAcceso === "Corbatín Verde" ? (
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                                        {b.corbatinNum && b.corbatinNum !== "—" ? (b.corbatinNum.startsWith("#") ? b.corbatinNum : `#${b.corbatinNum}`) : "—"}
+                                      </span>
+                                    ) : (
+                                      <span style={{ color: "var(--color-primary)" }}>
+                                        {b.corbatinNum && b.corbatinNum !== "—" ? (b.corbatinNum.startsWith("#") ? b.corbatinNum : `#${b.corbatinNum}`) : "—"}
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="px-1 py-2.5 text-center text-[11px] text-slate-700 font-mono truncate" title={horaEntradaLimpia}>
+                                    {horaEntradaLimpia}
+                                  </td>
+                                  <td className="px-1 py-2.5 text-center text-[11px] text-slate-500 font-mono truncate" title={horaSalidaLimpia || "Dentro"}>
+                                    {horaSalidaLimpia || "—"}
+                                  </td>
+                                  <td className="px-2.5 py-2.5 text-xs text-slate-600 truncate" title={trabajoTexto}>
+                                    {trabajoTexto}
+                                  </td>
+                                  <td className="px-1 py-2.5 text-center">
+                                    <StatusBadge status={b.estado} />
+                                  </td>
+                                  <td className="px-1.5 py-2.5 text-center">
+                                    {b.estado === "Dentro" ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleMarcarSalida(b.id)}
+                                        disabled={Boolean(marcandoSalidaIds[b.id])}
+                                        className={`w-full py-1 text-[11px] font-bold rounded-lg bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 cursor-pointer flex items-center justify-center gap-1 shadow-sm transition-all whitespace-nowrap ${marcandoSalidaIds[b.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                                          }`}
+                                      >
+                                        {marcandoSalidaIds[b.id] ? (
+                                          <>
+                                            <IconSpinner className="w-3 h-3" />
+                                            <span>...</span>
+                                          </>
+                                        ) : (
+                                          <span>Salida</span>
+                                        )}
+                                      </button>
+                                    ) : (
+                                      <span className="text-[11px] text-slate-400 font-medium">Completado</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Footer de Paginación Robusto (10 registros por página) */}
+                    {filteredBitacora.length > 0 && (
+                      <div className="px-5 py-3.5 border-t bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600" style={{ borderColor: "var(--color-border)" }}>
+                        <div className="flex items-center gap-3">
+                          <div>
+                            Mostrando <strong className="text-slate-800">{casetaBitacoraStartIndex + 1}</strong> – <strong className="text-slate-800">{Math.min(casetaBitacoraStartIndex + pageSize, filteredBitacora.length)}</strong> de <strong className="text-slate-800">{filteredBitacora.length}</strong> registros
+                          </div>
+                          <div className="hidden md:flex items-center gap-1 text-[11px] text-slate-500">
+                            <span>•</span>
+                            <label htmlFor="caseta-page-size-select" className="text-slate-500">Ver:</label>
+                            <select
+                              id="caseta-page-size-select"
+                              value={pageSize}
+                              onChange={(e) => {
+                                setCasetaBitacoraPageSize(Number(e.target.value));
+                                setCasetaBitacoraPage(1);
+                              }}
+                              className="bg-white border border-slate-300 rounded px-1.5 py-0.5 font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0D6E5F]"
+                            >
+                              <option value={10}>10 por pág.</option>
+                              <option value={20}>20 por pág.</option>
+                              <option value={50}>50 por pág.</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {totalCasetaBitacoraPages > 1 && (
+                          <div className="flex items-center gap-1.5">
+                            {/* Primera Página */}
+                            <button
+                              type="button"
+                              onClick={() => setCasetaBitacoraPage(1)}
+                              disabled={safeCasetaBitacoraPage <= 1}
+                              className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors cursor-pointer shadow-2xs"
+                              title="Primera página"
+                            >
+                              <IconChevronsLeft className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* Anterior */}
+                            <button
+                              type="button"
+                              onClick={() => setCasetaBitacoraPage((p) => Math.max(1, p - 1))}
+                              disabled={safeCasetaBitacoraPage <= 1}
+                              className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
+                              title="Página anterior"
+                            >
+                              <IconChevronLeft className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">Anterior</span>
+                            </button>
+
+                            {/* Botones de Números de Página */}
+                            <div className="flex items-center gap-1">
+                              {Array.from({ length: totalCasetaBitacoraPages }, (_, i) => i + 1).map((pageNum) => {
+                                if (
+                                  totalCasetaBitacoraPages > 7 &&
+                                  pageNum !== 1 &&
+                                  pageNum !== totalCasetaBitacoraPages &&
+                                  Math.abs(pageNum - safeCasetaBitacoraPage) > 1
+                                ) {
+                                  if (pageNum === 2 || pageNum === totalCasetaBitacoraPages - 1) {
+                                    return <span key={pageNum} className="px-1 text-slate-400">...</span>;
+                                  }
+                                  return null;
+                                }
+
+                                const isActive = pageNum === safeCasetaBitacoraPage;
+                                return (
+                                  <button
+                                    key={pageNum}
+                                    type="button"
+                                    onClick={() => setCasetaBitacoraPage(pageNum)}
+                                    className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${isActive
+                                      ? "bg-[#0D6E5F] text-white shadow-xs"
+                                      : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-100"
+                                      }`}
+                                  >
+                                    {pageNum}
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            {/* Siguiente */}
+                            <button
+                              type="button"
+                              onClick={() => setCasetaBitacoraPage((p) => Math.min(totalCasetaBitacoraPages, p + 1))}
+                              disabled={safeCasetaBitacoraPage >= totalCasetaBitacoraPages}
+                              className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
+                              title="Página siguiente"
+                            >
+                              <span className="hidden sm:inline">Siguiente</span>
+                              <IconChevronRight className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* Última Página */}
+                            <button
+                              type="button"
+                              onClick={() => setCasetaBitacoraPage(totalCasetaBitacoraPages)}
+                              disabled={safeCasetaBitacoraPage >= totalCasetaBitacoraPages}
+                              className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors cursor-pointer shadow-2xs"
+                              title="Última página"
+                            >
+                              <IconChevronsRight className="w-3.5 h-3.5" />
+                            </button>
+
+                            <span className="text-[11px] text-slate-400 font-mono pl-1 hidden lg:inline">
+                              Pág. {safeCasetaBitacoraPage}/{totalCasetaBitacoraPages}
+                            </span>
+                          </div>
                         )}
-                      </tbody>
-                    </table>
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           </main>
         )}
@@ -11892,8 +12363,8 @@ export default function App() {
             <div className="px-6 py-4 border-b bg-slate-50 flex items-center justify-between gap-4" style={{ borderColor: "var(--color-border)" }}>
               <div className="flex items-center gap-3 min-w-0">
                 <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold shrink-0 border ${selectedDocTrabajadorPreview.type === "seguro"
-                    ? "bg-teal-50 text-[#0D6E5F] border-teal-200"
-                    : "bg-indigo-50 text-indigo-700 border-indigo-200"
+                  ? "bg-teal-50 text-[#0D6E5F] border-teal-200"
+                  : "bg-indigo-50 text-indigo-700 border-indigo-200"
                   }`}>
                   {selectedDocTrabajadorPreview.type === "seguro" ? (
                     <IconShield className="w-5 h-5" />
@@ -12942,8 +13413,8 @@ export default function App() {
                           setVincularFechaFin(venc.toISOString().split("T")[0]);
                         }}
                         className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${isSel
-                            ? "bg-[#0D6E5F] text-white shadow-2xs"
-                            : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+                          ? "bg-[#0D6E5F] text-white shadow-2xs"
+                          : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
                           }`}
                       >
                         {preset}
@@ -13119,8 +13590,8 @@ export default function App() {
                 type="button"
                 onClick={() => setNuevoCVModo("individual")}
                 className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${nuevoCVModo === "individual"
-                    ? "bg-white text-[#0D6E5F] shadow-xs border border-slate-200"
-                    : "text-slate-600 hover:text-slate-900"
+                  ? "bg-white text-[#0D6E5F] shadow-xs border border-slate-200"
+                  : "text-slate-600 hover:text-slate-900"
                   }`}
               >
                 Emisión Individual (1 Corbatín)
@@ -13134,8 +13605,8 @@ export default function App() {
                   if (!nuevoCVRangoFin) setNuevoCVRangoFin(next);
                 }}
                 className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${nuevoCVModo === "lote"
-                    ? "bg-white text-[#0D6E5F] shadow-xs border border-slate-200"
-                    : "text-slate-600 hover:text-slate-900"
+                  ? "bg-white text-[#0D6E5F] shadow-xs border border-slate-200"
+                  : "text-slate-600 hover:text-slate-900"
                   }`}
               >
                 Emisión en Lote / Rango Consecutivo
@@ -13373,6 +13844,17 @@ export default function App() {
         onScanSuccess={handleQRScanData}
         title="Escanear Código QR de Corbatín"
         subtitle="Apunta la cámara al código QR impreso en el corbatín o sube una imagen / foto del QR"
+      />
+
+      {/* ─── MODAL OFICIAL DE REPORTES DE BITÁCORA ─── */}
+      <ReporteBitacoraModal
+        isOpen={showReporteBitacoraModal}
+        onClose={() => setShowReporteBitacoraModal(false)}
+        bitacora={bitacora}
+        empresas={empresas}
+        currentUserRole={currentUser?.role}
+        currentUserName={currentUser?.nombre}
+        onNotify={showToast}
       />
 
       {/* ─── TOAST NOTIFICATIONS OVERLAY ─── */}

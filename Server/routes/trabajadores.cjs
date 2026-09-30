@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
     const trabajadores = await db.Trabajador.findAll({
       where,
       include: [{ model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social'] }],
-      order: [['created_at', 'DESC']]
+      order: [['id_trabajador', 'DESC']]
     });
 
     const resultado = trabajadores.map(t => {

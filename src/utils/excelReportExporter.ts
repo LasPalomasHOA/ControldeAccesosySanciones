@@ -999,3 +999,317 @@ export async function exportSupervisorReportToExcel(data: ExportReportData) {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EXPORTADOR FORMATEADO PARA CASETA Y BITÁCORA GENERAL (.XLSX)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface SimpleBitacoraExportRecord {
+  id: string | number;
+  fecha?: string;
+  tipoAcceso?: string;
+  empresaNombre: string;
+  placas?: string;
+  color?: string;
+  conductor: string;
+  telefono?: string;
+  corbatinNum?: string;
+  num_pasajeros?: number;
+  horaEntrada: string;
+  horaSalida?: string;
+  trabajos?: string;
+  guardiaNombre?: string;
+  estado?: string;
+  observaciones?: string;
+  vehicleId?: string;
+}
+
+export interface SimpleBitacoraExportOptions {
+  periodoNombre: string;
+  fechaReporte?: string;
+  empresaFiltro?: string;
+  guardiaNombre?: string;
+  supervisorNombre?: string;
+  records: SimpleBitacoraExportRecord[];
+}
+
+export async function exportBitacoraCasetaToExcel(options: SimpleBitacoraExportOptions) {
+  const {
+    periodoNombre,
+    fechaReporte = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    empresaFiltro = 'Todas las Empresas',
+    guardiaNombre = 'Oficial en Turno',
+    records = []
+  } = options;
+
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Las Palomas Rocky Point HOA - Sistema de Seguridad y Caseta';
+  workbook.lastModifiedBy = guardiaNombre;
+  workbook.created = new Date();
+  workbook.modified = new Date();
+
+  const ws = workbook.addWorksheet('Bitácora de Accesos', {
+    views: [{ state: 'frozen', ySplit: 8, showGridLines: true }]
+  });
+
+  ws.columns = [
+    { width: 10 }, // A: Folio
+    { width: 14 }, // B: Fecha
+    { width: 16 }, // C: Modalidad
+    { width: 34 }, // D: Empresa Contratista
+    { width: 16 }, // E: Placas / ID
+    { width: 14 }, // F: Color Unidad
+    { width: 28 }, // G: Conductor / Colaborador
+    { width: 16 }, // H: Teléfono Celular
+    { width: 14 }, // I: Corbatín
+    { width: 12 }, // J: Pasajeros
+    { width: 16 }, // K: Hora Entrada
+    { width: 16 }, // L: Hora Salida
+    { width: 32 }, // M: Destino / Trabajos
+    { width: 22 }, // N: Oficial Caseta
+    { width: 18 }, // O: Estatus
+    { width: 32 }, // P: Observaciones
+  ];
+
+  // Banner Corporativo
+  ws.mergeCells('A1:P1');
+  const cellTitle = ws.getCell('A1');
+  cellTitle.value = 'LAS PALOMAS ROCKY POINT HOA, A.C.';
+  cellTitle.font = { name: 'Calibri', size: 15, bold: true, color: { argb: COLORS.headerText } };
+  cellTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.primary } };
+  cellTitle.alignment = { horizontal: 'center', vertical: 'middle' };
+  ws.getRow(1).height = 26;
+
+  ws.mergeCells('A2:P2');
+  const cellSub = ws.getCell('A2');
+  cellSub.value = 'BITÁCORA OFICIAL DE CONTROL DE ACCESOS Y REGISTRO EN CASETA (ENTRADAS Y SALIDAS)';
+  cellSub.font = { name: 'Calibri', size: 10.5, bold: true, color: { argb: COLORS.primaryLight } };
+  cellSub.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.primaryDark } };
+  cellSub.alignment = { horizontal: 'center', vertical: 'middle' };
+  ws.getRow(2).height = 20;
+
+  ws.mergeCells('A3:P3');
+  const cellMeta = ws.getCell('A3');
+  cellMeta.value = `Periodo: ${periodoNombre.toUpperCase()} | Fecha de Emisión: ${fechaReporte} | Filtro Empresa: ${empresaFiltro} | Oficial en Turno: ${guardiaNombre}`;
+  cellMeta.font = { name: 'Calibri', size: 9, italic: true, color: { argb: COLORS.textMuted } };
+  cellMeta.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.zebraLight } };
+  cellMeta.alignment = { horizontal: 'center', vertical: 'middle' };
+  ws.getRow(3).height = 18;
+
+  // KPIs Resumen
+  const totalMovimientos = records.length;
+  const totalEntradas = records.filter(r => r.horaEntrada && r.horaEntrada !== '—').length;
+  const totalSalidas = records.filter(r => r.horaSalida && r.horaSalida !== 'Dentro' && r.horaSalida !== '—').length;
+  const balanceDentro = records.filter(r => !r.horaSalida || r.horaSalida === 'Dentro' || r.estado === 'Dentro').length;
+
+  const kpiRow = 5;
+  // KPI 1: Total
+  ws.mergeCells(`A${kpiRow}:C${kpiRow}`);
+  ws.getCell(`A${kpiRow}`).value = `TOTAL MOVIMIENTOS: ${totalMovimientos}`;
+  ws.getCell(`A${kpiRow}`).font = { size: 10, bold: true, color: { argb: COLORS.textDark } };
+  ws.getCell(`A${kpiRow}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.cardBg } };
+  ws.getCell(`A${kpiRow}`).alignment = { horizontal: 'center', vertical: 'middle' };
+
+  // KPI 2: Entradas
+  ws.mergeCells(`D${kpiRow}:F${kpiRow}`);
+  ws.getCell(`D${kpiRow}`).value = `INGRESOS (ENTRADAS): ${totalEntradas}`;
+  ws.getCell(`D${kpiRow}`).font = { size: 10, bold: true, color: { argb: COLORS.primary } };
+  ws.getCell(`D${kpiRow}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.primaryLight } };
+  ws.getCell(`D${kpiRow}`).alignment = { horizontal: 'center', vertical: 'middle' };
+
+  // KPI 3: Salidas
+  ws.mergeCells(`G${kpiRow}:I${kpiRow}`);
+  ws.getCell(`G${kpiRow}`).value = `SALIDAS REGISTRADAS: ${totalSalidas}`;
+  ws.getCell(`G${kpiRow}`).font = { size: 10, bold: true, color: { argb: COLORS.textMuted } };
+  ws.getCell(`G${kpiRow}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.zebraLight } };
+  ws.getCell(`G${kpiRow}`).alignment = { horizontal: 'center', vertical: 'middle' };
+
+  // KPI 4: Dentro
+  ws.mergeCells(`J${kpiRow}:M${kpiRow}`);
+  ws.getCell(`J${kpiRow}`).value = `EN INSTALACIONES (DENTRO): ${balanceDentro}`;
+  ws.getCell(`J${kpiRow}`).font = { size: 10, bold: true, color: { argb: balanceDentro > 0 ? COLORS.accentGreen : COLORS.textMuted } };
+  ws.getCell(`J${kpiRow}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: balanceDentro > 0 ? COLORS.accentGreenBg : COLORS.cardBg } };
+  ws.getCell(`J${kpiRow}`).alignment = { horizontal: 'center', vertical: 'middle' };
+  ws.getRow(kpiRow).height = 22;
+
+  // Cabeceras de Tabla
+  const headers = [
+    'Folio',
+    'Fecha',
+    'Modalidad',
+    'Empresa Contratista',
+    'Vehículo / Placas',
+    'Color Unidad',
+    'Conductor / Colaborador',
+    'Teléfono Celular',
+    'Corbatín',
+    'Pasajeros',
+    'Hora Entrada',
+    'Hora Salida',
+    'Destino / Motivo de Acceso',
+    'Oficial en Caseta',
+    'Estatus',
+    'Observaciones'
+  ];
+
+  const headerRow = ws.getRow(8);
+  headerRow.values = headers;
+  headerRow.height = 24;
+
+  headers.forEach((_, idx) => {
+    const cell = headerRow.getCell(idx + 1);
+    cell.font = { name: 'Calibri', size: 9.5, bold: true, color: { argb: COLORS.headerText } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.primaryDark } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    cell.border = {
+      top: { style: 'medium', color: { argb: COLORS.primary } },
+      bottom: { style: 'medium', color: { argb: COLORS.primary } },
+      left: { style: 'thin', color: { argb: COLORS.borderGray } },
+      right: { style: 'thin', color: { argb: COLORS.borderGray } }
+    };
+  });
+
+  // Filas de Datos
+  let rowIdx = 9;
+  records.forEach((b, idx) => {
+    const isZebra = idx % 2 === 1;
+    const bgRow = isZebra ? COLORS.zebraLight : COLORS.zebraWhite;
+    const row = ws.getRow(rowIdx);
+
+    const esPeatonal = b.tipoAcceso === 'Peatonal' || b.vehicleId === 'PEATONAL';
+    const horaEntradaVis = b.horaEntrada || '00:00';
+    const horaSalidaVis = b.horaSalida ? b.horaSalida : 'Dentro';
+    const esDentro = !b.horaSalida || b.horaSalida === 'Dentro' || b.estado === 'Dentro';
+
+    row.values = [
+      Number(b.id) || b.id,
+      b.fecha || new Date().toISOString().split('T')[0],
+      b.tipoAcceso || (esPeatonal ? 'Peatonal' : 'Vehicular'),
+      b.empresaNombre || '—',
+      b.placas || (esPeatonal ? 'PEATONAL' : '—'),
+      b.color || 'N/A',
+      b.conductor || 'Personal Acreditado',
+      b.telefono || 'N/A',
+      b.corbatinNum ? `#${b.corbatinNum}` : '—',
+      Number(b.num_pasajeros) || 0,
+      horaEntradaVis,
+      horaSalidaVis,
+      b.trabajos || b.observaciones || 'Mantenimiento / Acceso regular',
+      b.guardiaNombre || guardiaNombre,
+      esDentro ? 'Dentro' : 'Salida Registrada',
+      b.observaciones || 'Sin observaciones'
+    ];
+    row.height = 20;
+
+    row.eachCell((cell, colNum) => {
+      cell.font = { name: 'Calibri', size: 9, color: { argb: COLORS.textDark } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgRow } };
+      cell.border = {
+        top: { style: 'thin', color: { argb: COLORS.borderGray } },
+        bottom: { style: 'thin', color: { argb: COLORS.borderGray } },
+        left: { style: 'thin', color: { argb: COLORS.borderGray } },
+        right: { style: 'thin', color: { argb: COLORS.borderGray } },
+      };
+
+      if ([1, 2, 3, 5, 6, 8, 9, 10, 11, 12, 15].includes(colNum)) {
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      } else {
+        cell.alignment = { horizontal: 'left', vertical: 'middle' };
+      }
+
+      if (colNum === 15) {
+        if (cell.value === 'Dentro') {
+          cell.font = { name: 'Calibri', size: 9, bold: true, color: { argb: COLORS.accentGreen } };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.accentGreenBg } };
+        }
+      }
+    });
+
+    rowIdx++;
+  });
+
+  // Filtros automáticos en Excel
+  ws.autoFilter = {
+    from: { row: 8, column: 1 },
+    to: { row: rowIdx - 1, column: headers.length }
+  };
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  const sanitizedPeriod = periodoNombre.replace(/[^a-zA-Z0-9_-]/g, '_');
+  link.download = `Bitacora_Oficial_LasPalomas_${sanitizedPeriod}_${new Date().toISOString().split('T')[0]}.xlsx`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Exportador CSV Estructurado con UTF-8 BOM
+ */
+export function exportBitacoraCSV(options: SimpleBitacoraExportOptions) {
+  const { records = [], periodoNombre = 'General' } = options;
+  if (records.length === 0) return;
+
+  const headers = [
+    'Folio',
+    'Fecha',
+    'Modalidad de Acceso',
+    'Empresa Contratista',
+    'Vehículo / Placas',
+    'Color Unidad',
+    'Conductor / Colaborador',
+    'Pasajeros (sin chofer)',
+    'Teléfono Celular',
+    'Corbatín / Gafete',
+    'Hora Entrada',
+    'Hora Salida',
+    'Trabajos / Motivo de Acceso',
+    'Oficial en Turno',
+    'Estatus',
+    'Observaciones de Seguridad'
+  ];
+
+  const rows = records.map((b) => [
+    b.id,
+    b.fecha || '',
+    b.tipoAcceso || (b.vehicleId === 'PEATONAL' ? 'Peatonal (A pie)' : 'Vehicular'),
+    b.empresaNombre || '—',
+    b.placas || 'PEATONAL',
+    b.color || 'N/A',
+    b.conductor || 'Personal Acreditado',
+    b.tipoAcceso === 'Peatonal' || b.vehicleId === 'PEATONAL' ? '0' : String(b.num_pasajeros ?? 0),
+    b.telefono || 'N/A',
+    b.corbatinNum ? `#${b.corbatinNum}` : 'N/A',
+    b.horaEntrada || '',
+    b.horaSalida ? b.horaSalida : 'Dentro (Sin salida aún)',
+    b.trabajos || 'Mantenimiento regular',
+    b.guardiaNombre || 'Oficial de Caseta',
+    b.estado || (b.horaSalida ? 'Salida Registrada' : 'Dentro'),
+    b.observaciones || 'Sin observaciones'
+  ]);
+
+  const csvContent = '\uFEFF' + [
+    headers.map((h) => `"${h.replace(/"/g, '""')}"`).join(','),
+    ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+  ].join('\r\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const sanitized = periodoNombre.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const today = new Date().toISOString().split('T')[0];
+  link.setAttribute('href', url);
+  link.setAttribute('download', `Bitacora_Caseta_LasPalomas_${sanitized}_${today}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
