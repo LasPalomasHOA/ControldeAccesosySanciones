@@ -18,12 +18,14 @@ router.get('/', async (req, res) => {
 
     const vehiculos = await db.Vehiculo.findAll({
       where,
+      attributes: ['id_vehiculo', 'id_empresa', 'marca', 'modelo', 'año', 'placas', 'color', 'foto_url', 'estatus_acceso', 'eliminado', 'created_at', 'updated_at'],
       include: [
         { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social'] },
         { model: db.Corbatin, as: 'corbatines', attributes: ['id_corbatin', 'numero', 'estatus'] },
         { 
           model: db.ConductorVehiculo, 
           as: 'asignaciones_conductores',
+          attributes: ['id_relacion', 'id_vehiculo', 'id_trabajador'],
           include: [{ model: db.Trabajador, as: 'trabajador', attributes: ['id_trabajador', 'nombre', 'apellidos', 'telefono'] }]
         },
         { model: db.Sancion, as: 'sanciones', attributes: ['id_sancion', 'estatus', 'fecha_inicio', 'fecha_fin'], where: { estatus: 'ACTIVA' }, required: false }
@@ -84,14 +86,15 @@ router.get('/:id', async (req, res) => {
   try {
     const vehiculo = await db.Vehiculo.findByPk(req.params.id, {
       include: [
-        { model: db.Empresa, as: 'empresa' },
-        { model: db.Corbatin, as: 'corbatines' },
+        { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social', 'telefono', 'correo'] },
+        { model: db.Corbatin, as: 'corbatines', attributes: ['id_corbatin', 'numero', 'estatus', 'fecha_emision', 'fecha_vencimiento'] },
         { 
           model: db.ConductorVehiculo, 
           as: 'asignaciones_conductores',
-          include: [{ model: db.Trabajador, as: 'trabajador' }]
+          attributes: ['id_relacion', 'id_vehiculo', 'id_trabajador'],
+          include: [{ model: db.Trabajador, as: 'trabajador', attributes: ['id_trabajador', 'nombre', 'apellidos', 'telefono'] }]
         },
-        { model: db.Sancion, as: 'sanciones' }
+        { model: db.Sancion, as: 'sanciones', attributes: ['id_sancion', 'estatus', 'fecha_inicio', 'fecha_fin', 'motivo', 'numero_reincidencia'] }
       ]
     });
 

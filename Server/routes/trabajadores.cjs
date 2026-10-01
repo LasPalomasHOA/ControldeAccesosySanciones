@@ -13,6 +13,7 @@ router.get('/', async (req, res) => {
 
     const trabajadores = await db.Trabajador.findAll({
       where,
+      attributes: ['id_trabajador', 'id_empresa', 'nombre', 'apellidos', 'telefono', 'foto_url', 'comprobante_seguro_url', 'dc3_documento_url', 'activo', 'created_at', 'updated_at'],
       include: [{ model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social'] }],
       order: [['id_trabajador', 'DESC']]
     });

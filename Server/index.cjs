@@ -69,157 +69,42 @@ async function ensureDbInit() {
       await db.sequelize.authenticate();
       console.log('✅ Conexión a base de datos Supabase / PostgreSQL verificada.');
 
-      // Asegurar estructura de tablas para accesos peatonales y fotografías
-      try {
-        const schemaName = process.env.DB_SCHEMA || 'control_acceso';
-        await db.sequelize.query(`
-          ALTER TABLE IF EXISTS "${schemaName}"."usuarios" 
-          ADD COLUMN IF NOT EXISTS "foto_url" TEXT;
-        `);
-
-
-        // Permitir que id_vehiculo e id_corbatin sean NULL para accesos peatonales
-        await db.sequelize.query(`
-          ALTER TABLE IF EXISTS "${schemaName}"."bitacora_accesos" 
-          ALTER COLUMN "id_vehiculo" DROP NOT NULL;
-        `).catch(() => {});
-
-        await db.sequelize.query(`
-          ALTER TABLE IF EXISTS "${schemaName}"."bitacora_accesos" 
-          ALTER COLUMN "id_corbatin" DROP NOT NULL;
-        `).catch(() => {});
-
-        // Campo eliminado (Soft Delete) para conservar historial en bitácoras
-        await db.sequelize.query(`
-          ALTER TABLE IF EXISTS "${schemaName}"."vehiculos" 
-          ADD COLUMN IF NOT EXISTS "eliminado" BOOLEAN DEFAULT FALSE;
-        `).catch(() => {});
-
-        // Campos para reglamento y banderines editables
-        await db.sequelize.query(`
-          ALTER TABLE IF EXISTS "${schemaName}"."reglamentos" 
-          ADD COLUMN IF NOT EXISTS "contenido_texto" TEXT;
-        `).catch(() => {});
-
-        await db.sequelize.query(`
-          ALTER TABLE IF EXISTS "${schemaName}"."reglamentos" 
-          ADD COLUMN IF NOT EXISTS "contenido_secciones" JSONB;
-        `).catch(() => {});
-
-        // Campos para corbatines (columna única: tipos)
-        const schemasToMigrate = [schemaName, 'public'];
-        for (const s of schemasToMigrate) {
+      // Estructura de tablas y migraciones DDL (solo si se especifica explícitamente RUN_MIGRATIONS=true)
+      if (process.env.RUN_MIGRATIONS === 'true') {
+        try {
+          const schemaName = process.env.DB_SCHEMA || 'control_acceso';
           await db.sequelize.query(`
-            ALTER TABLE IF EXISTS "${s}"."corbatines" 
-            ADD COLUMN IF NOT EXISTS "tipos" VARCHAR(50) DEFAULT 'NORMAL';
-          `).catch(() => {});
-
-          // Copiar valores de tipo a tipos si existía y luego eliminar tipo
-          await db.sequelize.query(`
-            UPDATE "${s}"."corbatines" SET "tipos" = "tipo" WHERE "tipo" IS NOT NULL AND ("tipos" IS NULL OR "tipos" = 'NORMAL');
+            ALTER TABLE IF EXISTS "${schemaName}"."usuarios" 
+            ADD COLUMN IF NOT EXISTS "foto_url" TEXT;
           `).catch(() => {});
 
           await db.sequelize.query(`
-            ALTER TABLE IF EXISTS "${s}"."corbatines" 
-            DROP COLUMN IF EXISTS "tipo";
-          `).catch(() => {});
-
-          await db.sequelize.query(`
-            ALTER TABLE IF EXISTS "${s}"."corbatines" 
-            ADD COLUMN IF NOT EXISTS "empresa_nombre" VARCHAR(255);
-          `).catch(() => {});
-
-          await db.sequelize.query(`
-            ALTER TABLE IF EXISTS "${s}"."corbatines" 
-            ADD COLUMN IF NOT EXISTS "telefono" VARCHAR(50);
-          `).catch(() => {});
-
-          await db.sequelize.query(`
-            ALTER TABLE IF EXISTS "${s}"."corbatines" 
-            ADD COLUMN IF NOT EXISTS "email" VARCHAR(150);
-          `).catch(() => {});
-
-          await db.sequelize.query(`
-            ALTER TABLE IF EXISTS "${s}"."corbatines" 
-            ADD COLUMN IF NOT EXISTS "vigencia_texto" VARCHAR(100);
-          `).catch(() => {});
-
-          await db.sequelize.query(`
-            ALTER TABLE IF EXISTS "${s}"."corbatines" 
-            ADD COLUMN IF NOT EXISTS "notas" TEXT;
-          `).catch(() => {});
-
-          await db.sequelize.query(`
-            ALTER TABLE IF EXISTS "${s}"."corbatines" 
-            ADD COLUMN IF NOT EXISTS "creado_por" VARCHAR(150);
-          `).catch(() => {});
-
-          await db.sequelize.query(`
-            ALTER TABLE IF EXISTS "${s}"."corbatines" 
-            ADD COLUMN IF NOT EXISTS "activo" BOOLEAN DEFAULT TRUE;
-          `).catch(() => {});
-
-          await db.sequelize.query(`
-            ALTER TABLE IF EXISTS "${s}"."corbatines" 
+            ALTER TABLE IF EXISTS "${schemaName}"."bitacora_accesos" 
             ALTER COLUMN "id_vehiculo" DROP NOT NULL;
           `).catch(() => {});
 
           await db.sequelize.query(`
-            ALTER TABLE IF EXISTS "${s}"."corbatines" 
-            ALTER COLUMN "qr_token" DROP NOT NULL;
-          `).catch(() => {});
-
-          // Permitir numeración independiente para NORMAL y VERDE
-          await db.sequelize.query(`
-            ALTER TABLE IF EXISTS "${s}"."corbatines" DROP CONSTRAINT IF EXISTS "corbatines_numero_key";
+            ALTER TABLE IF EXISTS "${schemaName}"."bitacora_accesos" 
+            ALTER COLUMN "id_corbatin" DROP NOT NULL;
           `).catch(() => {});
 
           await db.sequelize.query(`
-            ALTER TABLE IF EXISTS "${s}"."corbatines" DROP CONSTRAINT IF EXISTS "corbatines_numero_unique";
+            ALTER TABLE IF EXISTS "${schemaName}"."vehiculos" 
+            ADD COLUMN IF NOT EXISTS "eliminado" BOOLEAN DEFAULT FALSE;
           `).catch(() => {});
 
           await db.sequelize.query(`
-            ALTER TABLE IF EXISTS "${s}"."corbatines" DROP CONSTRAINT IF EXISTS "corbatines_qr_token_key";
+            ALTER TABLE IF EXISTS "${schemaName}"."reglamentos" 
+            ADD COLUMN IF NOT EXISTS "contenido_texto" TEXT;
           `).catch(() => {});
 
           await db.sequelize.query(`
-            ALTER TABLE IF EXISTS "${s}"."corbatines" 
-            ADD CONSTRAINT "corbatines_tipos_numero_unique" UNIQUE ("tipos", "numero");
+            ALTER TABLE IF EXISTS "${schemaName}"."reglamentos" 
+            ADD COLUMN IF NOT EXISTS "contenido_secciones" JSONB;
           `).catch(() => {});
-
-          // Campos para comprobante de seguro (IMSS, etc.) y constancia DC-3 en trabajadores
-          await db.sequelize.query(`
-            ALTER TABLE IF EXISTS "${s}"."trabajadores" 
-            ADD COLUMN IF NOT EXISTS "comprobante_seguro_url" TEXT;
-          `).catch(() => {});
-
-          await db.sequelize.query(`
-            ALTER TABLE IF EXISTS "${s}"."trabajadores" 
-            ADD COLUMN IF NOT EXISTS "dc3_documento_url" TEXT;
-          `).catch(() => {});
+        } catch (colErr) {
+          // Ignorar si ya existe o no aplica
         }
-
-        // Migrar automáticamente registros que contengan rutas '/uploads/' o 'guardia_' a Base64 en PostgreSQL
-        const usuariosConRuta = await db.Usuario.findAll({
-          where: {
-            foto_url: {
-              [db.Sequelize.Op.or]: [
-                { [db.Sequelize.Op.like]: '%uploads/%' },
-                { [db.Sequelize.Op.like]: 'guardia_%' }
-              ]
-            }
-          }
-        });
-
-        for (const u of usuariosConRuta) {
-          const resolved = resolveFotoToDataUrl(u.foto_url);
-          if (resolved && resolved.startsWith('data:image')) {
-            await u.update({ foto_url: resolved });
-            console.log(`✅ Fotografía de usuario ${u.nombre} (ID: ${u.id_usuario}) migrada a Base64 en la base de datos.`);
-          }
-        }
-      } catch (colErr) {
-        // Ignorar si ya existe o no aplica
       }
 
       // En entornos Serverless de Vercel NO se ejecuta sync() ni seedDatabase()
