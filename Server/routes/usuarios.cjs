@@ -92,7 +92,8 @@ router.get('/', async (req, res) => {
         { model: db.Rol, as: 'rol' },
         { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social'] }
       ],
-      order: [['created_at', 'DESC']]
+      order: [['created_at', 'DESC']],
+      limit: 100
     });
 
     const rolMap = {
