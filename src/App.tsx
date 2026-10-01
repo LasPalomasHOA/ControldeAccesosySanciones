@@ -745,22 +745,59 @@ function normalizeFotoUrl(url?: string | null): string {
   return `/uploads/${trimmed}`;
 }
 
-// ─── Page Hero Banner ─────────────────────────────────────────────────────────
+// ─── Page Hero / Title Header (Compact with Brand Background) ─────────────────
 
-function PageHero({ img, title, subtitle, children }: { img: string; title: string; subtitle: string; children?: React.ReactNode }) {
+function PageHero({
+  img = IMG_COAST,
+  title,
+  subtitle,
+  children,
+}: {
+  img?: string;
+  title: string;
+  subtitle?: string;
+  children?: React.ReactNode;
+}) {
   return (
-    <div className="relative overflow-hidden no-print" style={{ minHeight: "150px" }}>
+    <div className="relative overflow-hidden no-print shadow-xs border-b border-[#0a5247]">
+      {img && (
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: `url(${img})`,
+            filter: "blur(2px) brightness(0.45)",
+            transform: "scale(1.05)",
+          }}
+        />
+      )}
       <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${img})`, filter: "blur(2px) brightness(0.55)", transform: "scale(1.06)" }}
+        className="absolute inset-0"
+        style={{
+          background: "linear-gradient(135deg, rgba(13,110,95,0.92) 0%, rgba(13,110,95,0.72) 60%, rgba(6,46,40,0.90) 100%)",
+        }}
       />
-      <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(13,110,95,0.90) 0%, rgba(13,110,95,0.65) 60%, rgba(0,0,0,0.50) 100%)" }} />
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight" style={{ fontFamily: "var(--font-display)", textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
-          {title}
-        </h1>
-        <p className="mt-1.5 text-sm sm:text-base text-white/90">{subtitle}</p>
-        {children && <div className="mt-3">{children}</div>}
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="min-w-0">
+          <h1
+            className="text-base sm:text-lg font-bold text-white tracking-tight"
+            style={{
+              fontFamily: "var(--font-display)",
+              textShadow: "0 1px 4px rgba(0,0,0,0.35)",
+            }}
+          >
+            {title}
+          </h1>
+          {subtitle && (
+            <p className="text-xs text-white/85 mt-0.5 sm:truncate">
+              {subtitle}
+            </p>
+          )}
+        </div>
+        {children && (
+          <div className="flex items-center gap-2 shrink-0">
+            {children}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -6693,22 +6730,11 @@ export default function App() {
         {currentUser.role === "admin" && (
           <main>
             <PageHero
-              img={IMG_COAST}
               title="Consola de Administración de Sistemas y TI"
               subtitle="Creación de supervisores HOA, auditoría global y gestión de contraseñas de usuarios"
-            >
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowCreateSupervisorModal(true)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-white/20 hover:bg-white/30 border border-white/40 flex items-center gap-1.5 cursor-pointer"
-                >
-                  <IconUserPlus className="w-4 h-4" />
-                  <span>Crear Cuenta de Supervisor</span>
-                </button>
-              </div>
-            </PageHero>
+            />
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 min-h-[calc(100vh-16rem)]">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-6 min-h-[calc(100vh-16rem)]">
               {adminTab === "supervisores" && (
                 <div className="space-y-4">
                   <div className="rounded-2xl border bg-white shadow-sm overflow-hidden" style={{ borderColor: "var(--color-border)" }}>
@@ -7034,12 +7060,11 @@ export default function App() {
         {currentUser.role === "supervisor" && (
           <main>
             <PageHero
-              img={IMG_AERIAL}
               title="Consola de Supervisión y Control HOA"
               subtitle="Dictamen de infracciones móviles, resolución de apelaciones y asignación de proveedores/guardias"
             />
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 min-h-[calc(100vh-16rem)]">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-6 min-h-[calc(100vh-16rem)]">
               {supervisorTab === "bandeja" && (
                 <div className="space-y-4">
                   {infraccionesPendientes.filter(i => i.estado === "Pendiente").length === 0 ? (

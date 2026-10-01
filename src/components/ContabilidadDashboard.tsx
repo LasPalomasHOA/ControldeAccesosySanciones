@@ -261,27 +261,6 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
 
   return (
     <div className="space-y-6 pb-12">
-      {/* ─── BANNER SUPERIOR INFORMATIVO ─── */}
-      <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-[#0D6E5F] via-[#094E43] to-[#063830] text-white shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-white/5 skew-x-12 translate-x-10 pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="space-y-1.5 max-w-2xl">
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight" style={{ fontFamily: "var(--font-display)" }}>
-              Información de Empresas y Documento de Proveedor
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="p-3.5 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md text-right">
-              <div className="text-[11px] text-teal-200 font-semibold uppercase tracking-wider">Fecha de Consulta</div>
-              <div className="text-sm font-black font-mono">
-                {new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* ─── TARJETAS DE MÉTRICAS CONTABLES ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1 */}

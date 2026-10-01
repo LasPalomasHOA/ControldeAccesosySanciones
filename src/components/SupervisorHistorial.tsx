@@ -1745,7 +1745,7 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                 Historial de Resoluciones y Medidas Disciplinarias
               </h3>
               <p className="text-xs text-slate-500">
-                Dictámenes de comités HOA, apelaciones atendidas y suspensiones vehiculares registradas en PostgreSQL
+                Dictámenes de comités HOA, apelaciones atendidas y suspensiones vehiculares registradas
               </p>
             </div>
 
