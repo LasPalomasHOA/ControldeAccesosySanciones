@@ -985,7 +985,7 @@ function CorbatinDocument({ vehicle, sections }: { vehicle: Vehicle; sections?: 
 }
 
 // ─── Helper de Formato de Corbatín Verde (Prefijo '00' obligatorio: 001, 002, 0010, 00100) ───
-export const formatCorbatinVerdeNum = (num: number | string): string => {
+const formatCorbatinVerdeNum = (num: number | string): string => {
   const cleanNum = parseInt(String(num).replace(/[^0-9]/g, ""), 10);
   if (isNaN(cleanNum) || cleanNum <= 0) return "001";
   return `00${cleanNum}`;
@@ -6372,13 +6372,13 @@ export default function App() {
   return (
     <div className="flex flex-col justify-between w-full max-w-full overflow-x-hidden min-h-screen" style={{ background: "var(--color-bg)", fontFamily: "var(--font-body)" }}>
       <div className="w-full max-w-full">
-        <header className="sticky top-0 z-50 border-b bg-white no-print w-full" style={{ borderColor: "var(--color-border)", boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
-          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 flex items-center min-h-[68px] sm:min-h-[72px] gap-3 sm:gap-6 justify-between w-full py-1.5">
+        <header className="sticky top-0 z-50 border-b bg-white no-print w-full shadow-xs" style={{ borderColor: "var(--color-border)" }}>
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 flex items-center min-h-[56px] sm:min-h-[64px] md:min-h-[70px] gap-3 sm:gap-6 justify-between w-full py-1.5">
             <div className="shrink-0 flex items-center">
-              <LPLogo size={195} className="h-10 sm:h-12 w-auto max-h-12 transition-all" />
+              <LPLogo size={195} className="h-8 sm:h-10 md:h-12 w-auto max-h-12 transition-all" />
             </div>
 
-            <div className="flex items-center gap-1 shrink-0 py-1 overflow-visible">
+            <div className="hidden md:flex items-center gap-1 shrink-0 py-1 overflow-visible">
               {currentUser.role === "admin" && (
                 <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                   <button
@@ -6680,15 +6680,19 @@ export default function App() {
                 <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                   <button
                     onClick={() => setCasetaTab("registro")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${casetaTab === "registro" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${casetaTab === "registro" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
-                    Registro de Entrada
+                    <span className="sm:hidden">Registro</span>
+                    <span className="hidden sm:inline">Registro de Entrada</span>
                   </button>
                   <button
                     onClick={() => setCasetaTab("bitacora")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${casetaTab === "bitacora" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${casetaTab === "bitacora" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
-                    Bitácora ({bitacora.filter(b => b.estado === "Dentro").length} dentro)
+                    <span>Bitácora</span>
+                    <span className="ml-1 px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-800 text-[10px] font-bold">
+                      {bitacora.filter(b => b.estado === "Dentro").length}
+                    </span>
                   </button>
                 </div>
               )}
@@ -6702,28 +6706,187 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
-              <div className="text-right min-w-0 max-w-[100px] sm:max-w-[140px] md:max-w-[180px] lg:max-w-[240px]">
+              <div className="text-right min-w-0 max-w-[90px] xs:max-w-[130px] sm:max-w-[160px] md:max-w-[200px] lg:max-w-[240px]">
                 <div className="text-xs font-bold text-slate-800 flex items-center justify-end gap-1.5 truncate">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block shrink-0" />
                   <span className="truncate">{currentUser.nombre}</span>
                 </div>
                 <div
-                  className="text-[11px] text-slate-500 font-mono truncate"
-                  title={currentUser.role === "admin" ? "Administrador de Sistemas" : currentUser.role === "supervisor" ? "Supervisor de Seguridad HOA" : currentUser.role === "contabilidad" ? "Contabilidad & Finanzas HOA" : currentUser.role === "contratista" ? currentUser.empresaNombre : `Oficial de Caseta (${currentUser.turno})`}
+                  className="text-[10px] sm:text-[11px] text-slate-500 font-mono truncate"
+                  title={currentUser.role === "admin" ? "Administrador de Sistemas" : currentUser.role === "supervisor" ? "Supervisor de Seguridad HOA" : currentUser.role === "contabilidad" ? "Contabilidad & Finanzas HOA" : currentUser.role === "contratista" ? (currentUser.empresaNombre || "Empresa Contratista") : (currentUser.turno ? `Oficial (${currentUser.turno})` : "Oficial de Caseta Principal")}
                 >
-                  {currentUser.role === "admin" ? "Administrador de Sistemas" : currentUser.role === "supervisor" ? "Supervisor de Seguridad HOA" : currentUser.role === "contabilidad" ? "Contabilidad & Finanzas HOA" : currentUser.role === "contratista" ? currentUser.empresaNombre : `Oficial de Caseta (${currentUser.turno})`}
+                  {currentUser.role === "admin" ? "Administrador" : currentUser.role === "supervisor" ? "Supervisor HOA" : currentUser.role === "contabilidad" ? "Contabilidad" : currentUser.role === "contratista" ? (currentUser.empresaNombre || "Contratista") : (currentUser.turno ? `Oficial (${currentUser.turno})` : "Oficial de Caseta")}
                 </div>
               </div>
 
               <button
                 onClick={handleLogout}
+                title="Cerrar Sesión"
                 className="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-colors duration-150 flex items-center gap-1.5 cursor-pointer no-print shrink-0"
               >
                 <IconLogOut className="w-3.5 h-3.5 shrink-0" />
-                <span className="whitespace-nowrap">Cerrar Sesión</span>
+                <span className="hidden sm:inline whitespace-nowrap">Cerrar Sesión</span>
               </button>
             </div>
           </div>
+
+          {/* BARRA DE NAVEGACIÓN MÓVIL SECUNDARIA (SEGMENTED TABS) */}
+          {currentUser.role === "caseta" && (
+            <div className="md:hidden border-t border-slate-200/80 bg-slate-50/95 px-3 py-2">
+              <div className="flex w-full bg-slate-200/90 p-1 rounded-xl shadow-2xs gap-1 max-w-md mx-auto">
+                <button
+                  type="button"
+                  onClick={() => setCasetaTab("registro")}
+                  className={`flex-1 py-2 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    casetaTab === "registro"
+                      ? "bg-[#0D6E5F] text-white shadow-sm"
+                      : "text-slate-700 hover:text-slate-900"
+                  }`}
+                >
+                  <IconCar className="w-3.5 h-3.5 shrink-0" />
+                  <span>Registro de Entrada</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCasetaTab("bitacora")}
+                  className={`flex-1 py-2 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    casetaTab === "bitacora"
+                      ? "bg-[#0D6E5F] text-white shadow-sm"
+                      : "text-slate-700 hover:text-slate-900"
+                  }`}
+                >
+                  <IconFileText className="w-3.5 h-3.5 shrink-0" />
+                  <span>Bitácora</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      casetaTab === "bitacora" ? "bg-white/25 text-white" : "bg-slate-300 text-slate-800"
+                    }`}
+                  >
+                    {bitacora.filter((b) => b.estado === "Dentro").length}
+                  </span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {currentUser.role === "admin" && (
+            <div className="md:hidden border-t border-slate-200/80 bg-slate-50/95 px-3 py-2 overflow-x-auto no-scrollbar">
+              <div className="flex gap-1 min-w-max bg-slate-200/90 p-1 rounded-xl mx-auto">
+                <button
+                  type="button"
+                  onClick={() => setAdminTab("supervisores")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${adminTab === "supervisores" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                >
+                  Supervisores ({users.filter((u) => u.role === "supervisor").length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAdminTab("proveedores")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${adminTab === "proveedores" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                >
+                  Proveedores ({empresas.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAdminTab("auditoria")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${adminTab === "auditoria" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                >
+                  Auditoría Global
+                </button>
+              </div>
+            </div>
+          )}
+
+          {currentUser.role === "contratista" && (
+            <div className="md:hidden border-t border-slate-200/80 bg-slate-50/95 px-3 py-2 overflow-x-auto no-scrollbar">
+              {portalScreen === "reglamento" || !currentUser.hasAcceptedReglamento ? (
+                <div className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">
+                  <IconShield className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Lectura de Reglamento Pendiente</span>
+                </div>
+              ) : (
+                <div className="flex gap-1 min-w-max bg-slate-200/90 p-1 rounded-xl mx-auto">
+                  <button
+                    type="button"
+                    onClick={() => setPortalScreen("dashboard")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${portalScreen === "dashboard" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                  >
+                    Flotilla
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPortalScreen("alta")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${portalScreen === "alta" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                  >
+                    Alta Vehículo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPortalScreen("trabajadores")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${portalScreen === "trabajadores" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                  >
+                    Trabajadores ({trabajadores.filter((t) => t.empresaNombre === currentUser.empresaNombre && t.activo).length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPortalScreen("sanciones")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${portalScreen === "sanciones" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                  >
+                    Sanciones {sanciones.filter((s) => !currentUser.empresaNombre || s.empresaNombre === currentUser.empresaNombre).length > 0 ? `(${sanciones.filter((s) => !currentUser.empresaNombre || s.empresaNombre === currentUser.empresaNombre).length})` : ""}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPortalScreen("consulta_reglamento")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${portalScreen === "consulta_reglamento" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                  >
+                    Reglamento
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {currentUser.role === "supervisor" && (
+            <div className="md:hidden border-t border-slate-200/80 bg-slate-50/95 px-3 py-2 overflow-x-auto no-scrollbar">
+              <div className="flex gap-1 min-w-max bg-slate-200/90 p-1 rounded-xl mx-auto">
+                <button
+                  type="button"
+                  onClick={() => setSupervisorTab("proveedores")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${["proveedores", "guardias"].includes(supervisorTab) ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                >
+                  Directorio ({empresas.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSupervisorTab("corbatines")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${["corbatines", "corbatines_verdes", "reglamento"].includes(supervisorTab) ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                >
+                  Control & Docs
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSupervisorTab("bandeja")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${supervisorTab === "bandeja" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                >
+                  Infracciones ({infraccionesPendientes.filter((i) => i.estado === "Pendiente").length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSupervisorTab("apelaciones")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${supervisorTab === "apelaciones" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                >
+                  Apelaciones ({apelacionesPendientesCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSupervisorTab("historial")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${supervisorTab === "historial" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                >
+                  Historial & Bitácora
+                </button>
+              </div>
+            </div>
+          )}
         </header>
 
         {/* ADMIN */}
@@ -9542,379 +9705,177 @@ export default function App() {
         {/* CASETA */}
         {currentUser.role === "caseta" && (
           <main>
-            <div className={`mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-6 min-h-[calc(100vh-16rem)] ${casetaTab === "bitacora" ? "max-w-[1600px] w-full" : "max-w-7xl"}`}>
+            <div className="mx-auto px-4 sm:px-6 lg:px-8 py-3.5 space-y-3 max-w-7xl w-full">
+              {/* ENCABEZADO SUPERIOR DE COMANDO Y ESTADO */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white px-4 py-2.5 sm:px-5 rounded-2xl border border-slate-200 shadow-2xs">
+                <div>
+                  <h1 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+                    <IconShield className="w-4 h-4 text-emerald-700 shrink-0" />
+                    <span>Control de Caseta & Registro de Accesos</span>
+                  </h1>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Validación en tiempo real de permisos, suspensiones disciplinarias HOA y tarjetones
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setShowQRScannerModal(true)}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
+                    title="Abrir cámara para escanear código QR"
+                  >
+                    <IconCamera className="w-3.5 h-3.5 text-emerald-100" />
+                    <span>Escanear Código QR</span>
+                  </button>
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono text-slate-600 shrink-0">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span className="font-sans font-semibold text-slate-700 text-[11px]">Oficial:</span>
+                    <span className="font-bold text-slate-900 text-xs">{currentUser.nombre}</span>
+                  </div>
+                </div>
+              </div>
+
               {casetaTab === "registro" && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <div className="lg:col-span-2 rounded-2xl border p-6 bg-white shadow-sm space-y-5" style={{ borderColor: "var(--color-border)" }}>
-                    <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: "var(--color-border)" }}>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch w-full">
+                  {/* COLUMNA PRINCIPAL: FORMULARIO */}
+                  <div className="lg:col-span-7 xl:col-span-8 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs space-y-3 flex flex-col">
+                    {/* SELECTOR DE MODALIDAD Y ENCABEZADO DEL FORMULARIO */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-100 pb-2.5">
                       <div>
-                        <h2 className="font-bold text-sm uppercase tracking-wider text-slate-800">
-                          {casetaModoAcceso === "vehicular" ? "Registro de Entrada Vehicular" : "Registro de Entrada Peatonal"}
+                        <h2 className="font-bold text-sm sm:text-base text-slate-900">
+                          {casetaModoAcceso === "vehicular" ? "Formulario de Ingreso Vehicular" : "Formulario de Ingreso Peatonal"}
                         </h2>
-
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          {casetaModoAcceso === "vehicular"
+                            ? "Captura la unidad, valida corbatín y registra el pase de pluma"
+                            : "Autorización de personal a pie / contratistas con vehículo retenido"}
+                        </p>
                       </div>
-                      <span className="text-xs text-slate-500 font-mono">Oficial: {currentUser.nombre}</span>
-                    </div>
 
-                    {/* SELECTOR DE MODALIDAD DE ACCESO */}
-                    <div className="flex gap-2 p-1.5 rounded-2xl bg-slate-100 border border-slate-200">
-                      <button
-                        type="button"
-                        onClick={() => setCasetaModoAcceso("vehicular")}
-                        className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${casetaModoAcceso === "vehicular"
-                          ? "bg-[#0D6E5F] text-white shadow-md"
-                          : "text-slate-600 hover:text-slate-900"
-                          }`}
-                      >
-                        <IconCar className="w-4 h-4" />
-                        <span>Acceso Vehicular (Regular)</span>
-                      </button>
+                      <div className="flex gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setCasetaModoAcceso("vehicular")}
+                          className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${casetaModoAcceso === "vehicular"
+                            ? "bg-[#0D6E5F] text-white shadow-xs"
+                            : "text-slate-600 hover:text-slate-900"
+                            }`}
+                        >
+                          <IconCar className="w-3.5 h-3.5" />
+                          <span>Acceso Vehicular</span>
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCasetaModoAcceso("peatonal");
-                          setHoraActual();
-                        }}
-                        className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${casetaModoAcceso === "peatonal"
-                          ? "bg-sky-700 text-white shadow-md"
-                          : "text-slate-600 hover:text-slate-900"
-                          }`}
-                      >
-                        <IconWalk className="w-4 h-4" />
-                        <span>Acceso Peatonal (Sanción)</span>
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCasetaModoAcceso("peatonal");
+                            setHoraActual();
+                          }}
+                          className={`py-1.5 px-3.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${casetaModoAcceso === "peatonal"
+                            ? "bg-sky-700 text-white shadow-xs"
+                            : "text-slate-600 hover:text-slate-900"
+                            }`}
+                        >
+                          <IconWalk className="w-3.5 h-3.5" />
+                          <span>Acceso Peatonal</span>
+                        </button>
+                      </div>
                     </div>
 
                     {casetaSuccessMsg && (
-                      <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
-                        <IconCheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-start sm:items-center gap-2">
+                        <IconCheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5 sm:mt-0" />
                         <span>Ingreso ({casetaModoAcceso === "vehicular" ? "Vehicular" : "Peatonal a pie"}) autorizado y registrado en la bitácora con éxito.</span>
                       </div>
                     )}
 
                     {/* FORMULARIO DE ACCESO VEHICULAR */}
                     {casetaModoAcceso === "vehicular" && (
-                      <form onSubmit={handleRegistrarEntrada} className="space-y-4">
-                        {/* BANNER / BOTÓN DE ACCESO RÁPIDO CON CÓDIGO QR */}
-                        <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-[#0D6E5F] to-emerald-800 text-white shadow-sm flex items-center justify-between gap-3 flex-wrap border border-emerald-700/50">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-xs flex items-center justify-center shrink-0 border border-white/20">
-                              <IconCamera className="w-5 h-5 text-white" />
-                            </div>
-                            <div>
-                              <div className="font-bold text-xs sm:text-sm text-white flex items-center gap-2 flex-wrap">
-                                <span>Escanear Código QR de Corbatín</span>
-                                <span className="text-[10px] font-bold bg-white/20 text-emerald-100 px-2 py-0.5 rounded-full">
-                                  Cámara en Vivo
-                                </span>
-                              </div>
-                              <p className="text-[11px] text-emerald-100/85 mt-0.5">
-                                Escanea el código QR del vehículo para autollenar los datos de la empresa y unidad al instante
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setShowQRScannerModal(true)}
-                            className="px-4 py-2 rounded-xl bg-white hover:bg-emerald-50 text-[#0D6E5F] font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95 shrink-0"
-                          >
-                            <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
-                            <span>Abrir Escáner QR</span>
-                          </button>
-                        </div>
-
-                        {/* 1. INGRESO RÁPIDO: CORBATÍN/PLACAS Y CONDUCTOR (LADO A LADO) */}
-                        <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50/90 via-teal-50/50 to-slate-50 border-2 border-emerald-300 shadow-2xs space-y-2.5">
-                          <div className="flex items-center justify-between">
-                            <label className="text-xs font-extrabold uppercase tracking-wider text-[#0D6E5F] flex items-center gap-1.5">
-                              <IconSearch className="w-4 h-4 text-emerald-600" />
-                              <span>1. Ingreso Vehicular: Corbatín / Placas y Conductor</span>
+                      <form onSubmit={handleRegistrarEntrada} className="space-y-3">
+                        {/* 1. AUTOCOMPLETADO Y BÚSQUEDA RÁPIDA */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+                          {/* CAMPO 1: # CORBATÍN O PLACAS CON DROPDOWN */}
+                          <div className="relative" ref={corbatinDropdownRef}>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                              <span>1. # Corbatín o Placas</span>
+                              <span className="text-[11px] text-slate-400 font-normal">Escribe o busca</span>
                             </label>
-                            <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-300/60">
-                              Búsqueda & Desplegables
-                            </span>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
-                            {/* CAMPO 1: # CORBATÍN O PLACAS CON DROPDOWN */}
-                            <div className="relative" ref={corbatinDropdownRef}>
-                              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
-                                # Corbatín o Placas
-                              </label>
-                              <div className="relative">
-                                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-base font-black font-mono text-emerald-700 pointer-events-none">
-                                  #
-                                </span>
-                                <input
-                                  type="text"
-                                  value={casetaCorbatin}
-                                  onChange={(e) => handleCorbatinInputChange(e.target.value)}
-                                  onKeyDown={handleCorbatinInputKeyDown}
-                                  onFocus={() => setIsCorbatinDropdownOpen(true)}
-                                  placeholder="Escribe # corbatín o placas..."
-                                  className="w-full rounded-xl pl-8 pr-16 py-2.5 text-sm font-bold font-mono text-slate-900 bg-white border-2 border-emerald-400 shadow-xs outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-600 transition-all placeholder:text-slate-400 placeholder:font-sans placeholder:text-xs"
-                                />
-                                <div className="absolute inset-y-0 right-0 flex items-center pr-2 gap-0.5">
-                                  {casetaCorbatin && (
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setCasetaCorbatin("");
-                                        setSelectedVehicleId("");
-                                        setIsCorbatinDropdownOpen(true);
-                                      }}
-                                      title="Limpiar búsqueda"
-                                      className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                                    >
-                                      <IconX className="w-4 h-4" />
-                                    </button>
-                                  )}
+                            <div className="relative">
+                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-sm font-bold font-mono text-emerald-700 pointer-events-none">
+                                #
+                              </span>
+                              <input
+                                type="text"
+                                value={casetaCorbatin}
+                                onChange={(e) => handleCorbatinInputChange(e.target.value)}
+                                onKeyDown={handleCorbatinInputKeyDown}
+                                onFocus={() => setIsCorbatinDropdownOpen(true)}
+                                placeholder="Escribe # corbatín o placas..."
+                                className="w-full h-10 rounded-xl pl-8 pr-14 text-sm font-semibold font-mono text-slate-900 bg-white border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-2xs outline-none transition-all placeholder:text-slate-400 placeholder:font-sans placeholder:text-xs"
+                              />
+                              <div className="absolute inset-y-0 right-0 flex items-center pr-1.5 gap-0.5">
+                                {casetaCorbatin && (
                                   <button
                                     type="button"
-                                    onClick={() => setIsCorbatinDropdownOpen(!isCorbatinDropdownOpen)}
-                                    title="Desplegar lista de vehículos"
-                                    className="p-1 rounded-md text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100/60 transition-colors cursor-pointer"
+                                    onClick={() => {
+                                      setCasetaCorbatin("");
+                                      setSelectedVehicleId("");
+                                      setIsCorbatinDropdownOpen(true);
+                                    }}
+                                    title="Limpiar búsqueda"
+                                    className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
                                   >
-                                    {isCorbatinDropdownOpen ? (
-                                      <IconChevronUp className="w-4 h-4" />
-                                    ) : (
-                                      <IconChevronDown className="w-4 h-4" />
-                                    )}
+                                    <IconX className="w-3.5 h-3.5" />
                                   </button>
-                                </div>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => setIsCorbatinDropdownOpen(!isCorbatinDropdownOpen)}
+                                  title="Desplegar lista de vehículos"
+                                  className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                                >
+                                  {isCorbatinDropdownOpen ? (
+                                    <IconChevronUp className="w-3.5 h-3.5" />
+                                  ) : (
+                                    <IconChevronDown className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
                               </div>
-
-                              {/* MENÚ DESPLEGABLE DE VEHÍCULOS Y CORBATINES VERDES */}
-                              {isCorbatinDropdownOpen && (
-                                <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border-2 border-emerald-400 shadow-2xl overflow-hidden max-h-72 overflow-y-auto">
-                                  <div className="px-3 py-1.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-[11px] font-semibold text-slate-600 sticky top-0 z-10">
-                                    <span>
-                                      {casetaCorbatin.trim()
-                                        ? `${filteredCasetaVehicles.length + filteredCasetaCorbatinesVerdes.length} registros encontrados`
-                                        : `Vehículos y Corbatines (${vehicles.length + corbatinesVerdes.length})`}
-                                    </span>
-                                    <span className="text-[10px] text-slate-400 hidden sm:inline">
-                                      Usa ↑ ↓ y Enter
-                                    </span>
-                                  </div>
-
-                                  {/* SECCIÓN 1: VEHÍCULOS REGULARES (CORBATINES REGULARES / NARANJA) */}
-                                  {filteredCasetaVehicles.length > 0 && (
-                                    <div>
-                                      <div className="px-3 py-1 bg-slate-100 border-y border-slate-200 text-[10px] font-extrabold uppercase tracking-wider text-slate-700 flex items-center justify-between">
-                                        <span className="flex items-center gap-1.5">
-                                          <IconCar className="w-3.5 h-3.5 text-slate-600" />
-                                          <span>Vehículos Registrados con Corbatín Regular ({filteredCasetaVehicles.length})</span>
-                                        </span>
-                                        <span className="text-slate-500 lowercase font-medium">acceso frecuente</span>
-                                      </div>
-                                      <div className="divide-y divide-slate-100">
-                                        {filteredCasetaVehicles.map((v, idx) => {
-                                          const isSelected = selectedVehicleId === v.id;
-                                          const isHighlighted = corbatinHighlightedIndex === idx;
-                                          return (
-                                            <div
-                                              key={v.id}
-                                              onClick={() => handleSelectVehicleFromDropdown(v)}
-                                              onMouseEnter={() => setCorbatinHighlightedIndex(idx)}
-                                              className={`p-2.5 cursor-pointer transition-colors border-l-4 ${isSelected
-                                                ? "bg-emerald-100/70 border-l-emerald-600"
-                                                : isHighlighted
-                                                  ? "bg-emerald-50/80 border-l-emerald-400"
-                                                  : "hover:bg-slate-50 border-l-transparent"
-                                                }`}
-                                            >
-                                              <div className="flex items-center justify-between gap-2">
-                                                <div className="flex items-center gap-1.5 flex-wrap">
-                                                  <span className="px-1.5 py-0.5 rounded-md bg-teal-800 text-white font-mono font-bold text-xs">
-                                                    #{v.corbatinNum}
-                                                  </span>
-                                                  <span className="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-900 font-mono font-bold text-xs tracking-wider">
-                                                    {v.placas}
-                                                  </span>
-                                                  <span className="font-bold text-slate-900 text-xs truncate max-w-[130px]">
-                                                    {v.marca} {v.modelo}
-                                                  </span>
-                                                </div>
-                                                <span
-                                                  className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${v.status === "Habilitado"
-                                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                                    : "bg-rose-50 text-rose-700 border-rose-200"
-                                                    }`}
-                                                >
-                                                  {v.status === "Habilitado" ? "✓" : "⛔"}
-                                                </span>
-                                              </div>
-                                              <div className="mt-0.5 text-[11px] text-slate-500 truncate flex items-center gap-1">
-                                                <IconBuilding className="w-3 h-3 text-slate-400 shrink-0" />
-                                                {v.empresaNombre}
-                                              </div>
-                                            </div>
-                                          );
-                                        })}
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {/* SECCIÓN 2: CORBATINES VERDES (PROYECTOS / LARGA ESTANCIA) */}
-                                  {filteredCasetaCorbatinesVerdes.length > 0 && (
-                                    <div>
-                                      <div className="px-3 py-1 bg-emerald-100/70 border-y border-emerald-200 text-[10px] font-extrabold uppercase tracking-wider text-emerald-900 flex items-center justify-between">
-                                        <span className="flex items-center gap-1.5">
-                                          <span className="w-2 h-2 rounded-full bg-emerald-600" />
-                                          <span>Corbatines Verdes · Proyectos / Larga Estancia ({filteredCasetaCorbatinesVerdes.length})</span>
-                                        </span>
-                                        <span className="text-emerald-700 lowercase font-medium">acceso temporal</span>
-                                      </div>
-                                      <div className="divide-y divide-emerald-50">
-                                        {filteredCasetaCorbatinesVerdes.map((c, idx) => {
-                                          const isSelected = selectedCorbatinVerdeId === c.id;
-                                          const isHighlighted = corbatinHighlightedIndex === (idx + filteredCasetaVehicles.length);
-                                          return (
-                                            <div
-                                              key={`corb-verde-${c.id}`}
-                                              onClick={() => handleSelectCorbatinVerdeFromDropdown(c)}
-                                              onMouseEnter={() => setCorbatinHighlightedIndex(idx + filteredCasetaVehicles.length)}
-                                              className={`p-2.5 cursor-pointer transition-colors border-l-4 ${isSelected
-                                                ? "bg-emerald-100/90 border-l-emerald-600"
-                                                : isHighlighted
-                                                  ? "bg-emerald-50/80 border-l-emerald-400"
-                                                  : "bg-emerald-50/40 hover:bg-emerald-100/60 border-l-emerald-500"
-                                                }`}
-                                            >
-                                              <div className="flex items-center justify-between gap-2">
-                                                <div className="flex items-center gap-1.5 flex-wrap">
-                                                  <span className="px-2 py-0.5 rounded-md bg-emerald-700 text-white font-mono font-extrabold text-xs shadow-2xs">
-                                                    VERDE #{formatCorbatinVerdeNum(c.corbatinNum)}
-                                                  </span>
-                                                  <span className="font-bold text-slate-900 text-xs truncate max-w-[150px]">
-                                                    {c.empresaNombre}
-                                                  </span>
-                                                  <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-200">
-                                                    {c.vigenciaTexto || "6 Meses"}
-                                                  </span>
-                                                </div>
-                                                <span
-                                                  className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${c.activo !== false
-                                                    ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                                                    : "bg-rose-50 text-rose-700 border-rose-200"
-                                                    }`}
-                                                >
-                                                  {c.activo !== false ? "✓ Activo" : "⛔ Inactivo"}
-                                                </span>
-                                              </div>
-                                              <div className="mt-0.5 text-[11px] text-slate-500 truncate flex items-center justify-between">
-                                                <span className="truncate">📞 {c.telefono || "Sin teléfono registrado"}</span>
-                                                <span className="text-[10px] text-slate-400 font-mono">Vence: {c.fechaVencimiento || "Vigente"}</span>
-                                              </div>
-                                            </div>
-                                          );
-                                        })}
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {filteredCasetaVehicles.length === 0 && filteredCasetaCorbatinesVerdes.length === 0 && (
-                                    <div className="p-4 text-center text-xs text-slate-500 space-y-1">
-                                      <p className="font-bold text-slate-700">No hay vehículos ni corbatines verdes con "{casetaCorbatin}"</p>
-                                      <p className="text-[11px] text-slate-400">Verifica el número de corbatín o nombre de la empresa.</p>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
                             </div>
 
-                            {/* CAMPO 2: CONDUCTOR / CHOFER CON DROPDOWN (SOLO DE LA EMPRESA SELECCIONADA) */}
-                            <div className="relative" ref={conductorDropdownRef}>
-                              <div className="flex items-center justify-between mb-1">
-                                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1">
-                                  <IconUsers className="w-3.5 h-3.5 text-emerald-700" />
-                                  <span>Conductor / Chofer</span>
-                                </label>
-                                <span className="text-[10px] text-slate-400 truncate max-w-[140px]">
-                                  {currentCasetaCorbatinVerde
-                                    ? "Chofer del Proyecto"
-                                    : selectedEmpresaId
-                                      ? `${currentEmpresa?.nombre ? currentEmpresa.nombre.split(" ")[0] : "Empresa"} (${empresaTrabajadores.length})`
-                                      : `Todos (${empresaTrabajadores.length})`}
-                                </span>
-                              </div>
-
-                              <div className="relative">
-                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
-                                  <IconUsers className="w-4 h-4 text-emerald-600" />
-                                </span>
-                                <input
-                                  type="text"
-                                  value={casetaConductorQuery}
-                                  onChange={(e) => handleConductorInputChange(e.target.value)}
-                                  onKeyDown={handleConductorInputKeyDown}
-                                  onFocus={() => setIsConductorDropdownOpen(true)}
-                                  placeholder={
-                                    currentCasetaCorbatinVerde
-                                      ? "Escribe el nombre del chofer que ingresa hoy..."
-                                      : selectedEmpresaId
-                                        ? (empresaTrabajadores.length > 0 ? "Escribe o selecciona el chofer..." : "Sin colaboradores registrados")
-                                        : "Escribe o busca conductor..."
-                                  }
-                                  className="w-full rounded-xl pl-9 pr-16 py-2.5 text-sm font-bold text-slate-900 bg-white border-2 border-emerald-400 shadow-xs outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-600 transition-all placeholder:text-slate-400 placeholder:font-normal placeholder:text-xs"
-                                />
-                                <div className="absolute inset-y-0 right-0 flex items-center pr-2 gap-0.5">
-                                  {casetaConductorQuery && (
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setCasetaConductorQuery("");
-                                        setCasetaConductorId("");
-                                        setIsConductorDropdownOpen(true);
-                                      }}
-                                      title="Limpiar chofer"
-                                      className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                                    >
-                                      <IconX className="w-4 h-4" />
-                                    </button>
-                                  )}
-                                  <button
-                                    type="button"
-                                    onClick={() => setIsConductorDropdownOpen(!isConductorDropdownOpen)}
-                                    title="Desplegar choferes"
-                                    className="p-1 rounded-md text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100/60 transition-colors cursor-pointer"
-                                  >
-                                    {isConductorDropdownOpen ? (
-                                      <IconChevronUp className="w-4 h-4" />
-                                    ) : (
-                                      <IconChevronDown className="w-4 h-4" />
-                                    )}
-                                  </button>
+                            {/* MENÚ DESPLEGABLE DE VEHÍCULOS Y CORBATINES VERDES */}
+                            {isCorbatinDropdownOpen && (
+                              <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden max-h-60 sm:max-h-72 overflow-y-auto">
+                                <div className="px-3 py-1.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-[11px] font-semibold text-slate-600 sticky top-0 z-10">
+                                  <span>
+                                    {casetaCorbatin.trim()
+                                      ? `${filteredCasetaVehicles.length + filteredCasetaCorbatinesVerdes.length} encontrados`
+                                      : `Vehículos y Corbatines (${vehicles.length + corbatinesVerdes.length})`}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 hidden sm:inline">
+                                    Usa ↑ ↓ y Enter
+                                  </span>
                                 </div>
-                              </div>
 
-                              {/* MENÚ DESPLEGABLE DE CONDUCTORES */}
-                              {isConductorDropdownOpen && (
-                                <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border-2 border-emerald-400 shadow-2xl overflow-hidden max-h-64 overflow-y-auto">
-                                  <div className="px-3 py-1.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-[11px] font-semibold text-slate-600 sticky top-0 z-10">
-                                    <span className="truncate">
-                                      {currentCasetaCorbatinVerde
-                                        ? `Chofer para ${currentCasetaCorbatinVerde.empresaNombre}`
-                                        : `Colaboradores de ${currentEmpresa?.nombre || "la empresa"} (${filteredEmpresaTrabajadores.length})`}
-                                    </span>
-                                    <span className="text-[10px] text-slate-400 hidden sm:inline shrink-0">
-                                      Usa ↑ ↓ y Enter
-                                    </span>
-                                  </div>
-
-                                  {filteredEmpresaTrabajadores.length > 0 ? (
+                                {/* SECCIÓN 1: VEHÍCULOS REGULARES */}
+                                {filteredCasetaVehicles.length > 0 && (
+                                  <div>
+                                    <div className="px-3 py-1 bg-slate-100 border-y border-slate-200 text-[10px] font-extrabold uppercase tracking-wider text-slate-700 flex items-center justify-between">
+                                      <span className="flex items-center gap-1.5">
+                                        <IconCar className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                                        <span>Vehículos con Corbatín Regular ({filteredCasetaVehicles.length})</span>
+                                      </span>
+                                    </div>
                                     <div className="divide-y divide-slate-100">
-                                      {filteredEmpresaTrabajadores.map((t, idx) => {
-                                        const isSelected = String(casetaConductorId) === String(t.id_trabajador);
-                                        const isHighlighted = conductorHighlightedIndex === idx;
+                                      {filteredCasetaVehicles.map((v, idx) => {
+                                        const isSelected = selectedVehicleId === v.id;
+                                        const isHighlighted = corbatinHighlightedIndex === idx;
                                         return (
                                           <div
-                                            key={t.id_trabajador}
-                                            onClick={() => handleSelectConductorFromDropdown(t)}
-                                            onMouseEnter={() => setConductorHighlightedIndex(idx)}
-                                            className={`p-2.5 cursor-pointer transition-colors border-l-4 ${isSelected
+                                            key={v.id}
+                                            onClick={() => handleSelectVehicleFromDropdown(v)}
+                                            onMouseEnter={() => setCorbatinHighlightedIndex(idx)}
+                                            className={`p-2.5 cursor-pointer transition-colors border-l-4 active:bg-emerald-100 ${isSelected
                                               ? "bg-emerald-100/70 border-l-emerald-600"
                                               : isHighlighted
                                                 ? "bg-emerald-50/80 border-l-emerald-400"
@@ -9922,81 +9883,258 @@ export default function App() {
                                               }`}
                                           >
                                             <div className="flex items-center justify-between gap-2">
-                                              <div className="min-w-0">
-                                                <span className="font-bold text-slate-900 text-xs sm:text-sm block truncate">
-                                                  {t.nombre} {t.apellidos}
+                                              <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                                                <span className="px-1.5 py-0.5 rounded-md bg-teal-800 text-white font-mono font-bold text-xs shrink-0">
+                                                  #{v.corbatinNum}
                                                 </span>
-                                                <span className="text-[11px] text-slate-500 font-mono block">
-                                                  📞 {t.telefono || "Sin teléfono"}
+                                                <span className="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-900 font-mono font-bold text-xs tracking-wider shrink-0">
+                                                  {v.placas}
+                                                </span>
+                                                <span className="font-bold text-slate-900 text-xs truncate max-w-[140px]">
+                                                  {v.marca} {v.modelo}
                                                 </span>
                                               </div>
-                                              <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                Acreditado
+                                              <span
+                                                className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${v.status === "Habilitado"
+                                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                                  : "bg-rose-50 text-rose-700 border-rose-200"
+                                                  }`}
+                                              >
+                                                {v.status === "Habilitado" ? "✓" : "⛔"}
                                               </span>
+                                            </div>
+                                            <div className="mt-0.5 text-[11px] text-slate-500 truncate flex items-center gap-1">
+                                              <IconBuilding className="w-3 h-3 text-slate-400 shrink-0" />
+                                              <span className="truncate">{v.empresaNombre}</span>
                                             </div>
                                           </div>
                                         );
                                       })}
                                     </div>
-                                  ) : (
-                                    <div className="p-3 text-center text-xs text-slate-500 space-y-1">
-                                      <p className="font-bold text-slate-700">
-                                        {currentCasetaCorbatinVerde
-                                          ? `Puedes capturar libremente el nombre del chofer arriba.`
-                                          : `No hay colaboradores con "${casetaConductorQuery}"`}
-                                      </p>
-                                      <p className="text-[11px] text-slate-400">
-                                        {currentCasetaCorbatinVerde
-                                          ? "Los corbatines verdes de proyecto permiten registrar cualquier chofer acreditado al momento."
-                                          : (empresaTrabajadores.length === 0
-                                            ? `No hay colaboradores registrados para ${currentEmpresa?.nombre || "esta empresa"}.`
-                                            : "Puedes escribir el nombre manualmente si cuenta con autorización especial.")}
-                                      </p>
+                                  </div>
+                                )}
+
+                                {/* SECCIÓN 2: CORBATINES VERDES */}
+                                {filteredCasetaCorbatinesVerdes.length > 0 && (
+                                  <div>
+                                    <div className="px-3 py-1 bg-emerald-100/70 border-y border-emerald-200 text-[10px] font-extrabold uppercase tracking-wider text-emerald-900 flex items-center justify-between">
+                                      <span className="flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
+                                        <span>Corbatines Verdes ({filteredCasetaCorbatinesVerdes.length})</span>
+                                      </span>
                                     </div>
+                                    <div className="divide-y divide-emerald-50">
+                                      {filteredCasetaCorbatinesVerdes.map((c, idx) => {
+                                        const isSelected = selectedCorbatinVerdeId === c.id;
+                                        const isHighlighted = corbatinHighlightedIndex === (idx + filteredCasetaVehicles.length);
+                                        return (
+                                          <div
+                                            key={`corb-verde-${c.id}`}
+                                            onClick={() => handleSelectCorbatinVerdeFromDropdown(c)}
+                                            onMouseEnter={() => setCorbatinHighlightedIndex(idx + filteredCasetaVehicles.length)}
+                                            className={`p-2.5 cursor-pointer transition-colors border-l-4 active:bg-emerald-100 ${isSelected
+                                              ? "bg-emerald-100/90 border-l-emerald-600"
+                                              : isHighlighted
+                                                ? "bg-emerald-50/80 border-l-emerald-400"
+                                                : "bg-emerald-50/40 hover:bg-emerald-100/60 border-l-emerald-500"
+                                              }`}
+                                          >
+                                            <div className="flex items-center justify-between gap-2">
+                                              <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                                                <span className="px-2 py-0.5 rounded-md bg-emerald-700 text-white font-mono font-extrabold text-xs shadow-2xs shrink-0">
+                                                  VERDE #{formatCorbatinVerdeNum(c.corbatinNum)}
+                                                </span>
+                                                <span className="font-bold text-slate-900 text-xs truncate max-w-[140px]">
+                                                  {c.empresaNombre}
+                                                </span>
+                                              </div>
+                                              <span
+                                                className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${c.activo !== false
+                                                  ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                                  : "bg-rose-50 text-rose-700 border-rose-200"
+                                                  }`}
+                                              >
+                                                {c.activo !== false ? "✓ Activo" : "⛔ Inactivo"}
+                                              </span>
+                                            </div>
+                                            <div className="mt-0.5 text-[11px] text-slate-500 truncate flex items-center justify-between gap-2">
+                                              <span className="truncate">📞 {c.telefono || "Sin teléfono"}</span>
+                                              <span className="text-[10px] text-slate-400 font-mono shrink-0">Vence: {c.fechaVencimiento || "Vigente"}</span>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {filteredCasetaVehicles.length === 0 && filteredCasetaCorbatinesVerdes.length === 0 && (
+                                  <div className="p-3 text-center text-xs text-slate-500 space-y-1">
+                                    <p className="font-bold text-slate-700">No hay registros con "{casetaCorbatin}"</p>
+                                    <p className="text-[11px] text-slate-400">Verifica el número de corbatín o nombre de la empresa.</p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* CAMPO 2: CONDUCTOR / CHOFER CON DROPDOWN */}
+                          <div className="relative" ref={conductorDropdownRef}>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                              <span>Conductor / Chofer</span>
+                              <span className="text-[11px] text-slate-400 font-normal truncate max-w-[150px]">
+                                {currentCasetaCorbatinVerde
+                                  ? "Chofer Proyecto"
+                                  : selectedEmpresaId
+                                    ? `${currentEmpresa?.nombre ? currentEmpresa.nombre.split(" ")[0] : "Empresa"} (${empresaTrabajadores.length})`
+                                    : `Todos (${empresaTrabajadores.length})`}
+                              </span>
+                            </label>
+
+                            <div className="relative">
+                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
+                                <IconUsers className="w-3.5 h-3.5 text-emerald-600" />
+                              </span>
+                              <input
+                                type="text"
+                                value={casetaConductorQuery}
+                                onChange={(e) => handleConductorInputChange(e.target.value)}
+                                onKeyDown={handleConductorInputKeyDown}
+                                onFocus={() => setIsConductorDropdownOpen(true)}
+                                placeholder={
+                                  currentCasetaCorbatinVerde
+                                    ? "Escribe el nombre del chofer..."
+                                    : selectedEmpresaId
+                                      ? (empresaTrabajadores.length > 0 ? "Escribe o selecciona chofer..." : "Sin colaboradores registrados")
+                                      : "Escribe o busca conductor..."
+                                }
+                                className="w-full h-10 rounded-xl pl-8 pr-14 text-sm font-semibold text-slate-900 bg-white border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-2xs outline-none transition-all placeholder:text-slate-400 placeholder:font-normal placeholder:text-xs"
+                              />
+                              <div className="absolute inset-y-0 right-0 flex items-center pr-1.5 gap-0.5">
+                                {casetaConductorQuery && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setCasetaConductorQuery("");
+                                      setCasetaConductorId("");
+                                      setIsConductorDropdownOpen(true);
+                                    }}
+                                    title="Limpiar chofer"
+                                    className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                                  >
+                                    <IconX className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => setIsConductorDropdownOpen(!isConductorDropdownOpen)}
+                                  title="Desplegar choferes"
+                                  className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                                >
+                                  {isConductorDropdownOpen ? (
+                                    <IconChevronUp className="w-3.5 h-3.5" />
+                                  ) : (
+                                    <IconChevronDown className="w-3.5 h-3.5" />
                                   )}
-                                </div>
-                              )}
+                                </button>
+                              </div>
                             </div>
+
+                            {/* MENÚ DESPLEGABLE DE CONDUCTORES */}
+                            {isConductorDropdownOpen && (
+                              <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden max-h-60 sm:max-h-64 overflow-y-auto">
+                                <div className="px-3 py-1.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-[11px] font-semibold text-slate-600 sticky top-0 z-10">
+                                  <span className="truncate">
+                                    {currentCasetaCorbatinVerde
+                                      ? `Chofer para ${currentCasetaCorbatinVerde.empresaNombre}`
+                                      : `Colaboradores (${filteredEmpresaTrabajadores.length})`}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 hidden sm:inline shrink-0">
+                                    Usa ↑ ↓ y Enter
+                                  </span>
+                                </div>
+
+                                {filteredEmpresaTrabajadores.length > 0 ? (
+                                  <div className="divide-y divide-slate-100">
+                                    {filteredEmpresaTrabajadores.map((t, idx) => {
+                                      const isSelected = String(casetaConductorId) === String(t.id_trabajador);
+                                      const isHighlighted = conductorHighlightedIndex === idx;
+                                      return (
+                                        <div
+                                          key={t.id_trabajador}
+                                          onClick={() => handleSelectConductorFromDropdown(t)}
+                                          onMouseEnter={() => setConductorHighlightedIndex(idx)}
+                                          className={`p-2.5 cursor-pointer transition-colors border-l-4 active:bg-emerald-100 ${isSelected
+                                            ? "bg-emerald-100/70 border-l-emerald-600"
+                                            : isHighlighted
+                                              ? "bg-emerald-50/80 border-l-emerald-400"
+                                              : "hover:bg-slate-50 border-l-transparent"
+                                            }`}
+                                        >
+                                          <div className="flex items-center justify-between gap-2">
+                                            <div className="min-w-0">
+                                              <span className="font-bold text-slate-900 text-xs sm:text-sm block truncate">
+                                                {t.nombre} {t.apellidos}
+                                              </span>
+                                              <span className="text-[11px] text-slate-500 font-mono block">
+                                                📞 {t.telefono || "Sin teléfono"}
+                                              </span>
+                                            </div>
+                                            <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                              Acreditado
+                                            </span>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                ) : (
+                                  <div className="p-3 text-center text-xs text-slate-500 space-y-1">
+                                    <p className="font-bold text-slate-700">
+                                      {currentCasetaCorbatinVerde
+                                        ? `Puedes capturar libremente el nombre del chofer arriba.`
+                                        : `No hay colaboradores con "${casetaConductorQuery}"`}
+                                    </p>
+                                    <p className="text-[11px] text-slate-400">
+                                      Puedes escribir el nombre manualmente si cuenta con autorización especial.
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
 
                         {/* 2. SELECCIÓN DE EMPRESA Y VEHÍCULO / CORBATÍN VERDE */}
                         {currentCasetaCorbatinVerde ? (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-2xl bg-emerald-50/80 border-2 border-emerald-300 shadow-2xs">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-emerald-50/70 border border-emerald-200">
                             <div>
-                              <div className="flex items-center justify-between mb-1">
-                                <label className="block text-xs font-extrabold uppercase tracking-wider text-emerald-950">
-                                  2. Empresa / Proyecto (Corbatín Verde)
-                                </label>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-900 border border-emerald-400">
-                                  Larga Estancia
-                                </span>
-                              </div>
-                              <div className="px-3.5 py-2.5 rounded-xl bg-white border border-emerald-300 text-sm font-bold text-slate-900 flex items-center gap-2 shadow-2xs">
+                              <label className="block text-xs font-semibold text-emerald-950 mb-1">
+                                2. Empresa / Proyecto (Corbatín Verde)
+                              </label>
+                              <div className="h-10 px-3.5 rounded-xl bg-white border border-emerald-300 text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
                                 <IconBuilding className="w-4 h-4 text-emerald-700 shrink-0" />
                                 <span className="truncate">{currentCasetaCorbatinVerde.empresaNombre}</span>
                               </div>
                             </div>
 
                             <div>
-                              <label className="block text-xs font-extrabold uppercase tracking-wider text-emerald-950 mb-1">
+                              <label className="block text-xs font-semibold text-emerald-950 mb-1">
                                 3. Placas de la Unidad (Opcional / Identificación)
                               </label>
-                              <div className="relative">
-                                <input
-                                  type="text"
-                                  value={casetaPlacasVerde}
-                                  onChange={(e) => setCasetaPlacasVerde(e.target.value.toUpperCase())}
-                                  placeholder="Ej. ABC-1234 o Camioneta Blanca"
-                                  className="w-full rounded-xl px-3.5 py-2.5 text-xs sm:text-sm border border-emerald-300 bg-white font-mono font-bold text-slate-900 outline-none focus:ring-2 focus:ring-emerald-400 shadow-2xs placeholder:font-sans placeholder:font-normal placeholder:text-slate-400"
-                                />
-                              </div>
+                              <input
+                                type="text"
+                                value={casetaPlacasVerde}
+                                onChange={(e) => setCasetaPlacasVerde(e.target.value.toUpperCase())}
+                                placeholder="Ej. ABC-1234 o Camioneta Blanca"
+                                className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-emerald-300 bg-white font-mono font-bold text-slate-900 outline-none focus:ring-2 focus:ring-emerald-400 placeholder:font-sans placeholder:font-normal placeholder:text-slate-400"
+                              />
                             </div>
                           </div>
                         ) : (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
-                              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                              <label className="block text-xs font-semibold text-slate-700 mb-1">
                                 2. Empresa Contratista
                               </label>
                               <select
@@ -10010,7 +10148,7 @@ export default function App() {
                                   setCasetaConductorId("");
                                   setCasetaConductorQuery("");
                                 }}
-                                className="w-full rounded-xl px-3.5 py-2 text-xs sm:text-sm border border-slate-300 bg-white font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-200"
+                                className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 bg-white font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                               >
                                 <option value="">-- Seleccionar Empresa Contratista --</option>
                                 {empresas.map((emp) => (
@@ -10020,7 +10158,7 @@ export default function App() {
                             </div>
 
                             <div>
-                              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                              <label className="block text-xs font-semibold text-slate-700 mb-1">
                                 3. Vehículo Asignado
                               </label>
                               <select
@@ -10046,7 +10184,7 @@ export default function App() {
                                     setCasetaConductorQuery("");
                                   }
                                 }}
-                                className="w-full rounded-xl px-3.5 py-2 text-xs sm:text-sm border border-slate-300 bg-white font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-200"
+                                className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 bg-white font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                               >
                                 <option value="">-- Seleccionar Vehículo Asignado --</option>
                                 {empresaVehicles.length === 0 && selectedEmpresaId ? (
@@ -10063,198 +10201,278 @@ export default function App() {
                           </div>
                         )}
 
-                        {/* 3. DATOS AUTOCOMPLETADOS DE LA UNIDAD / CORBATÍN VERDE */}
-                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
-                            <span>Datos Autocompletados de la Unidad</span>
-                            <span className="font-mono text-emerald-700 font-bold">
-                              {currentCasetaCorbatinVerde
-                                ? `Corbatín Verde #${formatCorbatinVerdeNum(currentCasetaCorbatinVerde.corbatinNum)}`
-                                : currentCasetaVehicle?.corbatinNum
-                                  ? `Corbatín #${currentCasetaVehicle.corbatinNum}`
-                                  : (casetaCorbatin ? `Corbatín ${casetaCorbatin}` : "—")}
-                            </span>
-                          </div>
-                          {currentCasetaCorbatinVerde ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-                              <div>
-                                <span className="text-slate-400 block text-[10px] uppercase font-bold">Modalidad:</span>
-                                <span className="font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded text-[11px]">
-                                  Corbatín Verde
+                        {/* 3. DIAGNÓSTICO DE ACCESO Y FICHA DE LA UNIDAD (ESTRUCTURA CONSTANTE) */}
+                        {currentCasetaCorbatinVerde ? (
+                          <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="px-2 py-0.5 rounded-md bg-emerald-700 text-white font-mono font-bold text-xs shrink-0">
+                                  VERDE #{formatCorbatinVerdeNum(currentCasetaCorbatinVerde.corbatinNum)}
+                                </span>
+                                <span className="font-bold text-slate-900 truncate">
+                                  {currentCasetaCorbatinVerde.empresaNombre || "Empresa de Proyecto"}
                                 </span>
                               </div>
+                              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 shrink-0">
+                                {currentCasetaCorbatinVerde.activo !== false ? "✓ Vigente" : "⛔ Inactivo"}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white p-2 rounded-lg border border-emerald-200/80 text-[11px]">
                               <div>
-                                <span className="text-slate-400 block text-[10px] uppercase font-bold">Vigencia:</span>
-                                <span className="font-semibold text-slate-800">
-                                  {currentCasetaCorbatinVerde.vigenciaTexto || "6 Meses"}
-                                </span>
+                                <span className="text-slate-400 block text-[9px] font-bold uppercase">Modalidad:</span>
+                                <span className="font-semibold text-emerald-800">Larga Estancia</span>
                               </div>
                               <div>
-                                <span className="text-slate-400 block text-[10px] uppercase font-bold">Conductor:</span>
-                                <span className="font-semibold text-slate-800 truncate block">
-                                  {casetaConductorQuery || "Chofer del Proyecto"}
-                                </span>
+                                <span className="text-slate-400 block text-[9px] font-bold uppercase">Vigencia:</span>
+                                <span className="font-semibold text-slate-800 truncate block">{currentCasetaCorbatinVerde.vigenciaTexto || "6 Meses"}</span>
                               </div>
                               <div>
-                                <span className="text-slate-400 block text-[10px] uppercase font-bold">Teléfono:</span>
+                                <span className="text-slate-400 block text-[9px] font-bold uppercase">Conductor:</span>
+                                <span className="font-semibold text-slate-800 truncate block">{casetaConductorQuery || "Chofer Asignado"}</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 block text-[9px] font-bold uppercase">Teléfono:</span>
                                 <CopyableInlineText
                                   text={currentCasetaCorbatinVerde.telefono || ""}
                                   label="Teléfono"
-                                  className="font-mono text-slate-800 font-semibold"
+                                  className="font-mono text-slate-800 font-semibold block truncate"
                                   onCopyToast={showToast}
                                 />
                               </div>
                             </div>
-                          ) : currentCasetaVehicle ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-                              <div>
-                                <span className="text-slate-400 block text-[10px] uppercase font-bold">Placas:</span>
-                                <span className="font-mono font-bold text-slate-800">{currentCasetaVehicle.placas || "N/A"}</span>
+                          </div>
+                        ) : (
+                          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2.5 shadow-2xs">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                              {/* FOTOGRAFÍA DEL VEHÍCULO O PLACEHOLDER */}
+                              <div className="relative shrink-0 w-full sm:w-26 sm:h-20 h-28 rounded-xl overflow-hidden bg-slate-900 border border-slate-200 shadow-2xs group">
+                                {currentCasetaVehicle?.foto ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedFotoVehiculoPreview(currentCasetaVehicle)}
+                                    className="w-full h-full block cursor-pointer group focus:outline-none relative"
+                                    title="Clic para ampliar fotografía del vehículo"
+                                  >
+                                    <img
+                                      src={normalizeFotoUrl(currentCasetaVehicle.foto)}
+                                      alt={`${currentCasetaVehicle.marca} ${currentCasetaVehicle.modelo}`}
+                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white gap-1 text-[11px] font-bold backdrop-blur-[1px]">
+                                      <IconEye className="w-3.5 h-3.5" />
+                                      <span>Ampliar</span>
+                                    </div>
+                                    <span className="absolute bottom-1 right-1 bg-black/70 backdrop-blur-xs text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                                      Foto
+                                    </span>
+                                  </button>
+                                ) : (
+                                  <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 p-2 text-center">
+                                    <IconCar className="w-6 h-6 text-slate-400" />
+                                    <span className="text-[10px] font-medium text-slate-500 leading-tight">
+                                      {currentCasetaVehicle ? "Sin foto" : "Sin unidad"}
+                                    </span>
+                                  </div>
+                                )}
                               </div>
-                              <div>
-                                <span className="text-slate-400 block text-[10px] uppercase font-bold">Color:</span>
-                                <span className="font-semibold text-slate-800">{currentCasetaVehicle.color || "N/A"}</span>
+
+                              {/* INFORMACIÓN DEL VEHÍCULO Y STATUS */}
+                              <div className="flex-1 min-w-0 w-full space-y-1.5">
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span className="px-2 py-0.5 rounded-md bg-teal-800 text-white font-mono font-bold text-xs shrink-0">
+                                      {currentCasetaVehicle?.corbatinNum ? `#${currentCasetaVehicle.corbatinNum}` : "# --"}
+                                    </span>
+                                    <span className="font-bold text-slate-900 text-xs sm:text-sm truncate">
+                                      {currentCasetaVehicle
+                                        ? `${currentCasetaVehicle.marca} ${currentCasetaVehicle.modelo}`
+                                        : "Sin vehículo seleccionado"}
+                                    </span>
+                                  </div>
+                                  <div className="shrink-0">
+                                    {currentCasetaVehicle ? (
+                                      <StatusBadge status={currentCasetaVehicle.status} />
+                                    ) : (
+                                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200 border border-slate-300/70">
+                                        En Espera
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white p-2 rounded-lg border border-slate-200 text-[11px]">
+                                  <div>
+                                    <span className="text-slate-400 block text-[9px] font-bold uppercase">Placas:</span>
+                                    <span className="font-mono font-bold text-slate-800 block truncate">
+                                      {currentCasetaVehicle?.placas || "—"}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-400 block text-[9px] font-bold uppercase">Color:</span>
+                                    <span className="font-semibold text-slate-800 block truncate">
+                                      {currentCasetaVehicle?.color || "—"}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-400 block text-[9px] font-bold uppercase">Conductor:</span>
+                                    <span className="font-semibold text-slate-800 truncate block">
+                                      {currentConductorVehicular
+                                        ? `${currentConductorVehicular.nombre} ${currentConductorVehicular.apellidos}`
+                                        : (casetaConductorQuery || currentCasetaVehicle?.conductor || "—")}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-400 block text-[9px] font-bold uppercase">Teléfono:</span>
+                                    <CopyableInlineText
+                                      text={currentConductorVehicular?.telefono || currentCasetaVehicle?.telefono || currentEmpresa?.telefono || ""}
+                                      label="Teléfono"
+                                      className="font-mono text-slate-800 font-semibold block truncate"
+                                      onCopyToast={showToast}
+                                    />
+                                  </div>
+                                </div>
                               </div>
-                              <div>
-                                <span className="text-slate-400 block text-[10px] uppercase font-bold">Conductor:</span>
-                                <span className="font-semibold text-slate-800 truncate block">
-                                  {currentConductorVehicular
-                                    ? `${currentConductorVehicular.nombre} ${currentConductorVehicular.apellidos}`
-                                    : (casetaConductorQuery || currentCasetaVehicle.conductor || "N/A")}
+                            </div>
+
+                            {/* BANNERS DE DIAGNÓSTICO / STATUS */}
+                            {currentCasetaVehicle ? (
+                              <>
+                                {currentCasetaVehicle.status !== "Habilitado" && currentCasetaVehicle.sancionActiva && (
+                                  <div className={`p-2.5 rounded-xl border ${currentCasetaVehicle.status === "Suspendido" ? "bg-red-50 border-red-200 text-red-900" : "bg-amber-50 border-amber-200 text-amber-900"} space-y-1.5`}>
+                                    <div className="font-bold text-xs uppercase flex items-center gap-1.5 text-red-900">
+                                      <IconAlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                                      <span>Alerta de Suspensión HOA Activa</span>
+                                    </div>
+                                    <p className="text-xs leading-relaxed">
+                                      <strong>Motivo:</strong> {currentCasetaVehicle.sancionActiva.motivo} (Expira: <span className="font-mono font-bold">{currentCasetaVehicle.sancionActiva.expiracion}</span>)
+                                    </p>
+                                    <div className="pt-1.5 flex flex-wrap items-center justify-between gap-2 border-t border-red-200/80">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleCambiarAIngresoPeatonal(currentCasetaVehicle)}
+                                        className="py-1.5 px-3 rounded-lg text-xs font-bold text-white bg-sky-700 hover:bg-sky-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
+                                      >
+                                        <IconWalk className="w-3.5 h-3.5" />
+                                        <span>🚶 Registrar Entrada Peatonal</span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setCasetaOverrideActive(true)}
+                                        className="text-amber-800 font-bold underline hover:text-amber-950 text-xs cursor-pointer"
+                                      >
+                                        Anulación de Supervisor
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {currentCasetaVehicle.status === "Habilitado" && (
+                                  <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
+                                    <IconCheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                    <span>Vehículo al corriente y autorizado para ingreso regular a condominio.</span>
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <div className="p-2 rounded-lg bg-slate-100/90 border border-slate-200/90 text-slate-600 text-xs flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <IconShield className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                  <span className="text-[11px] truncate">
+                                    Diagnóstico HOA: Selecciona una unidad para verificar permisos y suspensiones en tiempo real.
+                                  </span>
+                                </div>
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider shrink-0 bg-slate-200/80 px-2 py-0.5 rounded">
+                                  En Espera
                                 </span>
                               </div>
-                              <div>
-                                <span className="text-slate-400 block text-[10px] uppercase font-bold">Teléfono:</span>
-                                <CopyableInlineText
-                                  text={currentConductorVehicular?.telefono || currentCasetaVehicle.telefono || currentEmpresa?.telefono || ""}
-                                  label="Teléfono"
-                                  className="font-mono text-slate-800 font-semibold"
-                                  onCopyToast={showToast}
-                                />
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="text-center py-2 text-xs text-slate-400">
-                              Selecciona un vehículo, corbatín verde o escribe corbatín / placas para autocompletar la información.
-                            </div>
-                          )}
-                        </div>
-
-                        {/* 4. DETALLES DEL INGRESO */}
-                        <div className="space-y-3 pt-1">
-                          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                            4. Datos del Ingreso
+                            )}
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div>
-                              <label className="block text-xs font-medium text-slate-600 mb-1">Pasajeros (sin chofer)</label>
-                              <input
-                                type="number"
-                                min="0"
-                                max="50"
-                                value={casetaNumPasajeros}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  if (val === "") {
-                                    setCasetaNumPasajeros("");
-                                  } else {
-                                    const parsed = parseInt(val, 10);
-                                    setCasetaNumPasajeros(isNaN(parsed) ? "" : Math.max(0, parsed));
-                                  }
-                                }}
-                                onFocus={(e) => e.target.select()}
-                                placeholder="0"
-                                className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono font-bold text-slate-800 focus:ring-2 focus:ring-emerald-200 outline-none"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-slate-600 mb-1">Hora de Entrada</label>
-                              <div className="flex gap-1">
-                                <input
-                                  type="text"
-                                  value={casetaHoraEntrada}
-                                  onChange={(e) => setCasetaHoraEntrada(e.target.value)}
-                                  placeholder="08:30 hrs"
-                                  className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono text-slate-800"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={setHoraActual}
-                                  className="px-2 py-1 text-[11px] font-bold rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 shrink-0 cursor-pointer"
-                                >
-                                  Ahora
-                                </button>
-                              </div>
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-slate-600 mb-1">Hora Estimada Salida</label>
+                        )}
+
+                        {/* 4. DATOS DEL INGRESO */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Pasajeros (sin chofer)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              max="50"
+                              value={casetaNumPasajeros}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === "") {
+                                  setCasetaNumPasajeros("");
+                                } else {
+                                  const parsed = parseInt(val, 10);
+                                  setCasetaNumPasajeros(isNaN(parsed) ? "" : Math.max(0, parsed));
+                                }
+                              }}
+                              onFocus={(e) => e.target.select()}
+                              placeholder="0"
+                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 font-mono font-bold text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none bg-white text-center"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Hora de Entrada</label>
+                            <div className="flex gap-1.5">
                               <input
                                 type="text"
-                                value={casetaHoraSalida}
-                                onChange={(e) => setCasetaHoraSalida(e.target.value)}
-                                placeholder="18:00 hrs"
-                                className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono text-slate-800"
+                                value={casetaHoraEntrada}
+                                onChange={(e) => setCasetaHoraEntrada(e.target.value)}
+                                placeholder="08:30 hrs"
+                                className="w-full h-10 rounded-xl px-3 text-sm border border-slate-300 font-mono text-slate-800 bg-white"
                               />
+                              <button
+                                type="button"
+                                onClick={setHoraActual}
+                                className="px-2.5 h-10 text-xs font-bold rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 shrink-0 cursor-pointer active:scale-95 transition-all"
+                              >
+                                Ahora
+                              </button>
                             </div>
                           </div>
-
                           <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Trabajos / Destino en el Complejo *</label>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Hora Estimada Salida</label>
                             <input
                               type="text"
-                              required
-                              value={casetaTrabajos}
-                              onChange={(e) => setCasetaTrabajos(e.target.value)}
-                              placeholder="Ej. Pintura de fachada exterior Torre 1"
-                              className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 text-slate-800 focus:ring-2 focus:ring-emerald-200 outline-none"
+                              value={casetaHoraSalida}
+                              onChange={(e) => setCasetaHoraSalida(e.target.value)}
+                              placeholder="18:00 hrs"
+                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 font-mono text-slate-800 bg-white"
                             />
                           </div>
                         </div>
 
-                        <div className="pt-2">
+                        {/* 5. TRABAJOS Y DESTINO */}
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Trabajos y Destino en el Complejo *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={casetaTrabajos}
+                            onChange={(e) => setCasetaTrabajos(e.target.value)}
+                            placeholder="Ej. Pintura de fachada exterior Torre 1, Depto 302"
+                            className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none bg-white"
+                          />
+                        </div>
+
+                        {/* 6. BOTÓN DE ENVÍO */}
+                        <div className="pt-1">
                           {currentCasetaVehicle?.status === "Suspendido" && !casetaOverrideActive ? (
-                            <div className="space-y-3">
-                              <button
-                                type="button"
-                                disabled
-                                className="w-full py-3 rounded-xl text-sm font-bold text-white bg-red-400 cursor-not-allowed opacity-80"
-                              >
-                                Acceso Vehicular Bloqueado — Vehículo con Suspensión Activa
-                              </button>
-
-                              <div className="p-3.5 rounded-xl bg-sky-50 border border-sky-200 space-y-2 text-xs">
-                                <div className="font-bold text-sky-900 flex items-center gap-1.5">
-                                  <IconWalk className="w-4 h-4 text-sky-700" />
-                                  <span>¿El contratista requiere realizar labores entrando a pie?</span>
-                                </div>
-                                <p className="text-sky-800">
-                                  Puedes autorizar el ingreso peatonal dejando el vehículo retenido en el exterior.
-                                </p>
-                                <button
-                                  type="button"
-                                  onClick={() => handleCambiarAIngresoPeatonal(currentCasetaVehicle)}
-                                  className="w-full py-2 px-3 rounded-lg text-xs font-bold text-white bg-sky-700 hover:bg-sky-800 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
-                                >
-                                  <IconWalk className="w-4 h-4" />
-                                  <span>🚶 Registrar Entrada Peatonal (A Pie) del Contratista</span>
-                                </button>
-                              </div>
-
-                              <div className="flex justify-end items-center text-xs pt-1">
-                                <button
-                                  type="button"
-                                  onClick={() => setCasetaOverrideActive(true)}
-                                  className="text-amber-700 font-bold underline hover:text-amber-900 cursor-pointer"
-                                >
-                                  Anulación de Emergencia por Supervisor
-                                </button>
-                              </div>
-                            </div>
+                            <button
+                              type="button"
+                              disabled
+                              className="w-full h-11 rounded-xl text-xs sm:text-sm font-bold text-white bg-red-500 cursor-not-allowed opacity-80 shadow-xs"
+                            >
+                              Acceso Vehicular Bloqueado — Vehículo con Suspensión Activa
+                            </button>
                           ) : (
                             <button
                               type="submit"
                               disabled={isSubmittingEntrada}
-                              className={`w-full py-3 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 ${isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                              className={`w-full h-11 rounded-xl text-sm font-bold text-white hover:brightness-105 active:scale-[0.99] transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 ${isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
                                 }`}
                               style={{ background: currentCasetaCorbatinVerde ? "linear-gradient(135deg, #0D6E5F, #059669)" : "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                             >
@@ -10278,47 +10496,91 @@ export default function App() {
 
                     {/* FORMULARIO DE ACCESO PEATONAL */}
                     {casetaModoAcceso === "peatonal" && (
-                      <form onSubmit={handleRegistrarEntrada} className="space-y-4">
-                        <div>
-                          <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                            1. Empresa Contratista
-                          </label>
-                          <select
-                            value={selectedEmpresaId}
-                            onChange={(e) => {
-                              setSelectedEmpresaId(e.target.value);
-                              setCasetaPeatonalTrabajadorId("");
-                            }}
-                            className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 bg-white font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-sky-200"
-                          >
-                            <option value="">-- Seleccionar Empresa Contratista --</option>
-                            {empresas.map((emp) => (
-                              <option key={emp.id} value={emp.id}>{emp.nombre}</option>
-                            ))}
-                          </select>
+                      <form onSubmit={handleRegistrarEntrada} className="space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                              1. Empresa Contratista
+                            </label>
+                            <select
+                              value={selectedEmpresaId}
+                              onChange={(e) => {
+                                setSelectedEmpresaId(e.target.value);
+                                setCasetaPeatonalTrabajadorId("");
+                              }}
+                              className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 bg-white font-medium text-slate-800 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                            >
+                              <option value="">-- Seleccionar Empresa Contratista --</option>
+                              {empresas.map((emp) => (
+                                <option key={emp.id} value={emp.id}>{emp.nombre}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                              2. Seleccionar de Plantilla (Opcional)
+                            </label>
+                            <select
+                              value={casetaPeatonalTrabajadorId}
+                              onChange={(e) => setCasetaPeatonalTrabajadorId(e.target.value)}
+                              className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 bg-white text-slate-800 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                            >
+                              <option value="">[+] Capturar colaborador / Nombre libre</option>
+                              {empresaTrabajadores.map((t) => (
+                                <option key={t.id_trabajador} value={String(t.id_trabajador)}>
+                                  {t.nombre} {t.apellidos} {t.activo ? "· Autorizado" : "· (Inactivo)"}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
 
-                        <div>
-                          <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                            2. Seleccionar de Plantilla (Opcional)
-                          </label>
-                          <select
-                            value={casetaPeatonalTrabajadorId}
-                            onChange={(e) => setCasetaPeatonalTrabajadorId(e.target.value)}
-                            className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 bg-white text-slate-800 outline-none focus:ring-2 focus:ring-sky-200"
-                          >
-                            <option value="">[+] Capturar colaborador / Nombre libre</option>
-                            {empresaTrabajadores.map((t) => (
-                              <option key={t.id_trabajador} value={String(t.id_trabajador)}>
-                                {t.nombre} {t.apellidos} {t.activo ? "· Autorizado" : "· (Inactivo)"}
-                              </option>
-                            ))}
-                          </select>
+                        {/* DIAGNÓSTICO / PROTOCOLO PEATONAL */}
+                        <div className="p-3 rounded-xl bg-sky-50 border border-sky-200 text-xs space-y-2">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                            {currentTrabajadorPeatonal?.foto_url ? (
+                              <button
+                                type="button"
+                                onClick={() => setSelectedFotoTrabajadorPreview(currentTrabajadorPeatonal)}
+                                className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-sky-300 bg-white shadow-2xs group relative cursor-pointer"
+                                title="Clic para ver credencial del trabajador"
+                              >
+                                <img
+                                  src={normalizeFotoUrl(currentTrabajadorPeatonal.foto_url)}
+                                  alt={currentTrabajadorPeatonal.nombre}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                />
+                                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                  <IconEye className="w-3 h-3" />
+                                </div>
+                              </button>
+                            ) : (
+                              <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-800 flex items-center justify-center shrink-0">
+                                <IconWalk className="w-5 h-5" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="font-bold text-sky-900 flex items-center justify-between">
+                                <span className="flex items-center gap-1.5 truncate">
+                                  <span>Diagnóstico de Acceso Peatonal {currentTrabajadorPeatonal ? `· ${currentTrabajadorPeatonal.nombre} ${currentTrabajadorPeatonal.apellidos}` : "· Protocolo Activo"}</span>
+                                </span>
+                                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-sky-200 text-sky-900 shrink-0">
+                                  A Pie
+                                </span>
+                              </div>
+                              <p className="text-sky-800 text-xs mt-0.5">
+                                {currentTrabajadorPeatonal
+                                  ? `Colaborador Acreditado · ID #${currentTrabajadorPeatonal.id_trabajador}. Verifica identificación oficial antes de permitir ingreso.`
+                                  : "Verifica que el colaborador externo porte su identificación oficial y equipo de seguridad antes de autorizar el ingreso."}
+                              </p>
+                            </div>
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-xs font-semibold text-slate-600 mb-1">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
                               Nombre Completo del Colaborador *
                             </label>
                             <input
@@ -10327,12 +10589,12 @@ export default function App() {
                               value={casetaPeatonalNombre}
                               onChange={(e) => setCasetaPeatonalNombre(e.target.value)}
                               placeholder="Ej. Carlos Ortega Vega"
-                              className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 text-slate-800"
+                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
                             />
                           </div>
 
                           <div>
-                            <label className="block text-xs font-semibold text-slate-600 mb-1">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
                               Teléfono Celular de Contacto
                             </label>
                             <input
@@ -10340,27 +10602,27 @@ export default function App() {
                               value={casetaPeatonalTelefono}
                               onChange={(e) => setCasetaPeatonalTelefono(e.target.value)}
                               placeholder="+52 638 000 0000"
-                              className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono text-slate-800"
+                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 font-mono text-slate-800 bg-white outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
                             />
                           </div>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Hora de Entrada *</label>
-                            <div className="flex gap-1">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Hora de Entrada *</label>
+                            <div className="flex gap-1.5">
                               <input
                                 type="text"
                                 required
                                 value={casetaHoraEntrada}
                                 onChange={(e) => setCasetaHoraEntrada(e.target.value)}
                                 placeholder="08:30 hrs"
-                                className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono text-slate-800"
+                                className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 font-mono text-slate-800 bg-white"
                               />
                               <button
                                 type="button"
                                 onClick={setHoraActual}
-                                className="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 shrink-0 cursor-pointer"
+                                className="px-3 h-10 text-xs font-bold rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 shrink-0 cursor-pointer active:scale-95 transition-all"
                               >
                                 Ahora
                               </button>
@@ -10368,19 +10630,19 @@ export default function App() {
                           </div>
 
                           <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Hora Estimada Salida</label>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Hora Estimada Salida</label>
                             <input
                               type="text"
                               value={casetaHoraSalida}
                               onChange={(e) => setCasetaHoraSalida(e.target.value)}
                               placeholder="18:00 hrs"
-                              className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono text-slate-800"
+                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 font-mono text-slate-800 bg-white"
                             />
                           </div>
                         </div>
 
                         <div>
-                          <label className="block text-xs font-semibold text-slate-600 mb-1">
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
                             Trabajos y Destino Autorizado *
                           </label>
                           <input
@@ -10389,28 +10651,28 @@ export default function App() {
                             value={casetaTrabajos}
                             onChange={(e) => setCasetaTrabajos(e.target.value)}
                             placeholder="Ej. Reparación urgente en Torre 2 con herramienta de mano"
-                            className="w-full rounded-xl px-3.5 py-2.5 text-sm border border-slate-300 text-slate-800"
+                            className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
                           />
                         </div>
 
                         <div>
-                          <label className="block text-xs font-semibold text-slate-600 mb-1">
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
                             Observaciones / Nota
                           </label>
                           <input
                             type="text"
                             value={casetaPeatonalObservaciones}
                             onChange={(e) => setCasetaPeatonalObservaciones(e.target.value)}
-                            placeholder="Ej. Ingreso a pie autorizado; vehículo retenido afuera por sanción HOA activa."
-                            className="w-full rounded-xl px-3.5 py-2 text-sm border border-slate-300 text-slate-700 bg-slate-50"
+                            placeholder="Ej. Ingreso a pie autorizado; vehículo retenido afuera."
+                            className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 text-slate-700 bg-slate-50"
                           />
                         </div>
 
-                        <div className="pt-2">
+                        <div className="pt-1">
                           <button
                             type="submit"
                             disabled={isSubmittingEntrada}
-                            className={`w-full py-3 rounded-xl text-sm font-bold text-white bg-sky-700 hover:bg-sky-800 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md ${isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                            className={`w-full h-11 rounded-xl text-sm font-bold text-white bg-sky-700 hover:bg-sky-800 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md ${isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
                               }`}
                           >
                             {isSubmittingEntrada ? (
@@ -10430,137 +10692,87 @@ export default function App() {
                     )}
                   </div>
 
-                  {/* PANEL LATERAL DE DIAGNÓSTICO */}
-                  <div className="space-y-4">
-                    <div className="rounded-2xl border p-5 bg-white shadow-sm space-y-4" style={{ borderColor: "var(--color-border)" }}>
-                      <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500 flex items-center justify-between">
-                        <span>Diagnóstico de Acceso</span>
-                        <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold uppercase">{casetaModoAcceso}</span>
-                      </h3>
+                  {/* COLUMNA LATERAL: ÚLTIMOS INGRESOS EN CASETA (SOLO VISIBLE EN PC / PANTALLAS GRANDES) */}
+                  <div className="hidden lg:flex lg:col-span-5 xl:col-span-4 flex-col h-full min-h-0">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-2xs space-y-2.5 h-full flex flex-col min-h-0">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2 shrink-0">
+                        <div className="flex items-center gap-1.5">
+                          <IconClock className="w-3.5 h-3.5 text-slate-500" />
+                          <h3 className="font-extrabold text-xs uppercase tracking-wider text-slate-800">
+                            Últimos Ingresos Registrados
+                          </h3>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setCasetaTab("bitacora")}
+                          className="text-[11px] text-[#0D6E5F] font-bold hover:underline cursor-pointer flex items-center gap-1"
+                          title="Ver bitácora completa"
+                        >
+                          <IconFileSpreadsheet className="w-3.5 h-3.5" />
+                          <span>Bitácora ({bitacora.length})</span>
+                        </button>
+                      </div>
 
-                      {casetaModoAcceso === "vehicular" ? (
-                        currentCasetaVehicle ? (
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-3">
-                              {currentCasetaVehicle.foto && (
-                                <div
-                                  onClick={() => setSelectedFotoVehiculoPreview(currentCasetaVehicle)}
-                                  className="cursor-pointer group relative shrink-0"
-                                  title="Clic para ver fotografía del vehículo ampliada"
-                                >
-                                  <img
-                                    src={normalizeFotoUrl(currentCasetaVehicle.foto)}
-                                    alt="Vehículo"
-                                    className="w-16 h-12 object-cover rounded-xl border border-slate-200 shadow-sm group-hover:border-emerald-500 group-hover:scale-105 transition-all"
-                                  />
-                                </div>
-                              )}
-                              <div className="flex-1">
-                                <div className="font-bold text-sm text-slate-800">{currentCasetaVehicle.marca} {currentCasetaVehicle.modelo}</div>
-                                <div className="text-xs text-slate-500 font-mono">{currentCasetaVehicle.placas}</div>
-                              </div>
-                              <StatusBadge status={currentCasetaVehicle.status} />
-                            </div>
-
-                            {currentCasetaVehicle.status !== "Habilitado" && currentCasetaVehicle.sancionActiva && (
-                              <div className={`p-4 rounded-xl border ${currentCasetaVehicle.status === "Suspendido" ? "bg-red-50 border-red-300 text-red-900" : "bg-amber-50 border-amber-300 text-amber-900"
-                                } space-y-2`}>
-                                <div className="font-black text-xs uppercase flex items-center gap-1.5">
-                                  <IconAlertTriangle className="w-4 h-4" />
-                                  <span>ALERTA DE SUSPENSIÓN HOA ACTIVA</span>
-                                </div>
-                                <div className="text-xs leading-relaxed">
-                                  <strong>Motivo:</strong> {currentCasetaVehicle.sancionActiva.motivo}
-                                </div>
-                                <div className="text-xs">
-                                  <strong>Expiración Exacta:</strong> <span className="font-mono font-bold">{currentCasetaVehicle.sancionActiva.expiracion}</span>
-                                </div>
-                                <div className="text-xs">
-                                  <strong>Medida Disciplinaria:</strong> {currentCasetaVehicle.sancionActiva.medidaDisciplinaria}
-                                </div>
-                                <div className="pt-2 border-t border-red-200">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleCambiarAIngresoPeatonal(currentCasetaVehicle)}
-                                    className="w-full py-2 px-3 rounded-lg text-xs font-bold text-white bg-sky-700 hover:bg-sky-800 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
-                                  >
-                                    <IconWalk className="w-4 h-4" />
-                                    <span>🚶 Permitir Ingreso a Pie</span>
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-
-                            {currentCasetaVehicle.status === "Habilitado" && (
-                              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
-                                <IconCheckCircle className="w-4 h-4 text-emerald-600" />
-                                <span>Vehículo al corriente y autorizado para ingreso vehicular regular.</span>
-                              </div>
-                            )}
-                          </div>
-                        ) : currentCasetaCorbatinVerde ? (
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-xl bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-800 font-mono font-black text-sm shrink-0 shadow-sm">
-                                #{formatCorbatinVerdeNum(currentCasetaCorbatinVerde.corbatinNum)}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                                    Corbatín Verde · Proyecto
-                                  </span>
-                                </div>
-                                <div className="font-bold text-sm text-slate-800 truncate mt-0.5" title={currentCasetaCorbatinVerde.empresaNombre}>
-                                  {currentCasetaCorbatinVerde.empresaNombre || "Empresa de Proyecto"}
-                                </div>
-                                <div className="text-[11px] text-slate-500 truncate font-mono">
-                                  {casetaPlacasVerde ? `Placas: ${casetaPlacasVerde}` : "(Pendiente capturar placas)"}
-                                </div>
-                              </div>
-                              <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                {currentCasetaCorbatinVerde.activo !== false ? "Activo" : "Inactivo"}
-                              </span>
-                            </div>
-
-                            <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-emerald-900 text-xs space-y-1.5">
-                              <div className="font-bold flex items-center gap-1.5 text-emerald-950">
-                                <IconCheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                                <span>Proyecto Temporal / Larga Estancia Habilitado</span>
-                              </div>
-                              <p className="text-[11px] text-emerald-800 leading-relaxed">
-                                Este corbatín verde está autorizado para acceso de proveedores de proyectos.
-                              </p>
-                              {currentCasetaCorbatinVerde.vigenciaTexto && (
-                                <div className="text-[11px] pt-1 text-emerald-900 font-medium">
-                                  <strong>Vigencia:</strong> {currentCasetaCorbatinVerde.vigenciaTexto}
-                                </div>
-                              )}
-                              {currentCasetaCorbatinVerde.telefono && (
-                                <div className="text-[11px] text-emerald-900 font-mono">
-                                  <strong>Contacto:</strong> {currentCasetaCorbatinVerde.telefono}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ) : (
-                          <p className="text-xs text-slate-500">Selecciona un vehículo o corbatín verde para verificar estatus.</p>
-                        )
+                      {bitacora.length === 0 ? (
+                        <div className="py-8 text-center text-xs text-slate-400 space-y-1 flex-1 flex flex-col items-center justify-center">
+                          <IconShield className="w-6 h-6 text-slate-300 mx-auto" />
+                          <p>Sin ingresos registrados en el turno.</p>
+                        </div>
                       ) : (
-                        <div className="space-y-3">
-                          <div className="p-3 rounded-xl bg-sky-50 border border-sky-200 text-xs space-y-2">
-                            <div className="font-bold text-sky-900 flex items-center gap-1.5">
-                              <IconWalk className="w-4 h-4 text-sky-700" />
-                              <span>Modalidad Peatonal Activa</span>
-                            </div>
-                            <p className="text-sky-800">
-                              Verifica que el colaborador externo porte su identificación oficial y equipo de seguridad antes de ingresar.
-                            </p>
-                          </div>
+                        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto pr-0.5">
+                          {bitacora.slice(0, 10).map((item) => {
+                            const isDentro = item.estado === "Dentro";
+                            const isMarcando = Boolean(marcandoSalidaIds[item.id]);
 
-                          <div className="text-xs text-slate-600 space-y-1">
-                            <div><strong>Empresa:</strong> {currentEmpresa?.nombre}</div>
-                            <div><strong>Colaboradores Registrados:</strong> {empresaTrabajadores.length}</div>
-                          </div>
+                            return (
+                              <div
+                                key={item.id}
+                                className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-50 transition-all flex items-center justify-between gap-2 text-xs shadow-2xs"
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="font-mono font-bold text-slate-900 truncate text-xs">
+                                      {item.placas || `Folio #${item.id}`}
+                                    </span>
+                                    {item.corbatinNum && (
+                                      <span className="px-1.5 py-0.2 rounded bg-teal-800 text-white font-mono font-bold text-[9px]">
+                                        #{item.corbatinNum}
+                                      </span>
+                                    )}
+                                    <span className="text-[10px] text-slate-400 font-mono">
+                                      · {formatHoraLocal(item.horaEntrada)}
+                                    </span>
+                                  </div>
+                                  <div className="text-[11px] text-slate-600 truncate mt-0.5">
+                                    {item.conductor || item.empresaNombre || "Contratista"}
+                                  </div>
+                                </div>
+
+                                <div className="shrink-0">
+                                  {isDentro ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleMarcarSalida(item.id)}
+                                      disabled={isMarcando}
+                                      title="Registrar salida de este vehículo"
+                                      className="px-2.5 py-1 rounded-lg text-[10px] font-bold text-white bg-amber-600 hover:bg-amber-700 active:scale-95 transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50 shadow-2xs"
+                                    >
+                                      {isMarcando ? (
+                                        <IconSpinner className="w-3 h-3 animate-spin" />
+                                      ) : (
+                                        <IconLogOut className="w-3 h-3" />
+                                      )}
+                                      <span>Salida</span>
+                                    </button>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-200/80 text-slate-600">
+                                      ✓ Fuera
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
