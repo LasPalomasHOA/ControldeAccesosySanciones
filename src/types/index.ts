@@ -77,16 +77,7 @@ export interface VehiculoDB {
   corbatines?: CorbatinDB[];
 }
 
-// 6. conductores_vehiculos
-export interface ConductorVehiculoDB {
-  id_relacion: number;
-  id_vehiculo: number;
-  id_trabajador: number;
-  activo: boolean;
-  // Asociaciones opcionales
-  vehiculo?: VehiculoDB;
-  trabajador?: TrabajadorDB;
-}
+
 
 // 7. reglamentos
 export interface ReglamentoDB {

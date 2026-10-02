@@ -10,8 +10,7 @@ const Usuario = require('./usuario.cjs');
 const Trabajador = require('./trabajador.cjs');
 // 5. vehiculos
 const Vehiculo = require('./vehiculo.cjs');
-// 6. conductores_vehiculos
-const ConductorVehiculo = require('./conductorVehiculo.cjs');
+
 // 7. reglamentos
 const Reglamento = require('./reglamento.cjs');
 // 8. aceptaciones_reglamento
@@ -53,11 +52,7 @@ Trabajador.belongsTo(Empresa, { foreignKey: 'id_empresa', as: 'empresa' });
 Empresa.hasMany(Vehiculo, { foreignKey: 'id_empresa', as: 'vehiculos' });
 Vehiculo.belongsTo(Empresa, { foreignKey: 'id_empresa', as: 'empresa' });
 
-// 5. Conductores y Vehículos (Relación Muchos a Muchos)
-Vehiculo.hasMany(ConductorVehiculo, { foreignKey: 'id_vehiculo', as: 'asignaciones_conductores' });
-ConductorVehiculo.belongsTo(Vehiculo, { foreignKey: 'id_vehiculo', as: 'vehiculo' });
-Trabajador.hasMany(ConductorVehiculo, { foreignKey: 'id_trabajador', as: 'asignaciones_vehiculos' });
-ConductorVehiculo.belongsTo(Trabajador, { foreignKey: 'id_trabajador', as: 'trabajador' });
+
 
 // 6. Reglamentos y Aceptaciones
 Reglamento.hasMany(AceptacionReglamento, { foreignKey: 'id_reglamento', as: 'aceptaciones' });
@@ -143,7 +138,6 @@ const db = {
   Usuario,
   Trabajador,
   Vehiculo,
-  ConductorVehiculo,
   Reglamento,
   AceptacionReglamento,
   Corbatin,

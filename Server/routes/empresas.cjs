@@ -234,15 +234,7 @@ router.delete('/:id', async (req, res) => {
       await db.Corbatin.destroy({ where: { id_vehiculo: vehiculoIds } }).catch(() => {});
     }
 
-    // 4. Limpiar conductores de vehículos
-    if (db.ConductorVehiculo) {
-      if (vehiculoIds.length > 0) {
-        await db.ConductorVehiculo.destroy({ where: { id_vehiculo: vehiculoIds } }).catch(() => {});
-      }
-      if (trabajadorIds.length > 0) {
-        await db.ConductorVehiculo.destroy({ where: { id_trabajador: trabajadorIds } }).catch(() => {});
-      }
-    }
+
 
     // 5. Desvincular corbatines de vehículos para que queden liberados
     if (vehiculoIds.length > 0 && db.Corbatin) {

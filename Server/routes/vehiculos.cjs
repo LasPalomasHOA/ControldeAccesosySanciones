@@ -21,11 +21,6 @@ router.get('/', async (req, res) => {
       include: [
         { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social'] },
         { model: db.Corbatin, as: 'corbatines', attributes: ['id_corbatin', 'numero', 'estatus'] },
-        { 
-          model: db.ConductorVehiculo, 
-          as: 'asignaciones_conductores',
-          include: [{ model: db.Trabajador, as: 'trabajador', attributes: ['id_trabajador', 'nombre', 'apellidos', 'telefono'] }]
-        },
         { model: db.Sancion, as: 'sanciones', attributes: ['id_sancion', 'estatus', 'fecha_inicio', 'fecha_fin'], where: { estatus: 'ACTIVA' }, required: false }
       ],
       order: [['created_at', 'DESC']]
@@ -42,7 +37,6 @@ router.get('/', async (req, res) => {
     const resultado = vehiculos.map(v => {
       const plain = v.get({ plain: true });
       const corbatinActivo = plain.corbatines?.find(c => c.estatus === 'ACTIVO') || plain.corbatines?.[0];
-      const conductorAsignado = plain.asignaciones_conductores?.[0]?.trabajador;
 
       let estadoAcceso = 'permitido';
       if (plain.estatus_acceso === 'SUSPENDIDO' || plain.estatus_acceso === 'RESTRINGIDO') {
@@ -64,8 +58,8 @@ router.get('/', async (req, res) => {
         corbatinNumero: corbatinActivo ? String(corbatinActivo.numero) : '',
         corbatinVencimiento: corbatinActivo?.fecha_vencimiento ? new Date(corbatinActivo.fecha_vencimiento).toISOString().split('T')[0] : '',
         qr_token: corbatinActivo?.qr_token || '',
-        conductor: conductorAsignado ? `${conductorAsignado.nombre} ${conductorAsignado.apellidos}` : '',
-        conductorId: conductorAsignado?.id_trabajador || null,
+        conductor: '',
+        conductorId: null,
         reincidencias: plain.sanciones?.length || 0,
         estadoAcceso,
         status: plain.estatus_acceso === 'HABILITADO' ? 'Habilitado' : (plain.estatus_acceso === 'SUSPENDIDO' ? 'Suspendido' : (plain.estatus_acceso === 'DESHABILITADO' ? 'Deshabilitado' : 'Restringido'))
@@ -86,11 +80,6 @@ router.get('/:id', async (req, res) => {
       include: [
         { model: db.Empresa, as: 'empresa' },
         { model: db.Corbatin, as: 'corbatines' },
-        { 
-          model: db.ConductorVehiculo, 
-          as: 'asignaciones_conductores',
-          include: [{ model: db.Trabajador, as: 'trabajador' }]
-        },
         { model: db.Sancion, as: 'sanciones' }
       ]
     });
@@ -123,8 +112,7 @@ router.post('/', async (req, res) => {
       color, 
       foto_url, 
       foto, 
-      estatus_acceso, 
-      id_conductor 
+      estatus_acceso 
     } = req.body;
 
     const empId = id_empresa || empresaId;
@@ -224,14 +212,7 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Asignar conductor si se especificó
-    if (id_conductor) {
-      await db.ConductorVehiculo.create({
-        id_vehiculo: nuevoVehiculo.id_vehiculo,
-        id_trabajador: id_conductor,
-        activo: true
-      });
-    }
+
 
     res.status(201).json({
       ...nuevoVehiculo.get({ plain: true }),
@@ -295,10 +276,7 @@ router.delete('/:id', async (req, res) => {
       { where: { id_vehiculo: idVeh } }
     ).catch(() => {});
 
-    // 2. Eliminar asignaciones activas conductor-vehículo
-    if (db.ConductorVehiculo) {
-      await db.ConductorVehiculo.destroy({ where: { id_vehiculo: idVeh } }).catch(() => {});
-    }
+
 
     // 3. Marcar el vehículo como eliminado lógicamente (Soft Delete)
     // NOTA: NO se toca ni se borra bitacora_accesos, para que el historial conserve las placas, marca y empresa originales

@@ -167,10 +167,7 @@ router.delete('/:id', async (req, res) => {
       return res.json({ message: 'El trabajador ya no existe o fue eliminado previamente', id_trabajador: req.params.id });
     }
 
-    // 1. Limpiar asignaciones en la tabla intermedia de conductores de vehículos
-    await db.ConductorVehiculo.destroy({ where: { id_trabajador: req.params.id } }).catch(() => {});
-
-    // 2. Desvincular referencias de conductor en la bitácora de accesos
+    // 1. Desvincular referencias de conductor en la bitácora de accesos
     await db.BitacoraAcceso.update({ id_conductor: null }, { where: { id_conductor: req.params.id } }).catch(() => {});
 
     await trabajador.destroy();
