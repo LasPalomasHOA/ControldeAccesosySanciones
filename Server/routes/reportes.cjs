@@ -62,11 +62,11 @@ router.get('/', async (req, res) => {
           ]
         },
         { model: db.Corbatin, as: 'corbatin', attributes: ['id_corbatin', 'numero', 'estatus'] },
-        { model: db.CatalogoInfraccion, as: 'infraccion' },
+        { model: db.CatalogoInfraccion, as: 'infraccion', attributes: ['id_infraccion', 'id_reglamento', 'codigo', 'nombre', 'descripcion', 'categoria', 'activo'] },
         { model: db.Usuario, as: 'agente', attributes: ['id_usuario', 'nombre', 'correo'] },
-        { model: db.Evidencia, as: 'evidencias' },
-        { model: db.RevisionReporte, as: 'revisiones' },
-        { model: db.Sancion, as: 'sancion' }
+        { model: db.Evidencia, as: 'evidencias', attributes: ['id_evidencia', 'id_reporte', 'archivo', 'descripcion', 'fecha_captura', 'activa'] },
+        { model: db.RevisionReporte, as: 'revisiones', attributes: ['id_revision', 'id_reporte', 'decision', 'comentarios', 'fecha_revision', 'nivel_reincidencia_aplicado'] },
+        { model: db.Sancion, as: 'sancion', attributes: ['id_sancion', 'estatus', 'fecha_inicio', 'fecha_fin', 'motivo', 'numero_reincidencia'] }
       ],
       order: [['fecha_hora', 'DESC']]
     });
@@ -96,7 +96,7 @@ router.post('/', async (req, res) => {
           [Op.gte]: haceDosMinutos
         }
       },
-      include: [{ model: db.Evidencia, as: 'evidencias' }]
+      include: [{ model: db.Evidencia, as: 'evidencias', attributes: ['id_evidencia'] }]
     });
 
     if (reporteExistente) {

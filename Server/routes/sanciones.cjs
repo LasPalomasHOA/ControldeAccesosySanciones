@@ -27,16 +27,6 @@ router.get('/', async (req, res) => {
     });
 
     const ahora = new Date();
-    for (const s of sanciones) {
-      if (s.fecha_fin && ahora >= new Date(s.fecha_fin) && (s.estatus === 'ACTIVA' || s.estatus === 'RATIFICADA')) {
-        s.estatus = 'VENCIDA';
-        await s.save().catch(() => {});
-        if (s.vehiculo && s.vehiculo.estatus_acceso === 'SUSPENDIDO') {
-          s.vehiculo.estatus_acceso = 'HABILITADO';
-          await s.vehiculo.save().catch(() => {});
-        }
-      }
-    }
 
     const resultado = sanciones.map(s => {
       const plain = s.get({ plain: true });
@@ -68,15 +58,18 @@ router.get('/', async (req, res) => {
         .replace(/\[DICTAMEN_DATA\].*?\[\/DICTAMEN_DATA\]/g, '')
         .trim();
 
-      // Normalizar status
+      // Normalizar status con cálculo dinámico de expiración en memoria
+      const isExpired = plain.fecha_fin && ahora >= new Date(plain.fecha_fin) && (plain.estatus === 'ACTIVA' || plain.estatus === 'RATIFICADA');
+      const estatusEfectivo = isExpired ? 'VENCIDA' : plain.estatus;
+
       let frontendStatus = 'Activa';
-      if (plain.estatus === 'EN_APELACION') {
+      if (estatusEfectivo === 'EN_APELACION') {
         frontendStatus = 'En Apelación';
-      } else if (plain.estatus === 'CANCELADA' || plain.estatus === 'ACLARADA') {
+      } else if (estatusEfectivo === 'CANCELADA' || estatusEfectivo === 'ACLARADA') {
         frontendStatus = 'Aclarada';
-      } else if (plain.estatus === 'RATIFICADA') {
+      } else if (estatusEfectivo === 'RATIFICADA') {
         frontendStatus = 'Ratificada';
-      } else if (plain.estatus === 'VENCIDA') {
+      } else if (estatusEfectivo === 'VENCIDA') {
         frontendStatus = 'Cumplida';
       } else {
         frontendStatus = 'Activa';
@@ -90,6 +83,7 @@ router.get('/', async (req, res) => {
 
       return {
         ...plain,
+        estatus: estatusEfectivo,
         id: String(plain.id_sancion),
         motivo: motivoLimpio,
         descripcion: motivoLimpio,
@@ -100,7 +94,7 @@ router.get('/', async (req, res) => {
         infraccionDescripcion: plain.reporte?.infraccion?.nombre || motivoLimpio,
         tipo: plain.reporte?.infraccion?.nombre || 'Infracción Vehicular',
         gravedad: plain.numero_reincidencia >= 3 ? 'critica' : (plain.numero_reincidencia === 2 ? 'grave' : 'moderada'),
-        estado: plain.estatus === 'ACTIVA' ? 'activa' : (plain.estatus === 'VENCIDA' ? 'resuelta' : 'pendiente_aprobacion'),
+        estado: estatusEfectivo === 'ACTIVA' ? 'activa' : (estatusEfectivo === 'VENCIDA' ? 'resuelta' : 'pendiente_aprobacion'),
         status: frontendStatus,
         fechaSancion: plain.fecha_inicio,
         fecha: plain.fecha_inicio ? new Date(plain.fecha_inicio).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],

@@ -136,7 +136,8 @@ export const HOAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const agregarUsuario = async (nuevo: Omit<Usuario, 'id' | 'avatar'>) => {
     try {
       await api.createUsuario(nuevo);
-      await recargarDatos();
+      const res = await api.getUsuarios();
+      if (Array.isArray(res)) setUsuarios(res);
     } catch (error) {
       const usuarioCompleto: Usuario = {
         ...nuevo,
@@ -150,7 +151,8 @@ export const HOAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const editarUsuario = async (id: string | number, data: any) => {
     try {
       await api.updateUsuario(id, data);
-      await recargarDatos();
+      const res = await api.getUsuarios();
+      if (Array.isArray(res)) setUsuarios(res);
     } catch (error) {
       setUsuarios(prev => prev.map(u => String(u.id) === String(id) ? { ...u, ...data } : u));
     }
@@ -159,7 +161,8 @@ export const HOAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const eliminarUsuario = async (id: string | number) => {
     try {
       await api.deleteUsuario(id);
-      await recargarDatos();
+      const res = await api.getUsuarios();
+      if (Array.isArray(res)) setUsuarios(res);
     } catch (error) {
       setUsuarios(prev => prev.filter(u => String(u.id) !== String(id)));
     }
@@ -187,7 +190,8 @@ export const HOAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         correo: nueva.correo,
         estatus: nueva.estado === 'activo' ? 'ACTIVA' : 'SUSPENDIDA'
       });
-      await recargarDatos();
+      const res = await api.getEmpresas();
+      if (Array.isArray(res)) setEmpresas(res);
     } catch (error) {
       const empresaCompleta: Empresa = { ...nueva, totalTrabajadores: 0, totalVehiculos: 0 };
       setEmpresas(prev => [empresaCompleta, ...prev]);
@@ -205,7 +209,8 @@ export const HOAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           correo: editada.correo,
           estatus: editada.estado === 'activo' ? 'ACTIVA' : 'SUSPENDIDA'
         });
-        await recargarDatos();
+        const res = await api.getEmpresas();
+        if (Array.isArray(res)) setEmpresas(res);
       }
     } catch (error) {
       setEmpresas(prev => prev.map(emp => emp.id === editada.id ? editada : emp));
@@ -225,7 +230,8 @@ export const HOAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         dc3_documento_url: nuevo.dc3_documento_url || null,
         activo: nuevo.activo !== undefined ? nuevo.activo : true
       });
-      await recargarDatos();
+      const res = await api.getTrabajadores();
+      if (Array.isArray(res)) setTrabajadores(res);
     } catch (error) {
       const trabajadorCompleto: Trabajador = {
         ...nuevo,
@@ -253,7 +259,8 @@ export const HOAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dc3_documento_url: editado.dc3_documento_url || null,
           activo: editado.activo
         });
-        await recargarDatos();
+        const res = await api.getTrabajadores();
+        if (Array.isArray(res)) setTrabajadores(res);
       }
     } catch (error) {
       setTrabajadores(prev => prev.map(t => t.id === editado.id ? editado : t));
@@ -272,7 +279,8 @@ export const HOAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         foto_url: nuevo.foto_url || '',
         estatus_acceso: 'HABILITADO'
       });
-      await recargarDatos();
+      const res = await api.getVehiculos();
+      if (Array.isArray(res)) setVehiculos(res);
     } catch (error) {
       const vehiculoCompleto: Vehiculo = { ...nuevo, id: `v_${Date.now()}`, reincidencias: 0 };
       setVehiculos(prev => [vehiculoCompleto, ...prev]);
@@ -292,7 +300,8 @@ export const HOAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           foto_url: editado.foto_url,
           estatus_acceso: editado.estadoAcceso === 'bloqueado' ? 'SUSPENDIDO' : 'HABILITADO'
         });
-        await recargarDatos();
+        const res = await api.getVehiculos();
+        if (Array.isArray(res)) setVehiculos(res);
       }
     } catch (error) {
       setVehiculos(prev => prev.map(v => v.id === editado.id ? editado : v));
@@ -309,7 +318,8 @@ export const HOAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         observaciones: nuevo.observaciones || null,
         tipo: nuevo.tipo
       });
-      await recargarDatos();
+      const res = await api.getBitacora();
+      if (Array.isArray(res)) setAccesos(res);
     } catch (error) {
       const accesoCompleto: Acceso = { ...nuevo, id: `acc_${Date.now()}`, fechaHora: new Date().toISOString() };
       setAccesos(prev => [accesoCompleto, ...prev]);
@@ -325,7 +335,8 @@ export const HOAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         descripcion_hechos: nueva.comentarios || nueva.infraccionDescripcion,
         evidencia_url: nueva.evidenciaUrl || null
       });
-      await recargarDatos();
+      const res = await api.getSanciones();
+      if (Array.isArray(res)) setSanciones(res);
     } catch (error) {
       const sancionCompleta: Sancion = { ...nueva, id: `san_${Date.now()}`, fechaSancion: new Date().toISOString() };
       setSanciones(prev => [sancionCompleta, ...prev]);
@@ -335,7 +346,8 @@ export const HOAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const aprobarSancion = async (sancionId: string) => {
     try {
       await api.dictaminarReporte(sancionId, { decision: 'APROBADO', comentarios: 'Aprobado por supervisión' });
-      await recargarDatos();
+      const res = await api.getSanciones();
+      if (Array.isArray(res)) setSanciones(res);
     } catch (error) {
       setSanciones(prev => prev.map(s => s.id === sancionId ? { ...s, estado: 'activa' } : s));
     }
@@ -344,7 +356,8 @@ export const HOAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const rechazarSancion = async (sancionId: string) => {
     try {
       await api.dictaminarReporte(sancionId, { decision: 'RECHAZADO', comentarios: 'Desestimado por supervisión' });
-      await recargarDatos();
+      const res = await api.getSanciones();
+      if (Array.isArray(res)) setSanciones(res);
     } catch (error) {
       setSanciones(prev => prev.map(s => s.id === sancionId ? { ...s, estado: 'rechazada' } : s));
     }
@@ -353,7 +366,8 @@ export const HOAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const resolverSancion = async (sancionId: string) => {
     try {
       await api.updateSancion(sancionId, { estatus: 'VENCIDA', fecha_fin: new Date() });
-      await recargarDatos();
+      const res = await api.getSanciones();
+      if (Array.isArray(res)) setSanciones(res);
     } catch (error) {
       setSanciones(prev => prev.map(s => s.id === sancionId ? { ...s, estado: 'resuelta', fechaResolucion: new Date().toISOString() } : s));
     }

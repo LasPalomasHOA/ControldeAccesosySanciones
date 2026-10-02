@@ -53,14 +53,15 @@ router.get('/:id', async (req, res) => {
   try {
     const empresa = await db.Empresa.findByPk(req.params.id, {
       include: [
-        { model: db.Trabajador, as: 'trabajadores' },
+        { model: db.Trabajador, as: 'trabajadores', attributes: ['id_trabajador', 'nombre', 'apellidos', 'telefono', 'activo'] },
         { 
           model: db.Vehiculo, 
           as: 'vehiculos',
+          attributes: ['id_vehiculo', 'marca', 'modelo', 'placas', 'color', 'estatus_acceso'],
           where: { eliminado: { [Op.or]: [false, null] } },
           required: false
         },
-        { model: db.Usuario, as: 'usuarios', attributes: ['id_usuario', 'nombre', 'correo'] }
+        { model: db.Usuario, as: 'usuarios', attributes: ['id_usuario', 'nombre', 'correo', 'activo'] }
       ]
     });
     if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });

@@ -10,7 +10,8 @@ router.get('/', async (req, res) => {
         { model: db.CatalogoInfraccion, as: 'infracciones' },
         { model: db.AceptacionReglamento, as: 'aceptaciones' }
       ],
-      order: [['created_at', 'DESC']]
+      order: [['created_at', 'DESC']],
+      limit: 10
     });
     res.json(reglamentos);
   } catch (error) {

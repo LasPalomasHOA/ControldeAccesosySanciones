@@ -15,8 +15,8 @@ router.post('/login', async (req, res) => {
     const usuario = await db.Usuario.findOne({
       where: { correo, activo: true },
       include: [
-        { model: db.Rol, as: 'rol' },
-        { model: db.Empresa, as: 'empresa' }
+        { model: db.Rol, as: 'rol', attributes: ['id_rol', 'nombre'] },
+        { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social'] }
       ]
     });
 
@@ -92,7 +92,8 @@ router.get('/', async (req, res) => {
         { model: db.Rol, as: 'rol' },
         { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social'] }
       ],
-      order: [['created_at', 'DESC']]
+      order: [['created_at', 'DESC']],
+      limit: 100
     });
 
     const rolMap = {

@@ -135,18 +135,9 @@ router.get('/', async (req, res) => {
       where.estatus = estatus;
     }
 
-    // Auto-asegurar pool de 20 si se solicitan corbatines verdes
-    if (tipoFiltro === 'VERDE') {
-      const count = await db.Corbatin.count({
-        where: { [Op.or]: [{ tipos: 'VERDE' }, { tipos: 'verde' }] }
-      });
-      if (count === 0) {
-        await asegurarPoolBaseVerdes();
-      }
-    }
-
     const corbatines = await db.Corbatin.findAll({
       where,
+      attributes: ['id_corbatin', 'id_vehiculo', 'tipos', 'numero', 'qr_token', 'fecha_emision', 'fecha_vencimiento', 'estatus', 'empresa_nombre', 'telefono', 'email', 'vigencia_texto', 'notas', 'creado_por', 'activo'],
       include: [
         {
           model: db.Vehiculo,
@@ -298,10 +289,9 @@ router.post('/:id/vincular', async (req, res) => {
     };
 
     await corbatin.update(updates);
-    const updated = await db.Corbatin.findByPk(corbatin.id_corbatin || corbatin.id);
     res.json({
       message: `Corbatín Verde #${numFormatted} vinculado exitosamente a ${nombreFinal}`,
-      corbatin: formatCorbatin(updated)
+      corbatin: formatCorbatin(corbatin)
     });
   } catch (error) {
     console.error('Error al vincular corbatín verde:', error);
@@ -338,10 +328,9 @@ router.post('/:id/desvincular', async (req, res) => {
       qr_token: `LP-HOA|CORB-VERDE:${numFormatted}`
     });
 
-    const updated = await db.Corbatin.findByPk(corbatin.id_corbatin || corbatin.id);
     res.json({
       message: `Corbatín Verde #${numFormatted} liberado y devuelto a Disponibles exitosamente`,
-      corbatin: formatCorbatin(updated)
+      corbatin: formatCorbatin(corbatin)
     });
   } catch (error) {
     console.error('Error al desvincular corbatín verde:', error);
@@ -360,22 +349,27 @@ router.post('/', async (req, res) => {
     }
 
     const creados = [];
+    const existingSetsByType = {};
 
     for (const item of items) {
       const tipo = (item.tipos || item.tipo || (item.empresaNombre || item.empresa_nombre ? 'VERDE' : 'NORMAL')).toUpperCase();
       let numeroInt = parseInt(item.numero || item.corbatinNum, 10);
 
       if (isNaN(numeroInt)) {
-        const existingRecords = await db.Corbatin.findAll({
-          where: { tipos: tipo },
-          attributes: ['numero']
-        });
-        const existingSet = new Set(existingRecords.map(r => parseInt(r.numero, 10)).filter(n => !isNaN(n) && n > 0));
+        if (!existingSetsByType[tipo]) {
+          const existingRecords = await db.Corbatin.findAll({
+            where: { tipos: tipo },
+            attributes: ['numero']
+          });
+          existingSetsByType[tipo] = new Set(existingRecords.map(r => parseInt(r.numero, 10)).filter(n => !isNaN(n) && n > 0));
+        }
+        const existingSet = existingSetsByType[tipo];
         let next = 1;
         while (existingSet.has(next)) {
           next++;
         }
         numeroInt = next;
+        existingSet.add(next);
       }
 
       const numFormatted = tipo === 'VERDE'
