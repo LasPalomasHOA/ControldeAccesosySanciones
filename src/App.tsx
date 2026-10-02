@@ -1003,9 +1003,9 @@ function TarjetaCorbatinVerdePrintable({ corb, sections }: { corb: CorbatinVerde
       style={{
         width: "760px",
         background: "#ffffff",
-        border: "2.5px solid #0D6E5F",
+        border: "2.5px solid #000000",
         fontFamily: "Arial, Helvetica, sans-serif",
-        boxShadow: "0 8px 36px rgba(13,110,95,0.14)",
+        boxShadow: "0 8px 36px rgba(0,0,0,0.14)",
         borderRadius: "4px",
         overflow: "hidden",
         boxSizing: "border-box",
@@ -1020,7 +1020,7 @@ function TarjetaCorbatinVerdePrintable({ corb, sections }: { corb: CorbatinVerde
               style={{
                 width: "380px",
                 verticalAlign: "top",
-                borderRight: "2px dashed #0D6E5F",
+                borderRight: "2px dashed #444444",
                 padding: "16px 14px",
                 textAlign: "center",
                 background: "#ffffff",
@@ -1028,29 +1028,29 @@ function TarjetaCorbatinVerdePrintable({ corb, sections }: { corb: CorbatinVerde
               }}
             >
               <div style={{ textAlign: "center", width: "100%" }}>
-                <div style={{ fontSize: "16px", fontWeight: "bold", color: "#0D6E5F", textAlign: "center", letterSpacing: "0.5px" }}>
+                <div style={{ fontSize: "16px", fontWeight: "bold", color: "#000000", textAlign: "center", letterSpacing: "0.5px" }}>
                   PROVEEDOR — ACCESO TEMPORAL
                 </div>
-                <div style={{ borderTop: "2px solid #0D6E5F", borderBottom: "2px solid #0D6E5F", height: "4px", margin: "5px auto", width: "100%" }} />
+                <div style={{ borderTop: "2px solid #000", borderBottom: "2px solid #000", height: "4px", margin: "5px auto", width: "100%" }} />
                 <div style={{ padding: "4px 0", textAlign: "center", display: "flex", justifyContent: "center" }}>
                   <LPLogo size={150} />
                 </div>
-                <div style={{ borderTop: "2px solid #0D6E5F", borderBottom: "2px solid #0D6E5F", height: "4px", margin: "5px auto", width: "100%" }} />
-                <div style={{ fontSize: "64px", fontWeight: "bold", color: "#0D6E5F", lineHeight: "1", textAlign: "center", width: "100%", padding: "2px 0", fontFamily: "var(--font-mono, monospace)" }}>
+                <div style={{ borderTop: "2px solid #000", borderBottom: "2px solid #000", height: "4px", margin: "5px auto", width: "100%" }} />
+                <div style={{ fontSize: "64px", fontWeight: "bold", color: "#000000", lineHeight: "1", textAlign: "center", width: "100%", padding: "2px 0", fontFamily: "var(--font-mono, monospace)" }}>
                   {corbNumFormatted}
                 </div>
-                <div style={{ borderTop: "2px solid #0D6E5F", borderBottom: "2px solid #0D6E5F", height: "4px", margin: "5px auto", width: "100%" }} />
+                <div style={{ borderTop: "2px solid #000", borderBottom: "2px solid #000", height: "4px", margin: "5px auto", width: "100%" }} />
               </div>
 
               {/* Generic Institutional Header */}
               <div style={{ textAlign: "center", fontSize: "11px", color: "#222222", lineHeight: "1.35", padding: "4px 0" }}>
-                <div style={{ fontWeight: "bold", fontSize: "13px", color: "#0D6E5F", marginBottom: "1.5px" }}>LAS PALOMAS ROCKY POINT HOA</div>
+                <div style={{ fontWeight: "bold", fontSize: "13px", color: "#000000", marginBottom: "1.5px" }}>LAS PALOMAS ROCKY POINT HOA</div>
                 <div style={{ color: "#333333", fontWeight: "bold", fontSize: "11px" }}>Control de Acceso Vehicular</div>
               </div>
 
               {/* QR CODE */}
-              <div style={{ borderTop: "1px dashed #0D6E5F", paddingTop: "8px", marginTop: "4px", textAlign: "center" }}>
-                <div style={{ display: "inline-block", background: "#ffffff", padding: "5px", border: "2px solid #0D6E5F", borderRadius: "6px", boxShadow: "0 2px 6px rgba(0,0,0,0.06)" }}>
+              <div style={{ borderTop: "1px dashed #444444", paddingTop: "8px", marginTop: "4px", textAlign: "center" }}>
+                <div style={{ display: "inline-block", background: "#ffffff", padding: "5px", border: "2px solid #000000", borderRadius: "6px", boxShadow: "0 2px 6px rgba(0,0,0,0.06)" }}>
                   <RealQRCode value={qrPayload} size={130} />
                 </div>
                 <div style={{ fontSize: "9px", fontWeight: "bold", color: "#000000", marginTop: "8px", textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: "1.3" }}>
@@ -1092,7 +1092,7 @@ function TarjetaCorbatinVerdePrintable({ corb, sections }: { corb: CorbatinVerde
               </div>
               <div style={{ borderTop: "1px solid #cccccc", paddingTop: "5px", marginTop: "4px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "8px", color: "#555555", gap: "8px", overflow: "hidden" }}>
                 <span style={{ flexShrink: 0, fontWeight: "600" }}>Las Palomas Rocky Point HOA</span>
-                <span style={{ fontFamily: "monospace", fontWeight: "bold", color: "#0D6E5F", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>
+                <span style={{ fontFamily: "monospace", fontWeight: "bold", color: "#000000", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>
                   Corbatín Verde #{corbNumFormatted}
                 </span>
               </div>
@@ -3494,8 +3494,8 @@ export default function App() {
       const colW = cardW / 2; // 130 mm
       const midX = startX + colW; // 148.5 mm
 
-      // Outer Solid Emerald Border
-      pdf.setDrawColor(13, 110, 95);
+      // Outer Solid Black Border
+      pdf.setDrawColor(0, 0, 0);
       pdf.setLineWidth(1.2);
       pdf.rect(startX, startY, cardW, cardH);
 
@@ -3512,12 +3512,12 @@ export default function App() {
       // 1. Title PROVEEDOR — ACCESO TEMPORAL
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(13);
-      pdf.setTextColor(13, 110, 95);
+      pdf.setTextColor(0, 0, 0);
       pdf.text("PROVEEDOR — ACCESO TEMPORAL", leftCenterX, startY + 11.5, { align: "center" });
 
-      // Double Line 1 (Green)
+      // Double Line 1 (Black)
       pdf.setLineWidth(0.6);
-      pdf.setDrawColor(13, 110, 95);
+      pdf.setDrawColor(0, 0, 0);
       pdf.line(startX + 7, startY + 15, midX - 7, startY + 15);
       pdf.line(startX + 7, startY + 16.3, midX - 7, startY + 16.3);
 
@@ -3529,22 +3529,22 @@ export default function App() {
       } else {
         pdf.setFont("times", "bold");
         pdf.setFontSize(14);
-        pdf.setTextColor(13, 110, 95);
+        pdf.setTextColor(0, 0, 0);
         pdf.text("Las Palomas", leftCenterX, startY + 25.5, { align: "center" });
         pdf.setFontSize(8.5);
         pdf.setTextColor(100, 116, 139);
         pdf.text("Rocky Point HOA, A.C.", leftCenterX, startY + 30, { align: "center" });
       }
 
-      // Double Line 2 (Green)
-      pdf.setDrawColor(13, 110, 95);
+      // Double Line 2 (Black)
+      pdf.setDrawColor(0, 0, 0);
       pdf.line(startX + 7, startY + 37, midX - 7, startY + 37);
       pdf.line(startX + 7, startY + 38.3, midX - 7, startY + 38.3);
 
-      // 3. NUMBER 001 - BOLD GREEN
+      // 3. NUMBER 001 - BOLD BLACK
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(54);
-      pdf.setTextColor(13, 110, 95);
+      pdf.setTextColor(0, 0, 0);
       pdf.text(corbNumFormatted, leftCenterX, startY + 55, { align: "center" });
 
       // Double Line 3
@@ -3554,15 +3554,12 @@ export default function App() {
       // 4. Branding & Context Information (Generic Reusable)
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(11);
-      // 4. Branding & Context Information
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(11);
       pdf.setTextColor(0, 0, 0);
       pdf.text("LAS PALOMAS ROCKY POINT HOA", leftCenterX, startY + 68, { align: "center" });
 
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(9.5);
-      pdf.setTextColor(13, 110, 95);
+      pdf.setTextColor(60, 60, 60);
       pdf.text("Control de Acceso Vehicular", leftCenterX, startY + 75, { align: "center" });
 
       // Divider Line
@@ -3576,7 +3573,7 @@ export default function App() {
       const qrX = leftCenterX - qrSize / 2;
       const qrY = startY + 85;
 
-      pdf.setDrawColor(13, 110, 95);
+      pdf.setDrawColor(0, 0, 0);
       pdf.setLineWidth(0.6);
       pdf.rect(qrX - 1.5, qrY - 1.5, qrSize + 3, qrSize + 3);
       pdf.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
@@ -3636,7 +3633,7 @@ export default function App() {
       pdf.setTextColor(110, 110, 110);
       pdf.text("Las Palomas Rocky Point HOA", rightMargin, startY + cardH - 5.5);
 
-      pdf.setTextColor(13, 110, 95);
+      pdf.setTextColor(80, 80, 80);
       pdf.text(`Corbatín Verde #${corbNumFormatted}`, startX + cardW - 8, startY + cardH - 5.5, { align: "right" });
 
       if (isPrintOnly) {
@@ -3709,8 +3706,8 @@ export default function App() {
           color: { dark: "#000000", light: "#ffffff" },
         });
 
-        // Outer Border
-        pdf.setDrawColor(13, 110, 95);
+        // Outer Border (Black)
+        pdf.setDrawColor(0, 0, 0);
         pdf.setLineWidth(1.2);
         pdf.rect(startX, startY, cardW, cardH);
 
@@ -3726,11 +3723,11 @@ export default function App() {
 
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(13);
-        pdf.setTextColor(13, 110, 95);
+        pdf.setTextColor(0, 0, 0);
         pdf.text("PROVEEDOR — ACCESO TEMPORAL", leftCenterX, startY + 11.5, { align: "center" });
 
         pdf.setLineWidth(0.6);
-        pdf.setDrawColor(13, 110, 95);
+        pdf.setDrawColor(0, 0, 0);
         pdf.line(startX + 7, startY + 15, midX - 7, startY + 15);
         pdf.line(startX + 7, startY + 16.3, midX - 7, startY + 16.3);
 
@@ -3740,13 +3737,13 @@ export default function App() {
           pdf.addImage(logoDataUrl, "PNG", leftCenterX - logoW / 2, startY + 18.5, logoW, logoH);
         }
 
-        pdf.setDrawColor(13, 110, 95);
+        pdf.setDrawColor(0, 0, 0);
         pdf.line(startX + 7, startY + 37, midX - 7, startY + 37);
         pdf.line(startX + 7, startY + 38.3, midX - 7, startY + 38.3);
 
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(54);
-        pdf.setTextColor(13, 110, 95);
+        pdf.setTextColor(0, 0, 0);
         pdf.text(corbNumFormatted, leftCenterX, startY + 55, { align: "center" });
 
         pdf.line(startX + 7, startY + 60, midX - 7, startY + 60);
@@ -3759,7 +3756,7 @@ export default function App() {
 
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(9.5);
-        pdf.setTextColor(13, 110, 95);
+        pdf.setTextColor(60, 60, 60);
         pdf.text("Control de Acceso Vehicular", leftCenterX, startY + 75, { align: "center" });
 
         pdf.setLineDashPattern([1.5, 1.5], 0);
@@ -3771,7 +3768,7 @@ export default function App() {
         const qrX = leftCenterX - qrSize / 2;
         const qrY = startY + 85;
 
-        pdf.setDrawColor(13, 110, 95);
+        pdf.setDrawColor(0, 0, 0);
         pdf.setLineWidth(0.6);
         pdf.rect(qrX - 1.5, qrY - 1.5, qrSize + 3, qrSize + 3);
         pdf.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
@@ -3828,7 +3825,7 @@ export default function App() {
         pdf.setTextColor(110, 110, 110);
         pdf.text("Las Palomas Rocky Point HOA", rightMargin, startY + cardH - 5.5);
 
-        pdf.setTextColor(13, 110, 95);
+        pdf.setTextColor(80, 80, 80);
         pdf.text(`Corbatín Verde #${corbNumFormatted}`, startX + cardW - 8, startY + cardH - 5.5, { align: "right" });
       }
 
