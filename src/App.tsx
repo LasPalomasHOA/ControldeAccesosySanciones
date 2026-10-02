@@ -2790,6 +2790,151 @@ export default function App() {
     }
   };
 
+  // Recarga granular de Sanciones
+  const reloadSanciones = async () => {
+    try {
+      const res = await api.getSanciones();
+      if (Array.isArray(res)) {
+        const cleanRawText = (text: string) => {
+          if (!text) return "";
+          return text
+            .replace(/\[APELACION_DATA\].*?\[\/APELACION_DATA\]/gs, "")
+            .replace(/\[DICTAMEN_DATA\].*?\[\/DICTAMEN_DATA\]/gs, "")
+            .trim();
+        };
+
+        const mappedSanciones: Sancion[] = res.map((s: any) => {
+          const descClean = cleanRawText(s.descripcion || s.motivo || "");
+          const tipoInf = s.tipo || s.infraccionDescripcion || s.reporte?.infraccion?.nombre || "Infracción al Reglamento";
+          const medidaLimpia = cleanRawText(s.medidaDisciplinaria || s.regla?.mensaje_alerta || `Sanción Nivel ${s.numero_reincidencia || 1}`);
+
+          return {
+            id: String(s.id_sancion || s.id),
+            vehicleId: String(s.id_vehiculo || s.vehicleId || ""),
+            empresaNombre: s.empresaNombre || s.empresa?.razon_social || "",
+            placas: s.placas || s.placa || s.vehiculo?.placas || "",
+            tipo: tipoInf,
+            fecha: s.fecha_inicio ? s.fecha_inicio.split("T")[0] : (s.fecha || new Date().toISOString().split("T")[0]),
+            fecha_inicio: s.fecha_inicio || undefined,
+            fecha_fin: s.fecha_fin || undefined,
+            medidaDisciplinaria: medidaLimpia,
+            status: (s.status as any) || (s.estatus === "EN_APELACION" ? "En Apelación" : (s.estatus === "CANCELADA" || s.estatus === "ACLARADA" ? "Aclarada" : (s.estatus === "RATIFICADA" ? "Ratificada" : (s.estatus === "VENCIDA" ? "Cumplida" : "Activa")))),
+            descripcion: descClean || "Infracción detectada en campo y documentada por seguridad",
+            apelacion: s.apelacion || undefined,
+          };
+        });
+        setSanciones(mappedSanciones);
+      }
+    } catch (e) {
+      console.warn("Error al recargar sanciones:", e);
+    }
+  };
+
+  // Recarga granular de Reportes de Infracciones
+  const reloadReportes = async () => {
+    try {
+      const res = await api.getReportes();
+      if (Array.isArray(res)) {
+        const mappedInf: InfraccionReporte[] = res.map((r: any) => {
+          const corbNum = r.corbatin?.numero
+            || r.corbatinNumero
+            || r.vehiculo?.corbatines?.find((c: any) => c.estatus === "ACTIVO")?.numero
+            || r.vehiculo?.corbatines?.[0]?.numero
+            || (r.id_corbatin ? String(r.id_corbatin) : "")
+            || "—";
+
+          return {
+            id: String(r.id_reporte || r.id),
+            folio: `FOL-${r.id_reporte}`,
+            fecha: r.fecha_hora ? r.fecha_hora.split("T")[0] : new Date().toISOString().split("T")[0],
+            hora: r.fecha_hora ? r.fecha_hora.split("T")[1]?.substring(0, 5) : "12:00",
+            agenteNombre: r.agente?.nombre || r.guardia_reporta?.nombre || "Guardia en Caseta",
+            empresaNombre: r.vehiculo?.empresa?.razon_social || "",
+            placas: r.vehiculo?.placas || "",
+            corbatinNum: String(corbNum).replace(/^#/, ""),
+            infraccionCodigo: r.infraccion?.codigo || "INF-01",
+            infraccionNombre: r.infraccion?.nombre || "Falta al reglamento",
+            lugar: r.ubicacion_texto || "Vialidad interna",
+            descripcion: r.descripcion_hechos || "",
+            evidencias: r.evidencias?.map((e: any) => e.archivo) || [],
+            gravedad: (r.infraccion?.gravedad?.toLowerCase() === "grave" ? "grave" : (r.infraccion?.gravedad?.toLowerCase() === "leve" ? "leve" : "moderada")) as "leve" | "moderada" | "grave",
+            medidaSugerida: "Revisión por comité de supervisión",
+            estado: (r.estatus_revision === "PENDIENTE" ? "Pendiente" : (r.estatus_revision === "APROBADO" ? "Aprobada" : (r.estatus_revision === "RECHAZADO" ? "Rechazada" : "Desestimada"))) as "Pendiente" | "Aprobada" | "Rechazada" | "Desestimada"
+          };
+        });
+        setInfraccionesPendientes(mappedInf);
+      }
+    } catch (e) {
+      console.warn("Error al recargar reportes:", e);
+    }
+  };
+
+  // Recarga granular de Corbatines Verdes
+  const reloadCorbatines = async () => {
+    try {
+      const res = await api.getCorbatines();
+      if (Array.isArray(res)) {
+        const verdesList = res.filter((c: any) => {
+          const t = String(c.tipos || c.tipo || "").toUpperCase();
+          return t === "VERDE";
+        });
+        let mappedVerdes: CorbatinVerde[] = verdesList.map((c: any) => {
+          const cleanNum = parseInt(String(c.numero || c.corbatinNum || 1).replace(/[^0-9]/g, ""), 10);
+          const empNom = c.empresa_nombre || c.empresaNombre || "";
+          const hasEmp = Boolean(empNom && empNom.trim());
+          const fechaVenc = c.fecha_vencimiento ? new Date(c.fecha_vencimiento) : null;
+          const isExp = fechaVenc ? (fechaVenc.getTime() < new Date().setHours(0, 0, 0, 0)) : false;
+
+          let estatusInv = c.estatus_inventario || "DISPONIBLE";
+          if (c.activo === false || c.estatus === "DESHABILITADO" || c.estatus === "CANCELADO") {
+            estatusInv = "INACTIVO";
+          } else if (hasEmp) {
+            estatusInv = isExp ? "VENCIDO" : "ASIGNADO";
+          } else {
+            estatusInv = "DISPONIBLE";
+          }
+
+          return {
+            id: String(c.id_corbatin || c.id_corbatines || c.id || cleanNum),
+            id_corbatin: c.id_corbatin || c.id_corbatines || cleanNum,
+            numero: cleanNum,
+            id_empresa: c.id_empresa || null,
+            corbatinNum: formatCorbatinVerdeNum(cleanNum),
+            tipos: "VERDE",
+            tipo: "VERDE",
+            estatus_inventario: estatusInv,
+            empresaNombre: empNom,
+            telefono: c.telefono || "",
+            email: c.email || "",
+            fechaEmision: c.fecha_emision ? new Date(c.fecha_emision).toISOString().split("T")[0] : (c.fechaEmision || ""),
+            fechaAsignacion: c.fecha_asignacion ? new Date(c.fecha_asignacion).toISOString().split("T")[0] : (c.fechaAsignacion || (hasEmp ? (c.fecha_emision ? new Date(c.fecha_emision).toISOString().split("T")[0] : "") : "")),
+            fechaVencimiento: c.fecha_vencimiento ? new Date(c.fecha_vencimiento).toISOString().split("T")[0] : (c.fechaVencimiento || ""),
+            vigenciaTexto: c.vigencia_texto || c.vigenciaTexto || (hasEmp ? "Temporal" : "Disponible"),
+            placasAsignadas: c.placas_asignadas || c.placasAsignadas || "",
+            conductorAsignado: c.conductor_asignado || c.conductorAsignado || "",
+            notasAsignacion: c.notas_asignacion || "",
+            activo: c.activo !== false && c.estatus !== "CANCELADO" && c.estatus !== "DESHABILITADO",
+            creadoPor: c.creado_por || c.creadoPor || "Sistema HOA",
+            asignadoPor: c.asignado_por || c.asignadoPor || "",
+            notas: c.notas || c.motivo_cancelacion || "",
+          };
+        });
+
+        if (mappedVerdes.length === 0) {
+          mappedVerdes = generateDefaultPoolCorbatinesVerdes(20);
+        }
+
+        mappedVerdes.sort((a, b) => (a.numero || 1) - (b.numero || 1));
+        setCorbatinesVerdes(mappedVerdes);
+        try {
+          localStorage.setItem("hoa_corbatines_verdes", JSON.stringify(mappedVerdes));
+        } catch { }
+      }
+    } catch (e) {
+      console.warn("Error al recargar corbatines:", e);
+    }
+  };
+
   useEffect(() => {
     // 1. Carga inicial de base de datos
     loadDatabaseData(true);
@@ -2804,7 +2949,8 @@ export default function App() {
           try {
             const payload = JSON.parse(event.data);
             if (payload.type === "NUEVO_REPORTE") {
-              loadDatabaseData(true);
+              reloadReportes();
+              reloadSanciones();
               playNotificationChime();
               showToast(
                 `Nueva infracción registrada en campo — Folio: FOL-${payload.data?.id_reporte || ""}`,
@@ -2812,7 +2958,9 @@ export default function App() {
                 "Infracción Detectada en Tiempo Real"
               );
             } else if (payload.type === "REPORTE_DICTAMINADO") {
-              loadDatabaseData(true);
+              reloadReportes();
+              reloadSanciones();
+              reloadVehiculos();
               if (payload.decision === "APROBADO") {
                 playNotificationChime();
                 if (currentUser?.role === "contratista" && (!payload.empresaNombre || payload.empresaNombre === currentUser.empresaNombre)) {
@@ -2823,14 +2971,13 @@ export default function App() {
                   );
                 }
               }
-            } else if (
-              payload.type === "NUEVA_APELACION" ||
-              payload.type === "SANCION_DICTAMINADA" ||
-              payload.type === "NUEVO_ACCESO" ||
-              payload.type === "SALIDA_REGISTRADA" ||
-              payload.type === "VEHICULO_ACTUALIZADO"
-            ) {
-              loadDatabaseData(true);
+            } else if (payload.type === "NUEVA_APELACION" || payload.type === "SANCION_DICTAMINADA") {
+              reloadSanciones();
+              reloadVehiculos();
+            } else if (payload.type === "NUEVO_ACCESO" || payload.type === "SALIDA_REGISTRADA") {
+              reloadBitacora();
+            } else if (payload.type === "VEHICULO_ACTUALIZADO") {
+              reloadVehiculos();
             }
           } catch (e) {
             // Ignorar pings de keepalive
@@ -4204,7 +4351,7 @@ export default function App() {
       await api.updateVehiculo(v.id, {
         estatus_acceso: nuevoEstatus
       });
-      await loadDatabaseData();
+      await reloadVehiculos();
       showToast(
         `Vehículo ${v.marca} ${v.modelo} (${v.placas}) ha sido ${nuevoStatusFrontend === "Habilitado" ? "Habilitado" : "Deshabilitado"} con éxito.`,
         nuevoStatusFrontend === "Habilitado" ? "success" : "info"
@@ -4415,10 +4562,14 @@ export default function App() {
         id_usuario: Number(currentUser?.id) || 2
       });
 
-      await loadDatabaseData();
+      await reloadReportes();
+      await reloadSanciones();
+      await reloadVehiculos();
       showToast(`Infracción ${inf.folio} aprobada. Se ha aplicado la suspensión de acceso vehicular en PostgreSQL.`, "success", "Infracción Aprobada");
     } catch (err: any) {
-      await loadDatabaseData();
+      await reloadReportes();
+      await reloadSanciones();
+      await reloadVehiculos();
       const msg = err.message || String(err);
       if (msg.includes("ya fue dictaminado") || msg.includes("409") || msg.includes("Ya existe una sanción") || msg.includes("previamente")) {
         showToast("Esta infracción ya había sido dictaminada por otro supervisor. La bandeja ha sido actualizada.", "info", "Infracción Ya Procesada");
@@ -4444,10 +4595,12 @@ export default function App() {
         id_usuario: Number(currentUser?.id) || 2
       });
 
-      await loadDatabaseData();
+      await reloadReportes();
+      await reloadSanciones();
       showToast(`Infracción ${inf.folio} desestimada y guardada en PostgreSQL.`, "info", "Infracción Desestimada");
     } catch (err: any) {
-      await loadDatabaseData();
+      await reloadReportes();
+      await reloadSanciones();
       const msg = err.message || String(err);
       if (msg.includes("ya fue dictaminado") || msg.includes("409") || msg.includes("Ya existe una sanción") || msg.includes("previamente")) {
         showToast("Esta infracción ya había sido dictaminada por otro supervisor. La bandeja ha sido actualizada.", "info", "Infracción Ya Procesada");
@@ -4484,7 +4637,7 @@ export default function App() {
         apelacion: apelacionPayload
       });
 
-      await loadDatabaseData();
+      await reloadSanciones();
 
       setSelectedSancionParaApelar(null);
       setApelacionArgumentos("");
@@ -4526,7 +4679,8 @@ export default function App() {
         estatus: 'CANCELADA',
         dictamen: dictamen || 'Suspensión levantada por resolución de Supervisión HOA'
       });
-      await loadDatabaseData();
+      await reloadSanciones();
+      await reloadVehiculos();
       showToast(`Apelación aprobada para el vehículo ${targetSancion.placas}. Suspensión levantada inmediatamente.`, "success", "Suspensión Levantada");
     } catch (err) {
       console.warn("Error al actualizar sanción en BD:", err);
@@ -4589,7 +4743,8 @@ export default function App() {
         estatus: 'RATIFICADA',
         dictamen: dictamen || 'Apelación improcedente. Se ratifica la medida disciplinaria.'
       });
-      await loadDatabaseData();
+      await reloadSanciones();
+      await reloadVehiculos();
       showToast(`Se ha ratificado la sanción para ${targetSancion.placas}. La suspensión continúa vigente.`, "warning", "Sanción Ratificada");
     } catch (err) {
       console.warn("Error al ratificar sanción en BD:", err);
@@ -4652,7 +4807,7 @@ export default function App() {
       await api.updateUsuario(selectedUserParaPassword.id, {
         password: nuevaPassword.trim(),
       });
-      await loadDatabaseData();
+      await reloadUsuarios();
       showToast(`Contraseña para la cuenta "${selectedUserParaPassword.email}" (${selectedUserParaPassword.nombre}) actualizada con éxito.`, "success", "Clave Actualizada");
       setSelectedUserParaPassword(null);
       setNuevaPassword("");
@@ -4883,7 +5038,8 @@ export default function App() {
         activo: true,
       });
 
-      await loadDatabaseData();
+      await reloadEmpresas();
+      await reloadUsuarios();
       setShowCreateEmpresaModal(false);
       showToast(`Empresa "${empNombre}" y cuenta "${email}" creadas exitosamente.`, "success", "Proveedor Creado");
     } catch (err: any) {
@@ -4989,7 +5145,7 @@ export default function App() {
     try {
       setEmpresas(prev => prev.filter(e => e.id !== target.id));
       await api.deleteEmpresa(target.id);
-      await loadDatabaseData();
+      await reloadEmpresas();
       setSelectedEmpresaParaEliminar(null);
       if (expandedEmpresaId === target.id) {
         setExpandedEmpresaId(null);
@@ -4998,7 +5154,7 @@ export default function App() {
     } catch (err: any) {
       console.error("Error al eliminar empresa:", err);
       showToast("Error al eliminar empresa: " + (err.message || err), "error");
-      await loadDatabaseData();
+      await reloadEmpresas();
     } finally {
       isDeletingEmpresaRef.current = false;
       setIsDeletingEmpresa(false);
@@ -5032,7 +5188,7 @@ export default function App() {
         activo: true,
         foto_url: nuevoGuardiaFoto,
       });
-      await loadDatabaseData();
+      await reloadUsuarios();
       setShowCreateGuardiaModal(false);
       setNuevoGuardiaFoto("");
       setNuevoGuardiaFotoError("");
