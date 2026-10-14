@@ -1544,6 +1544,7 @@ export default function App() {
   const [selectedTrabajadorParaEditar, setSelectedTrabajadorParaEditar] = useState<Trabajador | null>(null);
   const [selectedTrabajadorParaEliminar, setSelectedTrabajadorParaEliminar] = useState<Trabajador | null>(null);
   const [selectedSupervisorParaEliminar, setSelectedSupervisorParaEliminar] = useState<UserAccount | null>(null);
+  const [selectedGuardiaParaEliminar, setSelectedGuardiaParaEliminar] = useState<UserAccount | null>(null);
   const [selectedFotoTrabajadorPreview, setSelectedFotoTrabajadorPreview] = useState<Trabajador | null>(null);
 
   const [infraccionesPendientes, setInfraccionesPendientes] = useState<InfraccionReporte[]>(INITIAL_INFRACCIONES_PENDIENTES);
@@ -1759,6 +1760,9 @@ export default function App() {
 
   const [isDeletingSupervisor, setIsDeletingSupervisor] = useState(false);
   const isDeletingSupervisorRef = useRef(false);
+
+  const [isDeletingGuardia, setIsDeletingGuardia] = useState(false);
+  const isDeletingGuardiaRef = useRef(false);
 
   const [isSubmittingVehiculo, setIsSubmittingVehiculo] = useState(false);
   const isSubmittingVehiculoRef = useRef(false);
@@ -2348,21 +2352,60 @@ export default function App() {
       lastFetchTimestampRef.current = Date.now();
 
       if (resUsers.status === "fulfilled" && Array.isArray(resUsers.value)) {
-        const mappedUsers: UserAccount[] = resUsers.value.map((u: any) => ({
-          id: String(u.id_usuario || u.id),
-          username: u.correo,
-          nombre: u.nombre,
-          email: u.correo,
-          role: (u.rol === "admin" ? "admin" : (u.rol === "supervisor" ? "supervisor" : (u.rol === "proveedor" ? "contratista" : "caseta"))) as UserRole,
-          empresaNombre: u.empresaNombre || "",
-          fechaCreacion: u.created_at ? new Date(u.created_at).toISOString().split("T")[0] : "2026-01-01",
-          creadoPor: "Administrador de Seguridad HOA",
-          hasAcceptedReglamento: (u.rol === "proveedor" || u.role === "contratista")
-            ? ((localStorage.getItem("hoa_accepted_reglamento_" + (u.id_usuario || u.id)) === "true") || Boolean(u.hasAcceptedReglamento))
-            : true,
-          activo: u.activo !== false,
-          foto_url: u.foto_url || u.avatar || "",
-        }));
+        const mappedUsers: UserAccount[] = resUsers.value.map((u: any) => {
+          const isGuardia =
+            u.rol === "guardia" ||
+            u.rol === "caseta" ||
+            u.role === "caseta" ||
+            u.role === "guardia" ||
+            u.id_rol === 4 ||
+            u.id_rol === 3 ||
+            u.rolNombre === "CASETA" ||
+            u.rolNombre === "AGENTE" ||
+            u.rolNombre === "GUARDIA";
+          const isSupervisor =
+            u.rol === "supervisor" ||
+            u.role === "supervisor" ||
+            u.id_rol === 2 ||
+            u.rolNombre === "SUPERVISOR";
+          const isContratista =
+            u.rol === "proveedor" ||
+            u.role === "contratista" ||
+            u.role === "proveedor" ||
+            u.id_rol === 5 ||
+            u.rolNombre === "PROVEEDOR";
+          const isContabilidad =
+            u.rol === "contabilidad" ||
+            u.role === "contabilidad" ||
+            u.id_rol === 6 ||
+            u.rolNombre === "CONTABILIDAD";
+
+          const calculatedRole: UserRole = isSupervisor
+            ? "supervisor"
+            : isGuardia
+            ? "caseta"
+            : isContratista
+            ? "contratista"
+            : isContabilidad
+            ? "contabilidad"
+            : "admin";
+
+          return {
+            id: String(u.id_usuario || u.id),
+            username: u.correo,
+            nombre: u.nombre,
+            email: u.correo,
+            role: calculatedRole,
+            empresaNombre: u.empresaNombre || "",
+            fechaCreacion: u.created_at ? new Date(u.created_at).toISOString().split("T")[0] : "2026-01-01",
+            creadoPor: "Administrador de Seguridad HOA",
+            hasAcceptedReglamento: (calculatedRole === "contratista")
+              ? ((localStorage.getItem("hoa_accepted_reglamento_" + (u.id_usuario || u.id)) === "true") || Boolean(u.hasAcceptedReglamento))
+              : true,
+            activo: u.activo !== false,
+            foto_url: u.foto_url || u.avatar || "",
+          };
+        });
         setUsers(mappedUsers);
       }
 
@@ -2770,19 +2813,58 @@ export default function App() {
     try {
       const res = await api.getUsuarios();
       if (Array.isArray(res)) {
-        const mappedUsers: UserAccount[] = res.map((u: any) => ({
-          id: String(u.id_usuario || u.id),
-          username: u.correo,
-          nombre: u.nombre,
-          email: u.correo,
-          role: (u.rol === "admin" ? "admin" : (u.rol === "supervisor" ? "supervisor" : (u.rol === "proveedor" ? "contratista" : (u.rol === "contabilidad" ? "contabilidad" : "caseta")))) as UserRole,
-          empresaNombre: u.empresaNombre || "",
-          fechaCreacion: u.created_at ? new Date(u.created_at).toISOString().split("T")[0] : "2026-01-01",
-          creadoPor: "Administrador de Seguridad HOA",
-          hasAcceptedReglamento: true,
-          activo: u.activo !== false,
-          foto_url: u.foto_url || u.avatar || "",
-        }));
+        const mappedUsers: UserAccount[] = res.map((u: any) => {
+          const isGuardia =
+            u.rol === "guardia" ||
+            u.rol === "caseta" ||
+            u.role === "caseta" ||
+            u.role === "guardia" ||
+            u.id_rol === 4 ||
+            u.id_rol === 3 ||
+            u.rolNombre === "CASETA" ||
+            u.rolNombre === "AGENTE" ||
+            u.rolNombre === "GUARDIA";
+          const isSupervisor =
+            u.rol === "supervisor" ||
+            u.role === "supervisor" ||
+            u.id_rol === 2 ||
+            u.rolNombre === "SUPERVISOR";
+          const isContratista =
+            u.rol === "proveedor" ||
+            u.role === "contratista" ||
+            u.role === "proveedor" ||
+            u.id_rol === 5 ||
+            u.rolNombre === "PROVEEDOR";
+          const isContabilidad =
+            u.rol === "contabilidad" ||
+            u.role === "contabilidad" ||
+            u.id_rol === 6 ||
+            u.rolNombre === "CONTABILIDAD";
+
+          const calculatedRole: UserRole = isSupervisor
+            ? "supervisor"
+            : isGuardia
+            ? "caseta"
+            : isContratista
+            ? "contratista"
+            : isContabilidad
+            ? "contabilidad"
+            : "admin";
+
+          return {
+            id: String(u.id_usuario || u.id),
+            username: u.correo,
+            nombre: u.nombre,
+            email: u.correo,
+            role: calculatedRole,
+            empresaNombre: u.empresaNombre || "",
+            fechaCreacion: u.created_at ? new Date(u.created_at).toISOString().split("T")[0] : "2026-01-01",
+            creadoPor: "Administrador de Seguridad HOA",
+            hasAcceptedReglamento: true,
+            activo: u.activo !== false,
+            foto_url: u.foto_url || u.avatar || "",
+          };
+        });
         setUsers(mappedUsers);
       }
     } catch (e) {
@@ -5181,6 +5263,7 @@ export default function App() {
         correo: emailVal,
         password: passVal || "123456",
         id_rol: 4, // CASETA
+        rol: "CASETA",
         id_empresa: null,
         activo: true,
         foto_url: nuevoGuardiaFoto,
@@ -5601,6 +5684,27 @@ export default function App() {
     }
   };
 
+  const handleConfirmarEliminarGuardia = async () => {
+    if (!selectedGuardiaParaEliminar || isDeletingGuardiaRef.current) return;
+    const eliminado = selectedGuardiaParaEliminar;
+    isDeletingGuardiaRef.current = true;
+    setIsDeletingGuardia(true);
+    try {
+      // Actualización optimista inmediata en memoria
+      setUsers((prev) => prev.filter((u) => String(u.id) !== String(eliminado.id)));
+      await api.deleteUsuario(eliminado.id);
+      await reloadUsuarios();
+      showToast(`El oficial de caseta "${eliminado.nombre}" (${eliminado.username}) fue eliminado permanentemente.`, "success", "Oficial Eliminado");
+      setSelectedGuardiaParaEliminar(null);
+    } catch (err: any) {
+      showToast("Error al eliminar oficial de caseta: " + (err.message || err), "error");
+      await reloadUsuarios();
+    } finally {
+      isDeletingGuardiaRef.current = false;
+      setIsDeletingGuardia(false);
+    }
+  };
+
   const handleToggleActivoTrabajador = async (trab: Trabajador) => {
     if (togglingTrabajadorIds[trab.id_trabajador]) return;
     setTogglingTrabajadorIds((prev) => ({ ...prev, [trab.id_trabajador]: true }));
@@ -5635,20 +5739,26 @@ export default function App() {
     togglingUserIdsRef.current = { ...togglingUserIdsRef.current, [user.id]: true };
     setTogglingUserIds((prev) => ({ ...prev, [user.id]: true }));
     const nuevoActivo = user.activo === false ? true : false;
+
+    // Actualización optimista inmediata en memoria para que el cambio sea instantáneo en UI
+    setUsers((prev) =>
+      prev.map((u) => (String(u.id) === String(user.id) ? { ...u, activo: nuevoActivo } : u))
+    );
+
     try {
       await api.updateUsuario(user.id, {
         activo: nuevoActivo,
       });
       await reloadUsuarios();
       showToast(
-        `Usuario "${user.nombre}" (${user.username}) ${nuevoActivo ? "activado" : "desactivado"} exitosamente.`,
+        `Usuario "${user.nombre}" (${user.username}) ${nuevoActivo ? "en servicio activo" : "marcado como inactivo"} exitosamente.`,
         "success",
-        nuevoActivo ? "Usuario Activado" : "Usuario Desactivado"
+        nuevoActivo ? "Oficial En Servicio" : "Oficial Inactivo"
       );
     } catch (err: any) {
       console.warn("Error al actualizar estatus de usuario en PostgreSQL:", err);
-      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, activo: nuevoActivo } : u));
-      showToast(`Estatus de usuario "${user.nombre}" actualizado localmente.`, "info");
+      setUsers(prev => prev.map(u => String(u.id) === String(user.id) ? { ...u, activo: nuevoActivo } : u));
+      showToast(`Estatus de "${user.nombre}" actualizado localmente.`, "info");
     } finally {
       const updated = { ...togglingUserIdsRef.current };
       delete updated[user.id];
@@ -7655,7 +7765,7 @@ export default function App() {
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
-                            {["Fotografía", "ID", "Nombre Oficial", "Usuario / Acceso", "Fecha Alta", "Creado Por", "Estatus"].map((h) => (
+                            {["Fotografía", "ID", "Nombre Oficial", "Usuario / Acceso", "Fecha Alta", "Creado Por", "Estatus", "Acciones"].map((h) => (
                               <th key={h} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
                             ))}
                           </tr>
@@ -7663,7 +7773,7 @@ export default function App() {
                         <tbody className="divide-y divide-slate-100">
                           {users.filter(u => u.role === "caseta").length === 0 ? (
                             <tr>
-                              <td colSpan={7} className="px-5 py-8 text-center text-xs text-slate-500">
+                              <td colSpan={8} className="px-5 py-8 text-center text-xs text-slate-500">
                                 <IconUsers className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                                 No hay oficiales de caseta registrados en PostgreSQL.
                               </td>
@@ -7716,7 +7826,7 @@ export default function App() {
                                     disabled={Boolean(togglingUserIds[g.id])}
                                     className={`cursor-pointer group flex items-center gap-1.5 transition-all ${togglingUserIds[g.id] ? "opacity-50 pointer-events-none" : ""
                                       }`}
-                                    title={g.activo !== false ? "Clic para desactivar oficial" : "Clic para activar oficial"}
+                                    title={g.activo !== false ? "Clic para desactivar oficial (Poner Inactivo)" : "Clic para activar oficial (Poner En Servicio)"}
                                   >
                                     {g.activo !== false ? (
                                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 shadow-sm transition-all">
@@ -7729,6 +7839,17 @@ export default function App() {
                                         <span>Inactivo</span>
                                       </span>
                                     )}
+                                  </button>
+                                </td>
+                                <td className="px-5 py-3">
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedGuardiaParaEliminar(g)}
+                                    className="p-1.5 px-2.5 rounded-lg text-red-600 bg-red-50 hover:bg-red-600 hover:text-white transition-all cursor-pointer border border-red-200 flex items-center gap-1.5 text-xs font-semibold shadow-xs"
+                                    title="Eliminar oficial de caseta permanentemente"
+                                  >
+                                    <IconTrash className="w-3.5 h-3.5" />
+                                    <span>Eliminar</span>
                                   </button>
                                 </td>
                               </tr>
@@ -12693,6 +12814,63 @@ export default function App() {
                   }`}
               >
                 {isDeletingSupervisor ? (
+                  <>
+                    <IconSpinner className="w-4 h-4" />
+                    <span>Eliminando...</span>
+                  </>
+                ) : (
+                  <>
+                    <IconTrash className="w-4 h-4" />
+                    <span>Eliminar Definitivamente</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL ELIMINAR GUARDIA / OFICIAL DE CASETA ─── */}
+      {selectedGuardiaParaEliminar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2 text-red-600">
+                <div className="p-2 rounded-xl bg-red-50">
+                  <IconTrash className="w-5 h-5" />
+                </div>
+                <h3 className="text-sm font-bold uppercase">Eliminar Oficial de Caseta</h3>
+              </div>
+              <button onClick={() => setSelectedGuardiaParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
+              <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este Oficial de Caseta del sistema?</p>
+              <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
+                <div><strong>Nombre:</strong> {selectedGuardiaParaEliminar.nombre}</div>
+                <div><strong>ID:</strong> <span className="font-mono">#{selectedGuardiaParaEliminar.id}</span></div>
+                <div><strong>Usuario / Correo:</strong> {selectedGuardiaParaEliminar.username}</div>
+                <div><strong>Rol:</strong> <span className="font-semibold uppercase text-emerald-700">Oficial de Caseta</span></div>
+              </div>
+              <p className="text-[11px] text-red-700">Esta acción eliminará permanentemente la cuenta del oficial. Para suspender temporalmente su acceso sin borrarlo, utiliza el botón de estatus (En Servicio / Inactivo).</p>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setSelectedGuardiaParaEliminar(null)}
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmarEliminarGuardia}
+                disabled={isDeletingGuardia}
+                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingGuardia ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                  }`}
+              >
+                {isDeletingGuardia ? (
                   <>
                     <IconSpinner className="w-4 h-4" />
                     <span>Eliminando...</span>

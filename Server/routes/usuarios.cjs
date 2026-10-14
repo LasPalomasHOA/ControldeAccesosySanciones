@@ -101,19 +101,42 @@ router.get('/', async (req, res) => {
       'SUPERVISOR': 'supervisor',
       'AGENTE': 'guardia',
       'CASETA': 'guardia',
+      'GUARDIA': 'guardia',
       'PROVEEDOR': 'proveedor',
       'CONTABILIDAD': 'contabilidad'
+    };
+
+    const idRolFallback = {
+      1: 'admin',
+      2: 'supervisor',
+      3: 'guardia',
+      4: 'guardia',
+      5: 'proveedor',
+      6: 'contabilidad'
+    };
+
+    const nombreRolFallback = {
+      1: 'ADMINISTRADOR',
+      2: 'SUPERVISOR',
+      3: 'AGENTE',
+      4: 'CASETA',
+      5: 'PROVEEDOR',
+      6: 'CONTABILIDAD'
     };
 
     const resultado = usuarios.map(u => {
       const plain = u.get({ plain: true });
       delete plain.password_hash;
       const resolvedFoto = resolveFotoToDataUrl(plain.foto_url);
+      const rolKey = plain.rol?.nombre ? String(plain.rol.nombre).toUpperCase() : null;
+      const rolNormalizado = (rolKey && rolMap[rolKey]) || (plain.id_rol && idRolFallback[plain.id_rol]) || plain.rol?.nombre?.toLowerCase() || 'guardia';
+      const rolNombreCalculado = plain.rol?.nombre || (plain.id_rol && nombreRolFallback[plain.id_rol]) || (rolNormalizado === 'guardia' ? 'CASETA' : 'ADMINISTRADOR');
+
       return {
         ...plain,
         id: String(plain.id_usuario),
-        rol: rolMap[plain.rol?.nombre] || plain.rol?.nombre?.toLowerCase() || 'admin',
-        rolNombre: plain.rol?.nombre,
+        rol: rolNormalizado,
+        rolNombre: rolNombreCalculado,
         empresaNombre: plain.empresa?.razon_social || '',
         foto_url: resolvedFoto || null,
         avatar: resolvedFoto || `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150`
@@ -142,14 +165,15 @@ router.post('/', async (req, res) => {
     }
 
     let finalIdRol = id_rol;
-    if (!finalIdRol && rol) {
-      const rolEncontrado = await db.Rol.findOne({ where: { nombre: rol.toUpperCase() } });
+    if (rol) {
+      const targetNames = (rol.toUpperCase() === 'CASETA' || rol.toUpperCase() === 'GUARDIA') ? ['CASETA', 'AGENTE', 'GUARDIA'] : [rol.toUpperCase()];
+      const rolEncontrado = await db.Rol.findOne({ where: { nombre: targetNames } });
       if (rolEncontrado) finalIdRol = rolEncontrado.id_rol;
     }
-    if (!finalIdRol) finalIdRol = 1;
+    if (!finalIdRol) finalIdRol = 4;
 
     // Si es guardia de caseta (rol 4 o 'caseta'), la foto es obligatoria
-    const esGuardia = finalIdRol === 4 || (rol && ['CASETA', 'AGENTE', 'GUARDIA'].includes(rol.toUpperCase()));
+    const esGuardia = finalIdRol === 4 || finalIdRol === 3 || (rol && ['CASETA', 'AGENTE', 'GUARDIA'].includes(rol.toUpperCase()));
     if (esGuardia && !foto_url) {
       return res.status(400).json({ error: 'La fotografía del oficial de caseta es obligatoria.' });
     }
@@ -183,7 +207,12 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { nombre, correo, password, activo, id_rol, id_empresa, foto_url } = req.body;
-    const usuario = await db.Usuario.findByPk(req.params.id);
+    const usuario = await db.Usuario.findByPk(req.params.id, {
+      include: [
+        { model: db.Rol, as: 'rol' },
+        { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social'] }
+      ]
+    });
     if (!usuario) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
@@ -199,9 +228,35 @@ router.put('/:id', async (req, res) => {
     if (foto_url !== undefined) usuario.foto_url = foto_url ? await saveBase64Image(foto_url, 'usuario') : null;
 
     await usuario.save();
+
+    // Recargar con asociaciones para devolver la respuesta completa
+    await usuario.reload({
+      include: [
+        { model: db.Rol, as: 'rol' },
+        { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social'] }
+      ]
+    });
+
     const plain = usuario.get({ plain: true });
     delete plain.password_hash;
     plain.foto_url = resolveFotoToDataUrl(plain.foto_url);
+
+    const rolMap = {
+      'ADMINISTRADOR': 'admin',
+      'SUPERVISOR': 'supervisor',
+      'AGENTE': 'guardia',
+      'CASETA': 'guardia',
+      'GUARDIA': 'guardia',
+      'PROVEEDOR': 'proveedor',
+      'CONTABILIDAD': 'contabilidad'
+    };
+    const idRolFallback = { 1: 'admin', 2: 'supervisor', 3: 'guardia', 4: 'guardia', 5: 'proveedor', 6: 'contabilidad' };
+    const nombreRolFallback = { 1: 'ADMINISTRADOR', 2: 'SUPERVISOR', 3: 'AGENTE', 4: 'CASETA', 5: 'PROVEEDOR', 6: 'CONTABILIDAD' };
+
+    const rolKey = plain.rol?.nombre ? String(plain.rol.nombre).toUpperCase() : null;
+    plain.rol = (rolKey && rolMap[rolKey]) || (plain.id_rol && idRolFallback[plain.id_rol]) || plain.rol?.nombre?.toLowerCase() || 'guardia';
+    plain.rolNombre = plain.rol?.nombre || (plain.id_rol && nombreRolFallback[plain.id_rol]) || (plain.rol === 'guardia' ? 'CASETA' : 'ADMINISTRADOR');
+
     res.json(plain);
   } catch (error) {
     console.error('Error al actualizar usuario:', error);
