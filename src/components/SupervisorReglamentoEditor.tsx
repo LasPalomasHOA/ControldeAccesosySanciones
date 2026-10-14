@@ -47,7 +47,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
     cancelText: "Cancelar",
     isDestructive: false,
     icon: "info",
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const closeModal = () => {
@@ -280,11 +280,10 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
         <button
           type="button"
           onClick={() => setActiveTab("banderin")}
-          className={`p-4 rounded-2xl text-left border-2 transition-all cursor-pointer ${
-            activeTab === "banderin"
+          className={`p-4 rounded-2xl text-left border-2 transition-all cursor-pointer ${activeTab === "banderin"
               ? "border-[#0D6E5F] bg-[#0D6E5F]/5 shadow-sm"
               : "border-slate-200 bg-white hover:border-slate-300 text-slate-600"
-          }`}
+            }`}
         >
           <div className="flex items-center justify-between">
             <span className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${activeTab === "banderin" ? "text-[#0D6E5F]" : "text-slate-700"}`}>
@@ -294,7 +293,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
                 <line x1="7" y1="12" x2="17" y2="12" />
                 <line x1="7" y1="16" x2="13" y2="16" />
               </svg>
-              1. Normas de Banderín Físico (Reverso del Corbatín)
+              1. Normas de Corbatín Físico
             </span>
             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${isFull ? "bg-amber-50 text-amber-800 border-amber-300" : "bg-slate-100 text-slate-600 border-slate-200"}`}>
               {capacityPercent}% Capacidad
@@ -308,11 +307,10 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
         <button
           type="button"
           onClick={() => setActiveTab("general")}
-          className={`p-4 rounded-2xl text-left border-2 transition-all cursor-pointer ${
-            activeTab === "general"
+          className={`p-4 rounded-2xl text-left border-2 transition-all cursor-pointer ${activeTab === "general"
               ? "border-[#0D6E5F] bg-[#0D6E5F]/5 shadow-sm"
               : "border-slate-200 bg-white hover:border-slate-300 text-slate-600"
-          }`}
+            }`}
         >
           <div className="flex items-center justify-between">
             <span className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${activeTab === "general" ? "text-[#0D6E5F]" : "text-slate-700"}`}>
@@ -373,11 +371,10 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
                   type="button"
                   onClick={handleAddSection}
                   disabled={isFull}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 ${
-                    isFull
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 ${isFull
                       ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
                       : "bg-[#0D6E5F]/10 text-[#0D6E5F] hover:bg-[#0D6E5F]/20 cursor-pointer"
-                  }`}
+                    }`}
                   title={isFull ? "Has alcanzado la capacidad física de la tarjeta" : "Agregar nueva sección"}
                 >
                   <span>{isFull ? "Tarjeta Llena" : "Nueva Sección"}</span>
@@ -446,9 +443,8 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
                           type="button"
                           onClick={() => handleAddItem(secIdx)}
                           disabled={isFull}
-                          className={`text-[11px] font-bold flex items-center gap-1 ${
-                            isFull ? "text-slate-400 cursor-not-allowed" : "text-[#0D6E5F] hover:underline cursor-pointer"
-                          }`}
+                          className={`text-[11px] font-bold flex items-center gap-1 ${isFull ? "text-slate-400 cursor-not-allowed" : "text-[#0D6E5F] hover:underline cursor-pointer"
+                            }`}
                         >
                           <span>Agregar norma a esta sección</span>
                         </button>
@@ -605,13 +601,12 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
           >
             <div className="flex items-start gap-4">
               <div
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
-                  modalConfig.icon === "reset" || modalConfig.isDestructive
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${modalConfig.icon === "reset" || modalConfig.isDestructive
                     ? "bg-rose-50 text-rose-600 border border-rose-100"
                     : modalConfig.icon === "warning"
-                    ? "bg-amber-50 text-amber-600 border border-amber-100"
-                    : "bg-teal-50 text-[#0D6E5F] border border-teal-100"
-                }`}
+                      ? "bg-amber-50 text-amber-600 border border-amber-100"
+                      : "bg-teal-50 text-[#0D6E5F] border border-teal-100"
+                  }`}
               >
                 {modalConfig.icon === "reset" ? (
                   <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -656,11 +651,10 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
               <button
                 type="button"
                 onClick={modalConfig.onConfirm}
-                className={`px-5 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-sm hover:brightness-110 cursor-pointer ${
-                  modalConfig.isDestructive
+                className={`px-5 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-sm hover:brightness-110 cursor-pointer ${modalConfig.isDestructive
                     ? "bg-rose-600 hover:bg-rose-700 shadow-rose-600/20"
                     : "bg-[#0D6E5F] hover:bg-[#0b5d50] shadow-[#0D6E5F]/20"
-                }`}
+                  }`}
               >
                 {modalConfig.confirmText}
               </button>
