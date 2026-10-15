@@ -2403,7 +2403,7 @@ export default function App() {
   const lastFetchTimestampRef = useRef<number>(0);
 
   // Cargar datos en vivo desde PostgreSQL con protección de concurrencia y caché temporal
-  const loadDatabaseData = async (force: boolean = false) => {
+  const loadDatabaseData = async (force: boolean = false, onlyDynamic: boolean = false) => {
     if (isFetchingDbRef.current) return;
     const now = Date.now();
     // Si no es una llamada forzada (por mutación o evento en tiempo real), omitir si ya se consultó recientemente (<10s)
@@ -2413,16 +2413,27 @@ export default function App() {
 
     isFetchingDbRef.current = true;
     try {
-      const [resUsers, resEmpresas, resVehicles, resTrabajadores, resSanciones, resBitacora, resReportes, resReglamento, resCorbatines] = await Promise.allSettled([
-        api.getUsuarios(),
-        api.getEmpresas(),
+      // Si es un refresco periódico de fondo (onlyDynamic = true), solo consultamos tablas operativas ligeras
+      const [
+        resUsers,
+        resEmpresas,
+        resVehicles,
+        resTrabajadores,
+        resSanciones,
+        resBitacora,
+        resReportes,
+        resReglamento,
+        resCorbatines
+      ] = await Promise.allSettled([
+        onlyDynamic ? Promise.resolve(null) : api.getUsuarios(),
+        onlyDynamic ? Promise.resolve(null) : api.getEmpresas(),
         api.getVehiculos(),
-        api.getTrabajadores(),
+        onlyDynamic ? Promise.resolve(null) : api.getTrabajadores(),
         api.getSanciones(),
         api.getBitacora(),
         api.getReportes(),
-        api.getReglamentoVigente(),
-        api.getCorbatines(),
+        onlyDynamic ? Promise.resolve(null) : api.getReglamentoVigente(),
+        onlyDynamic ? Promise.resolve(null) : api.getCorbatines({ tipo: "VERDE" }),
       ]);
 
       lastFetchTimestampRef.current = Date.now();
@@ -2527,7 +2538,7 @@ export default function App() {
       }
 
       if (resVehicles.status === "fulfilled" && Array.isArray(resVehicles.value)) {
-        const empList = resEmpresas.status === "fulfilled" && Array.isArray(resEmpresas.value) ? resEmpresas.value : [];
+        const empList = resEmpresas.status === "fulfilled" && Array.isArray(resEmpresas.value) ? resEmpresas.value : empresas;
         const mappedVeh: Vehicle[] = resVehicles.value.map((v: any) => {
           const empMatch = empList.find((e: any) => String(e.id_empresa || e.id) === String(v.id_empresa || v.empresaId));
           const corbNum = v.corbatinNumero
@@ -3049,7 +3060,7 @@ export default function App() {
   // Recarga granular de Corbatines Verdes
   const reloadCorbatines = async () => {
     try {
-      const res = await api.getCorbatines();
+      const res = await api.getCorbatines({ tipo: "VERDE" });
       if (Array.isArray(res)) {
         const verdesList = res.filter((c: any) => {
           const t = String(c.tipos || c.tipo || "").toUpperCase();
@@ -3170,7 +3181,7 @@ export default function App() {
     // 3. Sincronización periódica controlada (cada 120s) únicamente si la pestaña está visible
     const backgroundSyncInterval = setInterval(() => {
       if (document.visibilityState === "visible") {
-        loadDatabaseData(false);
+        loadDatabaseData(false, true);
       }
     }, 120000);
 
@@ -3179,7 +3190,7 @@ export default function App() {
       if (document.visibilityState === "visible") {
         const now = Date.now();
         if (now - lastFetchTimestampRef.current > 60000) {
-          loadDatabaseData(false);
+          loadDatabaseData(false, true);
         }
       }
     };

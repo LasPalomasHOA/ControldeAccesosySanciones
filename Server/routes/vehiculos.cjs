@@ -21,8 +21,8 @@ router.get('/', async (req, res) => {
       attributes: ['id_vehiculo', 'id_empresa', 'marca', 'modelo', 'año', 'placas', 'color', 'foto_url', 'estatus_acceso', 'eliminado', 'created_at', 'updated_at'],
       include: [
         { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social'] },
-        { model: db.Corbatin, as: 'corbatines', attributes: ['id_corbatin', 'numero', 'estatus'] },
-        { model: db.Sancion, as: 'sanciones', attributes: ['id_sancion', 'estatus', 'fecha_inicio', 'fecha_fin'], where: { estatus: 'ACTIVA' }, required: false }
+        { model: db.Corbatin, as: 'corbatines', attributes: ['id_corbatin', 'numero', 'estatus', 'fecha_vencimiento', 'qr_token'], separate: true },
+        { model: db.Sancion, as: 'sanciones', attributes: ['id_sancion', 'estatus', 'fecha_inicio', 'fecha_fin'], where: { estatus: 'ACTIVA' }, required: false, separate: true }
       ],
       order: [['created_at', 'DESC']]
     });

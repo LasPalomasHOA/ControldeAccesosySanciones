@@ -58,14 +58,14 @@ router.get('/', requireAuth, async (req, res) => {
           attributes: ['id_vehiculo', 'placas', 'marca', 'modelo', 'color'],
           include: [
             { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social', 'telefono'] },
-            { model: db.Corbatin, as: 'corbatines', attributes: ['id_corbatin', 'numero', 'estatus'] }
+            { model: db.Corbatin, as: 'corbatines', attributes: ['id_corbatin', 'numero', 'estatus'], separate: true }
           ]
         },
         { model: db.Corbatin, as: 'corbatin', attributes: ['id_corbatin', 'numero', 'estatus'] },
         { model: db.CatalogoInfraccion, as: 'infraccion', attributes: ['id_infraccion', 'id_reglamento', 'codigo', 'nombre', 'descripcion', 'categoria', 'activo'] },
         { model: db.Usuario, as: 'agente', attributes: ['id_usuario', 'nombre', 'correo'] },
-        { model: db.Evidencia, as: 'evidencias', attributes: ['id_evidencia', 'id_reporte', 'archivo', 'descripcion', 'fecha_captura', 'activa'] },
-        { model: db.RevisionReporte, as: 'revisiones', attributes: ['id_revision', 'id_reporte', 'decision', 'comentarios', 'fecha_revision', 'nivel_reincidencia_aplicado'] },
+        { model: db.Evidencia, as: 'evidencias', attributes: ['id_evidencia', 'id_reporte', 'archivo', 'descripcion', 'fecha_captura', 'activa'], separate: true },
+        { model: db.RevisionReporte, as: 'revisiones', attributes: ['id_revision', 'id_reporte', 'decision', 'comentarios', 'fecha_revision', 'nivel_reincidencia_aplicado'], separate: true },
         { model: db.Sancion, as: 'sancion', attributes: ['id_sancion', 'estatus', 'fecha_inicio', 'fecha_fin', 'motivo', 'numero_reincidencia'] }
       ],
       order: [['fecha_hora', 'DESC']]

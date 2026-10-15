@@ -13,7 +13,32 @@ router.get('/', async (req, res) => {
 
     const trabajadores = await db.Trabajador.findAll({
       where,
-      attributes: ['id_trabajador', 'id_empresa', 'nombre', 'apellidos', 'telefono', 'foto_url', 'comprobante_seguro_url', 'dc3_documento_url', 'activo', 'created_at', 'updated_at'],
+      attributes: [
+        'id_trabajador',
+        'id_empresa',
+        'nombre',
+        'apellidos',
+        'telefono',
+        'foto_url',
+        // Si es Base64 ('data:...'), enviamos un puntero ligero; si es URL de Storage o null, pasa igual
+        [
+          db.sequelize.literal(`CASE 
+            WHEN comprobante_seguro_url LIKE 'data:%' THEN CONCAT('/api/trabajadores/', id_trabajador, '/documento/seguro.pdf')
+            ELSE comprobante_seguro_url 
+          END`),
+          'comprobante_seguro_url'
+        ],
+        [
+          db.sequelize.literal(`CASE 
+            WHEN dc3_documento_url LIKE 'data:%' THEN CONCAT('/api/trabajadores/', id_trabajador, '/documento/dc3.pdf')
+            ELSE dc3_documento_url 
+          END`),
+          'dc3_documento_url'
+        ],
+        'activo',
+        'created_at',
+        'updated_at'
+      ],
       include: [{ model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social'] }],
       order: [['id_trabajador', 'DESC']],
       limit: 100
@@ -34,6 +59,33 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error al obtener trabajadores:', error);
     res.status(500).json({ error: 'Error al consultar la base de datos de trabajadores', details: error.message });
+  }
+});
+
+// GET /api/trabajadores/:id/documento/:tipo - Sirve el binario/Base64 únicamente al abrir la vista previa
+router.get('/:id/documento/:tipo', async (req, res) => {
+  try {
+    const { id, tipo } = req.params;
+    const cleanTipo = String(tipo || '').toLowerCase().replace(/\.pdf$/i, '');
+    const col = cleanTipo === 'seguro' ? 'comprobante_seguro_url' : 'dc3_documento_url';
+    const trab = await db.Trabajador.findByPk(id, { attributes: [col] });
+    const raw = trab ? trab[col] : null;
+
+    if (!raw) return res.status(404).send('Documento no encontrado');
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      return res.redirect(raw);
+    }
+
+    const match = raw.match(/^data:([^;]+);base64,(.+)$/);
+    if (match) {
+      const buffer = Buffer.from(match[2], 'base64');
+      res.setHeader('Content-Type', match[1]);
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      return res.send(buffer);
+    }
+    res.send(raw);
+  } catch (error) {
+    res.status(500).send('Error al cargar documento');
   }
 });
 
@@ -140,11 +192,19 @@ router.put('/:id', async (req, res) => {
     }
     if (comprobante_seguro_url !== undefined || comprobante_seguro !== undefined || seguro_imss_url !== undefined) {
       const rawSeguro = comprobante_seguro_url || comprobante_seguro || seguro_imss_url || null;
-      trabajador.comprobante_seguro_url = rawSeguro ? await saveBase64Image(rawSeguro, 'seguro_imss') : null;
+      if (rawSeguro && !String(rawSeguro).startsWith('/api/trabajadores/')) {
+        trabajador.comprobante_seguro_url = await saveBase64Image(rawSeguro, 'seguro_imss');
+      } else if (!rawSeguro) {
+        trabajador.comprobante_seguro_url = null;
+      }
     }
     if (dc3_documento_url !== undefined || dc3_url !== undefined || dc3_documento !== undefined) {
       const rawDc3 = dc3_documento_url || dc3_url || dc3_documento || null;
-      trabajador.dc3_documento_url = rawDc3 ? await saveBase64Image(rawDc3, 'dc3_documento') : null;
+      if (rawDc3 && !String(rawDc3).startsWith('/api/trabajadores/')) {
+        trabajador.dc3_documento_url = await saveBase64Image(rawDc3, 'dc3_documento');
+      } else if (!rawDc3) {
+        trabajador.dc3_documento_url = null;
+      }
     }
     if (activo !== undefined) trabajador.activo = activo;
 

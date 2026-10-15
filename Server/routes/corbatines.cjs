@@ -138,11 +138,11 @@ router.get('/', async (req, res) => {
     const corbatines = await db.Corbatin.findAll({
       where,
       attributes: ['id_corbatin', 'id_vehiculo', 'tipos', 'numero', 'qr_token', 'fecha_emision', 'fecha_vencimiento', 'estatus', 'empresa_nombre', 'telefono', 'email', 'vigencia_texto', 'notas', 'creado_por', 'activo'],
-      include: [
+      include: tipoFiltro === 'VERDE' ? [] : [
         {
           model: db.Vehiculo,
           as: 'vehiculo',
-          attributes: ['id_vehiculo', 'id_empresa', 'placas', 'marca', 'modelo', 'color', 'año', 'foto_url', 'estatus_acceso'],
+          attributes: ['id_vehiculo', 'id_empresa', 'placas', 'marca', 'modelo', 'color', 'año', 'estatus_acceso'],
           required: false,
           include: [{ model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social', 'telefono', 'correo'], required: false }]
         }
