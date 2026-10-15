@@ -395,7 +395,7 @@ function IconCheckSimple({ className = "w-4 h-4" }: { className?: string }) {
 type UserRole = "admin" | "supervisor" | "contratista" | "caseta" | "contabilidad";
 type PortalScreen = "reglamento" | "dashboard" | "alta" | "trabajadores" | "sanciones" | "consulta_reglamento";
 type SupervisorTab = "bandeja" | "apelaciones" | "proveedores" | "guardias" | "historial" | "reglamento" | "corbatines" | "corbatines_verdes";
-type AdminTab = "supervisores" | "proveedores" | "auditoria";
+type AdminTab = "administradores" | "supervisores" | "proveedores" | "auditoria";
 type CasetaTab = "registro" | "bitacora";
 
 interface CorbatinVerde {
@@ -454,6 +454,8 @@ interface UserAccount {
   hasAcceptedReglamento?: boolean;
   activo?: boolean;
   foto_url?: string;
+  avatar?: string;
+  token?: string;
 }
 
 interface Empresa {
@@ -565,7 +567,7 @@ const INITIAL_USERS: UserAccount[] = [
   { id: "2", username: "supervisor@laspalomashoa.com", password: "123456", nombre: "Supervisor Operativo", email: "supervisor@laspalomashoa.com", role: "supervisor", turno: "Turno General 24/7", fechaCreacion: "2026-01-10", creadoPor: "Admin TI", activo: true },
   { id: "5", username: "proveedor@constructoraintegral.com", password: "123456", nombre: "Roberto Silva Morales", email: "proveedor@constructoraintegral.com", role: "contratista", empresaNombre: "Constructora Integral del Noroeste S.A. de C.V.", fechaCreacion: "2026-02-01", creadoPor: "Supervisor HOA", hasAcceptedReglamento: false, activo: true },
   { id: "4", username: "caseta@laspalomashoa.com", password: "123456", nombre: "Guardia Caseta Principal", email: "caseta@laspalomashoa.com", role: "caseta", turno: "Vespertino (14:00 - 22:00)", fechaCreacion: "2026-02-05", creadoPor: "Supervisor HOA", activo: true },
-  { id: "6", username: "contabilidad@laspalomashoa.com", password: "123456", nombre: "Lic. Marisol Mendoza", email: "contabilidad@laspalomashoa.com", role: "contabilidad", fechaCreacion: "2026-03-01", creadoPor: "Sistema Raíz", activo: true },
+  { id: "15", username: "contabilidad@laspalomashoa.com", password: "123456", nombre: "Lic. Marisol Mendoza", email: "contabilidad@laspalomashoa.com", role: "contabilidad", fechaCreacion: "2026-03-01", creadoPor: "Sistema Raíz", activo: true },
 ];
 
 const INITIAL_EMPRESAS: Empresa[] = [];
@@ -1502,18 +1504,84 @@ export default function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
+    try {
+      const saved = sessionStorage.getItem("hoa_session_user");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
 
-  const [adminTab, setAdminTab] = useState<AdminTab>("supervisores");
-  const [supervisorTab, setSupervisorTab] = useState<SupervisorTab>("bandeja");
+  const [adminTab, setAdminTab] = useState<AdminTab>(() => {
+    try {
+      const saved = sessionStorage.getItem("hoa_session_admin_tab");
+      return (saved as AdminTab) || "supervisores";
+    } catch {
+      return "supervisores";
+    }
+  });
+  const [supervisorTab, setSupervisorTab] = useState<SupervisorTab>(() => {
+    try {
+      const saved = sessionStorage.getItem("hoa_session_supervisor_tab");
+      return (saved as SupervisorTab) || "bandeja";
+    } catch {
+      return "bandeja";
+    }
+  });
   const [openSupervisorDropdown, setOpenSupervisorDropdown] = useState<"operacion" | "directorio" | "documentos" | null>(null);
   const supervisorNavRef = useRef<HTMLDivElement>(null);
-  const [portalScreen, setPortalScreen] = useState<PortalScreen>("dashboard");
-  const [casetaTab, setCasetaTab] = useState<CasetaTab>("registro");
+  const [portalScreen, setPortalScreen] = useState<PortalScreen>(() => {
+    try {
+      const saved = sessionStorage.getItem("hoa_session_user");
+      if (saved) {
+        const u = JSON.parse(saved);
+        if (u && (u.role === "contratista" || u.role === "proveedor") && !u.hasAcceptedReglamento) {
+          return "reglamento";
+        }
+      }
+      const savedScreen = sessionStorage.getItem("hoa_session_portal_screen");
+      return (savedScreen as PortalScreen) || "dashboard";
+    } catch { }
+    return "dashboard";
+  });
+  const [casetaTab, setCasetaTab] = useState<CasetaTab>(() => {
+    try {
+      const saved = sessionStorage.getItem("hoa_session_caseta_tab");
+      return (saved as CasetaTab) || "registro";
+    } catch {
+      return "registro";
+    }
+  });
+
+  // Persistir navegación de pantallas en sessionStorage para conservar vista tras F5
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("hoa_session_admin_tab", adminTab);
+    } catch { }
+  }, [adminTab]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("hoa_session_supervisor_tab", supervisorTab);
+    } catch { }
+  }, [supervisorTab]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("hoa_session_portal_screen", portalScreen);
+    } catch { }
+  }, [portalScreen]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("hoa_session_caseta_tab", casetaTab);
+    } catch { }
+  }, [casetaTab]);
 
   // Estado dinámico del reglamento oficial y banderines
   const [reglamentoTexto, setReglamentoTexto] = useState<string>(() => {
@@ -1545,6 +1613,7 @@ export default function App() {
   const [selectedTrabajadorParaEliminar, setSelectedTrabajadorParaEliminar] = useState<Trabajador | null>(null);
   const [selectedSupervisorParaEliminar, setSelectedSupervisorParaEliminar] = useState<UserAccount | null>(null);
   const [selectedGuardiaParaEliminar, setSelectedGuardiaParaEliminar] = useState<UserAccount | null>(null);
+  const [selectedAdminParaEliminar, setSelectedAdminParaEliminar] = useState<UserAccount | null>(null);
   const [selectedFotoTrabajadorPreview, setSelectedFotoTrabajadorPreview] = useState<Trabajador | null>(null);
 
   const [infraccionesPendientes, setInfraccionesPendientes] = useState<InfraccionReporte[]>(INITIAL_INFRACCIONES_PENDIENTES);
@@ -1582,6 +1651,7 @@ export default function App() {
 
   // Modals
   const [showCreateSupervisorModal, setShowCreateSupervisorModal] = useState(false);
+  const [showCreateAdminModal, setShowCreateAdminModal] = useState(false);
   const [showCreateEmpresaModal, setShowCreateEmpresaModal] = useState(false);
   const [empresaCreateError, setEmpresaCreateError] = useState("");
   const [showCreateGuardiaModal, setShowCreateGuardiaModal] = useState(false);
@@ -1763,6 +1833,12 @@ export default function App() {
 
   const [isDeletingGuardia, setIsDeletingGuardia] = useState(false);
   const isDeletingGuardiaRef = useRef(false);
+
+  const [isDeletingAdmin, setIsDeletingAdmin] = useState(false);
+  const isDeletingAdminRef = useRef(false);
+
+  const [isSubmittingAdmin, setIsSubmittingAdmin] = useState(false);
+  const isSubmittingAdminRef = useRef(false);
 
   const [isSubmittingVehiculo, setIsSubmittingVehiculo] = useState(false);
   const isSubmittingVehiculoRef = useRef(false);
@@ -2383,12 +2459,12 @@ export default function App() {
           const calculatedRole: UserRole = isSupervisor
             ? "supervisor"
             : isGuardia
-            ? "caseta"
-            : isContratista
-            ? "contratista"
-            : isContabilidad
-            ? "contabilidad"
-            : "admin";
+              ? "caseta"
+              : isContratista
+                ? "contratista"
+                : isContabilidad
+                  ? "contabilidad"
+                  : "admin";
 
           return {
             id: String(u.id_usuario || u.id),
@@ -2407,6 +2483,25 @@ export default function App() {
           };
         });
         setUsers(mappedUsers);
+
+        // Si el usuario en sesión fue desactivado o eliminado en el backend, revocar sesión de inmediato
+        if (currentUser) {
+          const me = mappedUsers.find(
+            (u) => String(u.id) === String(currentUser.id) || u.email?.toLowerCase() === currentUser.email?.toLowerCase()
+          );
+          if (me && me.activo === false) {
+            try {
+              sessionStorage.removeItem("hoa_session_user");
+              sessionStorage.removeItem("hoa_session_admin_tab");
+              sessionStorage.removeItem("hoa_session_supervisor_tab");
+              sessionStorage.removeItem("hoa_session_portal_screen");
+              sessionStorage.removeItem("hoa_session_caseta_tab");
+            } catch { }
+            setCurrentUser(null);
+            showToast("Tu cuenta ha sido desactivada por un administrador.", "error", "Acceso Revocado");
+            return;
+          }
+        }
       }
 
       if (resEmpresas.status === "fulfilled" && Array.isArray(resEmpresas.value)) {
@@ -2844,12 +2939,12 @@ export default function App() {
           const calculatedRole: UserRole = isSupervisor
             ? "supervisor"
             : isGuardia
-            ? "caseta"
-            : isContratista
-            ? "contratista"
-            : isContabilidad
-            ? "contabilidad"
-            : "admin";
+              ? "caseta"
+              : isContratista
+                ? "contratista"
+                : isContabilidad
+                  ? "contabilidad"
+                  : "admin";
 
           return {
             id: String(u.id_usuario || u.id),
@@ -3018,7 +3113,9 @@ export default function App() {
   };
 
   useEffect(() => {
-    // 1. Carga inicial de base de datos
+    if (!currentUser) return;
+
+    // 1. Carga inicial de base de datos para la sesión activa
     loadDatabaseData(true);
 
     // 2. Conexión a canal Server-Sent Events (SSE) SOLO en entorno local para evitar bucle serverless en Vercel
@@ -3100,6 +3197,126 @@ export default function App() {
     };
   }, [currentUser]);
 
+  // ─── VALIDACIÓN DE SEGURIDAD DE SESIÓN EN SEGUNDO PLANO ───
+  useEffect(() => {
+    if (!currentUser || !currentUser.id) return;
+
+    let isMounted = true;
+    const validarSesionEnSegundoPlano = async () => {
+      try {
+        const res = await api.verificarSesion(currentUser.id);
+        if (!isMounted) return;
+
+        if (res.status === 401 || res.status === 403) {
+          // El usuario fue eliminado o desactivado por el Administrador
+          try {
+            sessionStorage.removeItem("hoa_session_user");
+            sessionStorage.removeItem("hoa_session_admin_tab");
+            sessionStorage.removeItem("hoa_session_supervisor_tab");
+            sessionStorage.removeItem("hoa_session_portal_screen");
+            sessionStorage.removeItem("hoa_session_caseta_tab");
+          } catch { }
+          setCurrentUser(null);
+          showToast(
+            "Tu sesión ha expirado o tu cuenta fue desactivada por un administrador.",
+            "error",
+            "Acceso Revocado"
+          );
+          return;
+        }
+
+        if (res.ok) {
+          const freshData = await res.json();
+          if (!isMounted) return;
+
+          if (freshData.activo === false) {
+            try {
+              sessionStorage.removeItem("hoa_session_user");
+              sessionStorage.removeItem("hoa_session_admin_tab");
+              sessionStorage.removeItem("hoa_session_supervisor_tab");
+              sessionStorage.removeItem("hoa_session_portal_screen");
+              sessionStorage.removeItem("hoa_session_caseta_tab");
+            } catch { }
+            setCurrentUser(null);
+            showToast(
+              "Tu cuenta ha sido desactivada por un administrador.",
+              "error",
+              "Acceso Revocado"
+            );
+            return;
+          }
+
+          // Sincronizar datos actualizados en segundo plano
+          const isAccepted = freshData.rol === "proveedor" || freshData.rol === "contratista"
+            ? (freshData.hasAcceptedReglamento !== undefined ? freshData.hasAcceptedReglamento : currentUser.hasAcceptedReglamento)
+            : true;
+
+          const normalizedRole: UserRole =
+            freshData.rol === "proveedor" || freshData.rol === "contratista"
+              ? "contratista"
+              : freshData.rol === "guardia" || freshData.rol === "caseta"
+                ? "caseta"
+                : freshData.rol === "admin"
+                  ? "admin"
+                  : freshData.rol === "supervisor"
+                    ? "supervisor"
+                    : freshData.rol === "contabilidad"
+                      ? "contabilidad"
+                      : (currentUser.role as UserRole);
+
+          const updatedUser: UserAccount = {
+            ...currentUser,
+            nombre: freshData.nombre || currentUser.nombre,
+            username: freshData.correo || currentUser.username,
+            email: freshData.correo || currentUser.email,
+            role: normalizedRole,
+            empresaNombre: freshData.empresaNombre || currentUser.empresaNombre,
+            avatar: freshData.avatar || freshData.foto_url || currentUser.avatar,
+            hasAcceptedReglamento: isAccepted,
+            activo: freshData.activo !== false,
+            token: freshData.token || currentUser.token,
+          };
+
+          try {
+            sessionStorage.setItem("hoa_session_user", JSON.stringify(updatedUser));
+          } catch { }
+
+          // Actualizar solo si hubo cambios reales para evitar re-renders innecesarios
+          if (
+            updatedUser.role !== currentUser.role ||
+            updatedUser.hasAcceptedReglamento !== currentUser.hasAcceptedReglamento ||
+            updatedUser.nombre !== currentUser.nombre ||
+            updatedUser.avatar !== currentUser.avatar ||
+            updatedUser.token !== currentUser.token
+          ) {
+            setCurrentUser(updatedUser);
+          }
+        }
+      } catch (err) {
+        // En caso de corte momentáneo de red, se mantiene la sesión en memoria
+        console.warn("Validación de sesión en segundo plano omitida:", err);
+      }
+    };
+
+    validarSesionEnSegundoPlano();
+
+    // Revalidación proactiva cuando el usuario regresa a la pestaña
+    const handleRevalidateOnFocus = () => {
+      if (document.visibilityState === "visible") {
+        validarSesionEnSegundoPlano();
+      }
+    };
+
+    window.addEventListener("focus", handleRevalidateOnFocus);
+    document.addEventListener("visibilitychange", handleRevalidateOnFocus);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("focus", handleRevalidateOnFocus);
+      document.removeEventListener("visibilitychange", handleRevalidateOnFocus);
+    };
+  }, [currentUser?.id]);
+
   // Sanciones activas o ratificadas no vistas para la empresa del proveedor actual
   const sancionesAlertaParaProveedor = useMemo(() => {
     if (!currentUser || currentUser.role !== "contratista") return [];
@@ -3163,7 +3380,14 @@ export default function App() {
           fechaCreacion: data.created_at || "2026-01-01",
           creadoPor: "PostgreSQL Database",
           hasAcceptedReglamento: isAccepted,
+          token: data.token,
+          foto_url: data.foto_url,
+          avatar: data.avatar,
         };
+
+        try {
+          sessionStorage.setItem("hoa_session_user", JSON.stringify(loggedUser));
+        } catch { }
 
         setCurrentUser(loggedUser);
         if (roleMapped === "contratista" && !loggedUser.hasAcceptedReglamento) {
@@ -3191,6 +3415,11 @@ export default function App() {
         ? ((localStorage.getItem("hoa_accepted_reglamento_" + found.id) === "true") || Boolean(found.hasAcceptedReglamento))
         : true;
       const userWithAcceptance = { ...found, hasAcceptedReglamento: isAccepted };
+
+      try {
+        sessionStorage.setItem("hoa_session_user", JSON.stringify(userWithAcceptance));
+      } catch { }
+
       setCurrentUser(userWithAcceptance);
       if (userWithAcceptance.role === "contratista" && !userWithAcceptance.hasAcceptedReglamento) {
         setPortalScreen("reglamento");
@@ -3202,7 +3431,7 @@ export default function App() {
     }
   };
 
-  const handleQuickLogin = (role: UserRole) => {
+  const handleQuickLogin = async (role: UserRole) => {
     const roleEmailMap: Record<UserRole, string> = {
       admin: "admin@laspalomashoa.com",
       supervisor: "supervisor@laspalomashoa.com",
@@ -3212,12 +3441,67 @@ export default function App() {
     };
 
     const targetEmail = roleEmailMap[role];
+    try {
+      const response = await fetch("/api/usuarios/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ correo: targetEmail, password: "123456" }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const roleMapped: UserRole =
+          data.rol === "admin" ? "admin" :
+            data.rol === "supervisor" ? "supervisor" :
+              data.rol === "proveedor" ? "contratista" :
+                data.rol === "contabilidad" ? "contabilidad" : "caseta";
+
+        const isAccepted = roleMapped === "contratista"
+          ? (data.hasAcceptedReglamento !== undefined ? data.hasAcceptedReglamento : (localStorage.getItem("hoa_accepted_reglamento_" + (data.id || data.id_usuario)) === "true"))
+          : true;
+
+        const loggedUser: UserAccount = {
+          id: String(data.id || data.id_usuario),
+          username: data.correo,
+          nombre: data.nombre,
+          email: data.correo,
+          role: roleMapped,
+          empresaNombre: data.empresaNombre || "",
+          fechaCreacion: data.created_at || "2026-01-01",
+          creadoPor: "PostgreSQL Database",
+          hasAcceptedReglamento: isAccepted,
+          token: data.token,
+          foto_url: data.foto_url,
+          avatar: data.avatar,
+        };
+
+        try {
+          sessionStorage.setItem("hoa_session_user", JSON.stringify(loggedUser));
+        } catch { }
+
+        setCurrentUser(loggedUser);
+        setLoginError("");
+        if (roleMapped === "contratista" && !loggedUser.hasAcceptedReglamento) {
+          setPortalScreen("reglamento");
+        } else {
+          setPortalScreen("dashboard");
+        }
+        return;
+      }
+    } catch (e) {
+      console.warn("Inicio rápido por API no disponible, usando fallback local:", e);
+    }
+
     const found = users.find((u) => u.email?.toLowerCase() === targetEmail || u.role === role);
     if (found) {
       const isAccepted = found.role === "contratista"
         ? ((localStorage.getItem("hoa_accepted_reglamento_" + found.id) === "true") || Boolean(found.hasAcceptedReglamento))
         : true;
       const userWithAcceptance = { ...found, hasAcceptedReglamento: isAccepted };
+
+      try {
+        sessionStorage.setItem("hoa_session_user", JSON.stringify(userWithAcceptance));
+      } catch { }
+
       setCurrentUser(userWithAcceptance);
       setLoginError("");
       if (userWithAcceptance.role === "contratista" && !userWithAcceptance.hasAcceptedReglamento) {
@@ -3229,6 +3513,13 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    try {
+      sessionStorage.removeItem("hoa_session_user");
+      sessionStorage.removeItem("hoa_session_admin_tab");
+      sessionStorage.removeItem("hoa_session_supervisor_tab");
+      sessionStorage.removeItem("hoa_session_portal_screen");
+      sessionStorage.removeItem("hoa_session_caseta_tab");
+    } catch { }
     setCurrentUser(null);
     setLoginUsername("");
     setLoginPassword("");
@@ -4644,7 +4935,7 @@ export default function App() {
       await reloadReportes();
       await reloadSanciones();
       await reloadVehiculos();
-      showToast(`Infracción ${inf.folio} aprobada. Se ha aplicado la suspensión de acceso vehicular en PostgreSQL.`, "success", "Infracción Aprobada");
+      showToast(`Infracción ${inf.folio} aprobada. Se ha aplicado la suspensión de acceso vehicular.`, "success", "Infracción Aprobada");
     } catch (err: any) {
       await reloadReportes();
       await reloadSanciones();
@@ -4676,7 +4967,7 @@ export default function App() {
 
       await reloadReportes();
       await reloadSanciones();
-      showToast(`Infracción ${inf.folio} desestimada y guardada en PostgreSQL.`, "info", "Infracción Desestimada");
+      showToast(`Infracción ${inf.folio} desestimada y guardada en la base de datos.`, "info", "Infracción Desestimada");
     } catch (err: any) {
       await reloadReportes();
       await reloadSanciones();
@@ -4937,13 +5228,7 @@ export default function App() {
 
     try {
       const compressed = await compressImageClient(file, 640, 0.75);
-      const res = await fetch(`/api/usuarios/${guardiaId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ foto_url: compressed })
-      });
-
-      if (!res.ok) throw new Error("Error al guardar la fotografía en el servidor");
+      await api.updateUsuario(guardiaId, { foto_url: compressed });
 
       setUsers(prev => prev.map(u => u.id === guardiaId ? { ...u, foto_url: compressed } : u));
       setSelectedFotoGuardiaPreview(prev => prev && prev.id === guardiaId ? { ...prev, foto_url: compressed } : prev);
@@ -5030,6 +5315,38 @@ export default function App() {
     } finally {
       isSubmittingSupervisorRef.current = false;
       setIsSubmittingSupervisor(false);
+    }
+  };
+
+  const handleGuardarNuevoAdmin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (isSubmittingAdminRef.current) return;
+    isSubmittingAdminRef.current = true;
+    setIsSubmittingAdmin(true);
+
+    const f = e.currentTarget;
+    const nom = (f.elements.namedItem("nombre") as HTMLInputElement).value.trim();
+    const emailVal = (f.elements.namedItem("email") as HTMLInputElement).value.trim();
+    const passVal = (f.elements.namedItem("password") as HTMLInputElement).value.trim();
+
+    try {
+      await api.createUsuario({
+        nombre: nom,
+        correo: emailVal,
+        password: passVal || "123456",
+        id_rol: 1, // ADMINISTRADOR
+        rol: "ADMINISTRADOR",
+        id_empresa: null,
+        activo: true,
+      });
+      await reloadUsuarios();
+      setShowCreateAdminModal(false);
+      showToast(`Cuenta de Administrador para "${nom}" (${emailVal}) creada y guardada exitosamente.`, "success", "Administrador Creado");
+    } catch (err: any) {
+      showToast("Error al guardar administrador en la base de datos: " + (err.message || err), "error");
+    } finally {
+      isSubmittingAdminRef.current = false;
+      setIsSubmittingAdmin(false);
     }
   };
 
@@ -5705,6 +6022,31 @@ export default function App() {
     }
   };
 
+  const handleConfirmarEliminarAdmin = async () => {
+    if (!selectedAdminParaEliminar || isDeletingAdminRef.current) return;
+    const eliminado = selectedAdminParaEliminar;
+    if (String(eliminado.id) === String(currentUser?.id)) {
+      showToast("No puedes eliminar tu propia cuenta en sesión.", "error", "Operación no permitida");
+      setSelectedAdminParaEliminar(null);
+      return;
+    }
+    isDeletingAdminRef.current = true;
+    setIsDeletingAdmin(true);
+    try {
+      setUsers((prev) => prev.filter((u) => String(u.id) !== String(eliminado.id)));
+      await api.deleteUsuario(eliminado.id);
+      await reloadUsuarios();
+      showToast(`El administrador "${eliminado.nombre}" (${eliminado.username}) fue eliminado permanentemente.`, "success", "Administrador Eliminado");
+      setSelectedAdminParaEliminar(null);
+    } catch (err: any) {
+      showToast("Error al eliminar administrador: " + (err.message || err), "error");
+      await reloadUsuarios();
+    } finally {
+      isDeletingAdminRef.current = false;
+      setIsDeletingAdmin(false);
+    }
+  };
+
   const handleToggleActivoTrabajador = async (trab: Trabajador) => {
     if (togglingTrabajadorIds[trab.id_trabajador]) return;
     setTogglingTrabajadorIds((prev) => ({ ...prev, [trab.id_trabajador]: true }));
@@ -5716,7 +6058,7 @@ export default function App() {
       await reloadTrabajadores();
       showToast(`Colaborador ${trab.nombre} ${trab.apellidos} ${nuevoActivo ? "habilitado" : "deshabilitado"} exitosamente.`, "success");
     } catch (err: any) {
-      console.warn("Error al actualizar estatus de trabajador en PostgreSQL:", err);
+      console.warn("Error al actualizar estatus de trabajador:", err);
       // Fallback local
       setTrabajadores(trabajadores.map(t => {
         if (t.id_trabajador === trab.id_trabajador) {
@@ -5756,7 +6098,7 @@ export default function App() {
         nuevoActivo ? "Oficial En Servicio" : "Oficial Inactivo"
       );
     } catch (err: any) {
-      console.warn("Error al actualizar estatus de usuario en PostgreSQL:", err);
+      console.warn("Error al actualizar estatus de usuario:", err);
       setUsers(prev => prev.map(u => String(u.id) === String(user.id) ? { ...u, activo: nuevoActivo } : u));
       showToast(`Estatus de "${user.nombre}" actualizado localmente.`, "info");
     } finally {
@@ -6645,6 +6987,12 @@ export default function App() {
               {currentUser.role === "admin" && (
                 <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                   <button
+                    onClick={() => setAdminTab("administradores")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${adminTab === "administradores" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                  >
+                    Administradores TI ({users.filter(u => u.role === "admin").length})
+                  </button>
+                  <button
                     onClick={() => setAdminTab("supervisores")}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${adminTab === "supervisores" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
@@ -6939,7 +7287,7 @@ export default function App() {
                 )
               )}
 
-              {currentUser.role === "caseta" && (
+              {(currentUser.role === "caseta" || (currentUser.role as string) === "guardia") && (
                 <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                   <button
                     onClick={() => setCasetaTab("registro")}
@@ -6994,17 +7342,16 @@ export default function App() {
           </div>
 
           {/* BARRA DE NAVEGACIÓN MÓVIL SECUNDARIA (SEGMENTED TABS) */}
-          {currentUser.role === "caseta" && (
+          {(currentUser.role === "caseta" || (currentUser.role as string) === "guardia") && (
             <div className="md:hidden border-t border-slate-200/80 bg-slate-50/95 px-3 py-2">
               <div className="flex w-full bg-slate-200/90 p-1 rounded-xl shadow-2xs gap-1 max-w-md mx-auto">
                 <button
                   type="button"
                   onClick={() => setCasetaTab("registro")}
-                  className={`flex-1 py-2 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    casetaTab === "registro"
-                      ? "bg-[#0D6E5F] text-white shadow-sm"
-                      : "text-slate-700 hover:text-slate-900"
-                  }`}
+                  className={`flex-1 py-2 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${casetaTab === "registro"
+                    ? "bg-[#0D6E5F] text-white shadow-sm"
+                    : "text-slate-700 hover:text-slate-900"
+                    }`}
                 >
                   <IconCar className="w-3.5 h-3.5 shrink-0" />
                   <span>Registro de Entrada</span>
@@ -7012,18 +7359,16 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setCasetaTab("bitacora")}
-                  className={`flex-1 py-2 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    casetaTab === "bitacora"
-                      ? "bg-[#0D6E5F] text-white shadow-sm"
-                      : "text-slate-700 hover:text-slate-900"
-                  }`}
+                  className={`flex-1 py-2 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${casetaTab === "bitacora"
+                    ? "bg-[#0D6E5F] text-white shadow-sm"
+                    : "text-slate-700 hover:text-slate-900"
+                    }`}
                 >
                   <IconFileText className="w-3.5 h-3.5 shrink-0" />
                   <span>Bitácora</span>
                   <span
-                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                      casetaTab === "bitacora" ? "bg-white/25 text-white" : "bg-slate-300 text-slate-800"
-                    }`}
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${casetaTab === "bitacora" ? "bg-white/25 text-white" : "bg-slate-300 text-slate-800"
+                      }`}
                   >
                     {bitacora.filter((b) => b.estado === "Dentro").length}
                   </span>
@@ -7035,6 +7380,13 @@ export default function App() {
           {currentUser.role === "admin" && (
             <div className="md:hidden border-t border-slate-200/80 bg-slate-50/95 px-3 py-2 overflow-x-auto no-scrollbar">
               <div className="flex gap-1 min-w-max bg-slate-200/90 p-1 rounded-xl mx-auto">
+                <button
+                  type="button"
+                  onClick={() => setAdminTab("administradores")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${adminTab === "administradores" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                >
+                  Admins ({users.filter((u) => u.role === "admin").length})
+                </button>
                 <button
                   type="button"
                   onClick={() => setAdminTab("supervisores")}
@@ -7157,10 +7509,110 @@ export default function App() {
           <main>
             <PageHero
               title="Consola de Administración de Sistemas y TI"
-              subtitle="Creación de supervisores HOA, auditoría global y gestión de contraseñas de usuarios"
+              subtitle="Gestión de administradores y supervisores HOA, auditoría global y control de cuentas"
             />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-6 min-h-[calc(100vh-16rem)]">
+              {adminTab === "administradores" && (
+                <div className="space-y-4">
+                  <div className="rounded-2xl border bg-white shadow-sm overflow-hidden" style={{ borderColor: "var(--color-border)" }}>
+                    <div className="px-5 py-4 border-b bg-slate-50 flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
+                      <div>
+                        <h2 className="font-bold text-sm text-slate-800">Administradores de Sistemas y TI</h2>
+                        <p className="text-xs text-slate-500">Cuentas con privilegios totales de administración, claves maestras y auditoría.</p>
+                      </div>
+                      <button
+                        onClick={() => setShowCreateAdminModal(true)}
+                        className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer shadow-sm"
+                        style={{ background: "var(--color-primary)" }}
+                      >
+                        <IconUserPlus className="w-3.5 h-3.5" />
+                        <span>Nuevo Administrador</span>
+                      </button>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
+                            {["ID", "Nombre Oficial", "Usuario / Correo", "Fecha Alta", "Creado Por", "Estatus", "Acciones"].map((h) => (
+                              <th key={h} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {users.filter(u => u.role === "admin").length === 0 ? (
+                            <tr>
+                              <td colSpan={7} className="px-5 py-8 text-center text-xs text-slate-500">
+                                <IconUsers className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                                No hay administradores registrados en la base de datos.
+                              </td>
+                            </tr>
+                          ) : (
+                            users.filter(u => u.role === "admin").map((adm) => (
+                              <tr key={adm.id} className="hover:bg-slate-50 transition-colors">
+                                <td className="px-5 py-3 font-mono text-xs font-bold text-slate-700">#{adm.id}</td>
+                                <td className="px-5 py-3 font-bold text-xs text-slate-900">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-7 h-7 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs shrink-0">
+                                      {adm.nombre.charAt(0)}
+                                    </div>
+                                    <span>{adm.nombre}</span>
+                                    {String(adm.id) === String(currentUser?.id) && (
+                                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                                        Tu cuenta
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-5 py-3 font-mono text-xs text-slate-600">{adm.username}</td>
+                                <td className="px-5 py-3 text-xs text-slate-500">{adm.fechaCreacion}</td>
+                                <td className="px-5 py-3 text-xs text-slate-500">{adm.creadoPor}</td>
+                                <td className="px-5 py-3">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleActivoUsuario(adm)}
+                                    disabled={Boolean(togglingUserIds[adm.id]) || String(adm.id) === String(currentUser?.id)}
+                                    className={`cursor-pointer group flex items-center gap-1.5 transition-all ${togglingUserIds[adm.id] || String(adm.id) === String(currentUser?.id) ? "opacity-60 pointer-events-none" : ""}`}
+                                    title={String(adm.id) === String(currentUser?.id) ? "No puedes desactivar tu propia cuenta en sesión" : adm.activo !== false ? "Clic para desactivar administrador" : "Clic para activar administrador"}
+                                  >
+                                    {adm.activo !== false ? (
+                                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 shadow-sm transition-all">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                        <span>Activo</span>
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-300 hover:bg-red-100 hover:border-red-400 shadow-sm transition-all">
+                                        <span className="w-2 h-2 rounded-full bg-red-400" />
+                                        <span>Inactivo</span>
+                                      </span>
+                                    )}
+                                  </button>
+                                </td>
+                                <td className="px-5 py-3">
+                                  {String(adm.id) === String(currentUser?.id) ? (
+                                    <span className="text-[11px] text-slate-400 italic">Sesión actual</span>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedAdminParaEliminar(adm)}
+                                      className="p-1.5 px-2.5 rounded-lg text-red-600 bg-red-50 hover:bg-red-600 hover:text-white transition-all cursor-pointer border border-red-200 flex items-center gap-1.5 text-xs font-semibold shadow-xs"
+                                      title="Eliminar administrador del sistema"
+                                    >
+                                      <IconTrash className="w-3.5 h-3.5" />
+                                      <span>Eliminar</span>
+                                    </button>
+                                  )}
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {adminTab === "supervisores" && (
                 <div className="space-y-4">
                   <div className="rounded-2xl border bg-white shadow-sm overflow-hidden" style={{ borderColor: "var(--color-border)" }}>
@@ -7168,13 +7620,23 @@ export default function App() {
                       <div>
                         <h2 className="font-bold text-sm text-slate-800">Supervisores HOA Creados por Sistemas</h2>
                       </div>
-                      <button
-                        onClick={() => setShowCreateSupervisorModal(true)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer"
-                        style={{ background: "var(--color-primary)" }}
-                      >
-                        Nuevo Supervisor
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setShowCreateSupervisorModal(true)}
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer flex items-center gap-1.5 shadow-sm"
+                          style={{ background: "var(--color-primary)" }}
+                        >
+                          <IconUserPlus className="w-3.5 h-3.5" />
+                          <span>Nuevo Supervisor</span>
+                        </button>
+                        <button
+                          onClick={() => setShowCreateAdminModal(true)}
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 hover:bg-purple-100 transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
+                        >
+                          <IconServer className="w-3.5 h-3.5" />
+                          <span>Nuevo Administrador</span>
+                        </button>
+                      </div>
                     </div>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
@@ -7775,7 +8237,7 @@ export default function App() {
                             <tr>
                               <td colSpan={8} className="px-5 py-8 text-center text-xs text-slate-500">
                                 <IconUsers className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                                No hay oficiales de caseta registrados en PostgreSQL.
+                                No hay oficiales de caseta registrados.
                               </td>
                             </tr>
                           ) : (
@@ -9087,7 +9549,11 @@ export default function App() {
                             if (currentUser) {
                               localStorage.setItem("hoa_accepted_reglamento_" + currentUser.id, "true");
                               setUsers(users.map(u => u.id === currentUser.id ? { ...u, hasAcceptedReglamento: true } : u));
-                              setCurrentUser({ ...currentUser, hasAcceptedReglamento: true });
+                              const updatedUser = { ...currentUser, hasAcceptedReglamento: true };
+                              try {
+                                sessionStorage.setItem("hoa_session_user", JSON.stringify(updatedUser));
+                              } catch { }
+                              setCurrentUser(updatedUser);
                             }
                             setPortalScreen("dashboard");
                             showToast("Reglamento aceptado y firmado digitalmente con éxito.", "success", "Firma Registrada");
@@ -9977,7 +10443,7 @@ export default function App() {
         )}
 
         {/* CASETA */}
-        {currentUser.role === "caseta" && (
+        {(currentUser.role === "caseta" || (currentUser.role as string) === "guardia") && (
           <main>
             <div className="mx-auto px-4 sm:px-6 lg:px-8 py-3.5 space-y-3 max-w-7xl w-full">
               {/* ENCABEZADO SUPERIOR DE COMANDO Y ESTADO */}
@@ -11230,7 +11696,7 @@ export default function App() {
                                 <IconShield className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                                 {q || casetaBitacoraStatusFilter !== "todos"
                                   ? "No se encontraron registros que coincidan con los filtros aplicados."
-                                  : "No hay registros de accesos en la bitácora de PostgreSQL."}
+                                  : "No hay registros de accesos en la bitácora."}
                               </td>
                             </tr>
                           ) : (
@@ -11697,6 +12163,66 @@ export default function App() {
                     </>
                   ) : (
                     <span>Guardar Supervisor</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL ADMIN CREA ADMINISTRADOR TI ─── */}
+      {showCreateAdminModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2 text-purple-700">
+                <div className="p-2 rounded-xl bg-purple-50">
+                  <IconServer className="w-5 h-5" />
+                </div>
+                <h3 className="text-sm font-bold text-slate-900 uppercase">Crear Cuenta de Administrador</h3>
+              </div>
+              <button onClick={() => setShowCreateAdminModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+            </div>
+            <form
+              onSubmit={handleGuardarNuevoAdmin}
+              className="space-y-3"
+            >
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre Completo del Administrador *</label>
+                <input name="nombre" required placeholder="Ej. Ing. Carlos Mendoza (TI)" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico Oficial *</label>
+                <input name="email" type="email" required placeholder="admin@laspalomashoa.com" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Contraseña de Acceso *</label>
+                <input name="password" type="password" required placeholder="Mínimo 6 caracteres" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20" />
+                <p className="text-[10px] text-slate-400 mt-1">Si se deja en blanco, se usará "123456" por defecto.</p>
+              </div>
+              <div className="p-3 rounded-xl bg-purple-50 border border-purple-100 text-purple-900 text-[11px] space-y-1">
+                <div className="font-bold flex items-center gap-1.5">
+                  <IconShield className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Privilegios Totales de Administrador</span>
+                </div>
+                <p className="text-purple-700">Esta cuenta tendrá acceso completo a la consola de sistemas, auditoría de eventos, cambio de contraseñas y gestión de todo el personal.</p>
+              </div>
+              <div className="flex justify-end gap-2 pt-3">
+                <button type="button" onClick={() => setShowCreateAdminModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer hover:bg-slate-50">Cancelar</button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingAdmin}
+                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0b5d50] cursor-pointer flex items-center gap-1.5 shadow-sm ${isSubmittingAdmin ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
+                >
+                  {isSubmittingAdmin ? (
+                    <>
+                      <IconSpinner className="w-3.5 h-3.5" />
+                      <span>Guardando...</span>
+                    </>
+                  ) : (
+                    <span>Guardar Administrador</span>
                   )}
                 </button>
               </div>
@@ -12871,6 +13397,63 @@ export default function App() {
                   }`}
               >
                 {isDeletingGuardia ? (
+                  <>
+                    <IconSpinner className="w-4 h-4" />
+                    <span>Eliminando...</span>
+                  </>
+                ) : (
+                  <>
+                    <IconTrash className="w-4 h-4" />
+                    <span>Eliminar Definitivamente</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL ELIMINAR ADMINISTRADOR TI ─── */}
+      {selectedAdminParaEliminar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2 text-red-600">
+                <div className="p-2 rounded-xl bg-red-50">
+                  <IconTrash className="w-5 h-5" />
+                </div>
+                <h3 className="text-sm font-bold uppercase">Eliminar Administrador TI</h3>
+              </div>
+              <button onClick={() => setSelectedAdminParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
+              <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este Administrador TI del sistema?</p>
+              <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
+                <div><strong>Nombre:</strong> {selectedAdminParaEliminar.nombre}</div>
+                <div><strong>ID:</strong> <span className="font-mono">#{selectedAdminParaEliminar.id}</span></div>
+                <div><strong>Usuario / Correo:</strong> {selectedAdminParaEliminar.username}</div>
+                <div><strong>Rol:</strong> <span className="font-semibold uppercase text-indigo-700">Administrador TI</span></div>
+              </div>
+              <p className="text-[11px] text-red-700">Esta acción eliminará de forma irreversible el acceso administrativo de esta cuenta.</p>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setSelectedAdminParaEliminar(null)}
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmarEliminarAdmin}
+                disabled={isDeletingAdmin}
+                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingAdmin ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                  }`}
+              >
+                {isDeletingAdmin ? (
                   <>
                     <IconSpinner className="w-4 h-4" />
                     <span>Eliminando...</span>

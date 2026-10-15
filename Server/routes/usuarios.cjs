@@ -3,9 +3,12 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const db = require('../models/index.cjs');
 const { saveBase64Image, resolveFotoToDataUrl } = require('../utils/imageHandler.cjs');
+const { signToken } = require('../utils/jwt.cjs');
+const { checkLoginRateLimit, recordFailedLogin, clearFailedLogins } = require('../middlewares/rateLimiter.cjs');
+const { requireAuth } = require('../middlewares/auth.cjs');
 
-// POST /api/usuarios/login - Autenticación con contraseña cifrada (bcrypt)
-router.post('/login', async (req, res) => {
+// POST /api/usuarios/login - Autenticación con contraseña cifrada (bcrypt), protección de fuerza bruta y emisión de JWT
+router.post('/login', checkLoginRateLimit, async (req, res) => {
   try {
     const { correo, password } = req.body;
     if (!correo || !password) {
@@ -21,13 +24,18 @@ router.post('/login', async (req, res) => {
     });
 
     if (!usuario) {
+      recordFailedLogin(req);
       return res.status(401).json({ error: 'Credenciales incorrectas o usuario inactivo' });
     }
 
     const passwordValido = bcrypt.compareSync(password, usuario.password_hash);
     if (!passwordValido) {
+      recordFailedLogin(req);
       return res.status(401).json({ error: 'Credenciales incorrectas o usuario inactivo' });
     }
+
+    // Login exitoso: restablecer contador de intentos de fuerza bruta
+    clearFailedLogins(req);
 
     const plain = usuario.get({ plain: true });
     delete plain.password_hash;
@@ -36,8 +44,9 @@ router.post('/login', async (req, res) => {
     const rolMap = {
       'ADMINISTRADOR': 'admin',
       'SUPERVISOR': 'supervisor',
-      'AGENTE': 'guardia',
-      'CASETA': 'guardia',
+      'AGENTE': 'caseta',
+      'CASETA': 'caseta',
+      'GUARDIA': 'caseta',
       'PROVEEDOR': 'proveedor',
       'CONTABILIDAD': 'contabilidad'
     };
@@ -67,6 +76,15 @@ router.post('/login', async (req, res) => {
       }
     }
 
+    // Generar JWT firmado con datos de sesión
+    const token = signToken({
+      id_usuario: plain.id_usuario,
+      correo: plain.correo,
+      rol: rolCalculado,
+      id_rol: plain.id_rol,
+      id_empresa: plain.id_empresa
+    });
+
     res.json({
       ...plain,
       id: String(plain.id_usuario),
@@ -75,7 +93,8 @@ router.post('/login', async (req, res) => {
       empresaNombre: plain.empresa?.razon_social || '',
       foto_url: resolvedFoto || null,
       avatar: resolvedFoto || `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150`,
-      hasAcceptedReglamento
+      hasAcceptedReglamento,
+      token
     });
   } catch (error) {
     console.error('Error en login:', error);
@@ -83,8 +102,114 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// GET /api/usuarios - Listar todos los usuarios
-router.get('/', async (req, res) => {
+// GET /api/usuarios/verificar-sesion/:id - Validar sesión activa y obtener datos actualizados
+router.get('/verificar-sesion/:id', async (req, res) => {
+  try {
+    const idNum = parseInt(req.params.id, 10);
+    if (isNaN(idNum)) {
+      return res.status(401).json({ error: 'ID de usuario no válido', activo: false });
+    }
+
+    const usuario = await db.Usuario.findByPk(idNum, {
+      include: [
+        { model: db.Rol, as: 'rol', attributes: ['id_rol', 'nombre'] },
+        { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social'] }
+      ]
+    });
+
+    if (!usuario) {
+      return res.status(401).json({ error: 'El usuario ya no existe o fue eliminado', activo: false });
+    }
+
+    if (usuario.activo === false) {
+      return res.status(403).json({ error: 'Tu cuenta ha sido desactivada por un administrador', activo: false });
+    }
+
+    const plain = usuario.get({ plain: true });
+    delete plain.password_hash;
+
+    const rolMap = {
+      'ADMINISTRADOR': 'admin',
+      'SUPERVISOR': 'supervisor',
+      'AGENTE': 'caseta',
+      'CASETA': 'caseta',
+      'GUARDIA': 'caseta',
+      'PROVEEDOR': 'proveedor',
+      'CONTABILIDAD': 'contabilidad'
+    };
+    const idRolFallback = {
+      1: 'admin',
+      2: 'supervisor',
+      3: 'caseta',
+      4: 'caseta',
+      5: 'proveedor',
+      6: 'contabilidad'
+    };
+    const nombreRolFallback = {
+      1: 'ADMINISTRADOR',
+      2: 'SUPERVISOR',
+      3: 'AGENTE',
+      4: 'CASETA',
+      5: 'PROVEEDOR',
+      6: 'CONTABILIDAD'
+    };
+
+    const resolvedFoto = resolveFotoToDataUrl(plain.foto_url);
+    const rolKey = plain.rol?.nombre ? String(plain.rol.nombre).toUpperCase() : null;
+    const rolNormalizado = (rolKey && rolMap[rolKey]) || (plain.id_rol && idRolFallback[plain.id_rol]) || plain.rol?.nombre?.toLowerCase() || 'caseta';
+    const rolNombreCalculado = plain.rol?.nombre || (plain.id_rol && nombreRolFallback[plain.id_rol]) || (rolNormalizado === 'caseta' ? 'CASETA' : 'ADMINISTRADOR');
+
+    // Verificar aceptación de reglamento si es proveedor/contratista
+    let hasAcceptedReglamento = true;
+    if (rolNormalizado === 'proveedor') {
+      hasAcceptedReglamento = false;
+      try {
+        const regVigente = await db.Reglamento.findOne({ where: { vigente: true } });
+        if (regVigente) {
+          const conditions = [{ id_usuario: plain.id_usuario }];
+          if (plain.id_empresa) conditions.push({ id_empresa: plain.id_empresa });
+          const aceptacion = await db.AceptacionReglamento.findOne({
+            where: {
+              id_reglamento: regVigente.id_reglamento,
+              [db.Sequelize.Op.or]: conditions
+            }
+          });
+          hasAcceptedReglamento = !!aceptacion;
+        }
+      } catch (checkErr) {
+        console.warn('Error verificando aceptación de reglamento en verificación:', checkErr.message);
+      }
+    }
+
+    // Generar o refrescar token de sesión
+    const token = signToken({
+      id_usuario: plain.id_usuario,
+      correo: plain.correo,
+      rol: rolNormalizado,
+      id_rol: plain.id_rol,
+      id_empresa: plain.id_empresa
+    });
+
+    res.json({
+      ...plain,
+      id: String(plain.id_usuario),
+      rol: rolNormalizado,
+      rolNombre: rolNombreCalculado,
+      empresaNombre: plain.empresa?.razon_social || '',
+      foto_url: resolvedFoto || null,
+      avatar: resolvedFoto || `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150`,
+      hasAcceptedReglamento,
+      activo: true,
+      token
+    });
+  } catch (error) {
+    console.error('Error al verificar sesión de usuario:', error);
+    res.status(500).json({ error: 'Error al verificar sesión', details: error.message });
+  }
+});
+
+// GET /api/usuarios - Listar todos los usuarios (Requiere Autenticación)
+router.get('/', requireAuth, async (req, res) => {
   try {
     const usuarios = await db.Usuario.findAll({
       attributes: { exclude: ['password_hash'] },
@@ -99,9 +224,9 @@ router.get('/', async (req, res) => {
     const rolMap = {
       'ADMINISTRADOR': 'admin',
       'SUPERVISOR': 'supervisor',
-      'AGENTE': 'guardia',
-      'CASETA': 'guardia',
-      'GUARDIA': 'guardia',
+      'AGENTE': 'caseta',
+      'CASETA': 'caseta',
+      'GUARDIA': 'caseta',
       'PROVEEDOR': 'proveedor',
       'CONTABILIDAD': 'contabilidad'
     };
@@ -109,8 +234,8 @@ router.get('/', async (req, res) => {
     const idRolFallback = {
       1: 'admin',
       2: 'supervisor',
-      3: 'guardia',
-      4: 'guardia',
+      3: 'caseta',
+      4: 'caseta',
       5: 'proveedor',
       6: 'contabilidad'
     };
@@ -129,8 +254,8 @@ router.get('/', async (req, res) => {
       delete plain.password_hash;
       const resolvedFoto = resolveFotoToDataUrl(plain.foto_url);
       const rolKey = plain.rol?.nombre ? String(plain.rol.nombre).toUpperCase() : null;
-      const rolNormalizado = (rolKey && rolMap[rolKey]) || (plain.id_rol && idRolFallback[plain.id_rol]) || plain.rol?.nombre?.toLowerCase() || 'guardia';
-      const rolNombreCalculado = plain.rol?.nombre || (plain.id_rol && nombreRolFallback[plain.id_rol]) || (rolNormalizado === 'guardia' ? 'CASETA' : 'ADMINISTRADOR');
+      const rolNormalizado = (rolKey && rolMap[rolKey]) || (plain.id_rol && idRolFallback[plain.id_rol]) || plain.rol?.nombre?.toLowerCase() || 'caseta';
+      const rolNombreCalculado = plain.rol?.nombre || (plain.id_rol && nombreRolFallback[plain.id_rol]) || (rolNormalizado === 'caseta' ? 'CASETA' : 'ADMINISTRADOR');
 
       return {
         ...plain,
@@ -150,8 +275,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/usuarios - Crear usuario con contraseña encriptada
-router.post('/', async (req, res) => {
+// POST /api/usuarios - Crear usuario con contraseña encriptada (Requiere Autenticación)
+router.post('/', requireAuth, async (req, res) => {
   try {
     const { nombre, correo, password, password_hash, id_rol, id_empresa, rol, activo, foto_url } = req.body;
     if (!nombre || !correo) {
@@ -203,8 +328,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/usuarios/:id - Actualizar usuario existente
-router.put('/:id', async (req, res) => {
+// PUT /api/usuarios/:id - Actualizar usuario existente (Requiere Autenticación)
+router.put('/:id', requireAuth, async (req, res) => {
   try {
     const { nombre, correo, password, activo, id_rol, id_empresa, foto_url } = req.body;
     const usuario = await db.Usuario.findByPk(req.params.id, {
@@ -244,18 +369,18 @@ router.put('/:id', async (req, res) => {
     const rolMap = {
       'ADMINISTRADOR': 'admin',
       'SUPERVISOR': 'supervisor',
-      'AGENTE': 'guardia',
-      'CASETA': 'guardia',
-      'GUARDIA': 'guardia',
+      'AGENTE': 'caseta',
+      'CASETA': 'caseta',
+      'GUARDIA': 'caseta',
       'PROVEEDOR': 'proveedor',
       'CONTABILIDAD': 'contabilidad'
     };
-    const idRolFallback = { 1: 'admin', 2: 'supervisor', 3: 'guardia', 4: 'guardia', 5: 'proveedor', 6: 'contabilidad' };
+    const idRolFallback = { 1: 'admin', 2: 'supervisor', 3: 'caseta', 4: 'caseta', 5: 'proveedor', 6: 'contabilidad' };
     const nombreRolFallback = { 1: 'ADMINISTRADOR', 2: 'SUPERVISOR', 3: 'AGENTE', 4: 'CASETA', 5: 'PROVEEDOR', 6: 'CONTABILIDAD' };
 
     const rolKey = plain.rol?.nombre ? String(plain.rol.nombre).toUpperCase() : null;
-    plain.rol = (rolKey && rolMap[rolKey]) || (plain.id_rol && idRolFallback[plain.id_rol]) || plain.rol?.nombre?.toLowerCase() || 'guardia';
-    plain.rolNombre = plain.rol?.nombre || (plain.id_rol && nombreRolFallback[plain.id_rol]) || (plain.rol === 'guardia' ? 'CASETA' : 'ADMINISTRADOR');
+    plain.rol = (rolKey && rolMap[rolKey]) || (plain.id_rol && idRolFallback[plain.id_rol]) || plain.rol?.nombre?.toLowerCase() || 'caseta';
+    plain.rolNombre = plain.rol?.nombre || (plain.id_rol && nombreRolFallback[plain.id_rol]) || (plain.rol === 'caseta' ? 'CASETA' : 'ADMINISTRADOR');
 
     res.json(plain);
   } catch (error) {
@@ -264,8 +389,8 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/usuarios/:id - Eliminar usuario permanentemente
-router.delete('/:id', async (req, res) => {
+// DELETE /api/usuarios/:id - Eliminar usuario permanentemente (Requiere Autenticación)
+router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const usuario = await db.Usuario.findByPk(req.params.id);
     if (!usuario) {

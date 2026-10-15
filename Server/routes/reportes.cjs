@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
 const db = require('../models/index.cjs');
-
 const events = require('../events.cjs');
 const { saveBase64Image } = require('../utils/imageHandler.cjs');
+const { requireAuth } = require('../middlewares/auth.cjs');
 
 // GET /api/reportes/stream - Canal SSE para actualizaciones en vivo
 router.get('/stream', (req, res) => {
@@ -47,7 +47,7 @@ router.get('/stream', (req, res) => {
 });
 
 // GET /api/reportes - Listar reportes de infracciones (limitado a 100 más recientes)
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
     const reportes = await db.ReporteInfraccion.findAll({
       limit: 100,
@@ -78,7 +78,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/reportes - Crear reporte de infracción con prevención de duplicados
-router.post('/', async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   try {
     const { id_vehiculo, id_corbatin, id_infraccion, id_usuario, ubicacion_texto, descripcion_hechos, evidencia_url } = req.body;
     if (!id_vehiculo || !id_infraccion || !id_usuario) {
@@ -161,7 +161,7 @@ router.post('/', async (req, res) => {
 });
 
 // POST /api/reportes/:id/revisar - Dictamen del supervisor con protección de concurrencia
-router.post('/:id/revisar', async (req, res) => {
+router.post('/:id/revisar', requireAuth, async (req, res) => {
   const transaction = await db.sequelize.transaction();
   try {
     const { decision, comentarios, id_usuario } = req.body;

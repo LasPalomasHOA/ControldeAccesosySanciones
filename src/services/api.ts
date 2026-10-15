@@ -1,6 +1,32 @@
 // Servicio de Comunicación con la API REST y PostgreSQL
 const API_BASE_URL = '/api';
 
+/**
+ * Obtiene el token JWT actual almacenado en sessionStorage
+ */
+function getSessionToken(): string | null {
+  try {
+    const saved = sessionStorage.getItem("hoa_session_user");
+    if (saved) {
+      const u = JSON.parse(saved);
+      return u?.token || null;
+    }
+  } catch {}
+  return null;
+}
+
+/**
+ * Wrapper de fetch que inyecta automáticamente el token de autorización Bearer
+ */
+function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const token = getSessionToken();
+  const headers = new Headers(options.headers || {});
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  return fetch(url, { ...options, headers });
+}
+
 async function handleResponse<T = any>(res: Response): Promise<T> {
   const text = await res.text();
   let json: any = {};
@@ -18,27 +44,27 @@ async function handleResponse<T = any>(res: Response): Promise<T> {
 export const api = {
   // Estado del servidor
   async checkStatus() {
-    const res = await fetch(`${API_BASE_URL}/status`);
+    const res = await authFetch(`${API_BASE_URL}/status`);
     return handleResponse(res);
   },
 
   // 1. Roles
   async getRoles() {
-    const res = await fetch(`${API_BASE_URL}/roles`);
+    const res = await authFetch(`${API_BASE_URL}/roles`);
     return handleResponse(res);
   },
 
   // 2. Empresas
   async getEmpresas() {
-    const res = await fetch(`${API_BASE_URL}/empresas`);
+    const res = await authFetch(`${API_BASE_URL}/empresas`);
     return handleResponse(res);
   },
   async getEmpresaById(id: string | number) {
-    const res = await fetch(`${API_BASE_URL}/empresas/${id}`);
+    const res = await authFetch(`${API_BASE_URL}/empresas/${id}`);
     return handleResponse(res);
   },
   async createEmpresa(data: any) {
-    const res = await fetch(`${API_BASE_URL}/empresas`, {
+    const res = await authFetch(`${API_BASE_URL}/empresas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -46,7 +72,7 @@ export const api = {
     return handleResponse(res);
   },
   async updateEmpresa(id: string | number, data: any) {
-    const res = await fetch(`${API_BASE_URL}/empresas/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/empresas/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -54,25 +80,29 @@ export const api = {
     return handleResponse(res);
   },
   async deleteEmpresa(id: string | number) {
-    const res = await fetch(`${API_BASE_URL}/empresas/${id}`, { method: 'DELETE' });
+    const res = await authFetch(`${API_BASE_URL}/empresas/${id}`, { method: 'DELETE' });
     return handleResponse(res);
   },
 
   // 3. Usuarios
   async getUsuarios() {
-    const res = await fetch(`${API_BASE_URL}/usuarios`);
+    const res = await authFetch(`${API_BASE_URL}/usuarios`);
     return handleResponse(res);
   },
   async login(correo: string, password: string) {
-    const res = await fetch(`${API_BASE_URL}/usuarios/login`, {
+    const res = await authFetch(`${API_BASE_URL}/usuarios/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ correo, password })
     });
     return handleResponse(res);
   },
+  async verificarSesion(id: string | number) {
+    const res = await authFetch(`${API_BASE_URL}/usuarios/verificar-sesion/${id}`);
+    return res;
+  },
   async createUsuario(data: any) {
-    const res = await fetch(`${API_BASE_URL}/usuarios`, {
+    const res = await authFetch(`${API_BASE_URL}/usuarios`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -80,7 +110,7 @@ export const api = {
     return handleResponse(res);
   },
   async updateUsuario(id: string | number, data: any) {
-    const res = await fetch(`${API_BASE_URL}/usuarios/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/usuarios/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -88,18 +118,18 @@ export const api = {
     return handleResponse(res);
   },
   async deleteUsuario(id: string | number) {
-    const res = await fetch(`${API_BASE_URL}/usuarios/${id}`, { method: 'DELETE' });
+    const res = await authFetch(`${API_BASE_URL}/usuarios/${id}`, { method: 'DELETE' });
     return handleResponse(res);
   },
 
   // 4. Trabajadores
   async getTrabajadores(params?: { id_empresa?: string | number }) {
     const query = params?.id_empresa ? `?id_empresa=${params.id_empresa}` : '';
-    const res = await fetch(`${API_BASE_URL}/trabajadores${query}`);
+    const res = await authFetch(`${API_BASE_URL}/trabajadores${query}`);
     return handleResponse(res);
   },
   async createTrabajador(data: any) {
-    const res = await fetch(`${API_BASE_URL}/trabajadores`, {
+    const res = await authFetch(`${API_BASE_URL}/trabajadores`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -107,7 +137,7 @@ export const api = {
     return handleResponse(res);
   },
   async updateTrabajador(id: string | number, data: any) {
-    const res = await fetch(`${API_BASE_URL}/trabajadores/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/trabajadores/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -115,18 +145,18 @@ export const api = {
     return handleResponse(res);
   },
   async deleteTrabajador(id: string | number) {
-    const res = await fetch(`${API_BASE_URL}/trabajadores/${id}`, { method: 'DELETE' });
+    const res = await authFetch(`${API_BASE_URL}/trabajadores/${id}`, { method: 'DELETE' });
     return handleResponse(res);
   },
 
   // 5. Vehículos (con soporte para año)
   async getVehiculos(params?: { id_empresa?: string | number }) {
     const query = params?.id_empresa ? `?id_empresa=${params.id_empresa}` : '';
-    const res = await fetch(`${API_BASE_URL}/vehiculos${query}`);
+    const res = await authFetch(`${API_BASE_URL}/vehiculos${query}`);
     return handleResponse(res);
   },
   async createVehiculo(data: any) {
-    const res = await fetch(`${API_BASE_URL}/vehiculos`, {
+    const res = await authFetch(`${API_BASE_URL}/vehiculos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -134,7 +164,7 @@ export const api = {
     return handleResponse(res);
   },
   async updateVehiculo(id: string | number, data: any) {
-    const res = await fetch(`${API_BASE_URL}/vehiculos/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/vehiculos/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -142,7 +172,7 @@ export const api = {
     return handleResponse(res);
   },
   async deleteVehiculo(id: string | number) {
-    const res = await fetch(`${API_BASE_URL}/vehiculos/${id}`, { method: 'DELETE' });
+    const res = await authFetch(`${API_BASE_URL}/vehiculos/${id}`, { method: 'DELETE' });
     return handleResponse(res);
   },
 
@@ -152,11 +182,11 @@ export const api = {
     if (params?.tipo) searchParams.append('tipo', params.tipo);
     if (params?.activo !== undefined) searchParams.append('activo', String(params.activo));
     const query = searchParams.toString() ? `?${searchParams.toString()}` : '';
-    const res = await fetch(`${API_BASE_URL}/corbatines${query}`);
+    const res = await authFetch(`${API_BASE_URL}/corbatines${query}`);
     return handleResponse(res);
   },
   async createCorbatin(data: any) {
-    const res = await fetch(`${API_BASE_URL}/corbatines`, {
+    const res = await authFetch(`${API_BASE_URL}/corbatines`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -164,7 +194,7 @@ export const api = {
     return handleResponse(res);
   },
   async updateCorbatin(id: string | number, data: any) {
-    const res = await fetch(`${API_BASE_URL}/corbatines/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/corbatines/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -172,11 +202,11 @@ export const api = {
     return handleResponse(res);
   },
   async deleteCorbatin(id: string | number) {
-    const res = await fetch(`${API_BASE_URL}/corbatines/${id}`, { method: 'DELETE' });
+    const res = await authFetch(`${API_BASE_URL}/corbatines/${id}`, { method: 'DELETE' });
     return handleResponse(res);
   },
   async vincularCorbatinVerde(id: string | number, data: any) {
-    const res = await fetch(`${API_BASE_URL}/corbatines/${id}/vincular`, {
+    const res = await authFetch(`${API_BASE_URL}/corbatines/${id}/vincular`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -184,14 +214,14 @@ export const api = {
     return handleResponse(res);
   },
   async desvincularCorbatinVerde(id: string | number) {
-    const res = await fetch(`${API_BASE_URL}/corbatines/${id}/desvincular`, {
+    const res = await authFetch(`${API_BASE_URL}/corbatines/${id}/desvincular`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     });
     return handleResponse(res);
   },
   async inicializarPoolCorbatinesVerdes() {
-    const res = await fetch(`${API_BASE_URL}/corbatines/verdes/inicializar-pool`, {
+    const res = await authFetch(`${API_BASE_URL}/corbatines/verdes/inicializar-pool`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -200,15 +230,15 @@ export const api = {
 
   // 7. Reglamentos & Aceptación
   async getReglamentos() {
-    const res = await fetch(`${API_BASE_URL}/reglamentos`);
+    const res = await authFetch(`${API_BASE_URL}/reglamentos`);
     return handleResponse(res);
   },
   async getReglamentoVigente() {
-    const res = await fetch(`${API_BASE_URL}/reglamentos/vigente`);
+    const res = await authFetch(`${API_BASE_URL}/reglamentos/vigente`);
     return handleResponse(res);
   },
   async aceptarReglamento(data: { id_empresa: string | number; id_usuario: string | number; firma_nombre?: string }) {
-    const res = await fetch(`${API_BASE_URL}/reglamentos/aceptar`, {
+    const res = await authFetch(`${API_BASE_URL}/reglamentos/aceptar`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -216,7 +246,7 @@ export const api = {
     return handleResponse(res);
   },
   async updateReglamentoContenido(data: { contenido_texto?: string; contenido_secciones?: any[]; titulo?: string }) {
-    const res = await fetch(`${API_BASE_URL}/reglamentos/vigente/contenido`, {
+    const res = await authFetch(`${API_BASE_URL}/reglamentos/vigente/contenido`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -226,25 +256,25 @@ export const api = {
 
   // 8. Casetas & Reglas
   async getCasetas() {
-    const res = await fetch(`${API_BASE_URL}/casetas`);
+    const res = await authFetch(`${API_BASE_URL}/casetas`);
     return handleResponse(res);
   },
   async getReglas() {
-    const res = await fetch(`${API_BASE_URL}/reglas`);
+    const res = await authFetch(`${API_BASE_URL}/reglas`);
     return handleResponse(res);
   },
 
   // 9. Infracciones & Reportes
   async getInfracciones() {
-    const res = await fetch(`${API_BASE_URL}/infracciones`);
+    const res = await authFetch(`${API_BASE_URL}/infracciones`);
     return handleResponse(res);
   },
   async getReportes() {
-    const res = await fetch(`${API_BASE_URL}/reportes`);
+    const res = await authFetch(`${API_BASE_URL}/reportes`);
     return handleResponse(res);
   },
   async createReporte(data: any) {
-    const res = await fetch(`${API_BASE_URL}/reportes`, {
+    const res = await authFetch(`${API_BASE_URL}/reportes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -252,7 +282,7 @@ export const api = {
     return handleResponse(res);
   },
   async dictaminarReporte(id: string | number, data: { decision: 'APROBADO' | 'RECHAZADO'; comentarios?: string; id_usuario?: number }) {
-    const res = await fetch(`${API_BASE_URL}/reportes/${id}/revisar`, {
+    const res = await authFetch(`${API_BASE_URL}/reportes/${id}/revisar`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -262,11 +292,11 @@ export const api = {
 
   // 10. Sanciones
   async getSanciones() {
-    const res = await fetch(`${API_BASE_URL}/sanciones`);
+    const res = await authFetch(`${API_BASE_URL}/sanciones`);
     return handleResponse(res);
   },
   async updateSancion(id: string | number, data: any) {
-    const res = await fetch(`${API_BASE_URL}/sanciones/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/sanciones/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -276,11 +306,11 @@ export const api = {
 
   // 11. Bitácora de Accesos
   async getBitacora() {
-    const res = await fetch(`${API_BASE_URL}/bitacora`);
+    const res = await authFetch(`${API_BASE_URL}/bitacora`);
     return handleResponse(res);
   },
   async registrarAcceso(data: any) {
-    const res = await fetch(`${API_BASE_URL}/bitacora`, {
+    const res = await authFetch(`${API_BASE_URL}/bitacora`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -288,16 +318,20 @@ export const api = {
     return handleResponse(res);
   },
   async registrarSalida(id: string | number) {
-    const res = await fetch(`${API_BASE_URL}/bitacora/${id}/salida`, {
+    const res = await authFetch(`${API_BASE_URL}/bitacora/${id}/salida`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' }
     });
     return handleResponse(res);
   },
 
-  // 12. Semilla / Inicialización
-  async runSeed() {
-    const res = await fetch(`${API_BASE_URL}/seed`, { method: 'POST' });
+  // 12. Semilla / Inicialización (Protegida)
+  async runSeed(secretKey?: string) {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (secretKey) {
+      headers['X-Seed-Secret'] = secretKey;
+    }
+    const res = await authFetch(`${API_BASE_URL}/seed`, { method: 'POST', headers });
     return handleResponse(res);
   }
 };

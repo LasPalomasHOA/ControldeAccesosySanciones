@@ -1492,7 +1492,7 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                 Flujo Cronológico Reciente (Últimos Movimientos)
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Seguimiento en vivo de las operaciones de entrada y salida procesadas en caseta ({allAccesosDataset.length} registros totales en PostgreSQL)
+                Seguimiento en vivo de las operaciones de entrada y salida procesadas en caseta ({allAccesosDataset.length} registros totales)
               </p>
             </div>
 

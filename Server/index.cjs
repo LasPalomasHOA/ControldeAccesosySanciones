@@ -23,8 +23,62 @@ const { UPLOADS_DIR, resolveFotoToDataUrl } = require('./utils/imageHandler.cjs'
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middlewares
-app.use(cors());
+// Cabeceras HTTP de Seguridad (Equivalente Helmet)
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(self), microphone=(), geolocation=()');
+  next();
+});
+
+// Configuración de CORS Restringida
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:8443',
+  'http://127.0.0.1:8443',
+  'http://localhost:5000',
+  'http://127.0.0.1:5000',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000'
+];
+
+if (process.env.APP_URL) {
+  allowedOrigins.push(process.env.APP_URL);
+}
+if (process.env.VERCEL_URL) {
+  allowedOrigins.push(`https://${process.env.VERCEL_URL}`);
+}
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Permitir peticiones sin origen (same-origin, Postman, curl local, proxies internos)
+    if (!origin) return callback(null, true);
+
+    const isAllowed =
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app') ||
+      origin.includes('localhost') ||
+      origin.includes('127.0.0.1');
+
+    if (isAllowed) {
+      return callback(null, true);
+    }
+    return callback(new Error(`Acceso bloqueado por política CORS: El origen ${origin} no está autorizado.`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Seed-Secret', 'X-Confirm-Force-Wipe']
+}));
+
+// Rate limiting global para la API
+const { apiRateLimiter } = require('./middlewares/rateLimiter.cjs');
+const { requireAuth } = require('./middlewares/auth.cjs');
+app.use('/api', apiRateLimiter);
+
 app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
@@ -191,21 +245,23 @@ app.get('/api/status', async (req, res) => {
   });
 });
 
-// Rutas API
-app.use('/api/roles', require('./routes/roles.cjs'));
-app.use('/api/empresas', require('./routes/empresas.cjs'));
-app.use('/api/usuarios', require('./routes/usuarios.cjs'));
-app.use('/api/trabajadores', require('./routes/trabajadores.cjs'));
-app.use('/api/vehiculos', require('./routes/vehiculos.cjs'));
-app.use('/api/reglamentos', require('./routes/reglamentos.cjs'));
-app.use('/api/corbatines', require('./routes/corbatines.cjs'));
-app.use('/api/casetas', require('./routes/casetas.cjs'));
-app.use('/api/reglas', require('./routes/reglas.cjs'));
-app.use('/api/infracciones', require('./routes/infracciones.cjs'));
-app.use('/api/reportes', require('./routes/reportes.cjs'));
-app.use('/api/sanciones', require('./routes/sanciones.cjs'));
-app.use('/api/bitacora', require('./routes/bitacora.cjs'));
-app.use('/api/seed', require('./routes/seed.cjs'));
+// Rutas de API Públicas (controladas internamente)
+app.use('/api/usuarios', require('./routes/usuarios.cjs')); // /login y /verificar-sesion son públicas, mutaciones protegidas
+app.use('/api/seed', require('./routes/seed.cjs'));         // Protegido por clave administrativa secreta
+app.use('/api/reportes', require('./routes/reportes.cjs')); // /stream es SSE público, mutaciones protegidas internamente
+
+// Rutas de API Protegidas (Requieren Token de Sesión JWT Válido)
+app.use('/api/roles', requireAuth, require('./routes/roles.cjs'));
+app.use('/api/empresas', requireAuth, require('./routes/empresas.cjs'));
+app.use('/api/trabajadores', requireAuth, require('./routes/trabajadores.cjs'));
+app.use('/api/vehiculos', requireAuth, require('./routes/vehiculos.cjs'));
+app.use('/api/reglamentos', requireAuth, require('./routes/reglamentos.cjs'));
+app.use('/api/corbatines', requireAuth, require('./routes/corbatines.cjs'));
+app.use('/api/casetas', requireAuth, require('./routes/casetas.cjs'));
+app.use('/api/reglas', requireAuth, require('./routes/reglas.cjs'));
+app.use('/api/infracciones', requireAuth, require('./routes/infracciones.cjs'));
+app.use('/api/sanciones', requireAuth, require('./routes/sanciones.cjs'));
+app.use('/api/bitacora', requireAuth, require('./routes/bitacora.cjs'));
 
 // Manejador para rutas no encontradas dentro de /api
 app.use('/api/*', (req, res) => {
