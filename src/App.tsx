@@ -8844,7 +8844,7 @@ export default function App() {
                           <div className="w-full lg:w-80 rounded-2xl border overflow-hidden bg-white shadow-sm flex flex-col shrink-0 no-print" style={{ borderColor: "var(--color-border)" }}>
                             <div className="p-4 border-b bg-slate-50 flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
                               <span className="font-bold text-xs uppercase tracking-wider text-slate-700">
-                                Inventario de Corbatines
+                                Selección de Corbatines
                               </span>
                               <span className="text-[11px] font-bold text-[#0D6E5F] font-mono">
                                 {(() => {
