@@ -12868,21 +12868,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Estatus Activo */}
-              <div className="pt-2 border-t border-slate-100">
-                <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl bg-slate-50 border border-slate-200">
-                  <input
-                    type="checkbox"
-                    checked={trabajadorActivo}
-                    onChange={(e) => setTrabajadorActivo(e.target.checked)}
-                    className="w-4 h-4 text-emerald-600 rounded cursor-pointer"
-                  />
-                  <div>
-                    <div className="text-xs font-bold text-slate-800">Estatus de Autorización: Activo (DEFAULT TRUE)</div>
-                    <div className="text-[11px] text-slate-500">Permite el ingreso regular del trabajador a las instalaciones.</div>
-                  </div>
-                </label>
-              </div>
 
               <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
                 <button
