@@ -4998,41 +4998,6 @@ export default function App() {
     }
   };
 
-  const handleReportarInfraccionHorario = async (item: ContratistaExcedido) => {
-    setIsProcessingOvertimeAction(true);
-    try {
-      const motivo = item.esPernocta
-        ? `Unidad permaneció en el complejo durante la noche sin autorización de pernocta (Fecha de ingreso: ${item.fechaIngreso}).`
-        : `Exceso de horario laboral en áreas comunes. Límite establecido: ${item.horaLimite} hrs, exceso registrado: +${item.minutosExcedidos} minutos.`;
-
-      const idUser = currentUser?.id ? parseInt(currentUser.id, 10) : 4;
-      const idVehiculo = item.idVehiculo ? parseInt(item.idVehiculo, 10) : null;
-
-      if (!idVehiculo) {
-        showToast("No se pudo vincular el vehículo para generar la infracción formal.", "warning");
-        return;
-      }
-
-      await api.createReporte({
-        id_vehiculo: idVehiculo,
-        id_corbatin: item.idCorbatin ? parseInt(item.idCorbatin, 10) : null,
-        id_infraccion: 2, // INF-02: Trabajos fuera del horario autorizado
-        id_usuario: idUser,
-        ubicacion_texto: "Áreas Comunes / Caseta Principal",
-        descripcion_hechos: motivo
-      });
-
-      showToast(`Infracción generada y enviada a revisión de Supervisión para ${item.empresaNombre}.`, "success", "Reporte de Infracción Creado");
-      setSelectedOvertimeContractor(null);
-      setDismissedOvertimeAlertIds((prev) => [...prev, item.registroId]);
-      await reloadReportes();
-    } catch (err: any) {
-      showToast("Error al registrar infracción: " + (err.message || err), "error");
-    } finally {
-      setIsProcessingOvertimeAction(false);
-    }
-  };
-
   const handleAprobarInfraccion = async (inf: InfraccionReporte) => {
     if (resolvingInfraccionIds[inf.id]) return;
     setResolvingInfraccionIds((prev) => ({ ...prev, [inf.id]: true }));
@@ -10571,30 +10536,30 @@ export default function App() {
                 </div>
               </div>
 
-              {/* BANNER DE ALERTA DE HORARIOS PARA CASETA */}
+              {/* BANNER DE ALERTA DE HORARIOS PARA CASETA (DISEÑO ARMONIOSO HOA) */}
               {contratistasExcedidos.length > 0 && (
-                <div className="bg-amber-500/10 border-2 border-amber-500/35 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                <div className="bg-white border-2 border-slate-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
                   <div className="flex items-start gap-2.5 sm:gap-3 w-full sm:w-auto min-w-0">
-                    <div className="p-2 rounded-xl bg-amber-500 text-white shrink-0 shadow-sm animate-pulse">
+                    <div className="p-2 sm:p-2.5 rounded-xl bg-red-600 text-white shrink-0 shadow-xs animate-pulse">
                       <IconClock className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                        <span className="font-extrabold text-amber-950 text-xs sm:text-sm tracking-tight uppercase">
-                          ⚠️ Alerta: {contratistasExcedidos.length} contratista{contratistasExcedidos.length > 1 ? "s" : ""} fuera de horario
+                        <span className="font-extrabold text-slate-900 text-xs sm:text-sm tracking-tight">
+                          Atención: {contratistasExcedidos.length} contratista{contratistasExcedidos.length > 1 ? "s" : ""} fuera de horario
                         </span>
-                        <span className="bg-amber-200 text-amber-900 font-mono font-bold text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full border border-amber-300">
-                          Límite: {contratistasExcedidos[0]?.horaLimite || "18:00"} hrs
+                        <span className="bg-slate-100 text-slate-700 font-mono font-bold text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200">
+                          Límite hoy: {contratistasExcedidos[0]?.horaLimite || "18:00"} hrs
                         </span>
                       </div>
-                      <p className="text-[11px] sm:text-xs text-amber-800/90 mt-0.5 break-words">
+                      <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5 break-words">
                         {contratistasExcedidos.length === 1 ? (
                           <span>
-                            <strong>{contratistasExcedidos[0].conductor}</strong> ({contratistasExcedidos[0].empresaNombre}) · Exceso: <strong>+{contratistasExcedidos[0].minutosExcedidos} min</strong>
+                            <strong>{contratistasExcedidos[0].conductor}</strong> ({contratistasExcedidos[0].empresaNombre}) · {contratistasExcedidos[0].esPernocta ? "Ingresó en fecha anterior sin salida registrada" : `Exceso: +${contratistasExcedidos[0].minutosExcedidos} min`}
                           </span>
                         ) : (
                           <span>
-                            Hay unidades externas dentro del complejo que superaron la hora límite oficial permitida de labores.
+                            Hay personal o unidades externas que continúan dentro del complejo fuera del horario oficial de trabajo.
                           </span>
                         )}
                       </p>
@@ -10604,10 +10569,10 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setSelectedOvertimeContractor(contratistasExcedidos[0])}
-                      className="w-full sm:w-auto px-3.5 py-2.5 sm:py-2 rounded-xl bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="w-full sm:w-auto px-4 py-2 sm:py-2.5 rounded-xl bg-[#0D6E5F] hover:bg-[#095247] active:scale-95 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <IconClock className="w-4 h-4 shrink-0" />
-                      <span>Ver Alerta de Incidencia</span>
+                      <span>Ver Ficha de Alerta</span>
                     </button>
                   </div>
                 </div>
@@ -11922,10 +11887,10 @@ export default function App() {
                                           <button
                                             type="button"
                                             onClick={() => setSelectedOvertimeContractor(exc)}
-                                            className="px-1.5 py-0.5 rounded text-[9px] font-black bg-red-100 text-red-800 border border-red-300 hover:bg-red-200 cursor-pointer shadow-2xs whitespace-nowrap animate-pulse"
+                                            className="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100 cursor-pointer shadow-2xs whitespace-nowrap"
                                             title="Clic para abrir la alerta de horario"
                                           >
-                                            {exc.esPernocta ? "⚠️ Pernocta" : `⏰ +${exc.minutosExcedidos}m`}
+                                            {exc.esPernocta ? "⏰ Sin salida previa" : `⏰ +${exc.minutosExcedidos}m`}
                                           </button>
                                         );
                                       })()}
@@ -15158,7 +15123,6 @@ export default function App() {
         }}
         contratista={selectedOvertimeContractor}
         onRegistrarSalida={handleRegistrarSalidaDesdeAlerta}
-        onLevantarInfraccion={handleReportarInfraccionHorario}
         isProcessing={isProcessingOvertimeAction}
       />
 
