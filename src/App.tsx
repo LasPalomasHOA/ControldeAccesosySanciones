@@ -400,7 +400,7 @@ function IconCheckSimple({ className = "w-4 h-4" }: { className?: string }) {
 type UserRole = "admin" | "supervisor" | "contratista" | "caseta" | "contabilidad";
 type PortalScreen = "reglamento" | "dashboard" | "alta" | "trabajadores" | "sanciones" | "consulta_reglamento";
 type SupervisorTab = "bandeja" | "apelaciones" | "proveedores" | "guardias" | "historial" | "reglamento" | "corbatines" | "corbatines_verdes";
-type AdminTab = "administradores" | "supervisores" | "proveedores" | "auditoria";
+type AdminTab = "administradores" | "supervisores" | "auditoria";
 type CasetaTab = "registro" | "bitacora";
 
 interface CorbatinVerde {
@@ -1551,9 +1551,12 @@ export default function App() {
   const [adminTab, setAdminTab] = useState<AdminTab>(() => {
     try {
       const saved = sessionStorage.getItem("hoa_session_admin_tab");
-      return (saved as AdminTab) || "supervisores";
+      if (saved === "administradores" || saved === "supervisores" || saved === "auditoria") {
+        return saved;
+      }
+      return "administradores";
     } catch {
-      return "supervisores";
+      return "administradores";
     }
   });
   const [supervisorTab, setSupervisorTab] = useState<SupervisorTab>(() => {
@@ -7107,12 +7110,6 @@ export default function App() {
                     Supervisores HOA ({users.filter(u => u.role === "supervisor").length})
                   </button>
                   <button
-                    onClick={() => setAdminTab("proveedores")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${adminTab === "proveedores" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
-                  >
-                    Proveedores & Flotilla ({empresas.length})
-                  </button>
-                  <button
                     onClick={() => setAdminTab("auditoria")}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 cursor-pointer whitespace-nowrap ${adminTab === "auditoria" ? "bg-[#0D6E5F] text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
@@ -7504,13 +7501,6 @@ export default function App() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setAdminTab("proveedores")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${adminTab === "proveedores" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
-                >
-                  Proveedores ({empresas.length})
-                </button>
-                <button
-                  type="button"
                   onClick={() => setAdminTab("auditoria")}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${adminTab === "auditoria" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
                 >
@@ -7805,8 +7795,6 @@ export default function App() {
                   </div>
                 </div>
               )}
-
-              {adminTab === "proveedores" && renderEmpresasManagementView()}
 
               {adminTab === "auditoria" && (() => {
                 const normalizeText = (str: string) =>
