@@ -3372,16 +3372,18 @@ export default function App() {
       return;
     }
 
+    setIsSubmittingLogin(true);
     try {
-      // 1. Autenticación directa contra la base de datos PostgreSQL
+      // 1. Autenticación estricta contra la base de datos PostgreSQL / Supabase
       const response = await fetch("/api/usuarios/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ correo: inputEmail, password: inputPass }),
       });
 
+      const data = await response.json().catch(() => ({}));
+
       if (response.ok) {
-        const data = await response.json();
         const roleMapped: UserRole =
           data.rol === "admin" ? "admin" :
             data.rol === "supervisor" ? "supervisor" :
@@ -3418,38 +3420,18 @@ export default function App() {
           setPortalScreen("dashboard");
         }
         return;
-      }
-    } catch (apiErr) {
-      console.warn("API de login no disponible, usando validación local:", apiErr);
-    }
-
-    // 2. Fallback de usuarios locales por correo electrónico
-    const found = users.find(
-      (u) => u.email?.toLowerCase() === inputEmail || u.username?.toLowerCase() === inputEmail
-    );
-
-    if (found) {
-      if (found.password && inputPass && found.password !== inputPass && inputPass !== "123456") {
-        setLoginError("Contraseña incorrecta. Por favor verifica tu clave (123456).");
+      } else {
+        // El servidor rechazó las credenciales (401, 403, 400, etc.)
+        const errorMsg = data.error || data.message || "Credenciales incorrectas o usuario inactivo.";
+        setLoginError(errorMsg);
         return;
       }
-      const isAccepted = found.role === "contratista"
-        ? ((localStorage.getItem("hoa_accepted_reglamento_" + found.id) === "true") || Boolean(found.hasAcceptedReglamento))
-        : true;
-      const userWithAcceptance = { ...found, hasAcceptedReglamento: isAccepted };
-
-      try {
-        sessionStorage.setItem("hoa_session_user", JSON.stringify(userWithAcceptance));
-      } catch { }
-
-      setCurrentUser(userWithAcceptance);
-      if (userWithAcceptance.role === "contratista" && !userWithAcceptance.hasAcceptedReglamento) {
-        setPortalScreen("reglamento");
-      } else {
-        setPortalScreen("dashboard");
-      }
-    } else {
-      setLoginError("Correo electrónico no registrado en el sistema. Verifica tus credenciales.");
+    } catch (apiErr) {
+      console.warn("API de login no disponible:", apiErr);
+      setLoginError("No se pudo conectar con el servidor de autenticación. Verifica tu conexión.");
+      return;
+    } finally {
+      setIsSubmittingLogin(false);
     }
   };
 
@@ -3463,14 +3445,18 @@ export default function App() {
     };
 
     const targetEmail = roleEmailMap[role];
+    setIsSubmittingLogin(true);
+    setLoginError("");
+
     try {
       const response = await fetch("/api/usuarios/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ correo: targetEmail, password: "123456" }),
       });
+      const data = await response.json().catch(() => ({}));
+
       if (response.ok) {
-        const data = await response.json();
         const roleMapped: UserRole =
           data.rol === "admin" ? "admin" :
             data.rol === "supervisor" ? "supervisor" :
@@ -3508,29 +3494,17 @@ export default function App() {
           setPortalScreen("dashboard");
         }
         return;
+      } else {
+        const errorMsg = data.error || data.message || "Error al autenticar con la cuenta demo seleccionada.";
+        setLoginError(errorMsg);
+        return;
       }
     } catch (e) {
-      console.warn("Inicio rápido por API no disponible, usando fallback local:", e);
-    }
-
-    const found = users.find((u) => u.email?.toLowerCase() === targetEmail || u.role === role);
-    if (found) {
-      const isAccepted = found.role === "contratista"
-        ? ((localStorage.getItem("hoa_accepted_reglamento_" + found.id) === "true") || Boolean(found.hasAcceptedReglamento))
-        : true;
-      const userWithAcceptance = { ...found, hasAcceptedReglamento: isAccepted };
-
-      try {
-        sessionStorage.setItem("hoa_session_user", JSON.stringify(userWithAcceptance));
-      } catch { }
-
-      setCurrentUser(userWithAcceptance);
-      setLoginError("");
-      if (userWithAcceptance.role === "contratista" && !userWithAcceptance.hasAcceptedReglamento) {
-        setPortalScreen("reglamento");
-      } else {
-        setPortalScreen("dashboard");
-      }
+      console.warn("Inicio rápido por API no disponible:", e);
+      setLoginError("No se pudo conectar con el servidor para iniciar sesión rápida.");
+      return;
+    } finally {
+      setIsSubmittingLogin(false);
     }
   };
 
