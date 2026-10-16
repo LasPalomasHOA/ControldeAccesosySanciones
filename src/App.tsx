@@ -957,21 +957,34 @@ function CorbatinDocument({ vehicle, sections }: { vehicle: Vehicle; sections?: 
                 overflow: "hidden",
               }}
             >
-              <div style={{ overflow: "hidden" }}>
-                <div style={{ fontSize: "11.5px", fontWeight: "900", textAlign: "center", marginBottom: "8px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                  Reglamento para externos en áreas comunes:
-                </div>
-                {docSections.map((sec, idx) => (
-                  <div key={sec.title || idx} style={{ marginBottom: "6px" }}>
-                    <div style={{ fontSize: "10.5px", fontWeight: "bold", color: "#000000", marginBottom: "1.5px" }}>{sec.title}</div>
-                    <ul style={{ margin: 0, paddingLeft: "14px", listStyleType: "disc" }}>
-                      {sec.items.map((item, i) => (
-                        <li key={i} style={{ fontSize: "10px", color: "#222222", lineHeight: "1.35", marginBottom: "1.5px" }}>{item}</li>
-                      ))}
-                    </ul>
+              {(() => {
+                const totalItemCount = docSections.reduce((acc, s) => acc + (s.items ? s.items.length : 0), 0);
+                const isDense = totalItemCount > 24;
+                const isVeryDense = totalItemCount > 30;
+                const titleFontSize = isVeryDense ? "9.5px" : isDense ? "10px" : "10.5px";
+                const secMargin = isVeryDense ? "3.5px" : isDense ? "4.5px" : "6px";
+                const itemFontSize = isVeryDense ? "9px" : isDense ? "9.5px" : "10px";
+                const itemLineHeight = isVeryDense ? "1.24" : isDense ? "1.3" : "1.35";
+                const itemMargin = isVeryDense ? "0.5px" : isDense ? "1px" : "1.5px";
+
+                return (
+                  <div style={{ overflow: "hidden" }}>
+                    <div style={{ fontSize: "11.5px", fontWeight: "900", textAlign: "center", marginBottom: isVeryDense ? "5px" : "8px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                      Reglamento para externos en áreas comunes:
+                    </div>
+                    {docSections.map((sec, idx) => (
+                      <div key={sec.title || idx} style={{ marginBottom: secMargin }}>
+                        <div style={{ fontSize: titleFontSize, fontWeight: "bold", color: "#000000", marginBottom: "1.5px" }}>{sec.title}</div>
+                        <ul style={{ margin: 0, paddingLeft: "14px", listStyleType: "disc" }}>
+                          {sec.items.map((item, i) => (
+                            <li key={i} style={{ fontSize: itemFontSize, color: "#222222", lineHeight: itemLineHeight, marginBottom: itemMargin }}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                );
+              })()}
               <div style={{ borderTop: "1px solid #cccccc", paddingTop: "5px", marginTop: "4px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "8px", color: "#555555", gap: "8px", overflow: "hidden" }}>
                 <span style={{ flexShrink: 0, fontWeight: "600" }}>Las Palomas Rocky Point HOA</span>
                 <span style={{ fontFamily: "monospace", fontWeight: "bold", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>
@@ -1077,21 +1090,34 @@ function TarjetaCorbatinVerdePrintable({ corb, sections }: { corb: CorbatinVerde
                 overflow: "hidden",
               }}
             >
-              <div style={{ overflow: "hidden" }}>
-                <div style={{ fontSize: "11.5px", fontWeight: "900", textAlign: "center", marginBottom: "8px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                  Reglamento para externos en áreas comunes:
-                </div>
-                {docSections.map((sec, idx) => (
-                  <div key={sec.title || idx} style={{ marginBottom: "6px" }}>
-                    <div style={{ fontSize: "10.5px", fontWeight: "bold", color: "#000000", marginBottom: "1.5px" }}>{sec.title}</div>
-                    <ul style={{ margin: 0, paddingLeft: "14px", listStyleType: "disc" }}>
-                      {sec.items.map((item, i) => (
-                        <li key={i} style={{ fontSize: "10px", color: "#222222", lineHeight: "1.35", marginBottom: "1.5px" }}>{item}</li>
-                      ))}
-                    </ul>
+              {(() => {
+                const totalItemCount = docSections.reduce((acc, s) => acc + (s.items ? s.items.length : 0), 0);
+                const isDense = totalItemCount > 24;
+                const isVeryDense = totalItemCount > 30;
+                const titleFontSize = isVeryDense ? "9.5px" : isDense ? "10px" : "10.5px";
+                const secMargin = isVeryDense ? "3.5px" : isDense ? "4.5px" : "6px";
+                const itemFontSize = isVeryDense ? "9px" : isDense ? "9.5px" : "10px";
+                const itemLineHeight = isVeryDense ? "1.24" : isDense ? "1.3" : "1.35";
+                const itemMargin = isVeryDense ? "0.5px" : isDense ? "1px" : "1.5px";
+
+                return (
+                  <div style={{ overflow: "hidden" }}>
+                    <div style={{ fontSize: "11.5px", fontWeight: "900", textAlign: "center", marginBottom: isVeryDense ? "5px" : "8px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                      Reglamento para externos en áreas comunes:
+                    </div>
+                    {docSections.map((sec, idx) => (
+                      <div key={sec.title || idx} style={{ marginBottom: secMargin }}>
+                        <div style={{ fontSize: titleFontSize, fontWeight: "bold", color: "#000000", marginBottom: "1.5px" }}>{sec.title}</div>
+                        <ul style={{ margin: 0, paddingLeft: "14px", listStyleType: "disc" }}>
+                          {sec.items.map((item, i) => (
+                            <li key={i} style={{ fontSize: itemFontSize, color: "#222222", lineHeight: itemLineHeight, marginBottom: itemMargin }}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                );
+              })()}
               <div style={{ borderTop: "1px solid #cccccc", paddingTop: "5px", marginTop: "4px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "8px", color: "#555555", gap: "8px", overflow: "hidden" }}>
                 <span style={{ flexShrink: 0, fontWeight: "600" }}>Las Palomas Rocky Point HOA</span>
                 <span style={{ fontFamily: "monospace", fontWeight: "bold", color: "#000000", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>

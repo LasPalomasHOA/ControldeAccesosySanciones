@@ -55,7 +55,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
   };
 
   // Cálculo de Capacidad Física Real de la Tarjeta (13.0 × 17.5 cm = 151 mm útiles)
-  const { totalSections, totalItems, totalChars, capacityPercent, isFull } = useMemo(() => {
+  const { totalSections, totalItems, totalChars, capacityPercent, isFull, canAddSection, canAddItem } = useMemo(() => {
     const sectionsCount = (reglamentoSecciones || []).length;
     const itemsCount = (reglamentoSecciones || []).reduce((acc, s) => acc + (s.items ? s.items.length : 0), 0);
     const titleCharsCount = (reglamentoSecciones || []).reduce((acc, s) => acc + (s.title || "").length, 0);
@@ -70,13 +70,18 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
     (reglamentoSecciones || []).forEach((sec) => {
       (sec.items || []).forEach((it) => {
         const len = (it || "").length;
-        estimatedLines += Math.max(1, Math.ceil(len / 52)); // ~52 caracteres por línea en 113mm
+        estimatedLines += Math.max(1, Math.ceil(len / 58)); // ~58 caracteres por línea en tarjeta de 348px
       });
     });
 
-    const maxLines = 28;
+    const maxLines = 45; // Capacidad física real adaptativa de la tarjeta de 13.0 × 17.5 cm (el estándar de fábrica representa ~73%)
     const percent = Math.min(100, Math.round((estimatedLines / maxLines) * 100));
-    const full = percent >= 100 || sectionsCount >= 10;
+
+    // Espacio para agregar una norma: disponible mientras las líneas estimadas no superen el límite físico
+    const canAddItem = estimatedLines < maxLines;
+    // Espacio para agregar una sección: disponible si hay menos de 10 secciones y cabe el bloque inicial (~2.5 líneas)
+    const canAddSection = sectionsCount < 10 && (estimatedLines + 2.5) <= maxLines;
+    const full = percent >= 100 || !canAddItem;
 
     return {
       totalSections: sectionsCount,
@@ -84,6 +89,8 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
       totalChars: charsCount,
       capacityPercent: percent,
       isFull: full,
+      canAddSection,
+      canAddItem,
     };
   }, [reglamentoSecciones]);
 
@@ -97,19 +104,19 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
 
   const handleItemChange = (secIndex: number, itemIndex: number, newValue: string) => {
     const updated = [...reglamentoSecciones];
-    const newItems = [...updated[secIndex].items];
-    newItems[itemIndex] = newValue;
-    updated[secIndex] = { ...updated[secIndex], items: newItems };
+    const currentItems = updated[secIndex]?.items ? [...updated[secIndex].items] : [];
+    currentItems[itemIndex] = newValue;
+    updated[secIndex] = { ...updated[secIndex], items: currentItems };
     onUpdateReglamentoSecciones(updated);
     setHasChanges(true);
   };
 
   const handleAddItem = (secIndex: number) => {
-    if (isFull) {
+    if (!canAddItem) {
       setModalConfig({
         isOpen: true,
         title: "Límite de Capacidad Física",
-        description: "La tarjeta de 13.0 × 17.5 cm ha alcanzado su capacidad máxima. Te sugerimos compactar textos existentes o redactar cláusulas extensas en la pestaña de 'Términos y Condiciones Generales'.",
+        description: "La tarjeta de 13.0 × 17.5 cm ha alcanzado su capacidad máxima permitida para garantizar que el texto se imprima con total legibilidad. Te sugerimos compactar textos existentes o redactar cláusulas extensas en la pestaña de 'Términos y Condiciones Generales'.",
         confirmText: "Entendido",
         icon: "warning",
         isDestructive: false,
@@ -118,9 +125,10 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
       return;
     }
     const updated = [...reglamentoSecciones];
+    const currentItems = updated[secIndex]?.items || [];
     updated[secIndex] = {
       ...updated[secIndex],
-      items: [...updated[secIndex].items, "Nueva norma reglamentaria"],
+      items: [...currentItems, "Nueva norma reglamentaria"],
     };
     onUpdateReglamentoSecciones(updated);
     setHasChanges(true);
@@ -128,18 +136,21 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
 
   const handleRemoveItem = (secIndex: number, itemIndex: number) => {
     const updated = [...reglamentoSecciones];
-    const newItems = updated[secIndex].items.filter((_, i) => i !== itemIndex);
+    const currentItems = updated[secIndex]?.items || [];
+    const newItems = currentItems.filter((_, i) => i !== itemIndex);
     updated[secIndex] = { ...updated[secIndex], items: newItems };
     onUpdateReglamentoSecciones(updated);
     setHasChanges(true);
   };
 
   const handleAddSection = () => {
-    if (isFull) {
+    if (!canAddSection) {
       setModalConfig({
         isOpen: true,
-        title: "Capacidad Máxima Alcanzada",
-        description: "La tarjeta física no tiene más espacio vertical para añadir otra sección completa sin desbordar el documento al imprimir. Puedes editar o compactar las secciones actuales.",
+        title: "Capacidad Máxima de Secciones",
+        description: (reglamentoSecciones || []).length >= 10
+          ? "Se ha alcanzado el límite máximo de 10 secciones para el corbatín físico. Puedes organizar tus normas dentro de las secciones existentes."
+          : "La tarjeta física no cuenta con suficiente espacio vertical para agregar una nueva sección completa sin desbordar el documento al imprimir. Puedes compactar textos o agregar normas dentro de las secciones existentes.",
         confirmText: "Entendido",
         icon: "warning",
         isDestructive: false,
@@ -295,7 +306,13 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
               </svg>
               1. Normas de Corbatín Físico
             </span>
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${isFull ? "bg-amber-50 text-amber-800 border-amber-300" : "bg-slate-100 text-slate-600 border-slate-200"}`}>
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+              capacityPercent >= 100
+                ? "bg-rose-50 text-rose-700 border-rose-300"
+                : capacityPercent >= 88
+                  ? "bg-amber-50 text-amber-800 border-amber-300"
+                  : "bg-slate-100 text-slate-600 border-slate-200"
+            }`}>
               {capacityPercent}% Capacidad
             </span>
           </div>
@@ -344,8 +361,14 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
                 <line x1="9" y1="21" x2="9" y2="9" />
               </svg>
               <span>Ocupación de la tarjeta física:</span>
-              <strong className={isFull ? "text-amber-700 font-bold" : "text-[#0D6E5F] font-bold"}>
-                {capacityPercent}% {isFull ? "(Capacidad Máxima)" : "(Espacio Disponible)"}
+              <strong className={
+                capacityPercent >= 100
+                  ? "text-rose-600 font-bold"
+                  : capacityPercent >= 88
+                    ? "text-amber-700 font-bold"
+                    : "text-[#0D6E5F] font-bold"
+              }>
+                {capacityPercent}% {capacityPercent >= 100 ? "(Capacidad Máxima)" : capacityPercent >= 88 ? "(Capacidad Alta)" : "(Espacio Disponible)"}
               </strong>
             </div>
 
@@ -370,14 +393,15 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
                 <button
                   type="button"
                   onClick={handleAddSection}
-                  disabled={isFull}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 ${isFull
+                  disabled={!canAddSection}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 ${
+                    !canAddSection
                       ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
                       : "bg-[#0D6E5F]/10 text-[#0D6E5F] hover:bg-[#0D6E5F]/20 cursor-pointer"
-                    }`}
-                  title={isFull ? "Has alcanzado la capacidad física de la tarjeta" : "Agregar nueva sección"}
+                  }`}
+                  title={!canAddSection ? "Has alcanzado la capacidad física para nuevas secciones" : "Agregar nueva sección"}
                 >
-                  <span>{isFull ? "Tarjeta Llena" : "Nueva Sección"}</span>
+                  <span>{!canAddSection ? "Límite de Secciones" : "+ Nueva Sección"}</span>
                 </button>
               </div>
 
@@ -442,11 +466,12 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
                         <button
                           type="button"
                           onClick={() => handleAddItem(secIdx)}
-                          disabled={isFull}
-                          className={`text-[11px] font-bold flex items-center gap-1 ${isFull ? "text-slate-400 cursor-not-allowed" : "text-[#0D6E5F] hover:underline cursor-pointer"
-                            }`}
+                          disabled={!canAddItem}
+                          className={`text-[11px] font-bold flex items-center gap-1 ${
+                            !canAddItem ? "text-slate-400 cursor-not-allowed" : "text-[#0D6E5F] hover:underline cursor-pointer"
+                          }`}
                         >
-                          <span>Agregar norma a esta sección</span>
+                          <span>+ Agregar norma a esta sección</span>
                         </button>
                       </div>
                     </div>
@@ -484,17 +509,19 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
                       Reglamento para Externos en Áreas Comunes
                     </div>
 
-                    <div className="space-y-2 pr-0.5">
+                    <div className={`${totalItems > 24 ? "space-y-1.5" : "space-y-2"} pr-0.5`}>
                       {reglamentoSecciones.map((sec, i) => (
                         <div key={i} className="space-y-0.5">
-                          <div className="font-bold text-black uppercase text-[10px]">
+                          <div className={`font-bold text-black uppercase ${totalItems > 24 ? "text-[9.5px]" : "text-[10px]"}`}>
                             {sec.title || "SECCIÓN SIN TÍTULO"}
                           </div>
                           <ul className="list-disc pl-4 space-y-0.5 m-0">
                             {sec.items.map((item, j) => (
                               <li
                                 key={j}
-                                className="text-slate-900 leading-snug text-[9.5px]"
+                                className={`text-slate-900 leading-snug ${
+                                  totalItems > 28 ? "text-[8.5px]" : totalItems > 24 ? "text-[9px]" : "text-[9.5px]"
+                                }`}
                               >
                                 {item || "Norma pendiente de redacción"}
                               </li>
