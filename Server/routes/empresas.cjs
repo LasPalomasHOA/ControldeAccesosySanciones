@@ -4,21 +4,42 @@ const { Op } = require('sequelize');
 const db = require('../models/index.cjs');
 const { optimizeBase64Image } = require('../utils/imageHandler.cjs');
 
-// GET /api/empresas - Listar empresas con conteos de trabajadores y vehículos
+// GET /api/empresas - Listar empresas con conteos nativos en SQL (sin descargar arrays de IDs)
 router.get('/', async (req, res) => {
   try {
+    const { limit, offset } = req.query;
+    const parsedLimit = Math.min(parseInt(limit, 10) || 200, 500);
+    const parsedOffset = parseInt(offset, 10) || 0;
+
+    const schema = db.sequelize.options.define?.schema || 'control_acceso';
+    const trabTable = schema ? `"${schema}"."trabajadores"` : `"trabajadores"`;
+    const vehTable = schema ? `"${schema}"."vehiculos"` : `"vehiculos"`;
+
     const empresas = await db.Empresa.findAll({
-      include: [
-        { model: db.Trabajador, as: 'trabajadores', attributes: ['id_trabajador'] },
-        { 
-          model: db.Vehiculo, 
-          as: 'vehiculos', 
-          attributes: ['id_vehiculo'],
-          where: { eliminado: { [Op.or]: [false, null] } },
-          required: false
-        }
-      ],
-      order: [['created_at', 'DESC']]
+      attributes: {
+        include: [
+          [
+            db.sequelize.literal(`(
+              SELECT COUNT(*)::int
+              FROM ${trabTable} AS t
+              WHERE t.id_empresa = "empresa"."id_empresa"
+            )`),
+            'total_trabajadores'
+          ],
+          [
+            db.sequelize.literal(`(
+              SELECT COUNT(*)::int
+              FROM ${vehTable} AS v
+              WHERE v.id_empresa = "empresa"."id_empresa"
+                AND (v.eliminado IS FALSE OR v.eliminado IS NULL)
+            )`),
+            'total_vehiculos'
+          ]
+        ]
+      },
+      order: [['created_at', 'DESC']],
+      limit: parsedLimit,
+      offset: parsedOffset
     });
 
     const resultado = empresas.map(emp => {
@@ -31,8 +52,8 @@ router.get('/', async (req, res) => {
         nombre: plain.razon_social,
         responsable: plain.responsable_nombre,
         estado: plain.estatus === 'ACTIVA' ? 'activo' : 'suspendido',
-        totalTrabajadores: plain.trabajadores?.length || 0,
-        totalVehiculos: plain.vehiculos?.length || 0,
+        totalTrabajadores: Number(plain.total_trabajadores || 0),
+        totalVehiculos: Number(plain.total_vehiculos || 0),
         corbatin_rango_inicio: inicio,
         corbatin_rango_fin: fin,
         corbatinRangoInicio: inicio,

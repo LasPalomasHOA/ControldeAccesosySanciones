@@ -70,41 +70,26 @@ function getBucketForPrefix(prefix) {
 }
 
 /**
- * Convierte cualquier referencia a archivo local (/uploads/...) a Data URL (base64)
- * o preserva URLs remotas http/https directamente sin conversiones pesadas.
+ * Normaliza la referencia de imagen o documento a una URL ligera (remota o ruta estática /uploads/...).
+ * NUNCA convierte archivos en disco a Base64 para evitar inflar los payloads JSON.
  */
 function resolveFotoToDataUrl(fotoUrl) {
   if (!fotoUrl) return null;
   const str = String(fotoUrl).trim();
-  
-  // Si ya es URL remota http/https o Data URL Base64, devolver directamente
-  if (str.startsWith('http://') || str.startsWith('https://') || str.startsWith('data:image') || str.startsWith('data:application/pdf')) {
+
+  // Si ya es URL remota http/https o Data URL existente, devolver tal cual
+  if (
+    str.startsWith('http://') ||
+    str.startsWith('https://') ||
+    str.startsWith('data:image') ||
+    str.startsWith('data:application/pdf')
+  ) {
     return str;
   }
 
-  const filename = path.basename(str);
-  const possiblePaths = [
-    path.join(__dirname, '../uploads', filename),
-    path.join(process.cwd(), 'Server', 'uploads', filename),
-    path.join(process.cwd(), 'public', 'uploads', filename),
-    path.join('/tmp', 'uploads', filename)
-  ];
-
-  for (const p of possiblePaths) {
-    if (fs.existsSync(p)) {
-      try {
-        const ext = path.extname(p).toLowerCase().replace('.', '') || 'jpeg';
-        const mime = ext === 'jpg' ? 'image/jpeg' : (ext === 'pdf' ? 'application/pdf' : 'image/' + ext);
-        const base64Data = fs.readFileSync(p).toString('base64');
-        return 'data:' + mime + ';base64,' + base64Data;
-      } catch (e) {
-        console.warn('Error leyendo archivo local para Base64:', e.message);
-      }
-    }
-  }
-
+  if (str.startsWith('/uploads/')) return str;
   if (str.startsWith('uploads/')) return '/' + str;
-  if (!str.startsWith('/') && !str.startsWith('http')) return '/uploads/' + str;
+  if (!str.startsWith('/')) return '/uploads/' + path.basename(str);
   return str;
 }
 
@@ -216,18 +201,20 @@ async function uploadBufferToSupabase(buffer, targetBucket, filePath, contentTyp
 
 /**
  * Procesa y sube archivos (Imágenes o Documentos PDF) directamente a Supabase Storage.
- * Retorna la URL pública permanente (ej. https://.../documentos/seguro_imss_123.pdf)
- * para almacenar en la base de datos con consumo mínimo de almacenamiento.
+ * Si Supabase falla, guarda el binario en el disco local (/uploads/...) y retorna la URL relativa,
+ * evitando por completo guardar cadenas Base64 en la base de datos.
  */
 async function saveBase64Image(dataString, prefix = 'img', options = {}) {
   if (!dataString) return null;
   const str = String(dataString).trim();
 
-  // 1. Si ya es una URL remota de Supabase o CDN, devolver tal cual
-  if (str.startsWith('http://') || str.startsWith('https://')) {
+  // 1. Si ya es una URL remota o ruta estática local, devolver tal cual
+  if (str.startsWith('http://') || str.startsWith('https://') || str.startsWith('/uploads/')) {
     return str;
   }
 
+  const timestamp = Date.now();
+  const randomSuffix = Math.random().toString(36).substring(2, 7);
   const isPdf = str.startsWith('data:application/pdf') || str.includes('application/pdf') || options.isPdf;
 
   // 2. Manejo de Documentos PDF
@@ -238,19 +225,26 @@ async function saveBase64Image(dataString, prefix = 'img', options = {}) {
       buffer = Buffer.from(b64, 'base64');
     } catch (e) {
       console.warn('[imageHandler] Error decodificando PDF Base64:', e.message);
-      return str;
+      return null;
     }
+
+    const fileName = `${prefix}_${timestamp}_${randomSuffix}.pdf`;
 
     if (supabase && buffer) {
       const bucket = options.bucket || getBucketForPrefix(prefix);
-      const timestamp = Date.now();
-      const randomSuffix = Math.random().toString(36).substring(2, 7);
-      const fileName = `${prefix}_${timestamp}_${randomSuffix}.pdf`;
-
       const publicUrl = await uploadBufferToSupabase(buffer, bucket, fileName, 'application/pdf');
       if (publicUrl) return publicUrl;
     }
-    return str; // Fallback Base64 solo si no hay Supabase
+
+    // Fallback en disco local (nunca Base64 en BD)
+    try {
+      const localPath = path.join(UPLOADS_DIR, fileName);
+      fs.writeFileSync(localPath, buffer);
+      return `/uploads/${fileName}`;
+    } catch (err) {
+      console.error('[imageHandler] Error guardando PDF en disco local:', err.message);
+      return null;
+    }
   }
 
   // 3. Manejo de Imágenes (JPG, PNG, WebP)
@@ -261,37 +255,35 @@ async function saveBase64Image(dataString, prefix = 'img', options = {}) {
   } else if (str.length > 500 && !str.startsWith('/')) {
     try {
       buffer = Buffer.from(str, 'base64');
-    } catch { }
-  } else if (str.startsWith('/') || str.startsWith('uploads/')) {
-    const resolved = resolveFotoToDataUrl(str);
-    if (resolved && resolved.startsWith('data:image')) {
-      const b64 = resolved.replace(/^data:image\/\w+;base64,/, '');
-      buffer = Buffer.from(b64, 'base64');
-    }
+    } catch {}
   }
 
   if (!buffer) {
-    return str;
+    return resolveFotoToDataUrl(str);
   }
 
-  // 4. Comprimir a WebP a máximo 800px de ancho y calidad 65%
+  // 4. Comprimir a WebP (máx 800px, calidad 65%)
   const maxWidth = options.maxWidth || 800;
   const quality = options.quality || 65;
   const compressedBuffer = await comprimirBuffer(buffer, maxWidth, quality);
+  const fileName = `${prefix}_${timestamp}_${randomSuffix}.webp`;
 
-  // 5. Subir a Supabase Storage con el mismo método
+  // 5. Subir a Supabase Storage
   if (supabase) {
     const bucket = options.bucket || getBucketForPrefix(prefix);
-    const timestamp = Date.now();
-    const randomSuffix = Math.random().toString(36).substring(2, 7);
-    const fileName = `${prefix}_${timestamp}_${randomSuffix}.webp`;
-
     const publicUrl = await uploadBufferToSupabase(compressedBuffer, bucket, fileName, 'image/webp');
     if (publicUrl) return publicUrl;
   }
 
-  // 6. Fallback seguro: Retornar string Base64 WebP optimizado
-  return 'data:image/webp;base64,' + compressedBuffer.toString('base64');
+  // 6. Fallback en disco local (evita guardar Base64 en PostgreSQL)
+  try {
+    const localPath = path.join(UPLOADS_DIR, fileName);
+    fs.writeFileSync(localPath, compressedBuffer);
+    return `/uploads/${fileName}`;
+  } catch (err) {
+    console.error('[imageHandler] Error guardando WebP en disco local:', err.message);
+    return null;
+  }
 }
 
 module.exports = {

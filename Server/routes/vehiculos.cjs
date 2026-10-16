@@ -5,10 +5,10 @@ const db = require('../models/index.cjs');
 const events = require('../events.cjs');
 const { saveBase64Image } = require('../utils/imageHandler.cjs');
 
-// GET /api/vehiculos - Listar todos los vehículos
+// GET /api/vehiculos - Listar vehículos optimizado (1 sola query SQL con LEFT JOIN y soporte de límite)
 router.get('/', async (req, res) => {
   try {
-    const { id_empresa, estatus_acceso, include_deleted } = req.query;
+    const { id_empresa, estatus_acceso, include_deleted, limit, offset } = req.query;
     const where = {};
     if (include_deleted !== 'true') {
       where.eliminado = { [Op.or]: [false, null] };
@@ -16,15 +16,35 @@ router.get('/', async (req, res) => {
     if (id_empresa) where.id_empresa = id_empresa;
     if (estatus_acceso) where.estatus_acceso = estatus_acceso;
 
+    const parsedLimit = Math.min(parseInt(limit, 10) || 500, 1000);
+    const parsedOffset = parseInt(offset, 10) || 0;
+
     const vehiculos = await db.Vehiculo.findAll({
       where,
-      attributes: ['id_vehiculo', 'id_empresa', 'marca', 'modelo', 'año', 'placas', 'color', 'foto_url', 'estatus_acceso', 'eliminado', 'created_at', 'updated_at'],
+      attributes: [
+        'id_vehiculo', 'id_empresa', 'marca', 'modelo', 'año', 'placas', 'color',
+        'foto_url', 'estatus_acceso', 'eliminado', 'created_at', 'updated_at'
+      ],
       include: [
         { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social'] },
-        { model: db.Corbatin, as: 'corbatines', attributes: ['id_corbatin', 'numero', 'estatus', 'fecha_vencimiento', 'qr_token'], separate: true },
-        { model: db.Sancion, as: 'sanciones', attributes: ['id_sancion', 'estatus', 'fecha_inicio', 'fecha_fin'], where: { estatus: 'ACTIVA' }, required: false, separate: true }
+        { 
+          model: db.Corbatin, 
+          as: 'corbatines', 
+          attributes: ['id_corbatin', 'numero', 'estatus', 'fecha_vencimiento', 'qr_token'],
+          required: false
+        },
+        { 
+          model: db.Sancion, 
+          as: 'sanciones', 
+          attributes: ['id_sancion', 'estatus', 'fecha_inicio', 'fecha_fin'], 
+          where: { estatus: 'ACTIVA' }, 
+          required: false
+        }
       ],
-      order: [['created_at', 'DESC']]
+      order: [['created_at', 'DESC']],
+      limit: parsedLimit,
+      offset: parsedOffset,
+      subQuery: false
     });
 
     const formatFoto = (url) => {

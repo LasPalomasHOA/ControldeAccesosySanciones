@@ -135,6 +135,9 @@ router.get('/', async (req, res) => {
       where.estatus = estatus;
     }
 
+    const parsedLimit = Math.min(parseInt(req.query.limit, 10) || 500, 1000);
+    const parsedOffset = parseInt(req.query.offset, 10) || 0;
+
     const corbatines = await db.Corbatin.findAll({
       where,
       attributes: ['id_corbatin', 'id_vehiculo', 'tipos', 'numero', 'qr_token', 'fecha_emision', 'fecha_vencimiento', 'estatus', 'empresa_nombre', 'telefono', 'email', 'vigencia_texto', 'notas', 'creado_por', 'activo'],
@@ -147,7 +150,9 @@ router.get('/', async (req, res) => {
           include: [{ model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social', 'telefono', 'correo'], required: false }]
         }
       ],
-      order: [['numero', 'ASC']]
+      order: [['numero', 'ASC']],
+      limit: parsedLimit,
+      offset: parsedOffset
     });
 
     const resultado = corbatines.map(formatCorbatin);

@@ -2406,14 +2406,21 @@ export default function App() {
   const loadDatabaseData = async (force: boolean = false, onlyDynamic: boolean = false) => {
     if (isFetchingDbRef.current) return;
     const now = Date.now();
-    // Si no es una llamada forzada (por mutación o evento en tiempo real), omitir si ya se consultó recientemente (<10s)
-    if (!force && now - lastFetchTimestampRef.current < 10000) {
+    // Si no es una llamada forzada (por mutación o evento en tiempo real), omitir si ya se consultó recientemente (<15s)
+    if (!force && now - lastFetchTimestampRef.current < 15000) {
       return;
     }
 
+    const role = currentUser?.role;
+    // En refrescos periódicos de fondo (onlyDynamic), pedir solo lo indispensable según el rol activo
+    const fetchVehicles = !onlyDynamic;
+    const fetchSanciones = !onlyDynamic || role === "supervisor" || role === "contratista" || role === "caseta";
+    const fetchBitacora = !onlyDynamic || role === "caseta" || role === "supervisor";
+    const fetchReportes = !onlyDynamic || role === "supervisor";
+
     isFetchingDbRef.current = true;
     try {
-      // Si es un refresco periódico de fondo (onlyDynamic = true), solo consultamos tablas operativas ligeras
+      // Si es un refresco periódico de fondo (onlyDynamic = true), solo consultamos tablas operativas según el rol
       const [
         resUsers,
         resEmpresas,
@@ -2427,11 +2434,11 @@ export default function App() {
       ] = await Promise.allSettled([
         onlyDynamic ? Promise.resolve(null) : api.getUsuarios(),
         onlyDynamic ? Promise.resolve(null) : api.getEmpresas(),
-        api.getVehiculos(),
+        fetchVehicles ? api.getVehiculos() : Promise.resolve(null),
         onlyDynamic ? Promise.resolve(null) : api.getTrabajadores(),
-        api.getSanciones(),
-        api.getBitacora(),
-        api.getReportes(),
+        fetchSanciones ? api.getSanciones() : Promise.resolve(null),
+        fetchBitacora ? api.getBitacora() : Promise.resolve(null),
+        fetchReportes ? api.getReportes() : Promise.resolve(null),
         onlyDynamic ? Promise.resolve(null) : api.getReglamentoVigente(),
         onlyDynamic ? Promise.resolve(null) : api.getCorbatines({ tipo: "VERDE" }),
       ]);
@@ -3178,18 +3185,22 @@ export default function App() {
       }
     }
 
-    // 3. Sincronización periódica controlada (cada 120s) únicamente si la pestaña está visible
+    // 3. Sincronización periódica controlada (cada 5 min / 300s) solo para roles operativos en vivo
     const backgroundSyncInterval = setInterval(() => {
-      if (document.visibilityState === "visible") {
+      if (
+        document.visibilityState === "visible" &&
+        currentUser &&
+        (currentUser.role === "caseta" || currentUser.role === "supervisor" || currentUser.role === "contratista")
+      ) {
         loadDatabaseData(false, true);
       }
-    }, 120000);
+    }, 300000);
 
-    // 4. Sincronización inteligente al regresar a la pestaña (si pasaron >60s de inactividad)
+    // 4. Sincronización inteligente al regresar a la pestaña (si pasaron >3 min de inactividad)
     const handleFocusOrVisibility = () => {
       if (document.visibilityState === "visible") {
         const now = Date.now();
-        if (now - lastFetchTimestampRef.current > 60000) {
+        if (now - lastFetchTimestampRef.current > 180000) {
           loadDatabaseData(false, true);
         }
       }
@@ -3206,7 +3217,7 @@ export default function App() {
       window.removeEventListener("focus", handleFocusOrVisibility);
       document.removeEventListener("visibilitychange", handleFocusOrVisibility);
     };
-  }, [currentUser]);
+  }, [currentUser?.id, currentUser?.role]);
 
   // ─── VALIDACIÓN DE SEGURIDAD DE SESIÓN EN SEGUNDO PLANO ───
   useEffect(() => {

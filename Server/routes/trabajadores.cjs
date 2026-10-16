@@ -89,12 +89,38 @@ router.get('/:id/documento/:tipo', async (req, res) => {
   }
 });
 
-// GET /api/trabajadores/:id - Obtener un trabajador por ID
+// GET /api/trabajadores/:id - Obtener un trabajador por ID sin arrastrar PDFs en Base64
 router.get('/:id', async (req, res) => {
   try {
     const trabajador = await db.Trabajador.findByPk(req.params.id, {
+      attributes: [
+        'id_trabajador',
+        'id_empresa',
+        'nombre',
+        'apellidos',
+        'telefono',
+        'foto_url',
+        [
+          db.sequelize.literal(`CASE 
+            WHEN comprobante_seguro_url LIKE 'data:%' THEN CONCAT('/api/trabajadores/', id_trabajador, '/documento/seguro.pdf')
+            ELSE comprobante_seguro_url 
+          END`),
+          'comprobante_seguro_url'
+        ],
+        [
+          db.sequelize.literal(`CASE 
+            WHEN dc3_documento_url LIKE 'data:%' THEN CONCAT('/api/trabajadores/', id_trabajador, '/documento/dc3.pdf')
+            ELSE dc3_documento_url 
+          END`),
+          'dc3_documento_url'
+        ],
+        'activo',
+        'created_at',
+        'updated_at'
+      ],
       include: [{ model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social'] }]
     });
+
     if (!trabajador) {
       return res.status(404).json({ error: 'Trabajador no encontrado' });
     }
@@ -103,7 +129,8 @@ router.get('/:id', async (req, res) => {
       ...plain,
       id: String(plain.id_trabajador),
       id_empresa: String(plain.id_empresa),
-      empresaNombre: plain.empresa?.razon_social || ''
+      empresaNombre: plain.empresa?.razon_social || '',
+      foto_url: resolveFotoToDataUrl(plain.foto_url)
     });
   } catch (error) {
     console.error('Error al obtener trabajador:', error);

@@ -102,7 +102,7 @@ router.post('/login', checkLoginRateLimit, async (req, res) => {
   }
 });
 
-// GET /api/usuarios/verificar-sesion/:id - Validar sesión activa y obtener datos actualizados
+// GET /api/usuarios/verificar-sesion/:id - Consulta ultraligera (< 500 bytes)
 router.get('/verificar-sesion/:id', async (req, res) => {
   try {
     const idNum = parseInt(req.params.id, 10);
@@ -111,6 +111,13 @@ router.get('/verificar-sesion/:id', async (req, res) => {
     }
 
     const usuario = await db.Usuario.findByPk(idNum, {
+      attributes: [
+        'id_usuario', 'id_rol', 'id_empresa', 'nombre', 'correo', 'activo',
+        [
+          db.sequelize.literal(`CASE WHEN foto_url LIKE 'data:%' THEN NULL ELSE foto_url END`),
+          'foto_url'
+        ]
+      ],
       include: [
         { model: db.Rol, as: 'rol', attributes: ['id_rol', 'nombre'] },
         { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social'] }
@@ -126,7 +133,6 @@ router.get('/verificar-sesion/:id', async (req, res) => {
     }
 
     const plain = usuario.get({ plain: true });
-    delete plain.password_hash;
 
     const rolMap = {
       'ADMINISTRADOR': 'admin',
@@ -159,16 +165,20 @@ router.get('/verificar-sesion/:id', async (req, res) => {
     const rolNormalizado = (rolKey && rolMap[rolKey]) || (plain.id_rol && idRolFallback[plain.id_rol]) || plain.rol?.nombre?.toLowerCase() || 'caseta';
     const rolNombreCalculado = plain.rol?.nombre || (plain.id_rol && nombreRolFallback[plain.id_rol]) || (rolNormalizado === 'caseta' ? 'CASETA' : 'ADMINISTRADOR');
 
-    // Verificar aceptación de reglamento si es proveedor/contratista
+    // En verificación de reglamento, consultar solo id_reglamento sin traer contenido_texto
     let hasAcceptedReglamento = true;
     if (rolNormalizado === 'proveedor') {
       hasAcceptedReglamento = false;
       try {
-        const regVigente = await db.Reglamento.findOne({ where: { vigente: true } });
+        const regVigente = await db.Reglamento.findOne({
+          where: { vigente: true },
+          attributes: ['id_reglamento']
+        });
         if (regVigente) {
           const conditions = [{ id_usuario: plain.id_usuario }];
           if (plain.id_empresa) conditions.push({ id_empresa: plain.id_empresa });
           const aceptacion = await db.AceptacionReglamento.findOne({
+            attributes: ['id_aceptacion'],
             where: {
               id_reglamento: regVigente.id_reglamento,
               [db.Sequelize.Op.or]: conditions

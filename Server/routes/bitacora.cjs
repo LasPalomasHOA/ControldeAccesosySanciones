@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
           attributes: ['id_vehiculo', 'placas', 'marca', 'modelo', 'color'],
           include: [
             { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social', 'telefono'] },
-            { model: db.Corbatin, as: 'corbatines', attributes: ['id_corbatin', 'numero', 'estatus'], separate: true }
+            { model: db.Corbatin, as: 'corbatines', attributes: ['id_corbatin', 'numero', 'estatus'] }
           ]
         },
         { 
