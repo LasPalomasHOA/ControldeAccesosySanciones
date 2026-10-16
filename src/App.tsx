@@ -10,6 +10,11 @@ import ContratistaReglamentoView from "./components/ContratistaReglamentoView";
 import ContabilidadDashboard from "./components/ContabilidadDashboard";
 import QRScannerModal from "./components/QRScannerModal";
 import ReporteBitacoraModal from "./components/ReporteBitacoraModal";
+import AlertaHorarioVencidoModal from "./components/AlertaHorarioVencidoModal";
+import {
+  evaluateOvertimeContractors,
+  type ContratistaExcedido
+} from "./utils/scheduleParser";
 import { downloadBitacoraPDF } from "./utils/pdfBitacoraExporter";
 import { exportBitacoraCasetaToExcel } from "./utils/excelReportExporter";
 import logoPng from "./assets/logo.png";
@@ -1696,6 +1701,39 @@ export default function App() {
   const [auditoriaRoleFilter, setAuditoriaRoleFilter] = useState<"todos" | "admin" | "supervisor" | "contratista" | "caseta">("todos");
   const [auditoriaCurrentPage, setAuditoriaCurrentPage] = useState(1);
   const AUDITORIA_PAGE_SIZE = 10;
+
+  // ─── ALERTA DINÁMICA DE HORARIOS PARA CASETA ───
+  const [currentTimeTicker, setCurrentTimeTicker] = useState<number>(() => Date.now());
+  const [selectedOvertimeContractor, setSelectedOvertimeContractor] = useState<ContratistaExcedido | null>(null);
+  const [dismissedOvertimeAlertIds, setDismissedOvertimeAlertIds] = useState<string[]>([]);
+  const [hasShownAutoOvertimeModal, setHasShownAutoOvertimeModal] = useState<Record<string, boolean>>({});
+  const [isProcessingOvertimeAction, setIsProcessingOvertimeAction] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTimeTicker(Date.now());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const contratistasExcedidos = useMemo(() => {
+    const now = new Date(currentTimeTicker);
+    return evaluateOvertimeContractors(bitacora, reglamentoSecciones, now);
+  }, [bitacora, reglamentoSecciones, currentTimeTicker]);
+
+  useEffect(() => {
+    const isCasetaActive = (currentUser?.role === "caseta" || (currentUser?.role as string) === "guardia") && portalScreen === "dashboard";
+    if (!isCasetaActive) return;
+
+    const pendingAlert = contratistasExcedidos.find(
+      (c) => !hasShownAutoOvertimeModal[c.registroId] && !dismissedOvertimeAlertIds.includes(c.registroId)
+    );
+
+    if (pendingAlert && !selectedOvertimeContractor) {
+      setSelectedOvertimeContractor(pendingAlert);
+      setHasShownAutoOvertimeModal((prev) => ({ ...prev, [pendingAlert.registroId]: true }));
+    }
+  }, [contratistasExcedidos, currentUser?.role, portalScreen, hasShownAutoOvertimeModal, dismissedOvertimeAlertIds, selectedOvertimeContractor]);
 
   // New Vehicle Photo State
   const [nuevoVehiculoFoto, setNuevoVehiculoFoto] = useState<string>("");
@@ -4941,6 +4979,54 @@ export default function App() {
         delete next[id];
         return next;
       });
+    }
+  };
+
+  const handleRegistrarSalidaDesdeAlerta = async (registroId: string) => {
+    setIsProcessingOvertimeAction(true);
+    try {
+      await handleMarcarSalida(registroId);
+      setSelectedOvertimeContractor(null);
+      setDismissedOvertimeAlertIds((prev) => [...prev, registroId]);
+    } catch (err: any) {
+      showToast("Error al registrar salida: " + (err.message || err), "error");
+    } finally {
+      setIsProcessingOvertimeAction(false);
+    }
+  };
+
+  const handleReportarInfraccionHorario = async (item: ContratistaExcedido) => {
+    setIsProcessingOvertimeAction(true);
+    try {
+      const motivo = item.esPernocta
+        ? `Unidad permaneció en el complejo durante la noche sin autorización de pernocta (Fecha de ingreso: ${item.fechaIngreso}).`
+        : `Exceso de horario laboral en áreas comunes. Límite establecido: ${item.horaLimite} hrs, exceso registrado: +${item.minutosExcedidos} minutos.`;
+
+      const idUser = currentUser?.id ? parseInt(currentUser.id, 10) : 4;
+      const idVehiculo = item.idVehiculo ? parseInt(item.idVehiculo, 10) : null;
+
+      if (!idVehiculo) {
+        showToast("No se pudo vincular el vehículo para generar la infracción formal.", "warning");
+        return;
+      }
+
+      await api.createReporte({
+        id_vehiculo: idVehiculo,
+        id_corbatin: item.idCorbatin ? parseInt(item.idCorbatin, 10) : null,
+        id_infraccion: 2, // INF-02: Trabajos fuera del horario autorizado
+        id_usuario: idUser,
+        ubicacion_texto: "Áreas Comunes / Caseta Principal",
+        descripcion_hechos: motivo
+      });
+
+      showToast(`Infracción generada y enviada a revisión de Supervisión para ${item.empresaNombre}.`, "success", "Reporte de Infracción Creado");
+      setSelectedOvertimeContractor(null);
+      setDismissedOvertimeAlertIds((prev) => [...prev, item.registroId]);
+      await reloadReportes();
+    } catch (err: any) {
+      showToast("Error al registrar infracción: " + (err.message || err), "error");
+    } finally {
+      setIsProcessingOvertimeAction(false);
     }
   };
 
@@ -10497,6 +10583,48 @@ export default function App() {
                 </div>
               </div>
 
+              {/* BANNER DE ALERTA DE HORARIOS PARA CASETA */}
+              {contratistasExcedidos.length > 0 && (
+                <div className="bg-amber-500/10 border-2 border-amber-500/35 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                  <div className="flex items-start gap-2.5 sm:gap-3 w-full sm:w-auto min-w-0">
+                    <div className="p-2 rounded-xl bg-amber-500 text-white shrink-0 shadow-sm animate-pulse">
+                      <IconClock className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                        <span className="font-extrabold text-amber-950 text-xs sm:text-sm tracking-tight uppercase">
+                          ⚠️ Alerta: {contratistasExcedidos.length} contratista{contratistasExcedidos.length > 1 ? "s" : ""} fuera de horario
+                        </span>
+                        <span className="bg-amber-200 text-amber-900 font-mono font-bold text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full border border-amber-300">
+                          Límite: {contratistasExcedidos[0]?.horaLimite || "18:00"} hrs
+                        </span>
+                      </div>
+                      <p className="text-[11px] sm:text-xs text-amber-800/90 mt-0.5 break-words">
+                        {contratistasExcedidos.length === 1 ? (
+                          <span>
+                            <strong>{contratistasExcedidos[0].conductor}</strong> ({contratistasExcedidos[0].empresaNombre}) · Exceso: <strong>+{contratistasExcedidos[0].minutosExcedidos} min</strong>
+                          </span>
+                        ) : (
+                          <span>
+                            Hay unidades externas dentro del complejo que superaron la hora límite oficial permitida de labores.
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedOvertimeContractor(contratistasExcedidos[0])}
+                      className="w-full sm:w-auto px-3.5 py-2.5 sm:py-2 rounded-xl bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <IconClock className="w-4 h-4 shrink-0" />
+                      <span>Ver Alerta de Incidencia</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {casetaTab === "registro" && (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch w-full">
                   {/* COLUMNA PRINCIPAL: FORMULARIO */}
@@ -11797,7 +11925,23 @@ export default function App() {
                                     {trabajoTexto}
                                   </td>
                                   <td className="px-1 py-2.5 text-center">
-                                    <StatusBadge status={b.estado} />
+                                    <div className="flex flex-col items-center gap-1">
+                                      <StatusBadge status={b.estado} />
+                                      {(() => {
+                                        const exc = contratistasExcedidos.find((c) => c.registroId === String(b.id));
+                                        if (!exc) return null;
+                                        return (
+                                          <button
+                                            type="button"
+                                            onClick={() => setSelectedOvertimeContractor(exc)}
+                                            className="px-1.5 py-0.5 rounded text-[9px] font-black bg-red-100 text-red-800 border border-red-300 hover:bg-red-200 cursor-pointer shadow-2xs whitespace-nowrap animate-pulse"
+                                            title="Clic para abrir la alerta de horario"
+                                          >
+                                            {exc.esPernocta ? "⚠️ Pernocta" : `⏰ +${exc.minutosExcedidos}m`}
+                                          </button>
+                                        );
+                                      })()}
+                                    </div>
                                   </td>
                                   <td className="px-1.5 py-2.5 text-center">
                                     {b.estado === "Dentro" ? (
@@ -15013,6 +15157,21 @@ export default function App() {
         currentUserRole={currentUser?.role}
         currentUserName={currentUser?.nombre}
         onNotify={showToast}
+      />
+
+      {/* ─── MODAL DE ALERTA DE HORARIO VENCIDO PARA CASETA ─── */}
+      <AlertaHorarioVencidoModal
+        isOpen={Boolean(selectedOvertimeContractor)}
+        onClose={() => {
+          if (selectedOvertimeContractor) {
+            setDismissedOvertimeAlertIds((prev) => [...prev, selectedOvertimeContractor.registroId]);
+          }
+          setSelectedOvertimeContractor(null);
+        }}
+        contratista={selectedOvertimeContractor}
+        onRegistrarSalida={handleRegistrarSalidaDesdeAlerta}
+        onLevantarInfraccion={handleReportarInfraccionHorario}
+        isProcessing={isProcessingOvertimeAction}
       />
 
       {/* ─── TOAST NOTIFICATIONS OVERLAY ─── */}
