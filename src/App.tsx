@@ -275,6 +275,15 @@ function IconEye({ className = "w-4 h-4" }: { className?: string }) {
   );
 }
 
+function IconEyeOff({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  );
+}
+
 function IconWalk({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1646,6 +1655,7 @@ export default function App() {
   const [selectedTrabajadorParaEditar, setSelectedTrabajadorParaEditar] = useState<Trabajador | null>(null);
   const [selectedTrabajadorParaEliminar, setSelectedTrabajadorParaEliminar] = useState<Trabajador | null>(null);
   const [selectedSupervisorParaEliminar, setSelectedSupervisorParaEliminar] = useState<UserAccount | null>(null);
+  const [selectedGuardiaParaEditar, setSelectedGuardiaParaEditar] = useState<UserAccount | null>(null);
   const [selectedGuardiaParaEliminar, setSelectedGuardiaParaEliminar] = useState<UserAccount | null>(null);
   const [selectedAdminParaEliminar, setSelectedAdminParaEliminar] = useState<UserAccount | null>(null);
   const [selectedFotoTrabajadorPreview, setSelectedFotoTrabajadorPreview] = useState<Trabajador | null>(null);
@@ -1746,7 +1756,17 @@ export default function App() {
   // New Guardia Photo State
   const [nuevoGuardiaFoto, setNuevoGuardiaFoto] = useState<string>("");
   const [nuevoGuardiaFotoError, setNuevoGuardiaFotoError] = useState<string>("");
+  const [nuevoGuardiaPassword, setNuevoGuardiaPassword] = useState<string>("");
+  const [showNuevoGuardiaPassword, setShowNuevoGuardiaPassword] = useState<boolean>(false);
   const [selectedFotoGuardiaPreview, setSelectedFotoGuardiaPreview] = useState<UserAccount | null>(null);
+
+  // Edit Guardia State
+  const [editGuardiaNombre, setEditGuardiaNombre] = useState<string>("");
+  const [editGuardiaEmail, setEditGuardiaEmail] = useState<string>("");
+  const [editGuardiaPassword, setEditGuardiaPassword] = useState<string>("");
+  const [showEditGuardiaPassword, setShowEditGuardiaPassword] = useState<boolean>(false);
+  const [editGuardiaFoto, setEditGuardiaFoto] = useState<string>("");
+  const [editGuardiaFotoError, setEditGuardiaFotoError] = useState<string>("");
 
   // Estados para Administrador / Supervisor: Gestión de Flotilla y Trabajadores por Empresa
   const [expandedEmpresaId, setExpandedEmpresaId] = useState<string | null>(null);
@@ -1922,6 +1942,9 @@ export default function App() {
 
   const [isSubmittingGuardia, setIsSubmittingGuardia] = useState(false);
   const isSubmittingGuardiaRef = useRef(false);
+
+  const [isSubmittingGuardiaEdit, setIsSubmittingGuardiaEdit] = useState(false);
+  const isSubmittingGuardiaEditRef = useRef(false);
 
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
   const isSubmittingPasswordRef = useRef(false);
@@ -4508,7 +4531,9 @@ export default function App() {
     // Calcular fechas
     const today = new Date().toISOString().split("T")[0];
     const fechaVencDate = new Date();
-    if (nuevoCVVigencia.includes("15 Días")) {
+    if (nuevoCVVigencia.includes("1 Semana") || nuevoCVVigencia.includes("7 Días")) {
+      fechaVencDate.setDate(fechaVencDate.getDate() + 7);
+    } else if (nuevoCVVigencia.includes("15 Días")) {
       fechaVencDate.setDate(fechaVencDate.getDate() + 15);
     } else if (nuevoCVVigencia.includes("1 Mes")) {
       fechaVencDate.setMonth(fechaVencDate.getMonth() + 1);
@@ -5649,13 +5674,13 @@ export default function App() {
     const f = e.currentTarget;
     const nom = (f.elements.namedItem("nombre") as HTMLInputElement).value.trim();
     const emailVal = (f.elements.namedItem("email") as HTMLInputElement).value.trim();
-    const passVal = (f.elements.namedItem("password") as HTMLInputElement).value.trim();
+    const passVal = nuevoGuardiaPassword.trim() || (f.elements.namedItem("password") as HTMLInputElement)?.value?.trim() || "123456";
 
     try {
       await api.createUsuario({
         nombre: nom,
         correo: emailVal,
-        password: passVal || "123456",
+        password: passVal,
         id_rol: 4, // CASETA
         rol: "CASETA",
         id_empresa: null,
@@ -5666,12 +5691,82 @@ export default function App() {
       setShowCreateGuardiaModal(false);
       setNuevoGuardiaFoto("");
       setNuevoGuardiaFotoError("");
+      setNuevoGuardiaPassword("");
+      setShowNuevoGuardiaPassword(false);
       showToast(`Oficial de Caseta "${nom}" (${emailVal}) registrado exitosamente con fotografía oficial.`, "success", "Oficial Registrado");
     } catch (err: any) {
       showToast("Error al registrar oficial en la base de datos: " + (err.message || err), "error");
     } finally {
       isSubmittingGuardiaRef.current = false;
       setIsSubmittingGuardia(false);
+    }
+  };
+
+  const handleAbrirEditarGuardia = (g: UserAccount) => {
+    setSelectedGuardiaParaEditar(g);
+    setEditGuardiaNombre(g.nombre || "");
+    setEditGuardiaEmail(g.email || g.username || "");
+    setEditGuardiaPassword("");
+    setShowEditGuardiaPassword(false);
+    setEditGuardiaFoto(g.foto_url || "");
+    setEditGuardiaFotoError("");
+  };
+
+  const handleFotoGuardiaEditChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditGuardiaFotoError("");
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const compressed = await compressImageClient(file, 640, 0.75);
+        setEditGuardiaFoto(compressed);
+        setEditGuardiaFotoError("");
+      } catch (err) {
+        setEditGuardiaFotoError("Error al procesar la fotografía del oficial.");
+      }
+    }
+  };
+
+  const handleGuardarEditarGuardia = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (isSubmittingGuardiaEditRef.current || !selectedGuardiaParaEditar) return;
+
+    const nom = editGuardiaNombre.trim();
+    const emailVal = editGuardiaEmail.trim();
+
+    if (!nom) {
+      setEditGuardiaFotoError("El nombre completo del oficial es obligatorio.");
+      return;
+    }
+    if (!emailVal) {
+      setEditGuardiaFotoError("El correo electrónico del oficial es obligatorio.");
+      return;
+    }
+
+    isSubmittingGuardiaEditRef.current = true;
+    setIsSubmittingGuardiaEdit(true);
+
+    try {
+      const payload: any = {
+        nombre: nom,
+        correo: emailVal,
+        foto_url: editGuardiaFoto || null,
+      };
+
+      if (editGuardiaPassword.trim()) {
+        payload.password = editGuardiaPassword.trim();
+      }
+
+      await api.updateUsuario(selectedGuardiaParaEditar.id, payload);
+      await reloadUsuarios();
+      showToast(`Oficial de Caseta "${nom}" actualizado exitosamente.`, "success", "Oficial Actualizado");
+      setSelectedGuardiaParaEditar(null);
+    } catch (err: any) {
+      console.error("Error al actualizar oficial de caseta:", err);
+      setEditGuardiaFotoError(err.message || "Error al actualizar oficial");
+      showToast("Error al actualizar oficial: " + (err.message || err), "error");
+    } finally {
+      isSubmittingGuardiaEditRef.current = false;
+      setIsSubmittingGuardiaEdit(false);
     }
   };
 
@@ -8276,6 +8371,8 @@ export default function App() {
                         onClick={() => {
                           setNuevoGuardiaFoto("");
                           setNuevoGuardiaFotoError("");
+                          setNuevoGuardiaPassword("");
+                          setShowNuevoGuardiaPassword(false);
                           setShowCreateGuardiaModal(true);
                         }}
                         className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer shadow-sm"
@@ -8366,15 +8463,26 @@ export default function App() {
                                   </button>
                                 </td>
                                 <td className="px-5 py-3">
-                                  <button
-                                    type="button"
-                                    onClick={() => setSelectedGuardiaParaEliminar(g)}
-                                    className="p-1.5 px-2.5 rounded-lg text-red-600 bg-red-50 hover:bg-red-600 hover:text-white transition-all cursor-pointer border border-red-200 flex items-center gap-1.5 text-xs font-semibold shadow-xs"
-                                    title="Eliminar oficial de caseta permanentemente"
-                                  >
-                                    <IconTrash className="w-3.5 h-3.5" />
-                                    <span>Eliminar</span>
-                                  </button>
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAbrirEditarGuardia(g)}
+                                      className="p-1.5 rounded-lg text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white transition-all cursor-pointer border border-blue-200 flex items-center justify-center shadow-2xs hover:shadow-xs"
+                                      title="Editar oficial de caseta"
+                                      aria-label={`Editar oficial ${g.nombre}`}
+                                    >
+                                      <IconEdit className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedGuardiaParaEliminar(g)}
+                                      className="p-1.5 rounded-lg text-red-600 bg-red-50 hover:bg-red-600 hover:text-white transition-all cursor-pointer border border-red-200 flex items-center justify-center shadow-2xs hover:shadow-xs"
+                                      title="Eliminar oficial de caseta permanentemente"
+                                      aria-label={`Eliminar oficial ${g.nombre}`}
+                                    >
+                                      <IconTrash className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
                                 </td>
                               </tr>
                             ))
@@ -12586,6 +12694,8 @@ export default function App() {
                   setShowCreateGuardiaModal(false);
                   setNuevoGuardiaFoto("");
                   setNuevoGuardiaFotoError("");
+                  setNuevoGuardiaPassword("");
+                  setShowNuevoGuardiaPassword(false);
                 }}
                 className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1"
               >
@@ -12615,9 +12725,47 @@ export default function App() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Contraseña de Tablet *</label>
-                <input name="password" type="password" required placeholder="Mínimo 6 caracteres" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800" />
-                <p className="text-[11px] text-slate-400 mt-1">El oficial usará esta contraseña para acceder desde la tablet.</p>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Contraseña de Inicio de Sesión *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const temp = "LP-" + Math.random().toString(36).substring(2, 7).toUpperCase();
+                      setNuevoGuardiaPassword(temp);
+                      setShowNuevoGuardiaPassword(true);
+                    }}
+                    className="text-xs text-[#0D6E5F] font-bold hover:underline cursor-pointer flex items-center gap-1"
+                    title="Generar contraseña aleatoria como en el módulo de IT"
+                  >
+                    <span>⚡ Generar Clave Segura</span>
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    name="password"
+                    type={showNuevoGuardiaPassword ? "text" : "password"}
+                    required
+                    value={nuevoGuardiaPassword}
+                    onChange={(e) => setNuevoGuardiaPassword(e.target.value)}
+                    placeholder="Mínimo 6 caracteres"
+                    className="w-full rounded-xl px-4 py-2.5 pr-10 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800 font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNuevoGuardiaPassword(!showNuevoGuardiaPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1"
+                    title={showNuevoGuardiaPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                  >
+                    {showNuevoGuardiaPassword ? (
+                      <IconEyeOff className="w-4 h-4" />
+                    ) : (
+                      <IconEye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1">El oficial usará esta contraseña para iniciar sesión en el sistema.</p>
               </div>
 
               {/* FOTOGRAFÍA OBLIGATORIA DEL GUARDIA */}
@@ -12704,6 +12852,202 @@ export default function App() {
                     </>
                   ) : (
                     <span>Guardar Oficial →</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL EDITAR OFICIAL DE CASETA ─── */}
+      {selectedGuardiaParaEditar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
+                  <IconShield className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 uppercase">Editar Oficial de Caseta</h3>
+                  <p className="text-xs text-slate-500">Actualiza los datos y fotografía oficial para el operador de caseta</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedGuardiaParaEditar(null);
+                  setEditGuardiaFotoError("");
+                }}
+                className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            {editGuardiaFotoError && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                <span>{editGuardiaFotoError}</span>
+              </div>
+            )}
+
+            <form
+              onSubmit={handleGuardarEditarGuardia}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre Completo del Oficial *</label>
+                <input
+                  type="text"
+                  name="nombre"
+                  required
+                  value={editGuardiaNombre}
+                  onChange={(e) => setEditGuardiaNombre(e.target.value)}
+                  placeholder="Ej. Oficial Ramón Beltrán"
+                  className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Correo Electrónico Oficial *</label>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  value={editGuardiaEmail}
+                  onChange={(e) => setEditGuardiaEmail(e.target.value)}
+                  placeholder="caseta.sur@laspalomasresort.net"
+                  className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Contraseña *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const temp = "LP-" + Math.random().toString(36).substring(2, 7).toUpperCase();
+                      setEditGuardiaPassword(temp);
+                      setShowEditGuardiaPassword(true);
+                    }}
+                    className="text-xs text-[#0D6E5F] font-bold hover:underline cursor-pointer flex items-center gap-1"
+                    title="Generar contraseña aleatoria como en el módulo de IT"
+                  >
+                    <span>⚡ Generar Clave Segura</span>
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showEditGuardiaPassword ? "text" : "password"}
+                    name="password"
+                    value={editGuardiaPassword}
+                    onChange={(e) => setEditGuardiaPassword(e.target.value)}
+                    placeholder="Mínimo 6 caracteres (o en blanco para conservar la actual)"
+                    className="w-full rounded-xl px-4 py-2.5 pr-10 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800 font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEditGuardiaPassword(!showEditGuardiaPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1"
+                    title={showEditGuardiaPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                  >
+                    {showEditGuardiaPassword ? (
+                      <IconEyeOff className="w-4 h-4" />
+                    ) : (
+                      <IconEye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* FOTOGRAFÍA OBLIGATORIA DEL GUARDIA */}
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Fotografía Oficial del Oficial *
+                  </label>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                    Obligatoria
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                  <div className="sm:col-span-2 space-y-2">
+                    <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                      <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
+                      <span>{editGuardiaFoto ? "Cambiar Fotografía" : "Subir Foto desde Dispositivo"}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFotoGuardiaEditChange}
+                      />
+                    </label>
+                    <p className="text-[11px] text-slate-400">
+                      Fotografía frontal y nítida del rostro del oficial para control de caseta (JPG o PNG, máx 5MB).
+                    </p>
+                    {editGuardiaFoto && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditGuardiaFoto("");
+                          setEditGuardiaFotoError("");
+                        }}
+                        className="text-xs text-red-600 hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <IconTrash className="w-3.5 h-3.5" />
+                        <span>Remover fotografía</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className={`h-32 rounded-2xl border-2 ${editGuardiaFoto ? 'border-emerald-400 bg-emerald-50/20' : 'border-dashed border-slate-300 bg-slate-50'} flex items-center justify-center overflow-hidden relative shadow-inner`}>
+                    {editGuardiaFoto ? (
+                      <div className="relative w-full h-full group">
+                        <img src={editGuardiaFoto} alt="Preview Guardia" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
+                          Foto Asignada ✓
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center p-2 text-slate-400">
+                        <IconUsers className="w-7 h-7 mx-auto mb-1 opacity-50" />
+                        <span className="text-[10px] block font-semibold text-amber-600">Foto Requerida *</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedGuardiaParaEditar(null);
+                    setEditGuardiaFotoError("");
+                  }}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingGuardiaEdit}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isSubmittingGuardiaEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
+                >
+                  {isSubmittingGuardiaEdit ? (
+                    <>
+                      <IconSpinner className="w-3.5 h-3.5" />
+                      <span>Guardando Oficial...</span>
+                    </>
+                  ) : (
+                    <span>Guardar Cambios →</span>
                   )}
                 </button>
               </div>
@@ -15040,6 +15384,7 @@ export default function App() {
                     onChange={(e) => setNuevoCVVigencia(e.target.value)}
                     className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
                   >
+                    <option value="1 Semana">1 Semana</option>
                     <option value="15 Días">15 Días</option>
                     <option value="1 Mes">1 Mes</option>
                     <option value="3 Meses">3 Meses</option>
