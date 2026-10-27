@@ -6711,13 +6711,8 @@ export default function App() {
               <span>Gestión de Castigos Activos & Pases de Oficina</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Administración de suspensiones vehiculares. Cuando una empresa acuerda con la administración HOA, puedes otorgar una tolerancia temporal ("solo por hoy") o levantar el castigo de raíz.
+              Administración de suspensiones vehiculares
             </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200 shadow-2xs">
-              {vehiculosCastigados.length} Unidades en Gestión
-            </span>
           </div>
         </div>
 
