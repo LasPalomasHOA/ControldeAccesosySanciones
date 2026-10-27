@@ -408,7 +408,7 @@ function IconCheckSimple({ className = "w-4 h-4" }: { className?: string }) {
 
 type UserRole = "admin" | "supervisor" | "contratista" | "caseta" | "contabilidad";
 type PortalScreen = "reglamento" | "dashboard" | "alta" | "trabajadores" | "sanciones" | "consulta_reglamento";
-type SupervisorTab = "bandeja" | "apelaciones" | "proveedores" | "guardias" | "historial" | "reglamento" | "corbatines" | "corbatines_verdes";
+type SupervisorTab = "bandeja" | "apelaciones" | "sanciones_activas" | "proveedores" | "guardias" | "historial" | "reglamento" | "corbatines" | "corbatines_verdes";
 type AdminTab = "administradores" | "supervisores" | "auditoria";
 type CasetaTab = "registro" | "bitacora";
 
@@ -486,6 +486,29 @@ interface Empresa {
   cuposTotales?: number | null;
 }
 
+export interface PermisoTemporalAcceso {
+  activo: boolean;
+  tipo: 'solo_hoy' | '24_horas' | 'fecha_limite';
+  fechaInicio: string;
+  fechaExpiracion: string;
+  autorizadoPorOficina?: string;
+  motivoAcuerdo: string;
+  supervisorEjecutor: string;
+  fechaRegistro: string;
+  notasSupervisor?: string;
+}
+
+export interface ResolucionCastigoOficina {
+  tipoResolucion: 'permiso_temporal' | 'levantamiento_definitivo';
+  vigenciaTipo?: 'solo_hoy' | '24_horas' | 'fecha_limite';
+  fechaExpiracionPermiso?: string;
+  autorizadoPorOficina?: string;
+  motivoAcuerdo: string;
+  supervisorEjecutor: string;
+  fechaRegistro: string;
+  notasSupervisor?: string;
+}
+
 interface Vehicle {
   id: string;
   empresaId: string;
@@ -506,6 +529,7 @@ interface Vehicle {
     expiracion: string;
     medidaDisciplinaria: string;
   };
+  permisoTemporal?: PermisoTemporalAcceso;
 }
 
 interface Sancion {
@@ -518,7 +542,7 @@ interface Sancion {
   fecha_inicio?: string;
   fecha_fin?: string;
   medidaDisciplinaria: string;
-  status: "Activa" | "En Apelación" | "Aclarada" | "Ratificada" | "Cumplida";
+  status: "Activa" | "En Apelación" | "Aclarada" | "Ratificada" | "Cumplida" | "Levantada" | "Permiso Provisional";
   descripcion: string;
   apelacion?: {
     fecha: string;
@@ -528,6 +552,7 @@ interface Sancion {
     dictamenSupervisor?: string;
     fechaDictamen?: string;
   };
+  resolucionOficina?: ResolucionCastigoOficina;
 }
 
 interface RegistroCaseta {
@@ -1698,6 +1723,8 @@ export default function App() {
   const [showCreateAdminModal, setShowCreateAdminModal] = useState(false);
   const [showCreateEmpresaModal, setShowCreateEmpresaModal] = useState(false);
   const [empresaCreateError, setEmpresaCreateError] = useState("");
+  const [nuevaEmpresaPassword, setNuevaEmpresaPassword] = useState("");
+  const [showNuevaEmpresaPassword, setShowNuevaEmpresaPassword] = useState(false);
   const [showCreateGuardiaModal, setShowCreateGuardiaModal] = useState(false);
   const [showQRScannerModal, setShowQRScannerModal] = useState(false);
   const [selectedSancionParaApelar, setSelectedSancionParaApelar] = useState<Sancion | null>(null);
@@ -1842,6 +1869,20 @@ export default function App() {
   const [selectedVehiculoParaEliminar, setSelectedVehiculoParaEliminar] = useState<Vehicle | null>(null);
   const [isDeletingVehiculo, setIsDeletingVehiculo] = useState(false);
   const isDeletingVehiculoRef = useRef(false);
+
+  // Estados para Modal de Gestión de Castigo / Pase de Oficina
+  const [selectedVehiculoParaGestionarCastigo, setSelectedVehiculoParaGestionarCastigo] = useState<Vehicle | null>(null);
+  const [selectedSancionParaGestionarCastigo, setSelectedSancionParaGestionarCastigo] = useState<Sancion | null>(null);
+  const [resolucionTipo, setResolucionTipo] = useState<"permiso_temporal" | "levantamiento_definitivo">("permiso_temporal");
+  const [resolucionVigenciaTipo, setResolucionVigenciaTipo] = useState<"solo_hoy" | "24_horas" | "fecha_limite">("solo_hoy");
+  const [resolucionFechaLimite, setResolucionFechaLimite] = useState("");
+  const [resolucionAutorizadoPor, setResolucionAutorizadoPor] = useState("");
+  const [resolucionMotivo, setResolucionMotivo] = useState("");
+  const [resolucionNotas, setResolucionNotas] = useState("");
+  const [resolucionError, setResolucionError] = useState("");
+  const [isSubmittingResolucionOficina, setIsSubmittingResolucionOficina] = useState(false);
+  const [filtroSancionesActivasEmpresa, setFiltroSancionesActivasEmpresa] = useState("all");
+  const [busquedaSancionesActivas, setBusquedaSancionesActivas] = useState("");
 
   const [selectedFotoVehiculoPreview, setSelectedFotoVehiculoPreview] = useState<Vehicle | null>(null);
   const [genericImagePreview, setGenericImagePreview] = useState<{
@@ -2643,6 +2684,18 @@ export default function App() {
             || (v.corbatin?.numero ? String(v.corbatin.numero) : (v.corbatines?.find((c: any) => c.estatus === "ACTIVO")?.numero ? String(v.corbatines.find((c: any) => c.estatus === "ACTIVO").numero) : (v.corbatines?.[0]?.numero ? String(v.corbatines[0].numero) : "")))
             || "";
 
+          const cachedPermisos = (() => {
+            try {
+              return JSON.parse(localStorage.getItem("las_palomas_permisos_temporales") || "{}");
+            } catch {
+              return {};
+            }
+          })();
+          const pPlaca = v.placas || v.placa;
+          const perm = cachedPermisos[pPlaca];
+          const hasValidPerm = perm && perm.activo && new Date() < new Date(perm.fechaExpiracion);
+          const baseStatus = (v.estatus_acceso === "HABILITADO" ? "Habilitado" : (v.estatus_acceso === "DESHABILITADO" ? "Deshabilitado" : (v.estatus_acceso === "SUSPENDIDO" ? "Suspendido" : "Restringido"))) as "Habilitado" | "Deshabilitado" | "Suspendido" | "Restringido";
+
           return {
             id: String(v.id_vehiculo || v.id),
             empresaId: String(v.id_empresa || v.empresaId),
@@ -2651,13 +2704,14 @@ export default function App() {
             modelo: v.modelo,
             año: String(v.año || v.anio || ""),
             anio: String(v.año || v.anio || ""),
-            placas: v.placas || v.placa,
+            placas: pPlaca,
             color: v.color,
             conductor: v.conductor || "",
             telefono: v.empresa?.telefono || empMatch?.telefono || v.telefono || "",
             foto: normalizeFotoUrl(v.foto_url || v.foto),
-            status: (v.estatus_acceso === "HABILITADO" ? "Habilitado" : (v.estatus_acceso === "DESHABILITADO" ? "Deshabilitado" : (v.estatus_acceso === "SUSPENDIDO" ? "Suspendido" : "Restringido"))) as "Habilitado" | "Deshabilitado" | "Suspendido" | "Restringido",
+            status: hasValidPerm ? ("Habilitado" as const) : baseStatus,
             corbatinNum: corbNum,
+            permisoTemporal: hasValidPerm ? perm : undefined,
           };
         });
         setVehicles(mappedVeh);
@@ -2691,6 +2745,7 @@ export default function App() {
           return text
             .replace(/\[APELACION_DATA\].*?\[\/APELACION_DATA\]/gs, "")
             .replace(/\[DICTAMEN_DATA\].*?\[\/DICTAMEN_DATA\]/gs, "")
+            .replace(/\[RESOLUCION_OFICINA_DATA\].*?\[\/RESOLUCION_OFICINA_DATA\]/gs, "")
             .trim();
         };
 
@@ -2709,9 +2764,10 @@ export default function App() {
             fecha_inicio: s.fecha_inicio || undefined,
             fecha_fin: s.fecha_fin || undefined,
             medidaDisciplinaria: medidaLimpia,
-            status: (s.status as any) || (s.estatus === "EN_APELACION" ? "En Apelación" : (s.estatus === "CANCELADA" || s.estatus === "ACLARADA" ? "Aclarada" : (s.estatus === "RATIFICADA" ? "Ratificada" : (s.estatus === "VENCIDA" ? "Cumplida" : "Activa")))),
+            status: (s.status as any) || (s.estatus === "EN_APELACION" ? "En Apelación" : (s.estatus === "CANCELADA" || s.estatus === "ACLARADA" ? "Levantada" : (s.estatus === "RATIFICADA" ? "Ratificada" : (s.estatus === "VENCIDA" ? "Cumplida" : "Activa")))),
             descripcion: descClean || "Infracción detectada en campo y documentada por seguridad",
             apelacion: s.apelacion || undefined,
+            resolucionOficina: s.resolucionOficina || undefined,
           };
         });
         setSanciones(mappedSanciones);
@@ -2927,10 +2983,23 @@ export default function App() {
     try {
       const res = await api.getVehiculos();
       if (Array.isArray(res)) {
+        const cachedPermisos = (() => {
+          try {
+            return JSON.parse(localStorage.getItem("las_palomas_permisos_temporales") || "{}");
+          } catch {
+            return {};
+          }
+        })();
+
         const mappedVeh: Vehicle[] = res.map((v: any) => {
           const corbNum = v.corbatinNumero
             || (v.corbatin?.numero ? String(v.corbatin.numero) : (v.corbatines?.find((c: any) => c.estatus === "ACTIVO")?.numero ? String(v.corbatines.find((c: any) => c.estatus === "ACTIVO").numero) : (v.corbatines?.[0]?.numero ? String(v.corbatines[0].numero) : "")))
             || "";
+
+          const pPlaca = v.placas || v.placa;
+          const perm = cachedPermisos[pPlaca];
+          const hasValidPerm = perm && perm.activo && new Date() < new Date(perm.fechaExpiracion);
+          const baseStatus = (v.estatus_acceso === "HABILITADO" ? "Habilitado" : (v.estatus_acceso === "DESHABILITADO" ? "Deshabilitado" : (v.estatus_acceso === "SUSPENDIDO" ? "Suspendido" : "Restringido"))) as "Habilitado" | "Deshabilitado" | "Suspendido" | "Restringido";
 
           return {
             id: String(v.id_vehiculo || v.id),
@@ -2940,13 +3009,14 @@ export default function App() {
             modelo: v.modelo,
             año: String(v.año || v.anio || ""),
             anio: String(v.año || v.anio || ""),
-            placas: v.placas || v.placa,
+            placas: pPlaca,
             color: v.color,
             conductor: v.conductor || "",
             telefono: v.empresa?.telefono || v.telefono || "",
             foto: normalizeFotoUrl(v.foto_url || v.foto),
-            status: (v.estatus_acceso === "HABILITADO" ? "Habilitado" : (v.estatus_acceso === "DESHABILITADO" ? "Deshabilitado" : (v.estatus_acceso === "SUSPENDIDO" ? "Suspendido" : "Restringido"))) as "Habilitado" | "Deshabilitado" | "Suspendido" | "Restringido",
+            status: hasValidPerm ? ("Habilitado" as const) : baseStatus,
             corbatinNum: corbNum,
+            permisoTemporal: hasValidPerm ? perm : undefined,
           };
         });
         setVehicles(mappedVeh);
@@ -3086,6 +3156,7 @@ export default function App() {
           return text
             .replace(/\[APELACION_DATA\].*?\[\/APELACION_DATA\]/gs, "")
             .replace(/\[DICTAMEN_DATA\].*?\[\/DICTAMEN_DATA\]/gs, "")
+            .replace(/\[RESOLUCION_OFICINA_DATA\].*?\[\/RESOLUCION_OFICINA_DATA\]/gs, "")
             .trim();
         };
 
@@ -3104,9 +3175,10 @@ export default function App() {
             fecha_inicio: s.fecha_inicio || undefined,
             fecha_fin: s.fecha_fin || undefined,
             medidaDisciplinaria: medidaLimpia,
-            status: (s.status as any) || (s.estatus === "EN_APELACION" ? "En Apelación" : (s.estatus === "CANCELADA" || s.estatus === "ACLARADA" ? "Aclarada" : (s.estatus === "RATIFICADA" ? "Ratificada" : (s.estatus === "VENCIDA" ? "Cumplida" : "Activa")))),
+            status: (s.status as any) || (s.estatus === "EN_APELACION" ? "En Apelación" : (s.estatus === "CANCELADA" || s.estatus === "ACLARADA" ? "Levantada" : (s.estatus === "RATIFICADA" ? "Ratificada" : (s.estatus === "VENCIDA" ? "Cumplida" : "Activa")))),
             descripcion: descClean || "Infracción detectada en campo y documentada por seguridad",
             apelacion: s.apelacion || undefined,
+            resolucionOficina: s.resolucionOficina || undefined,
           };
         });
         setSanciones(mappedSanciones);
@@ -5253,6 +5325,165 @@ export default function App() {
     }
   };
 
+  // ─── Gestión de Castigos y Pases de Oficina (Permiso 'Solo por hoy' / Levantamiento Definitivo) ───
+  const handleOpenGestionarCastigo = (v: Vehicle, sancion?: Sancion) => {
+    setSelectedVehiculoParaGestionarCastigo(v);
+    const targetSan = sancion || sanciones.find((s) => s.placas === v.placas && (s.status === "Activa" || s.status === "Permiso Provisional" || s.status === "En Apelación")) || null;
+    setSelectedSancionParaGestionarCastigo(targetSan);
+    setResolucionTipo("permiso_temporal");
+    setResolucionVigenciaTipo("solo_hoy");
+    const defaultExp = new Date();
+    defaultExp.setHours(19, 0, 0, 0);
+    if (new Date().getHours() >= 19) {
+      defaultExp.setDate(defaultExp.getDate() + 1);
+    }
+    const tzOffset = defaultExp.getTimezoneOffset() * 60000;
+    const localISOTime = new Date(defaultExp.getTime() - tzOffset).toISOString().slice(0, 16);
+    setResolucionFechaLimite(localISOTime);
+    setResolucionAutorizadoPor(v.permisoTemporal?.autorizadoPorOficina || "");
+    setResolucionMotivo(v.permisoTemporal?.motivoAcuerdo || "");
+    setResolucionNotas(v.permisoTemporal?.notasSupervisor || "");
+    setResolucionError("");
+  };
+
+  const handleGuardarResolucionCastigo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedVehiculoParaGestionarCastigo) return;
+    setResolucionError("");
+
+    const targetVeh = selectedVehiculoParaGestionarCastigo;
+    const targetSan = selectedSancionParaGestionarCastigo;
+
+    if (!resolucionMotivo.trim()) {
+      setResolucionError("Por favor escribe el motivo del acuerdo o la instrucción de la oficina.");
+      return;
+    }
+
+    setIsSubmittingResolucionOficina(true);
+
+    try {
+      let expISO = "";
+      if (resolucionTipo === "permiso_temporal") {
+        if (resolucionVigenciaTipo === "solo_hoy") {
+          const hoyFin = new Date();
+          hoyFin.setHours(19, 0, 0, 0);
+          if (new Date().getHours() >= 19) {
+            hoyFin.setHours(23, 59, 59, 999);
+          }
+          expISO = hoyFin.toISOString();
+        } else if (resolucionVigenciaTipo === "24_horas") {
+          const mañ = new Date(Date.now() + 24 * 60 * 60 * 1000);
+          expISO = mañ.toISOString();
+        } else {
+          expISO = resolucionFechaLimite ? new Date(resolucionFechaLimite).toISOString() : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        }
+      }
+
+      const resolucionPayload: ResolucionCastigoOficina = {
+        tipoResolucion: resolucionTipo,
+        vigenciaTipo: resolucionTipo === "permiso_temporal" ? resolucionVigenciaTipo : undefined,
+        fechaExpiracionPermiso: resolucionTipo === "permiso_temporal" ? expISO : undefined,
+        autorizadoPorOficina: resolucionAutorizadoPor.trim() || undefined,
+        motivoAcuerdo: resolucionMotivo.trim(),
+        supervisorEjecutor: currentUser?.nombre || "Supervisor HOA",
+        fechaRegistro: new Date().toISOString(),
+        notasSupervisor: resolucionNotas.trim() || undefined,
+      };
+
+      const permisoAcceso: PermisoTemporalAcceso | undefined = resolucionTipo === "permiso_temporal" ? {
+        activo: true,
+        tipo: resolucionVigenciaTipo,
+        fechaInicio: new Date().toISOString(),
+        fechaExpiracion: expISO,
+        autorizadoPorOficina: resolucionAutorizadoPor.trim() || undefined,
+        motivoAcuerdo: resolucionMotivo.trim(),
+        supervisorEjecutor: currentUser?.nombre || "Supervisor HOA",
+        fechaRegistro: new Date().toISOString(),
+        notasSupervisor: resolucionNotas.trim() || undefined,
+      } : undefined;
+
+      // 1. Actualizar sanción si existe
+      if (targetSan) {
+        await api.updateSancion(targetSan.id, {
+          estatus: resolucionTipo === "levantamiento_definitivo" ? "CANCELADA" : "ACTIVA",
+          resolucionOficina: resolucionPayload,
+        });
+      }
+
+      // 2. Actualizar vehículo a HABILITADO
+      await api.updateVehiculo(targetVeh.id, {
+        estatus_acceso: "HABILITADO",
+      });
+
+      // 3. Persistir en localStorage
+      try {
+        const localPermisos = JSON.parse(localStorage.getItem("las_palomas_permisos_temporales") || "{}");
+        if (permisoAcceso) {
+          localPermisos[targetVeh.placas] = permisoAcceso;
+        } else {
+          delete localPermisos[targetVeh.placas];
+        }
+        localStorage.setItem("las_palomas_permisos_temporales", JSON.stringify(localPermisos));
+      } catch { }
+
+      // 4. Actualizar estado local reactivo
+      setVehicles((prev) =>
+        prev.map((v) => {
+          if (v.id === targetVeh.id || v.placas === targetVeh.placas) {
+            return {
+              ...v,
+              status: "Habilitado",
+              sancionActiva: resolucionTipo === "levantamiento_definitivo" ? undefined : v.sancionActiva,
+              permisoTemporal: permisoAcceso,
+            };
+          }
+          return v;
+        })
+      );
+
+      if (targetSan) {
+        setSanciones((prev) =>
+          prev.map((s) => {
+            if (s.id === targetSan.id) {
+              return {
+                ...s,
+                status: resolucionTipo === "levantamiento_definitivo" ? "Levantada" : "Permiso Provisional",
+                resolucionOficina: resolucionPayload,
+              };
+            }
+            return s;
+          })
+        );
+      }
+
+      await reloadVehiculos();
+      await reloadSanciones();
+
+      setSelectedVehiculoParaGestionarCastigo(null);
+
+      if (resolucionTipo === "levantamiento_definitivo") {
+        showToast(
+          `Castigo levantado permanentemente para ${targetVeh.placas}. Autorizó: ${resolucionAutorizadoPor}.`,
+          "success",
+          "Castigo Levantado"
+        );
+      } else {
+        const horaStr = new Date(expISO).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        showToast(
+          `Pase vehicular provisional otorgado para ${targetVeh.placas} hasta las ${horaStr}. Pluma habilitada en caseta.`,
+          "success",
+          "Pase Provisional Activo"
+        );
+      }
+    } catch (err: any) {
+      console.error("Error al procesar resolución de oficina:", err);
+      setResolucionError("Error al procesar la solicitud: " + (err.message || err));
+      showToast("Error al procesar resolución: " + (err.message || err), "error");
+    } finally {
+      setIsSubmittingResolucionOficina(false);
+    }
+  };
+
   const handleGuardarNuevaPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmittingPasswordRef.current) return;
@@ -5464,7 +5695,7 @@ export default function App() {
     const contacto = (f.elements.namedItem("contacto") as HTMLInputElement).value.trim();
     const tel = (f.elements.namedItem("telefono") as HTMLInputElement).value.trim();
     const email = (f.elements.namedItem("email") as HTMLInputElement).value.trim();
-    const passVal = (f.elements.namedItem("password") as HTMLInputElement).value.trim();
+    const passVal = ((f.elements.namedItem("password") as HTMLInputElement)?.value || nuevaEmpresaPassword).trim();
     const rInicioInput = (f.elements.namedItem("corbatin_rango_inicio") as HTMLInputElement)?.value;
     const rFinInput = (f.elements.namedItem("corbatin_rango_fin") as HTMLInputElement)?.value;
     const rInicio = rInicioInput !== undefined && rInicioInput !== "" ? parseInt(rInicioInput, 10) : null;
@@ -5539,6 +5770,8 @@ export default function App() {
       await reloadEmpresas();
       await reloadUsuarios();
       setShowCreateEmpresaModal(false);
+      setNuevaEmpresaPassword("");
+      setShowNuevaEmpresaPassword(false);
       showToast(`Empresa "${empNombre}" y cuenta "${email}" creadas exitosamente.`, "success", "Proveedor Creado");
     } catch (err: any) {
       const errMsg = err.message || err;
@@ -6448,6 +6681,210 @@ export default function App() {
 
   const apelacionesPendientesCount = sanciones.filter(s => s.status === "En Apelación").length;
 
+  const renderSancionesActivasView = () => {
+    const vehiculosCastigados = vehicles.filter((v) => {
+      const isRestringido = v.status === "Suspendido" || v.status === "Restringido";
+      const hasPermiso = Boolean(v.permisoTemporal?.activo);
+      const hasSancion = Boolean(v.sancionActiva) || sanciones.some(s => s.placas === v.placas && (s.status === "Activa" || s.status === "Permiso Provisional"));
+      return isRestringido || hasPermiso || hasSancion;
+    });
+
+    const filteredVehiculos = vehiculosCastigados.filter((v) => {
+      const matchEmp = filtroSancionesActivasEmpresa === "all" || v.empresaNombre.toLowerCase() === filtroSancionesActivasEmpresa.toLowerCase();
+      const q = busquedaSancionesActivas.trim().toLowerCase();
+      const matchQ = !q ||
+        v.placas.toLowerCase().includes(q) ||
+        v.marca.toLowerCase().includes(q) ||
+        v.modelo.toLowerCase().includes(q) ||
+        v.empresaNombre.toLowerCase().includes(q) ||
+        v.conductor.toLowerCase().includes(q);
+      return matchEmp && matchQ;
+    });
+
+    return (
+      <div className="space-y-6">
+        {/* Encabezado y Explicación */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <IconShield className="w-5 h-5 text-amber-600" />
+              <span>Gestión de Castigos Activos & Pases de Oficina</span>
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Administración de suspensiones vehiculares. Cuando una empresa acuerda con la administración HOA, puedes otorgar una tolerancia temporal ("solo por hoy") o levantar el castigo de raíz.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200 shadow-2xs">
+              {vehiculosCastigados.length} Unidades en Gestión
+            </span>
+          </div>
+        </div>
+
+        {/* Recordatorio Operativo: Acceso Peatonal Siempre Permitido */}
+        <div className="rounded-2xl border border-sky-200 bg-sky-50/80 p-4 flex items-start gap-3 shadow-2xs">
+          <div className="p-2 rounded-xl bg-sky-600 text-white shrink-0 mt-0.5">
+            <IconWalk className="w-4 h-4" />
+          </div>
+          <div className="text-xs text-sky-950 space-y-1">
+            <div className="font-bold flex items-center gap-2">
+              <span>Aclaración Operativa de Acceso: El Personal Siempre Puede Entrar a Pie</span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-200 text-sky-800 uppercase tracking-wider">Regla HOA</span>
+            </div>
+            <p className="text-sky-900/90 leading-relaxed">
+              Los castigos disciplinarios aplican <strong>estrictamente a la unidad vehicular</strong>. Los trabajadores y choferes siempre pueden registrar <strong>"Acceso Peatonal"</strong> en caseta dejando la unidad afuera. Los pases de oficina se gestionan cuando el contratista requiere forzosamente ingresar el vehículo físico para descarga de concreto, materiales pesados o faenas urgentes.
+            </p>
+          </div>
+        </div>
+
+        {/* Filtros y Búsqueda */}
+        <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
+          <div className="relative w-full sm:w-80">
+            <IconSearch className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Buscar por placa, modelo, empresa o chofer..."
+              value={busquedaSancionesActivas}
+              onChange={(e) => setBusquedaSancionesActivas(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 text-slate-800"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <select
+              value={filtroSancionesActivasEmpresa}
+              onChange={(e) => setFiltroSancionesActivasEmpresa(e.target.value)}
+              className="px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/20 cursor-pointer"
+            >
+              <option value="all">Todas las Empresas</option>
+              {empresas.map((emp) => (
+                <option key={emp.id} value={emp.nombre}>{emp.nombre}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Lista de Unidades Castigadas */}
+        {filteredVehiculos.length === 0 ? (
+          <div className="rounded-2xl border p-12 text-center bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
+            <IconCheckCircle className="w-10 h-10 text-emerald-600 mx-auto mb-2" />
+            <h3 className="font-bold text-slate-800 text-sm">Sin vehículos suspendidos</h3>
+            <p className="text-xs text-slate-500 mt-1">Actualmente ninguna unidad vehicular tiene castigos activos o pases provisionales pendientes.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredVehiculos.map((veh) => {
+              const sanMatch = sanciones.find(s => s.placas === veh.placas && (s.status === "Activa" || s.status === "Permiso Provisional" || s.status === "En Apelación"));
+              const tienePermiso = Boolean(veh.permisoTemporal?.activo && new Date() < new Date(veh.permisoTemporal.fechaExpiracion));
+              const permisoExpirado = Boolean(veh.permisoTemporal?.activo && new Date() >= new Date(veh.permisoTemporal.fechaExpiracion));
+
+              return (
+                <div
+                  key={veh.id}
+                  className={`rounded-2xl border p-5 bg-white shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between gap-4 ${tienePermiso ? "border-emerald-300 ring-1 ring-emerald-100" : "border-slate-200"}`}
+                >
+                  <div className="space-y-3.5">
+                    {/* Header Card */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                          {veh.foto ? (
+                            <img src={normalizeFotoUrl(veh.foto)} alt={veh.placas} className="w-full h-full object-cover" />
+                          ) : (
+                            <IconCar className="w-6 h-6 text-slate-400" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-xs text-slate-900 bg-slate-100 px-2.5 py-0.5 rounded-lg border border-slate-200">
+                              {veh.placas}
+                            </span>
+                            <span className="text-xs text-slate-500 font-semibold truncate max-w-[150px]">
+                              {veh.empresaNombre}
+                            </span>
+                          </div>
+                          <h4 className="font-bold text-sm text-slate-800 mt-1">
+                            {veh.marca} {veh.modelo} <span className="text-xs text-slate-400 font-normal">({veh.anio || veh.año || "N/A"})</span>
+                          </h4>
+                        </div>
+                      </div>
+
+                      {/* Badge Estado */}
+                      {tienePermiso ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 shrink-0">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                          <span>Pase Activo ({veh.permisoTemporal?.tipo === 'solo_hoy' ? 'Solo hoy' : 'Temporal'})</span>
+                        </span>
+                      ) : veh.status === "Suspendido" ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-red-100 text-red-800 border border-red-300 shrink-0">
+                          <span className="w-2 h-2 rounded-full bg-red-500" />
+                          <span>Suspendido</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300 shrink-0">
+                          <span>{veh.status}</span>
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Detalle del Castigo o Infracción */}
+                    {sanMatch && (
+                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs space-y-1">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Infracción Registrada</div>
+                        <div className="font-bold text-slate-800">{sanMatch.tipo}</div>
+                        <div className="text-slate-600 text-[11px] leading-relaxed">{sanMatch.descripcion}</div>
+                        <div className="text-[11px] text-red-600 font-semibold mt-1">
+                          Medida Disciplinaria: {sanMatch.medidaDisciplinaria}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Información del Pase Temporal si existe */}
+                    {tienePermiso && veh.permisoTemporal && (
+                      <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs space-y-1 text-emerald-950">
+                        <div className="flex items-center justify-between font-bold text-[10px] uppercase text-emerald-800">
+                          <span>Pase de Oficina Vigente</span>
+                          <span className="font-mono">Vence: {new Date(veh.permisoTemporal.fechaExpiracion).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ({new Date(veh.permisoTemporal.fechaExpiracion).toLocaleDateString()})</span>
+                        </div>
+                        <div className="text-[11px]">
+                          Autorizó en Oficina: <strong>{veh.permisoTemporal.autorizadoPorOficina}</strong>
+                        </div>
+                        <p className="text-[11px] italic bg-white/70 p-2 rounded border border-emerald-200/60 mt-1">
+                          "{veh.permisoTemporal.motivoAcuerdo}"
+                        </p>
+                      </div>
+                    )}
+
+                    {permisoExpirado && (
+                      <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
+                        <span className="font-bold">Aviso:</span> El pase temporal anterior ha expirado. La unidad se encuentra sujeta a castigo vehicular regular (acceso peatonal habilitado).
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Acciones */}
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+                    <span className="text-[11px] text-slate-400 font-medium">
+                      🚶 Cuadrilla puede entrar a pie
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenGestionarCastigo(veh, sanMatch || undefined)}
+                      className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0a564a] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                    >
+                      <IconScale className="w-3.5 h-3.5" />
+                      <span>{tienePermiso ? "Modificar / Levantar Castigo" : "Gestionar Castigo / Pase"}</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderEmpresasManagementView = () => {
     const filteredEmpresas = empresas.filter((e) => {
       const q = empresaSearchTerm.toLowerCase();
@@ -6531,6 +6968,8 @@ export default function App() {
             <button
               onClick={() => {
                 setEmpresaCreateError("");
+                setNuevaEmpresaPassword("");
+                setShowNuevaEmpresaPassword(false);
                 setShowCreateEmpresaModal(true);
               }}
               className="px-4 py-2 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer shadow-sm"
@@ -6813,7 +7252,12 @@ export default function App() {
                                           <CopyableInlineText text={v.telefono} label="Teléfono" onCopyToast={showToast} />
                                         </td>
                                         <td className="px-4 py-2.5">
-                                          {v.status === "Habilitado" ? (
+                                          {v.permisoTemporal?.activo && new Date(v.permisoTemporal.fechaExpiracion).getTime() > Date.now() ? (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 shadow-2xs" title={`Pase provisional vigente hasta ${new Date(v.permisoTemporal.fechaExpiracion).toLocaleDateString("es-MX", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}`}>
+                                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                              <span>Pase Oficina ({v.permisoTemporal.tipo === "solo_hoy" ? "Hoy" : "Temp"})</span>
+                                            </span>
+                                          ) : v.status === "Habilitado" ? (
                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 shadow-2xs">
                                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                               <span>Habilitado</span>
@@ -6837,6 +7281,17 @@ export default function App() {
                                         </td>
                                         <td className="px-4 py-2.5">
                                           <div className="flex items-center gap-1.5">
+                                            {(v.status === "Suspendido" || v.status === "Restringido" || v.permisoTemporal?.activo) && (
+                                              <button
+                                                type="button"
+                                                onClick={() => handleOpenGestionarCastigo(v)}
+                                                className="px-2.5 py-1 rounded-lg text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-600 hover:text-white border border-amber-300 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                                title="Gestionar pase provisional o levantamiento de castigo por orden de Oficina"
+                                              >
+                                                <IconShield className="w-3.5 h-3.5" />
+                                                <span>Pase Oficina</span>
+                                              </button>
+                                            )}
                                             <button
                                               type="button"
                                               onClick={() => {
@@ -7319,7 +7774,7 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setOpenSupervisorDropdown(openSupervisorDropdown === "operacion" ? null : "operacion")}
-                      className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${["bandeja", "apelaciones"].includes(supervisorTab)
+                      className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${["bandeja", "apelaciones", "sanciones_activas"].includes(supervisorTab)
                         ? "bg-[#0D6E5F] text-white shadow-xs"
                         : "text-slate-700 hover:bg-white hover:text-slate-900"
                         }`}
@@ -7335,7 +7790,7 @@ export default function App() {
                     </button>
 
                     {openSupervisorDropdown === "operacion" && (
-                      <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-64 rounded-2xl bg-white border border-slate-200 shadow-2xl py-1.5 z-[100] ring-1 ring-black/5">
+                      <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-72 rounded-2xl bg-white border border-slate-200 shadow-2xl py-1.5 z-[100] ring-1 ring-black/5">
                         <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
                           Sanciones y Casos
                         </div>
@@ -7379,6 +7834,30 @@ export default function App() {
                           {apelacionesPendientesCount > 0 ? (
                             <span className="px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 text-[10px] font-bold">
                               {apelacionesPendientesCount}
+                            </span>
+                          ) : (
+                            <span className="w-4 h-4 rounded-full bg-slate-100 text-slate-500 text-[10px] flex items-center justify-center font-semibold">
+                              0
+                            </span>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSupervisorTab("sanciones_activas");
+                            setOpenSupervisorDropdown(null);
+                          }}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "sanciones_activas" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                            }`}
+                        >
+                          <div>
+                            <div className="font-semibold">Castigos & Pases de Oficina</div>
+                            <div className="text-[11px] text-slate-400">Pases temporales y levantamientos</div>
+                          </div>
+                          {vehicles.filter(v => v.status === "Suspendido" || Boolean(v.permisoTemporal?.activo)).length > 0 ? (
+                            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold">
+                              {vehicles.filter(v => v.status === "Suspendido" || Boolean(v.permisoTemporal?.activo)).length}
                             </span>
                           ) : (
                             <span className="w-4 h-4 rounded-full bg-slate-100 text-slate-500 text-[10px] flex items-center justify-center font-semibold">
@@ -7650,6 +8129,13 @@ export default function App() {
                   className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${supervisorTab === "apelaciones" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
                 >
                   Apelaciones ({apelacionesPendientesCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSupervisorTab("sanciones_activas")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${supervisorTab === "sanciones_activas" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                >
+                  Pases Oficina ({vehicles.filter(v => v.status === "Suspendido" || Boolean(v.permisoTemporal?.activo)).length})
                 </button>
                 <button
                   type="button"
@@ -8356,6 +8842,8 @@ export default function App() {
                   )}
                 </div>
               )}
+
+              {supervisorTab === "sanciones_activas" && renderSancionesActivasView()}
 
               {supervisorTab === "proveedores" && renderEmpresasManagementView()}
 
@@ -11292,15 +11780,43 @@ export default function App() {
                             {/* BANNERS DE DIAGNÓSTICO / STATUS */}
                             {currentCasetaVehicle ? (
                               <>
-                                {currentCasetaVehicle.status !== "Habilitado" && currentCasetaVehicle.sancionActiva && (
+                                {currentCasetaVehicle.permisoTemporal?.activo && new Date(currentCasetaVehicle.permisoTemporal.fechaExpiracion).getTime() > Date.now() ? (
+                                  <div className="p-3 rounded-xl bg-amber-500/10 border-2 border-amber-400 text-amber-950 space-y-1.5 shadow-2xs">
+                                    <div className="flex items-center justify-between">
+                                      <div className="font-bold text-xs uppercase flex items-center gap-1.5 text-amber-900">
+                                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                                        <span>Pase Provisional Vehicular Autorizado por Oficina HOA</span>
+                                      </div>
+                                      <span className="text-[10px] font-mono font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full">
+                                        Hasta: {new Date(currentCasetaVehicle.permisoTemporal.fechaExpiracion).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })} hrs
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-amber-900 leading-relaxed">
+                                      {currentCasetaVehicle.permisoTemporal.autorizadoPorOficina ? (
+                                        <><strong>Autorizó:</strong> {currentCasetaVehicle.permisoTemporal.autorizadoPorOficina} · </>
+                                      ) : null}
+                                      <strong>Acuerdo:</strong> {currentCasetaVehicle.permisoTemporal.motivoAcuerdo}
+                                      {currentCasetaVehicle.permisoTemporal.notasSupervisor ? (
+                                        <> · <strong>Notas:</strong> {currentCasetaVehicle.permisoTemporal.notasSupervisor}</>
+                                      ) : null}
+                                    </p>
+                                    <div className="text-[11px] font-semibold text-emerald-800 bg-emerald-100/70 p-1.5 rounded-lg border border-emerald-200 flex items-center gap-1.5">
+                                      <IconCheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                      <span>Ingreso vehicular temporal autorizado. Procede a registrar entrada de la unidad.</span>
+                                    </div>
+                                  </div>
+                                ) : currentCasetaVehicle.status !== "Habilitado" && currentCasetaVehicle.sancionActiva ? (
                                   <div className={`p-2.5 rounded-xl border ${currentCasetaVehicle.status === "Suspendido" ? "bg-red-50 border-red-200 text-red-900" : "bg-amber-50 border-amber-200 text-amber-900"} space-y-1.5`}>
                                     <div className="font-bold text-xs uppercase flex items-center gap-1.5 text-red-900">
                                       <IconAlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                                      <span>Alerta de Suspensión HOA Activa</span>
+                                      <span>Alerta de Suspensión Vehicular HOA</span>
                                     </div>
                                     <p className="text-xs leading-relaxed">
                                       <strong>Motivo:</strong> {currentCasetaVehicle.sancionActiva.motivo} (Expira: <span className="font-mono font-bold">{currentCasetaVehicle.sancionActiva.expiracion}</span>)
                                     </p>
+                                    <div className="p-2 rounded-lg bg-blue-50 border border-blue-200 text-[11px] text-blue-900 font-medium">
+                                      🚶 <strong>Acceso Peatonal Siempre Permitido:</strong> Los trabajadores y cuadrilla de la empresa pueden ingresar libremente a pie. El vehículo debe permanecer en el estacionamiento exterior.
+                                    </div>
                                     <div className="pt-1.5 flex flex-wrap items-center justify-between gap-2 border-t border-red-200/80">
                                       <button
                                         type="button"
@@ -11319,14 +11835,12 @@ export default function App() {
                                       </button>
                                     </div>
                                   </div>
-                                )}
-
-                                {currentCasetaVehicle.status === "Habilitado" && (
+                                ) : currentCasetaVehicle.status === "Habilitado" ? (
                                   <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
                                     <IconCheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                                     <span>Vehículo al corriente y autorizado para ingreso regular a condominio.</span>
                                   </div>
-                                )}
+                                ) : null}
                               </>
                             ) : (
                               <div className="p-2 rounded-lg bg-slate-100/90 border border-slate-200/90 text-slate-600 text-xs flex items-center justify-between gap-2">
@@ -12471,7 +12985,7 @@ export default function App() {
           <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b pb-3">
               <h3 className="text-sm font-bold text-slate-900 uppercase">Registrar Empresa Proveedora</h3>
-              <button onClick={() => { setShowCreateEmpresaModal(false); setEmpresaCreateError(""); }} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">✕</button>
+              <button onClick={() => { setShowCreateEmpresaModal(false); setEmpresaCreateError(""); setNuevaEmpresaPassword(""); setShowNuevaEmpresaPassword(false); }} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">✕</button>
             </div>
 
             {empresaCreateError && (
@@ -12504,8 +13018,63 @@ export default function App() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Contraseña de Acceso al Portal *</label>
-                <input name="password" type="password" required placeholder="Mínimo 6 caracteres" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-slate-600">
+                    Contraseña de Acceso al Portal *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const temp = "LP-" + Math.random().toString(36).substring(2, 7).toUpperCase();
+                      setNuevaEmpresaPassword(temp);
+                      setShowNuevaEmpresaPassword(true);
+                      showToast(`Contraseña generada: ${temp}`, "info", "Clave Aleatoria");
+                    }}
+                    className="text-xs text-[#0D6E5F] font-bold hover:underline cursor-pointer flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 transition-all shadow-2xs"
+                    title="Generar contraseña aleatoria como en el módulo de IT"
+                  >
+                    <IconKey className="w-3.5 h-3.5 text-[#0D6E5F]" />
+                    <span>Generar Clave Segura</span>
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    name="password"
+                    type={showNuevaEmpresaPassword ? "text" : "password"}
+                    required
+                    value={nuevaEmpresaPassword}
+                    onChange={(e) => setNuevaEmpresaPassword(e.target.value)}
+                    placeholder="Mínimo 6 caracteres o genera una clave"
+                    className="w-full rounded-xl px-3 py-2 pr-20 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800 font-mono"
+                  />
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                    {nuevaEmpresaPassword && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(nuevaEmpresaPassword);
+                          showToast("Contraseña copiada al portapapeles", "success");
+                        }}
+                        className="text-slate-400 hover:text-emerald-700 cursor-pointer p-1 rounded-md hover:bg-emerald-50 transition-colors"
+                        title="Copiar contraseña"
+                      >
+                        <IconCopy className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowNuevaEmpresaPassword(!showNuevaEmpresaPassword)}
+                      className="text-slate-400 hover:text-slate-700 cursor-pointer p-1 rounded-md hover:bg-slate-100 transition-colors"
+                      title={showNuevaEmpresaPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                    >
+                      {showNuevaEmpresaPassword ? (
+                        <IconEyeOff className="w-4 h-4" />
+                      ) : (
+                        <IconEye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
                 <p className="text-[10px] text-slate-400 mt-1">El contratista usará esta contraseña para ingresar al portal.</p>
               </div>
 
@@ -12529,7 +13098,7 @@ export default function App() {
               </div>
 
               <div className="flex justify-end gap-2 pt-3">
-                <button type="button" onClick={() => { setShowCreateEmpresaModal(false); setEmpresaCreateError(""); }} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>
+                <button type="button" onClick={() => { setShowCreateEmpresaModal(false); setEmpresaCreateError(""); setNuevaEmpresaPassword(""); setShowNuevaEmpresaPassword(false); }} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>
                 <button
                   type="submit"
                   disabled={isSubmittingEmpresa}
@@ -15443,6 +16012,266 @@ export default function App() {
       )}
 
 
+
+      {/* ─── MODAL OFICIAL PARA LEVANTAMIENTO DE CASTIGO O PASE PROVISIONAL (OFICINA) ─── */}
+      {selectedVehiculoParaGestionarCastigo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col border border-slate-200 shadow-2xl overflow-hidden">
+            {/* Modal Header (Fijo en el tope) */}
+            <div className="px-5 py-3.5 bg-gradient-to-r from-amber-500/10 via-teal-500/10 to-transparent border-b border-slate-200 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 rounded-2xl bg-amber-500 text-white shadow-sm shrink-0">
+                  <IconShield className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                    Resolución de Oficina: Castigo de Vehículo
+                  </h3>
+                  <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">
+                    {selectedVehiculoParaGestionarCastigo.marca} {selectedVehiculoParaGestionarCastigo.modelo} · Placas <span className="font-mono font-bold text-slate-800">{selectedVehiculoParaGestionarCastigo.placas}</span> · {selectedVehiculoParaGestionarCastigo.empresaNombre}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedVehiculoParaGestionarCastigo(null);
+                  setSelectedSancionParaGestionarCastigo(null);
+                  setResolucionError("");
+                }}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer shrink-0 ml-2"
+                title="Cerrar ventana"
+              >
+                <IconX className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Formulario con Scroll Interno fluido si la pantalla es corta */}
+            <form onSubmit={handleGuardarResolucionCastigo} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
+                {/* Recordatorio Operativo: Acceso Peatonal Siempre Libre */}
+                <div className="p-3 rounded-2xl bg-blue-50/80 border border-blue-200 flex items-start gap-2.5 text-xs text-blue-900">
+                  <div className="p-1.5 rounded-xl bg-blue-100 text-blue-700 shrink-0 mt-0.5">
+                    <IconWalk className="w-4 h-4" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="font-bold block text-xs">Acceso Peatonal Siempre Permitido</span>
+                    <span className="text-blue-800 leading-relaxed block text-[11px]">
+                      El personal y la cuadrilla de la empresa pueden ingresar libremente a pie. Este trámite autoriza exclusivamente el ingreso del <strong>vehículo automotor</strong> (para transporte de herramientas pesadas, colados o materiales).
+                    </span>
+                  </div>
+                </div>
+
+                {/* Banner si ya cuenta con Permiso Provisional */}
+                {selectedVehiculoParaGestionarCastigo.permisoTemporal?.activo && (
+                  <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 flex items-start justify-between gap-3 text-xs">
+                    <div className="space-y-0.5">
+                      <span className="font-bold text-amber-900 block flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                        Pase Provisional Actualmente Activo
+                      </span>
+                      <span className="text-amber-800 text-[11px] block">
+                        Vigente hasta: <strong>{new Date(selectedVehiculoParaGestionarCastigo.permisoTemporal.fechaExpiracion).toLocaleString("es-MX", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</strong>
+                        {selectedVehiculoParaGestionarCastigo.permisoTemporal.autorizadoPorOficina ? ` (Autorizado: ${selectedVehiculoParaGestionarCastigo.permisoTemporal.autorizadoPorOficina})` : ""}
+                        {selectedVehiculoParaGestionarCastigo.permisoTemporal.notasSupervisor ? ` · Notas: ${selectedVehiculoParaGestionarCastigo.permisoTemporal.notasSupervisor}` : ""}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResolucionTipo("levantamiento_definitivo");
+                        setResolucionMotivo("Cancelación / levantamiento definitivo de sanción acordada con oficina");
+                      }}
+                      className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition-colors cursor-pointer shrink-0"
+                    >
+                      Hacer Definitivo
+                    </button>
+                  </div>
+                )}
+
+                {/* Error Banner */}
+                {resolucionError && (
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2.5 text-xs text-red-700 font-medium">
+                    <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                    <span>{resolucionError}</span>
+                  </div>
+                )}
+
+                {/* Selector de Modalidad */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Tipo de Resolución Acordada con la Oficina HOA <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setResolucionTipo("permiso_temporal")}
+                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 ${resolucionTipo === "permiso_temporal"
+                        ? "bg-amber-50/70 border-amber-400 ring-2 ring-amber-400/20"
+                        : "bg-white border-slate-200 hover:border-slate-300"
+                        }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                          <IconClock className="w-4 h-4 text-amber-600" />
+                          Pase Provisional Temporal
+                        </span>
+                        <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${resolucionTipo === "permiso_temporal" ? "border-amber-600 bg-amber-600" : "border-slate-300"}`}>
+                          {resolucionTipo === "permiso_temporal" && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 leading-normal">
+                        Permiso especial por hoy o lapso determinado (colado, entrega urgente). Mantiene el registro de la sanción.
+                      </p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setResolucionTipo("levantamiento_definitivo")}
+                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 ${resolucionTipo === "levantamiento_definitivo"
+                        ? "bg-emerald-50/70 border-emerald-500 ring-2 ring-emerald-500/20"
+                        : "bg-white border-slate-200 hover:border-slate-300"
+                        }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                          <IconCheckCircle className="w-4 h-4 text-emerald-600" />
+                          Levantamiento Definitivo
+                        </span>
+                        <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${resolucionTipo === "levantamiento_definitivo" ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`}>
+                          {resolucionTipo === "levantamiento_definitivo" && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 leading-normal">
+                        La oficina acordó exonerar o dar por concluido el castigo restante. El vehículo queda habilitado permanentemente.
+                      </p>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Opciones de Vigencia si es Permiso Temporal */}
+                {resolucionTipo === "permiso_temporal" && (
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+                    <label className="block text-xs font-bold text-slate-700">
+                      Vigencia del Permiso Provisional Vehicular
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: "solo_hoy", label: "Solo por Hoy", sub: "Hasta 19:00 hrs" },
+                        { id: "24_horas", label: "24 Horas", sub: "1 día completo" },
+                        { id: "fecha_limite", label: "Fecha Límite", sub: "Fecha y hora exacta" },
+                      ].map((opt) => (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setResolucionVigenciaTipo(opt.id as any)}
+                          className={`p-2 rounded-xl border text-center transition-all cursor-pointer ${resolucionVigenciaTipo === opt.id
+                            ? "bg-[#0D6E5F] text-white border-[#0D6E5F] shadow-2xs"
+                            : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                            }`}
+                        >
+                          <div className="text-xs font-bold">{opt.label}</div>
+                          <div className={`text-[10px] ${resolucionVigenciaTipo === opt.id ? "text-teal-100" : "text-slate-400"}`}>{opt.sub}</div>
+                        </button>
+                      ))}
+                    </div>
+
+                    {resolucionVigenciaTipo === "fecha_limite" && (
+                      <div className="pt-1">
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          Selecciona Fecha y Hora de Expiración del Permiso:
+                        </label>
+                        <input
+                          type="datetime-local"
+                          required
+                          value={resolucionFechaLimite}
+                          onChange={(e) => setResolucionFechaLimite(e.target.value)}
+                          className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Motivo del Acuerdo / Justificación (Campo de texto libre) */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Motivo del Acuerdo o Causa de Levantamiento <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    rows={2}
+                    required
+                    value={resolucionMotivo}
+                    onChange={(e) => setResolucionMotivo(e.target.value)}
+                    placeholder="Ej. El contratista dialogó con la administración HOA y se acordó permitir el ingreso del vehículo para descarga urgente de material y colado estructural en Villa 14..."
+                    className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F] leading-relaxed"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Campo de texto libre para detallar los términos acordados con la administración.
+                  </p>
+                </div>
+
+                {/* Observaciones Internas / Quién autorizó (Opcional) */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Notas u Observaciones del Supervisor (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={resolucionNotas}
+                    onChange={(e) => setResolucionNotas(e.target.value)}
+                    placeholder="Ej. Autorizó Lic. Roberto Gómez en administración. Notificado a caseta vía radio"
+                    className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Puedes registrar aquí quién autorizó en oficina o cualquier apunte para los oficiales de caseta.
+                  </p>
+                </div>
+              </div>
+
+              {/* Footer Fijo en la Base */}
+              <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedVehiculoParaGestionarCastigo(null);
+                    setSelectedSancionParaGestionarCastigo(null);
+                    setResolucionError("");
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-200 border border-slate-300 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isSubmittingResolucionOficina}
+                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white transition-all flex items-center gap-2 cursor-pointer shadow-sm ${resolucionTipo === "levantamiento_definitivo"
+                    ? "bg-emerald-600 hover:bg-emerald-700"
+                    : "bg-[#0D6E5F] hover:bg-[#0A574B]"
+                    } ${isSubmittingResolucionOficina ? "opacity-60 cursor-not-allowed" : ""}`}
+                >
+                  {isSubmittingResolucionOficina ? (
+                    <>
+                      <IconClock className="w-4 h-4 animate-spin" />
+                      <span>Guardando Resolución...</span>
+                    </>
+                  ) : (
+                    <>
+                      <IconCheckCircle className="w-4 h-4" />
+                      <span>
+                        {resolucionTipo === "levantamiento_definitivo"
+                          ? "Levantar Castigo Definitivamente"
+                          : "Emitir Pase Provisional Vehicular"}
+                      </span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ─── MODAL DE ESCANEO QR PARA CASETA ─── */}
       <QRScannerModal

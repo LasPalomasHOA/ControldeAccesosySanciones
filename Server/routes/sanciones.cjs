@@ -52,10 +52,22 @@ router.get('/', async (req, res) => {
         }
       }
 
+      // Extraer datos de resolución de oficina (levantamiento / permiso temporal)
+      let resolucionOficina = null;
+      if (motivoLimpio.includes('[RESOLUCION_OFICINA_DATA]')) {
+        try {
+          const rMatch = motivoLimpio.match(/\[RESOLUCION_OFICINA_DATA\](.*?)\[\/RESOLUCION_OFICINA_DATA\]/);
+          if (rMatch && rMatch[1]) {
+            resolucionOficina = JSON.parse(rMatch[1]);
+          }
+        } catch (e) {}
+      }
+
       // Limpiar etiquetas del motivo para presentación limpia
       motivoLimpio = motivoLimpio
         .replace(/\[APELACION_DATA\].*?\[\/APELACION_DATA\]/g, '')
         .replace(/\[DICTAMEN_DATA\].*?\[\/DICTAMEN_DATA\]/g, '')
+        .replace(/\[RESOLUCION_OFICINA_DATA\].*?\[\/RESOLUCION_OFICINA_DATA\]/g, '')
         .trim();
 
       // Normalizar status con cálculo dinámico de expiración en memoria
@@ -63,7 +75,16 @@ router.get('/', async (req, res) => {
       const estatusEfectivo = isExpired ? 'VENCIDA' : plain.estatus;
 
       let frontendStatus = 'Activa';
-      if (estatusEfectivo === 'EN_APELACION') {
+      if (resolucionOficina && resolucionOficina.tipoResolucion === 'levantamiento_definitivo') {
+        frontendStatus = 'Levantada';
+      } else if (resolucionOficina && resolucionOficina.tipoResolucion === 'permiso_temporal') {
+        const expDate = resolucionOficina.fechaExpiracionPermiso ? new Date(resolucionOficina.fechaExpiracionPermiso) : null;
+        if (expDate && ahora <= expDate) {
+          frontendStatus = 'Permiso Provisional';
+        } else {
+          frontendStatus = 'Activa';
+        }
+      } else if (estatusEfectivo === 'EN_APELACION') {
         frontendStatus = 'En Apelación';
       } else if (estatusEfectivo === 'CANCELADA' || estatusEfectivo === 'ACLARADA') {
         frontendStatus = 'Aclarada';
@@ -76,7 +97,7 @@ router.get('/', async (req, res) => {
       }
 
       if (apelacionObj) {
-        if (frontendStatus === 'Aclarada') apelacionObj.estado = 'Aprobada';
+        if (frontendStatus === 'Aclarada' || frontendStatus === 'Levantada') apelacionObj.estado = 'Aprobada';
         if (frontendStatus === 'Ratificada') apelacionObj.estado = 'Rechazada';
         if (dictamenSupervisor) apelacionObj.dictamenSupervisor = dictamenSupervisor;
       }
@@ -94,14 +115,15 @@ router.get('/', async (req, res) => {
         infraccionDescripcion: plain.reporte?.infraccion?.nombre || motivoLimpio,
         tipo: plain.reporte?.infraccion?.nombre || 'Infracción Vehicular',
         gravedad: plain.numero_reincidencia >= 3 ? 'critica' : (plain.numero_reincidencia === 2 ? 'grave' : 'moderada'),
-        estado: estatusEfectivo === 'ACTIVA' ? 'activa' : (estatusEfectivo === 'VENCIDA' ? 'resuelta' : 'pendiente_aprobacion'),
+        estado: estatusEfectivo === 'ACTIVA' ? 'activa' : (estatusEfectivo === 'VENCIDA' ? 'resuelta' : (frontendStatus === 'Levantada' ? 'levantada' : 'pendiente_aprobacion')),
         status: frontendStatus,
         fechaSancion: plain.fecha_inicio,
         fecha: plain.fecha_inicio ? new Date(plain.fecha_inicio).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         montoMulta: plain.numero_reincidencia * 100,
         medidaDisciplinaria: plain.regla?.mensaje_alerta || `Sanción nivel ${plain.numero_reincidencia}`,
         evidenciaUrl: plain.reporte?.evidencias?.[0]?.archivo || '',
-        apelacion: apelacionObj
+        apelacion: apelacionObj,
+        resolucionOficina: resolucionOficina
       };
     });
 
@@ -112,7 +134,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// PUT /api/sanciones/:id - Actualizar / Resolver sanción o registrar apelación
+// PUT /api/sanciones/:id - Actualizar / Resolver sanción o registrar apelación / resolución de oficina
 router.put('/:id', async (req, res) => {
   try {
     const sancion = await db.Sancion.findByPk(req.params.id, {
@@ -120,7 +142,7 @@ router.put('/:id', async (req, res) => {
     });
     if (!sancion) return res.status(404).json({ error: 'Sanción no encontrada' });
 
-    const { estatus, fecha_fin, motivo, apelacion, dictamen } = req.body;
+    const { estatus, fecha_fin, motivo, apelacion, dictamen, resolucionOficina } = req.body;
     if (estatus) sancion.estatus = estatus;
     if (fecha_fin) sancion.fecha_fin = fecha_fin;
 
@@ -134,6 +156,29 @@ router.put('/:id', async (req, res) => {
       sancion.motivo = `${baseMotivo} [APELACION_DATA]${cleanArgs}[/APELACION_DATA]`;
     }
 
+    // Si viene resolución directa de oficina (levantamiento definitivo o permiso temporal)
+    if (resolucionOficina) {
+      const cleanRes = typeof resolucionOficina === 'object' ? JSON.stringify(resolucionOficina) : String(resolucionOficina);
+      const baseMotivo = (sancion.motivo || 'Sanción vehicular')
+        .replace(/\[RESOLUCION_OFICINA_DATA\].*?\[\/RESOLUCION_OFICINA_DATA\]/g, '')
+        .trim();
+      sancion.motivo = `${baseMotivo} [RESOLUCION_OFICINA_DATA]${cleanRes}[/RESOLUCION_OFICINA_DATA]`;
+
+      if (resolucionOficina.tipoResolucion === 'levantamiento_definitivo') {
+        sancion.estatus = 'CANCELADA';
+        if (sancion.vehiculo) {
+          sancion.vehiculo.estatus_acceso = 'HABILITADO';
+          await sancion.vehiculo.save();
+        }
+      } else if (resolucionOficina.tipoResolucion === 'permiso_temporal') {
+        // En permiso temporal se habilita el acceso vehicular para la jornada
+        if (sancion.vehiculo) {
+          sancion.vehiculo.estatus_acceso = 'HABILITADO';
+          await sancion.vehiculo.save();
+        }
+      }
+    }
+
     // Si se dictamina o actualiza con dictamen
     if (dictamen) {
       const baseMotivo = (sancion.motivo || 'Sanción vehicular')
@@ -142,7 +187,7 @@ router.put('/:id', async (req, res) => {
       sancion.motivo = `${baseMotivo} [DICTAMEN_DATA]${dictamen}[/DICTAMEN_DATA]`;
     }
 
-    if (motivo && !apelacion && !dictamen) {
+    if (motivo && !apelacion && !dictamen && !resolucionOficina) {
       sancion.motivo = motivo;
     }
 
@@ -152,7 +197,7 @@ router.put('/:id', async (req, res) => {
         await sancion.vehiculo.save();
       }
     } else if (estatus === 'ACTIVA' || estatus === 'RATIFICADA' || estatus === 'EN_APELACION') {
-      if (sancion.vehiculo) {
+      if (sancion.vehiculo && (!resolucionOficina || resolucionOficina.tipoResolucion !== 'permiso_temporal')) {
         sancion.vehiculo.estatus_acceso = 'SUSPENDIDO';
         await sancion.vehiculo.save();
       }
@@ -162,7 +207,9 @@ router.put('/:id', async (req, res) => {
 
     // Emitir evento SSE en tiempo real
     try {
-      if (apelacion) {
+      if (resolucionOficina) {
+        events.broadcastEvent('CASTIGO_GESTIONADO_OFICINA', { id_sancion: sancion.id_sancion, estatus: sancion.estatus, resolucionOficina });
+      } else if (apelacion) {
         events.broadcastEvent('NUEVA_APELACION', { id_sancion: sancion.id_sancion, estatus: sancion.estatus });
       } else if (dictamen || estatus) {
         events.broadcastEvent('SANCION_DICTAMINADA', { id_sancion: sancion.id_sancion, estatus: sancion.estatus });

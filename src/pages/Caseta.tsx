@@ -314,17 +314,34 @@ export const Caseta: React.FC = () => {
                 </div>
 
                 {/* Warnings Display */}
-                {selectedVehiculo.estadoAcceso === 'bloqueado' && (
-                  <div className="bg-rose-5050/10 border border-rose-500/20 text-rose-600 p-3 rounded-lg flex items-start gap-2.5 text-xs font-bold leading-normal">
-                    <ShieldClose size={18} className="shrink-0 mt-0.5" />
+                {selectedVehiculo.permisoTemporal?.activo && new Date(selectedVehiculo.permisoTemporal.fechaExpiracion).getTime() > Date.now() ? (
+                  <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 p-3 rounded-lg flex items-start gap-2.5 text-xs font-bold leading-normal">
+                    <CheckCircle size={18} className="shrink-0 mt-0.5 text-emerald-600" />
                     <div>
-                      ACCESO RESTRINGIDO PERMANENTE O TEMPORAL. 
-                      <p className="font-normal text-[11px] mt-1 text-rose-500/90">
-                        Esta matrícula cuenta con {selectedVehiculo.reincidencias} infracciones activas. El reglamento de HOA bloquea automáticamente accesos tras acumular 3 faltas.
+                      PASE PROVISIONAL VEHICULAR AUTORIZADO POR OFICINA HOA
+                      <p className="font-normal text-[11px] mt-1 text-emerald-700">
+                        {selectedVehiculo.permisoTemporal.autorizadoPorOficina ? (
+                          <>Autorizado por: <strong>{selectedVehiculo.permisoTemporal.autorizadoPorOficina}</strong> · </>
+                        ) : null}
+                        Vigente hasta: <strong>{new Date(selectedVehiculo.permisoTemporal.fechaExpiracion).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })} hrs</strong>. Motivo: {selectedVehiculo.permisoTemporal.motivoAcuerdo}.
+                        {selectedVehiculo.permisoTemporal.notasSupervisor ? ` (${selectedVehiculo.permisoTemporal.notasSupervisor})` : ""} Ingreso vehicular permitido.
                       </p>
                     </div>
                   </div>
-                )}
+                ) : selectedVehiculo.estadoAcceso === 'bloqueado' ? (
+                  <div className="bg-rose-5050/10 border border-rose-500/20 text-rose-600 p-3 rounded-lg flex items-start gap-2.5 text-xs font-bold leading-normal">
+                    <ShieldClose size={18} className="shrink-0 mt-0.5" />
+                    <div className="space-y-1.5 w-full">
+                      <div>ACCESO VEHICULAR RESTRINGIDO POR SANCIONES HOA.</div>
+                      <p className="font-normal text-[11px] text-rose-500/90 leading-relaxed">
+                        Esta matrícula cuenta con {selectedVehiculo.reincidencias} infracciones activas. El vehículo motorizado no puede ingresar.
+                      </p>
+                      <div className="bg-white/80 p-2 rounded border border-rose-200 text-[11px] text-slate-800 font-medium">
+                        🚶 <strong>Acceso Peatonal Siempre Permitido:</strong> La cuadrilla de trabajadores puede ingresar libremente a pie.
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
 
                 {selectedVehiculo.estadoAcceso === 'alerta_sancion' && (
                   <div className="bg-amber-500/10 border border-amber-500/20 text-amber-600 p-3 rounded-lg flex items-start gap-2.5 text-xs font-bold leading-normal">
@@ -373,9 +390,9 @@ export const Caseta: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4 border-t border-slate-200/40 pt-4 bg-transparent">
                   <button
                     onClick={() => handleRegisterAccess('entrada')}
-                    disabled={selectedVehiculo.estadoAcceso === 'bloqueado'}
+                    disabled={selectedVehiculo.estadoAcceso === 'bloqueado' && !(selectedVehiculo.permisoTemporal?.activo && new Date(selectedVehiculo.permisoTemporal.fechaExpiracion).getTime() > Date.now())}
                     className={`py-2.5 rounded-xl text-xs font-bold shadow-md transition-colors flex items-center justify-center gap-2 ${
-                      selectedVehiculo.estadoAcceso === 'bloqueado'
+                      selectedVehiculo.estadoAcceso === 'bloqueado' && !(selectedVehiculo.permisoTemporal?.activo && new Date(selectedVehiculo.permisoTemporal.fechaExpiracion).getTime() > Date.now())
                         ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
                         : 'bg-emerald-500 hover:bg-emerald-600 text-white'
                     }`}

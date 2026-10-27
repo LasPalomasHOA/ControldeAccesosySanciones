@@ -345,6 +345,29 @@ export interface Trabajador {
   observaciones?: string;
 }
 
+export interface PermisoTemporalAcceso {
+  activo: boolean;
+  tipo: 'solo_hoy' | '24_horas' | 'fecha_limite';
+  fechaInicio: string;
+  fechaExpiracion: string;
+  autorizadoPorOficina?: string;
+  motivoAcuerdo: string;
+  supervisorEjecutor: string;
+  fechaRegistro: string;
+  notasSupervisor?: string;
+}
+
+export interface ResolucionCastigoOficina {
+  tipoResolucion: 'permiso_temporal' | 'levantamiento_definitivo';
+  vigenciaTipo?: 'solo_hoy' | '24_horas' | 'fecha_limite';
+  fechaExpiracionPermiso?: string;
+  autorizadoPorOficina?: string;
+  motivoAcuerdo: string;
+  supervisorEjecutor: string;
+  fechaRegistro: string;
+  notasSupervisor?: string;
+}
+
 export interface Vehiculo {
   id: string;
   id_vehiculo?: number | string;
@@ -364,6 +387,7 @@ export interface Vehiculo {
   corbatinVencimiento?: string;
   reincidencias?: number;
   eliminado?: boolean;
+  permisoTemporal?: PermisoTemporalAcceso;
 }
 
 export interface Acceso {
@@ -407,7 +431,7 @@ export interface Sancion {
   infraccionCodigo: string;
   infraccionDescripcion: string;
   gravedad?: 'leve' | 'moderada' | 'grave' | 'critica';
-  estado?: 'pendiente_aprobacion' | 'activa' | 'resuelta' | 'rechazada';
+  estado?: 'pendiente_aprobacion' | 'activa' | 'resuelta' | 'rechazada' | 'levantada';
   estatus?: string;
   fechaSancion?: string;
   fechaResolucion?: string;
@@ -417,6 +441,7 @@ export interface Sancion {
   evidenciaUrl?: string;
   comentarios?: string;
   agenteNombre?: string;
+  resolucionOficina?: ResolucionCastigoOficina;
 }
 
 export interface DocumentoFiscalProveedor {

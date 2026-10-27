@@ -18,3 +18,9 @@ logs/
 # beside it.
 /.plugins/
 /.opencode-skills/
+/.agents/
+
+# Local graphify knowledge graph
+graphify-out/
+
+
