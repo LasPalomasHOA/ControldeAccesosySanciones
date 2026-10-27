@@ -6721,22 +6721,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* Recordatorio Operativo: Acceso Peatonal Siempre Permitido */}
-        <div className="rounded-2xl border border-sky-200 bg-sky-50/80 p-4 flex items-start gap-3 shadow-2xs">
-          <div className="p-2 rounded-xl bg-sky-600 text-white shrink-0 mt-0.5">
-            <IconWalk className="w-4 h-4" />
-          </div>
-          <div className="text-xs text-sky-950 space-y-1">
-            <div className="font-bold flex items-center gap-2">
-              <span>Aclaración Operativa de Acceso: El Personal Siempre Puede Entrar a Pie</span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-200 text-sky-800 uppercase tracking-wider">Regla HOA</span>
-            </div>
-            <p className="text-sky-900/90 leading-relaxed">
-              Los castigos disciplinarios aplican <strong>estrictamente a la unidad vehicular</strong>. Los trabajadores y choferes siempre pueden registrar <strong>"Acceso Peatonal"</strong> en caseta dejando la unidad afuera. Los pases de oficina se gestionan cuando el contratista requiere forzosamente ingresar el vehículo físico para descarga de concreto, materiales pesados o faenas urgentes.
-            </p>
-          </div>
-        </div>
-
         {/* Filtros y Búsqueda */}
         <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
           <div className="relative w-full sm:w-80">
@@ -11814,9 +11798,6 @@ export default function App() {
                                     <p className="text-xs leading-relaxed">
                                       <strong>Motivo:</strong> {currentCasetaVehicle.sancionActiva.motivo} (Expira: <span className="font-mono font-bold">{currentCasetaVehicle.sancionActiva.expiracion}</span>)
                                     </p>
-                                    <div className="p-2 rounded-lg bg-blue-50 border border-blue-200 text-[11px] text-blue-900 font-medium">
-                                      🚶 <strong>Acceso Peatonal Siempre Permitido:</strong> Los trabajadores y cuadrilla de la empresa pueden ingresar libremente a pie. El vehículo debe permanecer en el estacionamiento exterior.
-                                    </div>
                                     <div className="pt-1.5 flex flex-wrap items-center justify-between gap-2 border-t border-red-200/80">
                                       <button
                                         type="button"
@@ -16049,19 +16030,6 @@ export default function App() {
             {/* Formulario con Scroll Interno fluido si la pantalla es corta */}
             <form onSubmit={handleGuardarResolucionCastigo} className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
-                {/* Recordatorio Operativo: Acceso Peatonal Siempre Libre */}
-                <div className="p-3 rounded-2xl bg-blue-50/80 border border-blue-200 flex items-start gap-2.5 text-xs text-blue-900">
-                  <div className="p-1.5 rounded-xl bg-blue-100 text-blue-700 shrink-0 mt-0.5">
-                    <IconWalk className="w-4 h-4" />
-                  </div>
-                  <div className="space-y-0.5">
-                    <span className="font-bold block text-xs">Acceso Peatonal Siempre Permitido</span>
-                    <span className="text-blue-800 leading-relaxed block text-[11px]">
-                      El personal y la cuadrilla de la empresa pueden ingresar libremente a pie. Este trámite autoriza exclusivamente el ingreso del <strong>vehículo automotor</strong> (para transporte de herramientas pesadas, colados o materiales).
-                    </span>
-                  </div>
-                </div>
-
                 {/* Banner si ya cuenta con Permiso Provisional */}
                 {selectedVehiculoParaGestionarCastigo.permisoTemporal?.activo && (
                   <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 flex items-start justify-between gap-3 text-xs">
