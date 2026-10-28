@@ -16,8 +16,8 @@ router.get('/', async (req, res) => {
     if (id_empresa) where.id_empresa = id_empresa;
     if (estatus_acceso) where.estatus_acceso = estatus_acceso;
 
-    const parsedLimit = Math.min(parseInt(limit, 10) || 500, 1000);
-    const parsedOffset = parseInt(offset, 10) || 0;
+    const parsedLimit = Math.min(parseInt(String(limit || ''), 10) || 500, 1000);
+    const parsedOffset = parseInt(String(offset || ''), 10) || 0;
 
     const vehiculos = await db.Vehiculo.findAll({
       where,
@@ -36,8 +36,8 @@ router.get('/', async (req, res) => {
         { 
           model: db.Sancion, 
           as: 'sanciones', 
-          attributes: ['id_sancion', 'estatus', 'fecha_inicio', 'fecha_fin'], 
-          where: { estatus: 'ACTIVA' }, 
+          attributes: ['id_sancion', 'estatus', 'fecha_inicio', 'fecha_fin', 'motivo', 'numero_reincidencia'], 
+          where: { estatus: { [Op.in]: ['ACTIVA', 'RATIFICADA', 'EN_APELACION'] } }, 
           required: false
         }
       ],
@@ -55,19 +55,88 @@ router.get('/', async (req, res) => {
       return `/uploads/${str}`;
     };
 
+    const ahora = new Date();
+
     const resultado = vehiculos.map(v => {
       const plain = v.get({ plain: true });
       const corbatinActivo = plain.corbatines?.find(c => c.estatus === 'ACTIVO') || plain.corbatines?.[0];
 
+      // Evaluar sanciones vigentes y pases provisionales de oficina
+      const sancionesVigentes = (plain.sanciones || []).filter(s => {
+        if (s.fecha_inicio && ahora < new Date(s.fecha_inicio)) return false;
+        if (s.fecha_fin && ahora >= new Date(s.fecha_fin)) return false;
+        if (s.motivo && s.motivo.includes('[RESOLUCION_OFICINA_DATA]')) {
+          try {
+            const rMatch = s.motivo.match(/\[RESOLUCION_OFICINA_DATA\](.*?)\[\/RESOLUCION_OFICINA_DATA\]/);
+            if (rMatch && rMatch[1]) {
+              const resObj = JSON.parse(rMatch[1]);
+              if (resObj.tipoResolucion === 'levantamiento_definitivo') return false;
+            }
+          } catch (e) {}
+        }
+        return true;
+      });
+
+      let permisoTemporal = undefined;
+      let permisoExpirado = false;
+
+      for (const s of sancionesVigentes) {
+        if (s.motivo && s.motivo.includes('[RESOLUCION_OFICINA_DATA]')) {
+          try {
+            const rMatch = s.motivo.match(/\[RESOLUCION_OFICINA_DATA\](.*?)\[\/RESOLUCION_OFICINA_DATA\]/);
+            if (rMatch && rMatch[1]) {
+              const resObj = JSON.parse(rMatch[1]);
+              if (resObj.tipoResolucion === 'permiso_temporal' && resObj.fechaExpiracionPermiso) {
+                const expDate = new Date(resObj.fechaExpiracionPermiso);
+                const isActive = ahora < expDate;
+                permisoTemporal = {
+                  activo: isActive,
+                  tipo: resObj.vigenciaTipo || 'solo_hoy',
+                  fechaInicio: resObj.fechaRegistro || s.fecha_inicio,
+                  fechaExpiracion: resObj.fechaExpiracionPermiso,
+                  autorizadoPorOficina: resObj.autorizadoPorOficina,
+                  motivoAcuerdo: resObj.motivoAcuerdo,
+                  supervisorEjecutor: resObj.supervisorEjecutor,
+                  fechaRegistro: resObj.fechaRegistro,
+                  notasSupervisor: resObj.notasSupervisor
+                };
+                if (!isActive) permisoExpirado = true;
+                break;
+              }
+            }
+          } catch (e) {}
+        }
+      }
+
+      // Si el pase temporal ya venció o tiene una sanción de suspensión vigente sin pase activo, el estatus efectivo es SUSPENDIDO
+      const sancionBloqueante = sancionesVigentes.find(s => Number(s.numero_reincidencia || s.id_regla || 1) >= 2);
+      const tieneCastigoSuspendido = sancionesVigentes.some(s => (s.numero_reincidencia || 1) >= 2 || permisoExpirado || plain.estatus_acceso === 'SUSPENDIDO');
+      let estatusEfectivo = plain.estatus_acceso;
+
+      if (permisoTemporal && permisoTemporal.activo) {
+        estatusEfectivo = 'HABILITADO';
+      } else if (permisoExpirado || (sancionesVigentes.length > 0 && tieneCastigoSuspendido)) {
+        estatusEfectivo = 'SUSPENDIDO';
+        // Sincronizar en segundo plano en BD si había quedado como HABILITADO por un pase de ayer
+        if (plain.estatus_acceso === 'HABILITADO') {
+          db.Vehiculo.update({ estatus_acceso: 'SUSPENDIDO' }, { where: { id_vehiculo: plain.id_vehiculo } }).catch(() => {});
+        }
+      } else if (sancionesVigentes.length === 0 && plain.estatus_acceso === 'SUSPENDIDO') {
+        // Si la sanción ya cumplió su fecha_fin, liberar automáticamente a HABILITADO
+        estatusEfectivo = 'HABILITADO';
+        db.Vehiculo.update({ estatus_acceso: 'HABILITADO' }, { where: { id_vehiculo: plain.id_vehiculo } }).catch(() => {});
+      }
+
       let estadoAcceso = 'permitido';
-      if (plain.estatus_acceso === 'SUSPENDIDO' || plain.estatus_acceso === 'RESTRINGIDO') {
+      if (estatusEfectivo === 'SUSPENDIDO' || estatusEfectivo === 'RESTRINGIDO') {
         estadoAcceso = 'bloqueado';
-      } else if (plain.sanciones && plain.sanciones.length > 0) {
+      } else if (sancionesVigentes.length > 0) {
         estadoAcceso = 'alerta_sancion';
       }
 
       return {
         ...plain,
+        estatus_acceso: estatusEfectivo,
         id: String(plain.id_vehiculo),
         placa: plain.placas,
         empresaId: String(plain.id_empresa),
@@ -81,9 +150,16 @@ router.get('/', async (req, res) => {
         qr_token: corbatinActivo?.qr_token || '',
         conductor: '',
         conductorId: null,
-        reincidencias: plain.sanciones?.length || 0,
+        reincidencias: sancionesVigentes.length,
         estadoAcceso,
-        status: plain.estatus_acceso === 'HABILITADO' ? 'Habilitado' : (plain.estatus_acceso === 'SUSPENDIDO' ? 'Suspendido' : (plain.estatus_acceso === 'DESHABILITADO' ? 'Deshabilitado' : 'Restringido'))
+        permisoTemporal,
+        sancionActiva: sancionBloqueante ? {
+          motivo: sancionBloqueante.motivo || `Sanción nivel ${sancionBloqueante.numero_reincidencia}`,
+          expiracion: sancionBloqueante.fecha_fin
+            ? new Date(sancionBloqueante.fecha_fin).toISOString().split('T')[0]
+            : 'Definitiva'
+        } : undefined,
+        status: estatusEfectivo === 'HABILITADO' ? 'Habilitado' : (estatusEfectivo === 'SUSPENDIDO' ? 'Suspendido' : (estatusEfectivo === 'DESHABILITADO' ? 'Deshabilitado' : 'Restringido'))
       };
     });
 

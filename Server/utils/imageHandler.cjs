@@ -98,7 +98,7 @@ function resolveFotoToDataUrl(fotoUrl) {
  */
 async function comprimirBuffer(buffer, maxWidth = 800, quality = 65) {
   try {
-    return await sharp(buffer)
+    return await /** @type {any} */ (sharp)(buffer)
       .resize({
         width: maxWidth,
         fit: 'inside',

@@ -6,6 +6,28 @@ const events = require('../events.cjs');
 const { saveBase64Image } = require('../utils/imageHandler.cjs');
 const { requireAuth } = require('../middlewares/auth.cjs');
 
+/**
+ * Calcula las 12:00 AM (00:00:00.000) del día calendario siguiente en hora local.
+ * Si el proceso corre en UTC puro (ej. servidor cloud con getTimezoneOffset() === 0),
+ * toma como referencia la zona horaria local de Sonora (America/Hermosillo, UTC-7).
+ */
+function getNextDayMidnightLocal(baseDate = new Date()) {
+  const now = baseDate instanceof Date ? baseDate : new Date(baseDate);
+  if (now.getTimezoneOffset() === 0) {
+    const sonoraOffsetMs = -7 * 60 * 60 * 1000;
+    const localTime = new Date(now.getTime() + sonoraOffsetMs);
+    return new Date(
+      Date.UTC(
+        localTime.getUTCFullYear(),
+        localTime.getUTCMonth(),
+        localTime.getUTCDate() + 1,
+        7, 0, 0, 0
+      )
+    );
+  }
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+}
+
 // GET /api/reportes/stream - Canal SSE para actualizaciones en vivo
 router.get('/stream', (req, res) => {
   if (process.env.VERCEL) {
@@ -244,7 +266,7 @@ router.post('/:id/revisar', requireAuth, async (req, res) => {
       { transaction }
     );
 
-    // 9. Si se aprueba, generar sanción única
+    // 9. Si se aprueba, generar sanción única programada para iniciar al día siguiente a las 12:00 AM (hora local)
     let sancion = null;
     if (decision === 'APROBADO') {
       const regla = await db.ReglaReincidencia.findOne({
@@ -252,30 +274,35 @@ router.post('/:id/revisar', requireAuth, async (req, res) => {
         transaction
       });
 
+      const fechaInicioSancion = getNextDayMidnightLocal(new Date());
+      let fechaFinSancion = null;
+      if (nivelReincidencia === 2) {
+        // 2ª Falta: 24 horas a partir del inicio de la sanción (día siguiente 12:00 AM)
+        fechaFinSancion = new Date(fechaInicioSancion.getTime() + 24 * 60 * 60 * 1000);
+      } else if (nivelReincidencia === 3) {
+        // 3ª Falta: 1 semana (7 días) a partir del inicio de la sanción (día siguiente 12:00 AM)
+        fechaFinSancion = new Date(fechaInicioSancion.getTime() + 7 * 24 * 60 * 60 * 1000);
+      }
+      // 1ª Falta (Llamada de atención) y 4ª Falta (Definitiva) mantienen fecha_fin = null
+
       sancion = await db.Sancion.create(
         {
           id_reporte: reporte.id_reporte,
           id_vehiculo: reporte.id_vehiculo || 1,
           id_empresa: vehiculo?.id_empresa || 1,
-          id_regla: regla?.id_regla || 1,
+          id_regla: regla?.id_regla || nivelReincidencia,
           numero_reincidencia: nivelReincidencia,
-          fecha_inicio: new Date(),
-          fecha_fin:
-            nivelReincidencia === 1
-              ? null
-              : new Date(Date.now() + (nivelReincidencia === 2 ? 7 : 30) * 24 * 60 * 60 * 1000),
+          fecha_inicio: fechaInicioSancion,
+          fecha_fin: fechaFinSancion,
           estatus: 'ACTIVA',
           motivo: comentarios || `Sanción por falta nivel ${nivelReincidencia}`,
           id_usuario: usuarioValidoId
         },
         { transaction }
       );
-
-      // Actualizar estatus de acceso en vehículo si la regla bloquea
-      if (regla && !regla.permite_acceso && vehiculo) {
-        vehiculo.estatus_acceso = 'SUSPENDIDO';
-        await vehiculo.save({ transaction });
-      }
+      // Nota: No se fuerza vehiculo.estatus_acceso = 'SUSPENDIDO' en el instante del dictamen,
+      // ya que la sanción entra en vigor hasta el día siguiente a las 12:00 AM (fecha_inicio).
+      // El estatus del vehículo se evalúa dinámicamente en función de las sanciones ya en vigor.
     }
 
     await transaction.commit();

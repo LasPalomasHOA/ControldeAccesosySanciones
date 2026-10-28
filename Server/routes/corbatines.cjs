@@ -22,8 +22,9 @@ function formatCorbatin(c) {
 
   const empNom = plain.empresa_nombre || plain.vehiculo?.empresa?.razon_social || plain.empresaNombre || '';
   const hasEmpresa = Boolean(empNom && empNom.trim());
-  const fechaVenc = plain.fecha_vencimiento ? new Date(plain.fecha_vencimiento) : null;
-  const isExpired = fechaVenc ? (fechaVenc.getTime() < new Date().setHours(0, 0, 0, 0)) : false;
+  const todayLocalStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD en zona horaria local
+  const fechaVencStr = plain.fecha_vencimiento ? new Date(plain.fecha_vencimiento).toISOString().split('T')[0] : '';
+  const isExpired = Boolean(fechaVencStr && fechaVencStr < todayLocalStr);
 
   let estatusInventario = 'DISPONIBLE';
   if (plain.activo === false || plain.estatus === 'DESHABILITADO' || plain.estatus === 'CANCELADO') {
@@ -115,9 +116,9 @@ async function asegurarPoolBaseVerdes() {
 router.get('/', async (req, res) => {
   try {
     const { tipo, tipos, activo, estatus, numero, id_vehiculo } = req.query;
-    const tipoFiltro = (tipos || tipo || '').toUpperCase();
+    const tipoFiltro = String(tipos || tipo || '').toUpperCase();
     const where = {};
-    if (numero) where.numero = parseInt(numero, 10);
+    if (numero) where.numero = parseInt(String(numero), 10);
     if (id_vehiculo) where.id_vehiculo = id_vehiculo;
 
     if (tipoFiltro) {
@@ -128,15 +129,15 @@ router.get('/', async (req, res) => {
     }
 
     if (activo !== undefined) {
-      where.activo = activo === 'true' || activo === true;
+      where.activo = String(activo) === 'true';
     }
 
     if (estatus) {
       where.estatus = estatus;
     }
 
-    const parsedLimit = Math.min(parseInt(req.query.limit, 10) || 500, 1000);
-    const parsedOffset = parseInt(req.query.offset, 10) || 0;
+    const parsedLimit = Math.min(parseInt(String(req.query.limit || ''), 10) || 500, 1000);
+    const parsedOffset = parseInt(String(req.query.offset || ''), 10) || 0;
 
     const corbatines = await db.Corbatin.findAll({
       where,
@@ -235,7 +236,6 @@ router.post('/:id/vincular', async (req, res) => {
     }
 
     const {
-      id_empresa,
       empresaNombre,
       empresa_nombre,
       telefono,
@@ -247,9 +247,7 @@ router.post('/:id/vincular', async (req, res) => {
       fechaAsignacion,
       fecha_asignacion,
       placas,
-      placasAsignadas,
       conductor,
-      conductorAsignado,
       notas,
       asignadoPor,
       asignado_por
@@ -266,7 +264,7 @@ router.post('/:id/vincular', async (req, res) => {
 
     if (!fechaVenc) {
       let days = 30;
-      if (vigTexto === '1 Día' || vigTexto === '1_dia') days = 1;
+      if (vigTexto === '1 Día' || vigTexto === '1_dia') days = 0; // Solo por el día de asignación
       else if (vigTexto === '1 Semana' || vigTexto === '1_semana') days = 7;
       else if (vigTexto === '15 Días' || vigTexto === '15_dias') days = 15;
       else if (vigTexto === '1 Mes' || vigTexto === '1_mes') days = 30;
