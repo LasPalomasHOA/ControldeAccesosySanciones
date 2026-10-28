@@ -36,8 +36,8 @@ router.get('/', async (req, res) => {
         { 
           model: db.Sancion, 
           as: 'sanciones', 
-          attributes: ['id_sancion', 'estatus', 'fecha_inicio', 'fecha_fin'], 
-          where: { estatus: 'ACTIVA' }, 
+          attributes: ['id_sancion', 'estatus', 'fecha_inicio', 'fecha_fin', 'numero_reincidencia', 'id_regla', 'motivo'], 
+          where: { estatus: { [Op.in]: ['ACTIVA', 'RATIFICADA'] } }, 
           required: false
         }
       ],
@@ -55,19 +55,45 @@ router.get('/', async (req, res) => {
       return `/uploads/${str}`;
     };
 
+    const ahora = new Date();
+
     const resultado = vehiculos.map(v => {
       const plain = v.get({ plain: true });
       const corbatinActivo = plain.corbatines?.find(c => c.estatus === 'ACTIVO') || plain.corbatines?.[0];
 
+      // Filtrar únicamente las sanciones que YA entraron en vigor (ahora >= fecha_inicio) y no han expirado
+      const sancionesEnVigor = (plain.sanciones || []).filter(s => {
+        if (s.estatus !== 'ACTIVA' && s.estatus !== 'RATIFICADA') return false;
+        if (s.fecha_inicio && ahora < new Date(s.fecha_inicio)) return false;
+        if (s.fecha_fin && ahora >= new Date(s.fecha_fin)) return false;
+        return true;
+      });
+
+      const sancionBloqueante = sancionesEnVigor
+        .slice()
+        .sort((a, b) => (Number(b.numero_reincidencia || b.id_regla || 1) - Number(a.numero_reincidencia || a.id_regla || 1)))
+        .find(s => Number(s.numero_reincidencia || s.id_regla || 1) >= 2);
+
+      let estatusEfectivo = plain.estatus_acceso || 'HABILITADO';
+      if (estatusEfectivo !== 'DESHABILITADO' && estatusEfectivo !== 'RESTRINGIDO') {
+        if (sancionBloqueante) {
+          estatusEfectivo = 'SUSPENDIDO';
+        } else if (estatusEfectivo === 'SUSPENDIDO' && (plain.sanciones || []).length > 0) {
+          // Si estaba marcado como SUSPENDIDO pero la sanción aún no inicia (o ya expiró), se mantiene HABILITADO
+          estatusEfectivo = 'HABILITADO';
+        }
+      }
+
       let estadoAcceso = 'permitido';
-      if (plain.estatus_acceso === 'SUSPENDIDO' || plain.estatus_acceso === 'RESTRINGIDO') {
+      if (estatusEfectivo === 'SUSPENDIDO' || estatusEfectivo === 'RESTRINGIDO') {
         estadoAcceso = 'bloqueado';
-      } else if (plain.sanciones && plain.sanciones.length > 0) {
+      } else if (sancionesEnVigor.length > 0) {
         estadoAcceso = 'alerta_sancion';
       }
 
       return {
         ...plain,
+        estatus_acceso: estatusEfectivo,
         id: String(plain.id_vehiculo),
         placa: plain.placas,
         empresaId: String(plain.id_empresa),
@@ -81,9 +107,15 @@ router.get('/', async (req, res) => {
         qr_token: corbatinActivo?.qr_token || '',
         conductor: '',
         conductorId: null,
-        reincidencias: plain.sanciones?.length || 0,
+        reincidencias: sancionesEnVigor.length,
         estadoAcceso,
-        status: plain.estatus_acceso === 'HABILITADO' ? 'Habilitado' : (plain.estatus_acceso === 'SUSPENDIDO' ? 'Suspendido' : (plain.estatus_acceso === 'DESHABILITADO' ? 'Deshabilitado' : 'Restringido'))
+        sancionActiva: sancionBloqueante ? {
+          motivo: sancionBloqueante.motivo || `Sanción nivel ${sancionBloqueante.numero_reincidencia}`,
+          expiracion: sancionBloqueante.fecha_fin
+            ? new Date(sancionBloqueante.fecha_fin).toISOString().split('T')[0]
+            : 'Definitiva'
+        } : undefined,
+        status: estatusEfectivo === 'HABILITADO' ? 'Habilitado' : (estatusEfectivo === 'SUSPENDIDO' ? 'Suspendido' : (estatusEfectivo === 'DESHABILITADO' ? 'Deshabilitado' : 'Restringido'))
       };
     });
 

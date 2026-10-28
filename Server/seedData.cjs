@@ -26,17 +26,23 @@ async function seedDatabase() {
 
     // 2. Reglas de Reincidencia
     const reglasData = [
-      { id_regla: 1, numero_falta: 1, permite_acceso: true, requiere_administrador: false, mensaje_alerta: 'Primera Falta: Amonestación formal. Acceso permitido.', activo: true },
-      { id_regla: 2, numero_falta: 2, permite_acceso: false, requiere_administrador: false, mensaje_alerta: 'Segunda Falta: Suspensión temporal de 7 días. Acceso denegado.', activo: true },
-      { id_regla: 3, numero_falta: 3, permite_acceso: false, requiere_administrador: false, mensaje_alerta: 'Tercera Falta: Suspensión de 30 días y multa. Acceso denegado.', activo: true },
-      { id_regla: 4, numero_falta: 4, permite_acceso: false, requiere_administrador: true, mensaje_alerta: 'Cuarta Falta: Bloqueo permanente. Requiere resolución de Dirección HOA.', activo: true }
+      { id_regla: 1, numero_falta: 1, permite_acceso: true, requiere_administrador: false, mensaje_alerta: 'Primera Falta: Llamada de atención. Acceso permitido.', activo: true },
+      { id_regla: 2, numero_falta: 2, permite_acceso: false, requiere_administrador: false, mensaje_alerta: 'Segunda Falta: Suspensión temporal de 24 horas. Acceso denegado.', activo: true },
+      { id_regla: 3, numero_falta: 3, permite_acceso: false, requiere_administrador: false, mensaje_alerta: 'Tercera Falta: Suspensión temporal de 1 semana. Acceso denegado.', activo: true },
+      { id_regla: 4, numero_falta: 4, permite_acceso: false, requiere_administrador: true, mensaje_alerta: 'Cuarta Falta: Sanción definitiva (bloqueo permanente). Requiere resolución de Dirección HOA.', activo: true }
     ];
 
     for (const reg of reglasData) {
-      await db.ReglaReincidencia.findOrCreate({
+      const [instance, created] = await db.ReglaReincidencia.findOrCreate({
         where: { numero_falta: reg.numero_falta },
         defaults: reg
       });
+      if (!created && instance.mensaje_alerta !== reg.mensaje_alerta) {
+        instance.mensaje_alerta = reg.mensaje_alerta;
+        instance.permite_acceso = reg.permite_acceso;
+        instance.requiere_administrador = reg.requiere_administrador;
+        await instance.save();
+      }
     }
 
     // 3. Casetas de Control de Acceso

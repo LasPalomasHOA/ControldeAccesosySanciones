@@ -6,7 +6,14 @@ const events = require('../events.cjs');
 // GET /api/sanciones - Listar todas las sanciones con soporte para apelaciones (limitado a 100)
 router.get('/', async (req, res) => {
   try {
+    const { id_vehiculo } = req.query;
+    const where = {};
+    if (id_vehiculo) {
+      where.id_vehiculo = id_vehiculo;
+    }
+
     const sanciones = await db.Sancion.findAll({
+      where,
       limit: 100,
       include: [
         { model: db.Vehiculo, as: 'vehiculo', attributes: ['id_vehiculo', 'placas', 'marca', 'modelo', 'color', 'estatus_acceso'] },
@@ -102,9 +109,19 @@ router.get('/', async (req, res) => {
         if (dictamenSupervisor) apelacionObj.dictamenSupervisor = dictamenSupervisor;
       }
 
+      const nivel = Number(plain.numero_reincidencia || plain.id_regla || 1);
+      const medidasPorNivel = {
+        1: 'Primera Falta: Llamada de atención. Acceso permitido.',
+        2: 'Segunda Falta: Suspensión temporal de 24 horas. Acceso denegado.',
+        3: 'Tercera Falta: Suspensión temporal de 1 semana. Acceso denegado.',
+        4: 'Cuarta Falta: Sanción definitiva (bloqueo permanente).'
+      };
+      const enVigor = !plain.fecha_inicio || ahora >= new Date(plain.fecha_inicio);
+
       return {
         ...plain,
         estatus: estatusEfectivo,
+        enVigor,
         id: String(plain.id_sancion),
         motivo: motivoLimpio,
         descripcion: motivoLimpio,
@@ -114,13 +131,13 @@ router.get('/', async (req, res) => {
         infraccionCodigo: plain.reporte?.infraccion?.codigo || 'INF-01',
         infraccionDescripcion: plain.reporte?.infraccion?.nombre || motivoLimpio,
         tipo: plain.reporte?.infraccion?.nombre || 'Infracción Vehicular',
-        gravedad: plain.numero_reincidencia >= 3 ? 'critica' : (plain.numero_reincidencia === 2 ? 'grave' : 'moderada'),
+        gravedad: nivel >= 3 ? 'critica' : (nivel === 2 ? 'grave' : 'moderada'),
         estado: estatusEfectivo === 'ACTIVA' ? 'activa' : (estatusEfectivo === 'VENCIDA' ? 'resuelta' : (frontendStatus === 'Levantada' ? 'levantada' : 'pendiente_aprobacion')),
         status: frontendStatus,
         fechaSancion: plain.fecha_inicio,
         fecha: plain.fecha_inicio ? new Date(plain.fecha_inicio).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-        montoMulta: plain.numero_reincidencia * 100,
-        medidaDisciplinaria: plain.regla?.mensaje_alerta || `Sanción nivel ${plain.numero_reincidencia}`,
+        montoMulta: nivel * 100,
+        medidaDisciplinaria: medidasPorNivel[nivel] || plain.regla?.mensaje_alerta || `Sanción nivel ${nivel}`,
         evidenciaUrl: plain.reporte?.evidencias?.[0]?.archivo || '',
         apelacion: apelacionObj,
         resolucionOficina: resolucionOficina
@@ -197,7 +214,9 @@ router.put('/:id', async (req, res) => {
         await sancion.vehiculo.save();
       }
     } else if (estatus === 'ACTIVA' || estatus === 'RATIFICADA' || estatus === 'EN_APELACION') {
-      if (sancion.vehiculo && (!resolucionOficina || resolucionOficina.tipoResolucion !== 'permiso_temporal')) {
+      const nivelSancion = Number(sancion.numero_reincidencia || sancion.id_regla || 1);
+      const yaInicio = !sancion.fecha_inicio || new Date() >= new Date(sancion.fecha_inicio);
+      if (sancion.vehiculo && nivelSancion >= 2 && yaInicio && (!resolucionOficina || resolucionOficina.tipoResolucion !== 'permiso_temporal')) {
         sancion.vehiculo.estatus_acceso = 'SUSPENDIDO';
         await sancion.vehiculo.save();
       }

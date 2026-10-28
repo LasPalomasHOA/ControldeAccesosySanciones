@@ -2694,7 +2694,7 @@ export default function App() {
           const pPlaca = v.placas || v.placa;
           const perm = cachedPermisos[pPlaca];
           const hasValidPerm = perm && perm.activo && new Date() < new Date(perm.fechaExpiracion);
-          const baseStatus = (v.estatus_acceso === "HABILITADO" ? "Habilitado" : (v.estatus_acceso === "DESHABILITADO" ? "Deshabilitado" : (v.estatus_acceso === "SUSPENDIDO" ? "Suspendido" : "Restringido"))) as "Habilitado" | "Deshabilitado" | "Suspendido" | "Restringido";
+          const baseStatus = (v.status || (v.estatus_acceso === "HABILITADO" ? "Habilitado" : (v.estatus_acceso === "DESHABILITADO" ? "Deshabilitado" : (v.estatus_acceso === "SUSPENDIDO" ? "Suspendido" : "Restringido")))) as "Habilitado" | "Deshabilitado" | "Suspendido" | "Restringido";
 
           return {
             id: String(v.id_vehiculo || v.id),
@@ -2711,6 +2711,7 @@ export default function App() {
             foto: normalizeFotoUrl(v.foto_url || v.foto),
             status: hasValidPerm ? ("Habilitado" as const) : baseStatus,
             corbatinNum: corbNum,
+            sancionActiva: v.sancionActiva || undefined,
             permisoTemporal: hasValidPerm ? perm : undefined,
           };
         });
@@ -2999,7 +3000,7 @@ export default function App() {
           const pPlaca = v.placas || v.placa;
           const perm = cachedPermisos[pPlaca];
           const hasValidPerm = perm && perm.activo && new Date() < new Date(perm.fechaExpiracion);
-          const baseStatus = (v.estatus_acceso === "HABILITADO" ? "Habilitado" : (v.estatus_acceso === "DESHABILITADO" ? "Deshabilitado" : (v.estatus_acceso === "SUSPENDIDO" ? "Suspendido" : "Restringido"))) as "Habilitado" | "Deshabilitado" | "Suspendido" | "Restringido";
+          const baseStatus = (v.status || (v.estatus_acceso === "HABILITADO" ? "Habilitado" : (v.estatus_acceso === "DESHABILITADO" ? "Deshabilitado" : (v.estatus_acceso === "SUSPENDIDO" ? "Suspendido" : "Restringido")))) as "Habilitado" | "Deshabilitado" | "Suspendido" | "Restringido";
 
           return {
             id: String(v.id_vehiculo || v.id),
@@ -3016,6 +3017,7 @@ export default function App() {
             foto: normalizeFotoUrl(v.foto_url || v.foto),
             status: hasValidPerm ? ("Habilitado" as const) : baseStatus,
             corbatinNum: corbNum,
+            sancionActiva: v.sancionActiva || undefined,
             permisoTemporal: hasValidPerm ? perm : undefined,
           };
         });
@@ -5109,7 +5111,7 @@ export default function App() {
       await reloadReportes();
       await reloadSanciones();
       await reloadVehiculos();
-      showToast(`Infracción ${inf.folio} aprobada. Se ha aplicado la suspensión de acceso vehicular.`, "success", "Infracción Aprobada");
+      showToast(`Infracción ${inf.folio} aprobada. La empresa ha sido notificada al instante y la sanción entrará en vigor mañana a las 12:00 AM.`, "success", "Infracción Aprobada");
     } catch (err: any) {
       await reloadReportes();
       await reloadSanciones();
@@ -11030,10 +11032,12 @@ export default function App() {
                                       <div className="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
                                         <IconClock className="w-3.5 h-3.5 text-amber-600" />
                                         <span>
-                                          {s.fecha_fin ? (
+                                          {s.fecha_inicio && new Date() < new Date(s.fecha_inicio) ? (
+                                            <>Entra en vigor el: <strong className="text-slate-800 font-mono">{new Date(s.fecha_inicio).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })} a las 12:00 AM</strong>{s.fecha_fin ? <> (Hasta: <strong className="text-slate-800 font-mono">{new Date(s.fecha_fin).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })}</strong>)</> : null}</>
+                                          ) : s.fecha_fin ? (
                                             <>Suspensión temporal vigente hasta: <strong className="text-slate-800 font-mono">{new Date(s.fecha_fin).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })}</strong></>
                                           ) : (
-                                            "Suspensión administrativa activa"
+                                            "Sanción administrativa activa"
                                           )}
                                         </span>
                                       </div>
