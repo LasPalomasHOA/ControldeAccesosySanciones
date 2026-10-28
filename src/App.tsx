@@ -8032,46 +8032,49 @@ export default function App() {
           )}
 
           {currentUser.role === "contratista" && (
-            <div className="md:hidden border-t border-slate-200/80 bg-slate-50/95 px-3 py-2 overflow-x-auto no-scrollbar">
+            <div className="md:hidden border-t border-slate-200/80 bg-slate-50/95 px-2.5 py-2 overflow-x-auto no-scrollbar scroll-smooth">
               {portalScreen === "reglamento" || !currentUser.hasAcceptedReglamento ? (
-                <div className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">
-                  <IconShield className="w-3.5 h-3.5 text-amber-600" />
+                <div className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold shadow-xs">
+                  <IconShield className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                   <span>Lectura de Reglamento Pendiente</span>
                 </div>
               ) : (
-                <div className="flex gap-1 min-w-max bg-slate-200/90 p-1 rounded-xl mx-auto">
+                <div className="flex gap-1.5 min-w-max bg-slate-200/90 p-1.5 rounded-2xl mx-auto shadow-inner">
                   <button
                     type="button"
                     onClick={() => setPortalScreen("dashboard")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${portalScreen === "dashboard" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap active:scale-95 cursor-pointer ${portalScreen === "dashboard" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700 hover:text-slate-900 hover:bg-white/60"}`}
                   >
                     Flotilla
                   </button>
                   <button
                     type="button"
                     onClick={() => setPortalScreen("alta")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${portalScreen === "alta" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap active:scale-95 cursor-pointer ${portalScreen === "alta" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700 hover:text-slate-900 hover:bg-white/60"}`}
                   >
                     Alta Vehículo
                   </button>
                   <button
                     type="button"
                     onClick={() => setPortalScreen("trabajadores")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${portalScreen === "trabajadores" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap active:scale-95 flex items-center gap-1.5 cursor-pointer ${portalScreen === "trabajadores" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700 hover:text-slate-900 hover:bg-white/60"}`}
                   >
-                    Trabajadores ({trabajadores.filter((t) => t.empresaNombre === currentUser.empresaNombre && t.activo).length})
+                    <span>Trabajadores</span>
+                    <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
+                      {trabajadores.filter((t) => t.empresaNombre === currentUser.empresaNombre && t.activo).length}
+                    </span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setPortalScreen("sanciones")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${portalScreen === "sanciones" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap active:scale-95 cursor-pointer ${portalScreen === "sanciones" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700 hover:text-slate-900 hover:bg-white/60"}`}
                   >
                     Sanciones {sanciones.filter((s) => !currentUser.empresaNombre || s.empresaNombre === currentUser.empresaNombre).length > 0 ? `(${sanciones.filter((s) => !currentUser.empresaNombre || s.empresaNombre === currentUser.empresaNombre).length})` : ""}
                   </button>
                   <button
                     type="button"
                     onClick={() => setPortalScreen("consulta_reglamento")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${portalScreen === "consulta_reglamento" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap active:scale-95 cursor-pointer ${portalScreen === "consulta_reglamento" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700 hover:text-slate-900 hover:bg-white/60"}`}
                   >
                     Reglamento
                   </button>
@@ -10120,34 +10123,34 @@ export default function App() {
             {portalScreen === "reglamento" && (
               <div className="min-h-[85vh]">
                 <PageHero img={IMG_GATE} title="Reglamento de Colaboradores Externos" subtitle="Debes leer el reglamento completo y firmar digitalmente para desbloquear los módulos de alta y corbatines" />
-                <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+                <div className="max-w-3xl mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-6">
                   <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
-                    <div className="px-5 py-4 border-b bg-slate-50 flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
-                      <span className="text-sm font-bold text-slate-800">Documento Oficial HOA</span>
-                      <span className="text-xs px-2.5 py-1 rounded-full border text-emerald-700 bg-emerald-50 border-emerald-200 font-semibold">
+                    <div className="px-4 sm:px-5 py-3 sm:py-4 border-b bg-slate-50 flex items-center justify-between gap-2" style={{ borderColor: "var(--color-border)" }}>
+                      <span className="text-xs sm:text-sm font-bold text-slate-800">Documento Oficial HOA</span>
+                      <span className="text-[11px] sm:text-xs px-2.5 py-0.5 sm:py-1 rounded-full border text-emerald-700 bg-emerald-50 border-emerald-200 font-semibold shrink-0">
                         Requisito Obligatorio
                       </span>
                     </div>
-                    <pre className="text-sm leading-7 whitespace-pre-wrap px-6 py-5 text-slate-700 max-h-96 overflow-y-auto font-sans">
+                    <pre className="text-xs sm:text-sm leading-6 sm:leading-7 whitespace-pre-wrap px-4 sm:px-6 py-4 sm:py-5 text-slate-700 max-h-72 sm:max-h-96 overflow-y-auto font-sans">
                       {reglamentoTexto}
                     </pre>
                   </div>
 
-                  <div className="rounded-2xl border p-6 space-y-4 bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
-                    <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800">Firma Digital del Representante</h2>
+                  <div className="rounded-2xl border p-4 sm:p-6 space-y-4 bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
+                    <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-800">Firma Digital del Representante</h2>
                     <label className="flex items-start gap-3 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={contratistaAceptoTerminos}
                         onChange={(e) => setContratistaAceptoTerminos(e.target.checked)}
-                        className="mt-1 w-4 h-4 text-emerald-600 rounded cursor-pointer"
+                        className="mt-1 w-4 h-4 text-emerald-600 rounded cursor-pointer shrink-0"
                       />
-                      <span className="text-sm text-slate-700 leading-relaxed">
+                      <span className="text-xs sm:text-sm text-slate-700 leading-relaxed">
                         He leído y acepto en su totalidad el Reglamento de Colaboradores Externos de Las Palomas Rocky Point HOA, comprometiéndome al estricto cumplimiento de sus cláusulas y medidas disciplinarias.
                       </span>
                     </label>
                     <div>
-                      <label className="block text-xs font-semibold mb-2 uppercase tracking-wider text-slate-500">
+                      <label className="block text-[11px] sm:text-xs font-semibold mb-1.5 uppercase tracking-wider text-slate-500">
                         Nombre completo del representante legal o titular
                       </label>
                       <input
@@ -10155,11 +10158,11 @@ export default function App() {
                         value={contratistaFirmaNombre || currentUser?.nombre || ""}
                         onChange={(e) => setContratistaFirmaNombre(e.target.value)}
                         placeholder="Ej. Ing. Roberto Garza Leal"
-                        className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 italic bg-white"
+                        className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 italic bg-white"
                       />
                     </div>
-                    <div className="flex items-center justify-between pt-2">
-                      <span className="text-xs text-slate-500">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
+                      <span className="text-xs text-slate-500 text-center sm:text-left">
                         {!contratistaAceptoTerminos ? "Marca la casilla de aceptación para habilitar la firma" : "Listo para registrar tu firma en la base de datos"}
                       </span>
                       <button
@@ -10201,7 +10204,7 @@ export default function App() {
                             setIsSubmittingReglamento(false);
                           }
                         }}
-                        className={`px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 cursor-pointer flex items-center gap-2 ${(isSubmittingReglamento || !contratistaAceptoTerminos) ? "opacity-60 cursor-not-allowed" : ""
+                        className={`w-full sm:w-auto justify-center px-6 py-3 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white transition-all hover:brightness-110 cursor-pointer flex items-center gap-2 ${(isSubmittingReglamento || !contratistaAceptoTerminos) ? "opacity-60 cursor-not-allowed" : ""
                           }`}
                         style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                       >
@@ -10227,22 +10230,22 @@ export default function App() {
                   title={`Panel de Contratista — ${currentUser.empresaNombre}`}
                   subtitle="Administración de flotilla vehicular, plantilla de trabajadores acreditados y control de accesos"
                 />
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 min-h-[calc(100vh-16rem)]">
+                <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 sm:space-y-8 min-h-[calc(100vh-16rem)]">
                   {/* KPI Statistics */}
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                     {[
                       { label: "Total Flotilla", value: `${vehicles.filter(v => v.empresaNombre === currentUser.empresaNombre).length} unidades`, color: "var(--color-primary)", bg: "var(--color-primary-light)", icon: <IconCar className="w-5 h-5 text-[#0D6E5F]" /> },
                       { label: "Vehículos Habilitados", value: `${vehicles.filter(v => v.empresaNombre === currentUser.empresaNombre && v.status === "Habilitado").length} autorizados`, color: "var(--color-success)", bg: "var(--color-success-light)", icon: <IconCheckCircle className="w-5 h-5 text-emerald-600" /> },
                       { label: "Plantilla Personal", value: `${trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre).length} trabajadores`, color: "#1e40af", bg: "#dbeafe", icon: <IconUsers className="w-5 h-5 text-blue-700" /> },
                       { label: "Personal Autorizado", value: `${trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre && t.activo).length} activos`, color: "var(--color-success)", bg: "var(--color-success-light)", icon: <IconUserCheck className="w-5 h-5 text-emerald-600" /> },
                     ].map((s) => (
-                      <div key={s.label} className="rounded-2xl border p-5 flex items-start gap-4 bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
+                      <div key={s.label} className="rounded-2xl border p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4 bg-white shadow-xs" style={{ borderColor: "var(--color-border)" }}>
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: s.bg }}>
                           {s.icon}
                         </div>
-                        <div>
-                          <div className="text-xl sm:text-2xl font-bold" style={{ color: s.color, fontFamily: "var(--font-display)" }}>{s.value}</div>
-                          <div className="text-xs font-medium text-slate-500">{s.label}</div>
+                        <div className="min-w-0">
+                          <div className="text-lg sm:text-2xl font-bold truncate" style={{ color: s.color, fontFamily: "var(--font-display)" }}>{s.value}</div>
+                          <div className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">{s.label}</div>
                         </div>
                       </div>
                     ))}
@@ -10250,24 +10253,24 @@ export default function App() {
 
                   {/* Resumen de Trabajadores Widget */}
                   <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-5 sm:px-6 py-4 border-b bg-slate-50 gap-3" style={{ borderColor: "var(--color-border)" }}>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b bg-slate-50 gap-3" style={{ borderColor: "var(--color-border)" }}>
                       <div>
-                        <h2 className="font-bold text-base text-slate-800">Plantilla de Trabajadores y Colaboradores</h2>
+                        <h2 className="font-bold text-sm sm:text-base text-slate-800">Plantilla de Trabajadores y Colaboradores</h2>
                       </div>
                       <div className="flex gap-2">
                         <button
                           onClick={handleAbrirCrearTrabajador}
-                          className="text-xs px-3.5 py-2 rounded-xl font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer shadow-sm"
+                          className="w-full sm:w-auto justify-center text-xs px-3.5 py-2.5 sm:py-2 rounded-xl font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
                           style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                         >
                           <IconUserPlus className="w-3.5 h-3.5" />
                           <span>Agregar Trabajador</span>
                         </button>
-
                       </div>
                     </div>
 
-                    <div className="overflow-x-auto">
+                    {/* Vista Desktop / Tablet (Tabla) */}
+                    <div className="hidden md:block overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
@@ -10332,17 +10335,75 @@ export default function App() {
                         </tbody>
                       </table>
                     </div>
+
+                    {/* Vista Móvil (Tarjetas Optimizadas) */}
+                    <div className="block md:hidden divide-y divide-slate-100">
+                      {(() => {
+                        const empTrabajadores = trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre);
+                        if (empTrabajadores.length === 0) {
+                          return (
+                            <div className="p-6 text-center text-slate-400">
+                              <IconUsers className="w-8 h-8 mx-auto mb-1 opacity-30" />
+                              <span className="text-xs">No hay trabajadores registrados para {currentUser.empresaNombre}.</span>
+                            </div>
+                          );
+                        }
+                        return empTrabajadores.slice(0, 4).map((t) => (
+                          <div key={t.id_trabajador} className="p-3.5 flex items-start gap-3 hover:bg-slate-50/70 transition-colors">
+                            <div
+                              onClick={() => setSelectedFotoTrabajadorPreview(t)}
+                              className="w-11 h-11 rounded-xl overflow-hidden border border-slate-200 shadow-2xs cursor-pointer shrink-0 bg-slate-100 flex items-center justify-center active:scale-95"
+                            >
+                              {t.foto_url ? (
+                                <img src={t.foto_url} alt={`${t.nombre} ${t.apellidos}`} className="w-full h-full object-cover" />
+                              ) : (
+                                <IconUsers className="w-5 h-5 text-slate-400" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-1.5">
+                                <div className="min-w-0">
+                                  <div className="font-bold text-slate-900 text-xs sm:text-sm truncate">{t.nombre} {t.apellidos}</div>
+                                  <div className="text-[10px] font-mono text-slate-400">ID: #{t.id_trabajador}</div>
+                                </div>
+                                {t.activo ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                    Autorizado
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200 shrink-0">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                                    Inactivo
+                                  </span>
+                                )}
+                              </div>
+                              <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
+                                <span className="font-mono text-[11px]">
+                                  <CopyableInlineText text={t.telefono} label="Teléfono" onCopyToast={showToast} />
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-mono">
+                                  {formatFechaLegible(t.created_at, false)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                    </div>
                   </div>
 
                   {/* Flotilla Vehicular Widget */}
                   <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
-                    <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b bg-slate-50" style={{ borderColor: "var(--color-border)" }}>
-                      <h2 className="font-bold text-base text-slate-800">Unidades Vehiculares de {currentUser.empresaNombre}</h2>
-                      <button onClick={() => setPortalScreen("alta")} className="text-xs px-4 py-2 rounded-xl font-semibold text-white transition-all hover:brightness-110 cursor-pointer" style={{ background: "var(--color-primary)" }}>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b bg-slate-50 gap-2.5" style={{ borderColor: "var(--color-border)" }}>
+                      <h2 className="font-bold text-sm sm:text-base text-slate-800">Unidades Vehiculares de {currentUser.empresaNombre}</h2>
+                      <button onClick={() => setPortalScreen("alta")} className="w-full sm:w-auto justify-center text-xs px-4 py-2.5 sm:py-2 rounded-xl font-semibold text-white transition-all hover:brightness-110 cursor-pointer active:scale-95" style={{ background: "var(--color-primary)" }}>
                         Agregar Vehículo
                       </button>
                     </div>
-                    <div className="overflow-x-auto">
+
+                    {/* Vista Desktop / Tablet (Tabla) */}
+                    <div className="hidden md:block overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
@@ -10409,6 +10470,60 @@ export default function App() {
                         </tbody>
                       </table>
                     </div>
+
+                    {/* Vista Móvil (Tarjetas de Vehículos) */}
+                    <div className="block md:hidden divide-y divide-slate-100">
+                      {vehicles.filter(v => v.empresaNombre === currentUser.empresaNombre).map((v) => (
+                        <div key={v.id} className="p-3.5 flex items-start gap-3 hover:bg-slate-50/70 transition-colors">
+                          <div
+                            onClick={() => setSelectedFotoVehiculoPreview(v)}
+                            className="w-16 h-12 rounded-xl overflow-hidden border border-slate-200 shadow-2xs cursor-pointer shrink-0 bg-slate-100 flex items-center justify-center relative group active:scale-95"
+                          >
+                            {v.foto ? (
+                              <img src={normalizeFotoUrl(v.foto)} alt={`${v.marca} ${v.modelo}`} className="w-full h-full object-cover" />
+                            ) : (
+                              <IconCar className="w-6 h-6 text-slate-400" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-1.5">
+                              <div className="min-w-0">
+                                <div className="font-bold text-slate-900 text-xs sm:text-sm truncate">{v.marca} {v.modelo} <span className="text-slate-400 font-normal text-[11px]">({v.anio})</span></div>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  <span className="font-mono font-bold text-[11px] bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded border border-slate-200">
+                                    {v.placas}
+                                  </span>
+                                  <span className="text-[11px] text-slate-400 truncate">• {v.color}</span>
+                                </div>
+                              </div>
+                              {v.status === "Habilitado" ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 shrink-0">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                  Habilitado
+                                </span>
+                              ) : v.status === "Suspendido" ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-300 shrink-0">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                  Suspendido
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-300 shrink-0">
+                                  {v.status}
+                                </span>
+                              )}
+                            </div>
+                            <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
+                              <span className="font-mono font-bold text-xs text-[#0D6E5F]">
+                                Corbatín #{v.corbatinNum}
+                              </span>
+                              <span className="font-mono text-[11px]">
+                                <CopyableInlineText text={v.telefono} label="Tel" onCopyToast={showToast} />
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -10417,9 +10532,9 @@ export default function App() {
             {portalScreen === "alta" && (
               <div>
                 <PageHero img={IMG_GATE} title="Registro de Unidades Vehiculares" subtitle="Registra los vehículos autorizados de tu empresa con fotografía y datos oficiales" />
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-                  <div className="rounded-2xl border p-6 sm:p-7 bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
-                    <h2 className="font-bold text-sm mb-4 uppercase tracking-wider text-slate-800">
+                <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
+                  <div className="rounded-2xl border p-4 sm:p-7 bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
+                    <h2 className="font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider text-slate-800">
                       Datos del Nuevo Vehículo
                     </h2>
 
@@ -10434,9 +10549,9 @@ export default function App() {
                       const isQuotaFull = hasRange && totalCupos !== null && cuposOcupados >= totalCupos;
 
                       return (
-                        <div className="mb-5 space-y-3">
+                        <div className="mb-4 sm:mb-5 space-y-3">
                           {hasRange ? (
-                            <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${isQuotaFull
+                            <div className={`p-3.5 sm:p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${isQuotaFull
                               ? "bg-amber-50/90 border-amber-300 text-amber-900"
                               : "bg-teal-50/90 border-teal-300 text-teal-900"
                               }`}>
@@ -10448,7 +10563,7 @@ export default function App() {
                                   Números autorizados: <strong>#{rInicio}</strong> al <strong>#{rFin}</strong>. El sistema asignará el siguiente número disponible automáticamente.
                                 </p>
                               </div>
-                              <div className="text-right shrink-0">
+                              <div className="text-left sm:text-right shrink-0">
                                 <div className={`text-base font-black font-mono ${isQuotaFull ? "text-amber-700" : "text-teal-700"}`}>
                                   {cuposOcupados} / {totalCupos} cupos
                                 </div>
@@ -10464,7 +10579,7 @@ export default function App() {
                           )}
 
                           {isQuotaFull && (
-                            <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2.5">
+                            <div className="p-3.5 sm:p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2.5">
                               <IconAlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
                               <span>
                                 Has alcanzado el límite máximo de corbatines autorizados ({totalCupos} unidades) asignados a tu empresa. Si requieres registrar más unidades, solicita una ampliación de rango a la administración.
@@ -10477,28 +10592,28 @@ export default function App() {
 
                     <form
                       onSubmit={handleGuardarNuevoVehiculo}
-                      className="space-y-5"
+                      className="space-y-4 sm:space-y-5"
                     >
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                         <div>
                           <label className="block text-xs font-semibold mb-1 text-slate-600">Marca *</label>
-                          <input name="marca" required placeholder="Toyota, Ford, Nissan" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200" />
+                          <input name="marca" required placeholder="Toyota, Ford, Nissan" className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200" />
                         </div>
                         <div>
                           <label className="block text-xs font-semibold mb-1 text-slate-600">Modelo *</label>
-                          <input name="modelo" required placeholder="Hilux, Transit, NP300" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200" />
+                          <input name="modelo" required placeholder="Hilux, Transit, NP300" className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200" />
                         </div>
                         <div>
                           <label className="block text-xs font-semibold mb-1 text-slate-600">Año *</label>
-                          <input name="año" required placeholder="2023" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200" />
+                          <input name="año" required placeholder="2023" className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200" />
                         </div>
                         <div>
                           <label className="block text-xs font-semibold mb-1 text-slate-600">Placas *</label>
-                          <input name="placas" required placeholder="MTY-0000-A" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-mono font-bold" />
+                          <input name="placas" required placeholder="MTY-0000-A" className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-mono font-bold" />
                         </div>
                         <div className="sm:col-span-2">
                           <label className="block text-xs font-semibold mb-1 text-slate-600">Color *</label>
-                          <input name="color" required placeholder="Blanco, Gris, Negro" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200" />
+                          <input name="color" required placeholder="Blanco, Gris, Negro" className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200" />
                         </div>
                       </div>
 
@@ -10515,9 +10630,9 @@ export default function App() {
                           </div>
                         )}
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4 items-center">
                           <div className="md:col-span-2 space-y-2">
-                            <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center gap-2 cursor-pointer shadow-sm w-fit">
+                            <label className="w-full sm:w-fit justify-center px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center gap-2 cursor-pointer shadow-xs active:scale-95">
                               <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
                               <span>Subir Foto desde Dispositivo</span>
                               <input
@@ -10532,7 +10647,7 @@ export default function App() {
                             </p>
                           </div>
 
-                          <div className="h-32 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
+                          <div className="h-36 sm:h-32 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
                             {nuevoVehiculoFoto ? (
                               <div
                                 onClick={() => setGenericImagePreview({
@@ -10572,7 +10687,7 @@ export default function App() {
                             const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
                             return Boolean(hasRange && totalCupos !== null && empVehiculosList.length >= totalCupos);
                           })()}
-                          className={`px-7 py-3 rounded-xl text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingVehiculo || (() => {
+                          className={`w-full sm:w-auto justify-center px-7 py-3 rounded-xl text-xs sm:text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingVehiculo || (() => {
                             const empUser = empresas.find(e => e.nombre === currentUser?.empresaNombre) || empresas[0];
                             const empVehiculosList = vehicles.filter(v => v.empresaNombre === currentUser?.empresaNombre || v.empresaId === empUser?.id);
                             const rInicio = empUser?.corbatin_rango_inicio;
@@ -10611,48 +10726,48 @@ export default function App() {
                   subtitle="Acreditación, consulta y control de acceso del personal de la empresa"
                 />
 
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 min-h-[calc(100vh-16rem)]">
+                <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-8 min-h-[calc(100vh-16rem)]">
                   {/* KPI Cards for Trabajadores */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="rounded-2xl border p-5 flex items-start gap-4 bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                    <div className="rounded-2xl border p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4 bg-white shadow-xs" style={{ borderColor: "var(--color-border)" }}>
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--color-primary-light)" }}>
                         <IconUsers className="w-5 h-5 text-[#0D6E5F]" />
                       </div>
-                      <div>
-                        <div className="text-2xl font-bold" style={{ color: "var(--color-primary)", fontFamily: "var(--font-display)" }}>
+                      <div className="min-w-0">
+                        <div className="text-xl sm:text-2xl font-bold truncate" style={{ color: "var(--color-primary)", fontFamily: "var(--font-display)" }}>
                           {trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre).length}
                         </div>
-                        <div className="text-xs font-medium text-slate-500">Total Colaboradores Registrados</div>
+                        <div className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">Total Colaboradores Registrados</div>
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border p-5 flex items-start gap-4 bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
+                    <div className="rounded-2xl border p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4 bg-white shadow-xs" style={{ borderColor: "var(--color-border)" }}>
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--color-success-light)" }}>
                         <IconUserCheck className="w-5 h-5 text-emerald-600" />
                       </div>
-                      <div>
-                        <div className="text-2xl font-bold" style={{ color: "var(--color-success)", fontFamily: "var(--font-display)" }}>
+                      <div className="min-w-0">
+                        <div className="text-xl sm:text-2xl font-bold truncate" style={{ color: "var(--color-success)", fontFamily: "var(--font-display)" }}>
                           {trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre && t.activo).length}
                         </div>
-                        <div className="text-xs font-medium text-slate-500">Autorizados (Acceso Activo)</div>
+                        <div className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">Autorizados (Acceso Activo)</div>
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border p-5 flex items-start gap-4 bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
+                    <div className="rounded-2xl border p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4 bg-white shadow-xs" style={{ borderColor: "var(--color-border)" }}>
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--color-danger-light)" }}>
                         <IconUserX className="w-5 h-5 text-red-600" />
                       </div>
-                      <div>
-                        <div className="text-2xl font-bold" style={{ color: "var(--color-danger)", fontFamily: "var(--font-display)" }}>
+                      <div className="min-w-0">
+                        <div className="text-xl sm:text-2xl font-bold truncate" style={{ color: "var(--color-danger)", fontFamily: "var(--font-display)" }}>
                           {trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre && !t.activo).length}
                         </div>
-                        <div className="text-xs font-medium text-slate-500">Inactivos / Sin Acceso</div>
+                        <div className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">Inactivos / Sin Acceso</div>
                       </div>
                     </div>
                   </div>
 
                   {/* Filter and Search Bar */}
-                  <div className="bg-white p-4 rounded-2xl border shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
+                  <div className="bg-white p-3.5 sm:p-4 rounded-2xl border shadow-sm flex flex-col md:flex-row gap-3 sm:gap-4 items-stretch md:items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
                     <div className="relative w-full md:w-80">
                       <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
                         <IconSearch className="w-4 h-4" />
@@ -10666,13 +10781,13 @@ export default function App() {
                       />
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Estatus:</span>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto justify-end">
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 shrink-0">Estatus:</span>
                         <select
                           value={trabajadorStatusFilter}
                           onChange={(e) => setTrabajadorStatusFilter(e.target.value as any)}
-                          className="bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                          className="w-full sm:w-auto bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 py-2.5 sm:py-2 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                         >
                           <option value="todos">Todos los estatus</option>
                           <option value="activos">Solo Autorizados (Activos)</option>
@@ -10682,7 +10797,7 @@ export default function App() {
 
                       <button
                         onClick={handleAbrirCrearTrabajador}
-                        className="px-4 py-2 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer shadow-md"
+                        className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer shadow-md active:scale-95"
                         style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                       >
                         <IconUserPlus className="w-4 h-4" />
@@ -10693,16 +10808,17 @@ export default function App() {
 
                   {/* Workers Table */}
                   <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
-                    <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b bg-slate-50" style={{ borderColor: "var(--color-border)" }}>
+                    <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b bg-slate-50" style={{ borderColor: "var(--color-border)" }}>
                       <div>
-                        <h2 className="font-bold text-base text-slate-800">Colaboradores Registrados</h2>
+                        <h2 className="font-bold text-sm sm:text-base text-slate-800">Colaboradores Registrados</h2>
                       </div>
                       <span className="text-xs font-mono font-bold text-slate-500">
                         {trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre).length} registros
                       </span>
                     </div>
 
-                    <div className="overflow-x-auto">
+                    {/* Vista Desktop / Tablet (Tabla) */}
+                    <div className="hidden md:block overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
@@ -10815,6 +10931,94 @@ export default function App() {
                         </tbody>
                       </table>
                     </div>
+
+                    {/* Vista Móvil (Tarjetas Optimizadas) */}
+                    <div className="block md:hidden divide-y divide-slate-100">
+                      {(() => {
+                        const empTrabajadores = trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre);
+                        const filtered = empTrabajadores.filter(t => {
+                          const matchesSearch =
+                            t.nombre.toLowerCase().includes(trabajadorSearchTerm.toLowerCase()) ||
+                            t.apellidos.toLowerCase().includes(trabajadorSearchTerm.toLowerCase()) ||
+                            (t.telefono || "").toLowerCase().includes(trabajadorSearchTerm.toLowerCase());
+                          const matchesStatus =
+                            trabajadorStatusFilter === "todos" ||
+                            (trabajadorStatusFilter === "activos" && t.activo) ||
+                            (trabajadorStatusFilter === "inactivos" && !t.activo);
+                          return matchesSearch && matchesStatus;
+                        });
+
+                        if (filtered.length === 0) {
+                          return (
+                            <div className="py-8 px-4 text-center text-slate-400">
+                              <IconUsers className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                              <div className="font-bold text-slate-700 text-xs sm:text-sm">No se encontraron trabajadores</div>
+                              <p className="text-[11px] text-slate-400 mt-1">
+                                {trabajadorSearchTerm ? "Prueba cambiando el término de búsqueda o filtro." : "Aún no has registrado colaboradores para esta empresa."}
+                              </p>
+                              <button
+                                onClick={handleAbrirCrearTrabajador}
+                                className="mt-3 w-full sm:w-auto justify-center px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 cursor-pointer active:scale-95"
+                              >
+                                Dar de alta primer trabajador
+                              </button>
+                            </div>
+                          );
+                        }
+
+                        return filtered.map((t) => (
+                          <div key={t.id_trabajador} className="p-3.5 flex items-start gap-3 hover:bg-slate-50/70 transition-colors">
+                            <div
+                              onClick={() => setSelectedFotoTrabajadorPreview(t)}
+                              className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 shadow-2xs cursor-pointer shrink-0 bg-slate-100 flex items-center justify-center active:scale-95"
+                            >
+                              {t.foto_url ? (
+                                <img src={t.foto_url} alt={`${t.nombre} ${t.apellidos}`} className="w-full h-full object-cover" />
+                              ) : (
+                                <IconUsers className="w-6 h-6 text-slate-400" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-1.5">
+                                <div className="min-w-0">
+                                  <div className="font-bold text-slate-900 text-xs sm:text-sm truncate">{t.nombre} {t.apellidos}</div>
+                                  <div className="text-[10px] font-mono text-slate-400">ID: #{t.id_trabajador}</div>
+                                </div>
+                                {t.activo ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                    Activo
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200 shrink-0">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                                    Inactivo
+                                  </span>
+                                )}
+                              </div>
+                              <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
+                                <span className="font-mono text-[11px]">
+                                  {t.telefono ? (
+                                    <CopyableInlineText
+                                      text={t.telefono}
+                                      label="Tel"
+                                      icon={<IconPhone className="w-3 h-3 text-slate-400" />}
+                                      className="text-slate-700 font-semibold"
+                                      onCopyToast={showToast}
+                                    />
+                                  ) : (
+                                    <span className="text-slate-400 italic text-[11px]">Sin teléfono</span>
+                                  )}
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-mono">
+                                  {formatFechaLegible(t.created_at, false)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -10825,7 +11029,7 @@ export default function App() {
             {portalScreen === "sanciones" && (
               <div>
                 <PageHero img={IMG_AERIAL} title="Historial de Sanciones & Módulo de Apelación" subtitle="Consulta de suspensiones vehiculares, interposición de recursos y resoluciones de HOA" />
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 min-h-[calc(100vh-16rem)]">
+                <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6 min-h-[calc(100vh-16rem)]">
                   {(() => {
                     const empresaSanciones = currentUser.empresaNombre
                       ? sanciones.filter(s => s.empresaNombre === currentUser.empresaNombre)
@@ -10833,33 +11037,33 @@ export default function App() {
 
                     return (
                       <>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          <div className="rounded-2xl border p-5 bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
-                            <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Total Sanciones</div>
-                            <div className="text-2xl font-bold text-slate-800">{empresaSanciones.length} registros</div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                          <div className="rounded-2xl border p-4 sm:p-5 bg-white shadow-xs" style={{ borderColor: "var(--color-border)" }}>
+                            <div className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Total Sanciones</div>
+                            <div className="text-xl sm:text-2xl font-bold text-slate-800">{empresaSanciones.length} registros</div>
                           </div>
-                          <div className="rounded-2xl border p-5 bg-red-50 border-red-200">
-                            <div className="text-xs font-semibold uppercase tracking-wider text-red-600 mb-1">Suspensiones Activas</div>
-                            <div className="text-2xl font-bold text-red-600">
+                          <div className="rounded-2xl border p-4 sm:p-5 bg-red-50 border-red-200 shadow-xs">
+                            <div className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-red-600 mb-1">Suspensiones Activas</div>
+                            <div className="text-xl sm:text-2xl font-bold text-red-600">
                               {empresaSanciones.filter(s => s.status === "Activa" || s.status === "Ratificada").length} vehículos
                             </div>
                           </div>
-                          <div className="rounded-2xl border p-5 bg-sky-50 border-sky-200">
-                            <div className="text-xs font-semibold uppercase tracking-wider text-sky-700 mb-1">En Trámite de Apelación</div>
-                            <div className="text-2xl font-bold text-sky-700">
+                          <div className="rounded-2xl border p-4 sm:p-5 bg-sky-50 border-sky-200 shadow-xs">
+                            <div className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-sky-700 mb-1">En Trámite de Apelación</div>
+                            <div className="text-xl sm:text-2xl font-bold text-sky-700">
                               {empresaSanciones.filter(s => s.status === "En Apelación").length} en revisión
                             </div>
                           </div>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="space-y-3.5 sm:space-y-4">
                           {empresaSanciones.length === 0 ? (
-                            <div className="rounded-2xl border p-12 bg-white shadow-sm text-center space-y-3" style={{ borderColor: "var(--color-border)" }}>
+                            <div className="rounded-2xl border p-8 sm:p-12 bg-white shadow-sm text-center space-y-3" style={{ borderColor: "var(--color-border)" }}>
                               <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
                                 <IconCheckCircle className="w-6 h-6" />
                               </div>
-                              <h3 className="text-base font-bold text-slate-800">Sin Sanciones Registradas</h3>
-                              <p className="text-xs text-slate-500 max-w-md mx-auto">
+                              <h3 className="text-sm sm:text-base font-bold text-slate-800">Sin Sanciones Registradas</h3>
+                              <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
                                 Tu empresa no cuenta con infracciones ni suspensiones registradas en la base de datos de HOA. Toda tu flotilla y personal se encuentran en regla.
                               </p>
                             </div>
@@ -10878,7 +11082,7 @@ export default function App() {
                               >
                                 {/* Cabecera de la Sanción */}
                                 <div
-                                  className={`px-5 py-3.5 border-b flex flex-wrap items-center justify-between gap-3 ${s.status === "En Apelación"
+                                  className={`px-4 sm:px-5 py-3 sm:py-3.5 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${s.status === "En Apelación"
                                     ? "bg-sky-50/70"
                                     : s.status === "Ratificada"
                                       ? "bg-amber-50/70"
@@ -10889,9 +11093,9 @@ export default function App() {
                                           : "bg-slate-50"
                                     }`}
                                 >
-                                  <div className="flex items-center gap-3">
+                                  <div className="flex items-start sm:items-center gap-2.5 sm:gap-3">
                                     <div
-                                      className={`p-2 rounded-xl text-white shrink-0 ${s.status === "En Apelación"
+                                      className={`p-2 rounded-xl text-white shrink-0 mt-0.5 sm:mt-0 ${s.status === "En Apelación"
                                         ? "bg-sky-600"
                                         : s.status === "Ratificada"
                                           ? "bg-amber-600"
@@ -10904,35 +11108,35 @@ export default function App() {
                                     >
                                       <IconAlertTriangle className="w-4 h-4" />
                                     </div>
-                                    <div>
+                                    <div className="min-w-0">
                                       <h3 className="font-bold text-sm sm:text-base text-slate-900 leading-tight">
                                         {s.tipo}
                                       </h3>
-                                      <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-slate-500">
-                                        <span className="font-mono font-bold text-slate-700 bg-white/90 px-2 py-0.5 rounded border border-slate-200">
+                                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1 text-xs text-slate-500">
+                                        <span className="font-mono font-bold text-slate-700 bg-white/90 px-1.5 py-0.5 rounded border border-slate-200 text-[11px]">
                                           Folio #{s.id}
                                         </span>
                                         <span>•</span>
-                                        <span className="font-mono font-semibold text-slate-700">
+                                        <span className="font-mono font-semibold text-slate-700 text-[11px] sm:text-xs">
                                           Placas: <strong className="text-slate-900">{s.placas}</strong>
                                         </span>
                                         <span>•</span>
-                                        <span>Fecha: {s.fecha}</span>
+                                        <span className="text-[11px] sm:text-xs">Fecha: {s.fecha}</span>
                                       </div>
                                     </div>
                                   </div>
 
-                                  <div>
+                                  <div className="self-start sm:self-auto shrink-0">
                                     <StatusBadge status={s.status} />
                                   </div>
                                 </div>
 
                                 {/* Cuerpo Estructurado */}
-                                <div className="p-5 sm:p-6 space-y-4">
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                                <div className="p-4 sm:p-6 space-y-3.5 sm:space-y-4">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-3.5">
                                     {/* Medida Disciplinaria */}
-                                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
-                                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                                    <div className="p-3 sm:p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                                      <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                                         <IconShield className="w-3.5 h-3.5 text-red-500" />
                                         <span>Medida Disciplinaria / Estatus</span>
                                       </div>
@@ -10942,8 +11146,8 @@ export default function App() {
                                     </div>
 
                                     {/* Motivo de la Infracción */}
-                                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
-                                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                                    <div className="p-3 sm:p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                                      <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                                         <IconFileText className="w-3.5 h-3.5 text-slate-600" />
                                         <span>Descripción de los Hechos</span>
                                       </div>
@@ -10956,7 +11160,7 @@ export default function App() {
                                   {/* Sección de Apelación y Dictamen */}
                                   {s.apelacion && (
                                     <div
-                                      className={`rounded-xl border p-4 space-y-3 ${s.status === "Aclarada"
+                                      className={`rounded-xl border p-3.5 sm:p-4 space-y-3 ${s.status === "Aclarada"
                                         ? "bg-emerald-50/50 border-emerald-200"
                                         : s.status === "Ratificada"
                                           ? "bg-amber-50/50 border-amber-200"
@@ -10964,22 +11168,22 @@ export default function App() {
                                         }`}
                                     >
                                       <div
-                                        className="flex flex-wrap items-center justify-between gap-2 border-b pb-2.5"
+                                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-2.5"
                                         style={{ borderColor: "rgba(0,0,0,0.06)" }}
                                       >
                                         <div className="flex items-center gap-2">
-                                          <IconMessageSquare className="w-4 h-4 text-sky-700" />
+                                          <IconMessageSquare className="w-4 h-4 text-sky-700 shrink-0" />
                                           <span className="font-bold text-xs uppercase tracking-wide text-slate-800">
-                                            Recurso de Apelación e Inconformidad
+                                            Recurso de Apelación
                                           </span>
                                           <span className="text-xs text-slate-500 font-mono">({s.apelacion.fecha})</span>
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex flex-wrap items-center gap-2">
                                           <span className="text-xs text-slate-500">
                                             Firmado por: <strong className="text-slate-700">{s.apelacion.representante}</strong>
                                           </span>
                                           <span
-                                            className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${s.apelacion.estado === "Aprobada"
+                                            className={`text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full ${s.apelacion.estado === "Aprobada"
                                               ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
                                               : s.apelacion.estado === "Rechazada"
                                                 ? "bg-amber-100 text-amber-800 border border-amber-300"
@@ -10996,7 +11200,7 @@ export default function App() {
                                       </div>
 
                                       <div className="space-y-1">
-                                        <div className="text-[11px] font-semibold uppercase text-slate-500">
+                                        <div className="text-[10px] sm:text-[11px] font-semibold uppercase text-slate-500">
                                           Argumentos / Pruebas del Contratista:
                                         </div>
                                         <p className="text-xs text-slate-800 bg-white/90 p-3 rounded-lg border border-slate-200/80 leading-relaxed italic">
@@ -11012,7 +11216,7 @@ export default function App() {
                                             }`}
                                         >
                                           <div className="flex items-center gap-1.5 font-bold text-xs uppercase">
-                                            <IconCheckCircle className="w-3.5 h-3.5" />
+                                            <IconCheckCircle className="w-3.5 h-3.5 shrink-0" />
                                             <span>
                                               Dictamen Oficial de Supervisión HOA{" "}
                                               {s.apelacion.fechaDictamen ? `(${s.apelacion.fechaDictamen})` : ""}:
@@ -11028,9 +11232,9 @@ export default function App() {
 
                                   {/* Información de vigencia y botón de apelación */}
                                   {s.status === "Activa" && (
-                                    <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-slate-100">
-                                      <div className="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
-                                        <IconClock className="w-3.5 h-3.5 text-amber-600" />
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2.5 border-t border-slate-100">
+                                      <div className="text-xs text-slate-500 flex items-start sm:items-center gap-1.5 font-medium leading-relaxed">
+                                        <IconClock className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
                                         <span>
                                           {s.fecha_inicio && new Date() < new Date(s.fecha_inicio) ? (
                                             <>Entra en vigor el: <strong className="text-slate-800 font-mono">{new Date(s.fecha_inicio).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })} a las 12:00 AM</strong>{s.fecha_fin ? <> (Hasta: <strong className="text-slate-800 font-mono">{new Date(s.fecha_fin).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })}</strong>)</> : null}</>
@@ -11044,7 +11248,7 @@ export default function App() {
                                       {!s.apelacion && (
                                         <button
                                           onClick={() => setSelectedSancionParaApelar(s)}
-                                          className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                                          className="w-full sm:w-auto justify-center px-4 py-2.5 sm:py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
                                         >
                                           <IconMessageSquare className="w-3.5 h-3.5" />
                                           <span>Interponer Apelación / Aclaración</span>
@@ -12774,8 +12978,8 @@ export default function App() {
 
       {/* ─── MODAL APELACIÓN FORMAL (CONTRATISTA) ─── */}
       {selectedSancionParaApelar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl p-4 sm:p-7 space-y-4 sm:space-y-5 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b pb-3.5">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-xl bg-sky-50 text-sky-700">
@@ -12806,7 +13010,7 @@ export default function App() {
                   value={apelacionArgumentos}
                   onChange={(e) => setApelacionArgumentos(e.target.value)}
                   placeholder="Describe detalladamente los motivos por los cuales se solicita la reconsideración o levantamiento de la suspensión..."
-                  className="w-full rounded-xl px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-sky-200 text-slate-800 leading-relaxed"
+                  className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-sky-200 text-slate-800 leading-relaxed"
                 />
               </div>
 
@@ -12818,22 +13022,22 @@ export default function App() {
                   type="text"
                   required
                   defaultValue={currentUser?.nombre || ""}
-                  className="w-full rounded-xl px-4 py-2 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-sky-200 font-medium text-slate-800"
+                  className="w-full rounded-xl px-3.5 sm:px-4 py-2 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-sky-200 font-medium text-slate-800"
                 />
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 pt-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setSelectedSancionParaApelar(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                  className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer active:scale-95"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingApelacion}
-                  className={`px-6 py-2 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isSubmittingApelacion ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                  className={`w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 active:scale-95 ${isSubmittingApelacion ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
                     }`}
                 >
                   {isSubmittingApelacion ? (
@@ -13607,8 +13811,8 @@ export default function App() {
 
       {/* ─── MODAL ALTA TRABAJADOR (SUPERVISOR / CONTRATISTA) ─── */}
       {showCreateTrabajadorModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl p-4 sm:p-7 space-y-4 sm:space-y-5 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b pb-3.5">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
@@ -13888,18 +14092,18 @@ export default function App() {
               </div>
 
 
-              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowCreateTrabajadorModal(false)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                  className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer active:scale-95"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingTrabajador}
-                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                  className={`w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 active:scale-95 ${isSubmittingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
                     }`}
                   style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                 >
@@ -14486,7 +14690,7 @@ export default function App() {
               <button onClick={() => setSelectedFotoTrabajadorPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
             </div>
 
-            <div className="w-full h-[380px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2">
+            <div className="w-full h-[260px] xs:h-[320px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2">
               {selectedFotoTrabajadorPreview.foto_url ? (
                 <img src={selectedFotoTrabajadorPreview.foto_url} alt="Credencial" className="max-w-full max-h-full object-contain rounded-xl shadow-lg" />
               ) : (
@@ -15215,7 +15419,7 @@ export default function App() {
               <button onClick={() => setSelectedFotoVehiculoPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
             </div>
 
-            <div className="w-full h-[380px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 relative">
+            <div className="w-full h-[260px] xs:h-[320px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 relative">
               {selectedFotoVehiculoPreview.foto ? (
                 <img
                   src={normalizeFotoUrl(selectedFotoVehiculoPreview.foto)}
@@ -15292,7 +15496,7 @@ export default function App() {
         return (
           <div
             key={alertItem.id}
-            className="fixed bottom-6 right-6 z-[9990] w-[calc(100vw-2rem)] max-w-md bg-white/95 text-slate-800 backdrop-blur-xl border border-rose-200 shadow-2xl rounded-3xl p-5 ring-1 ring-black/5 animate-in fade-in slide-in-from-bottom-5 duration-300 transition-all font-sans"
+            className="fixed bottom-3 sm:bottom-6 left-3 right-3 sm:left-auto sm:right-6 z-[9990] w-auto sm:w-[26rem] max-w-full bg-white/98 text-slate-800 backdrop-blur-xl border border-rose-200 shadow-2xl rounded-2xl sm:rounded-3xl p-4 sm:p-5 ring-1 ring-black/5 animate-in fade-in slide-in-from-bottom-5 duration-300 transition-all font-sans"
             style={{ boxShadow: "0 20px 45px -10px rgba(225, 29, 72, 0.18), 0 8px 20px -6px rgba(0, 0, 0, 0.08)" }}
           >
             {/* Header */}
