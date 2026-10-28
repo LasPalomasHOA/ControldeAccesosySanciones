@@ -36,8 +36,8 @@ router.get('/', async (req, res) => {
         { 
           model: db.Sancion, 
           as: 'sanciones', 
-          attributes: ['id_sancion', 'estatus', 'fecha_inicio', 'fecha_fin', 'motivo', 'numero_reincidencia'], 
-          where: { estatus: { [Op.in]: ['ACTIVA', 'RATIFICADA', 'EN_APELACION'] } }, 
+          attributes: ['id_sancion', 'estatus', 'fecha_inicio', 'fecha_fin', 'numero_reincidencia', 'id_regla', 'motivo'],
+          where: { estatus: { [Op.in]: ['ACTIVA', 'RATIFICADA', 'EN_APELACION'] } },
           required: false
         }
       ],
