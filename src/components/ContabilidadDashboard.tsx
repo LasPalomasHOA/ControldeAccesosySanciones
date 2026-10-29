@@ -1,6 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { DocumentoFiscalProveedor } from '../types';
-import { mockDocumentosEmpresas } from '../data/mockData';
 
 // ─── SVG Icons ─────────────────────────────────────────────────────────────
 function IconSearch({ className = "w-4 h-4" }: { className?: string }) {
@@ -23,42 +21,13 @@ function IconBuilding({ className = "w-5 h-5" }: { className?: string }) {
   );
 }
 
-function IconFileText({ className = "w-5 h-5" }: { className?: string }) {
+function IconReceipt({ className = "w-5 h-5" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-      <path d="M10 9H8" />
-      <path d="M16 13H8" />
-      <path d="M16 17H8" />
-    </svg>
-  );
-}
-
-function IconCheckCircle({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-      <path d="m9 11 3 3L22 4" />
-    </svg>
-  );
-}
-
-function IconAlertTriangle({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-      <line x1="12" y1="9" x2="12" y2="13" />
-      <line x1="12" y1="17" x2="12.01" y2="17" />
-    </svg>
-  );
-}
-
-function IconShieldCheck({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-      <path d="m9 12 2 2 4-4" />
+      <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
+      <path d="M16 8h-8" />
+      <path d="M16 12h-8" />
+      <path d="M11 16H8" />
     </svg>
   );
 }
@@ -112,15 +81,23 @@ function IconCar({ className = "w-5 h-5" }: { className?: string }) {
   );
 }
 
-function IconLock({ className = "w-4 h-4" }: { className?: string }) {
+function IconChevronLeft({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      <path d="m15 18-6-6 6-6" />
     </svg>
   );
 }
 
+function IconChevronRight({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m9 18 6-6-6-6" />
+    </svg>
+  );
+}
+
+// ─── Interfaces ────────────────────────────────────────────────────────────
 export interface ContabilidadEmpresa {
   id: string | number;
   nombre?: string;
@@ -173,6 +150,31 @@ export interface ContabilidadVehiculo {
   corbatinNum?: string;
 }
 
+/**
+ * Factura recurrente de proveedor
+ * Diseñada para soportar múltiples facturas por empresa conforme realizan trabajos periódicos.
+ */
+export interface FacturaProveedor {
+  id: string;
+  empresaId: string | number;
+  empresaNombre?: string;
+  folio: string;               // Ej: "FAC-1042"
+  uuidSat?: string;            // UUID fiscal del SAT
+  fechaEmision: string;        // YYYY-MM-DD
+  fechaRecepcion: string;      // YYYY-MM-DD
+  monto: number;               // Importe numérico
+  moneda: 'MXN' | 'USD';
+  concepto: string;            // Concepto del trabajo realizado
+  archivoUrl: string;          // Enlace directo al PDF
+  archivoXmlUrl?: string;      // Enlace al XML
+  nombreArchivo: string;       // Nombre de archivo
+  rutaStorage?: string;
+  estatus: 'pagada' | 'pendiente_pago' | 'en_revision' | 'rechazada';
+  metodoPago?: 'PPD' | 'PUE' | string;
+  subidoPor: string;
+  observaciones?: string;
+}
+
 interface ContabilidadDashboardProps {
   empresas: ContabilidadEmpresa[] | any[];
   trabajadores: ContabilidadTrabajador[] | any[];
@@ -185,52 +187,72 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
   vehicles,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterEstatus, setFilterEstatus] = useState<'todos' | 'con_documento' | 'pendientes' | 'suspendido'>('todos');
+  const [filterEstatus, setFilterEstatus] = useState<'todos' | 'con_facturas' | 'sin_facturas'>('todos');
   const [selectedEmpresaExpediente, setSelectedEmpresaExpediente] = useState<ContabilidadEmpresa | null>(null);
-  const [selectedDocumentoPreview, setSelectedDocumentoPreview] = useState<DocumentoFiscalProveedor | null>(null);
-  const [modalTab, setModalTab] = useState<'documento' | 'flotilla' | 'personal'>('documento');
+  const [selectedFacturaPreview, setSelectedFacturaPreview] = useState<FacturaProveedor | null>(null);
+  const [modalTab, setModalTab] = useState<'facturas' | 'flotilla' | 'personal'>('facturas');
 
-  // Documentos mockeados por empresa (1 por empresa)
-  const documentos = mockDocumentosEmpresas;
+  // Estados de búsqueda y paginación interna para cuando la empresa tiene muchas facturas recurrentes
+  const [facturasModalSearch, setFacturasModalSearch] = useState('');
+  const [facturasModalFilterStatus, setFacturasModalFilterStatus] = useState<'todas' | 'pendientes' | 'pagadas'>('todas');
+  const [facturasModalPage, setFacturasModalPage] = useState(1);
+  const facturasModalPageSize = 5;
 
-  // Helpers para normalizar campos
+  // Facturas de proveedores (inicia vacío hasta que se carguen facturas reales)
+  const [facturasList] = useState<FacturaProveedor[]>(() => {
+    try {
+      const saved = localStorage.getItem('las_palomas_facturas_proveedores');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [];
+  });
+
+  // Helpers para normalizar campos de Empresa
   const getEmpName = (emp: ContabilidadEmpresa) => emp.nombre || emp.razon_social || `Empresa #${emp.id}`;
   const getEmpContact = (emp: ContabilidadEmpresa) => emp.contacto || emp.responsable || emp.responsable_nombre || 'Sin contacto';
   const getEmpEmail = (emp: ContabilidadEmpresa) => emp.email || emp.correo || 'Sin correo registrado';
 
-  // Obtener el único documento de la empresa
-  const getDocumentoDeEmpresa = (empId: string | number, empRfc?: string): DocumentoFiscalProveedor | undefined => {
-    return documentos.find(d => d.empresaId === String(empId) || (empRfc && d.descripcion?.includes(empRfc)));
+  // Obtener todas las facturas históricas de una empresa específica
+  const getFacturasDeEmpresa = (empId: string | number): FacturaProveedor[] => {
+    return facturasList
+      .filter(f => String(f.empresaId) === String(empId))
+      .sort((a, b) => new Date(b.fechaEmision || b.fechaRecepcion).getTime() - new Date(a.fechaEmision || a.fechaRecepcion).getTime());
+  };
+
+  // Formateador de moneda
+  const formatMonto = (monto: number, moneda: string = 'MXN') => {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: moneda || 'MXN',
+      minimumFractionDigits: 2,
+    }).format(monto);
   };
 
   // Cálculo de estadísticas generales
   const stats = useMemo(() => {
     const totalEmpresas = empresas.length;
-    let conDocVigente = 0;
-    let conDocPendienteOVencido = 0;
-
-    empresas.forEach(emp => {
-      const doc = getDocumentoDeEmpresa(emp.id, emp.rfc);
-      if (doc && doc.estatus === 'vigente') {
-        conDocVigente++;
-      } else {
-        conDocPendienteOVencido++;
-      }
-    });
-
+    const empresasConFacturas = empresas.filter(emp => getFacturasDeEmpresa(emp.id).length > 0).length;
+    const totalFacturas = facturasList.length;
+    const facturasPendientes = facturasList.filter(f => f.estatus === 'pendiente_pago' || f.estatus === 'en_revision');
+    const montoTotalPendiente = facturasPendientes.reduce((acc, f) => acc + (Number(f.monto) || 0), 0);
     const totalFlotilla = vehicles.length;
     const totalPersonal = trabajadores.filter(t => t.activo !== false).length;
 
     return {
       totalEmpresas,
-      conDocVigente,
-      conDocPendienteOVencido,
+      empresasConFacturas,
+      totalFacturas,
+      totalPendientesCount: facturasPendientes.length,
+      montoTotalPendiente,
       totalFlotilla,
       totalPersonal,
     };
-  }, [empresas, documentos, vehicles, trabajadores]);
+  }, [empresas, vehicles, trabajadores, facturasList]);
 
-  // Filtrado de empresas
+  // Filtrado de empresas en la tabla principal
   const empresasFiltradas = useMemo(() => {
     return empresas.filter(emp => {
       const term = searchTerm.toLowerCase();
@@ -247,23 +269,55 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
 
       if (!matchSearch) return false;
 
-      const doc = getDocumentoDeEmpresa(emp.id, emp.rfc);
-      const isVigente = doc && doc.estatus === 'vigente';
-      const isSuspendido = emp.estatus === 'SUSPENDIDA' || emp.estado === 'suspendido';
+      const facturasCount = getFacturasDeEmpresa(emp.id).length;
 
-      if (filterEstatus === 'con_documento') return isVigente && !isSuspendido;
-      if (filterEstatus === 'pendientes') return !isVigente && !isSuspendido;
-      if (filterEstatus === 'suspendido') return isSuspendido;
+      if (filterEstatus === 'con_facturas') return facturasCount > 0;
+      if (filterEstatus === 'sin_facturas') return facturasCount === 0;
 
       return true;
     });
-  }, [empresas, searchTerm, filterEstatus, documentos]);
+  }, [empresas, searchTerm, filterEstatus, facturasList]);
+
+  // Facturas de la empresa activa filtradas y paginadas (para historial recurrente)
+  const facturasEmpresaActiva = useMemo(() => {
+    if (!selectedEmpresaExpediente) return [];
+    return getFacturasDeEmpresa(selectedEmpresaExpediente.id);
+  }, [selectedEmpresaExpediente, facturasList]);
+
+  const facturasEmpresaFiltradas = useMemo(() => {
+    return facturasEmpresaActiva.filter(fac => {
+      const q = facturasModalSearch.toLowerCase().trim();
+      const matchQ =
+        !q ||
+        fac.folio.toLowerCase().includes(q) ||
+        fac.concepto.toLowerCase().includes(q) ||
+        (fac.uuidSat && fac.uuidSat.toLowerCase().includes(q));
+
+      if (!matchQ) return false;
+
+      if (facturasModalFilterStatus === 'pendientes') {
+        return fac.estatus === 'pendiente_pago' || fac.estatus === 'en_revision';
+      }
+      if (facturasModalFilterStatus === 'pagadas') {
+        return fac.estatus === 'pagada';
+      }
+
+      return true;
+    });
+  }, [facturasEmpresaActiva, facturasModalSearch, facturasModalFilterStatus]);
+
+  const facturasPaginadas = useMemo(() => {
+    const start = (facturasModalPage - 1) * facturasModalPageSize;
+    return facturasEmpresaFiltradas.slice(start, start + facturasModalPageSize);
+  }, [facturasEmpresaFiltradas, facturasModalPage]);
+
+  const totalPagesModal = Math.max(1, Math.ceil(facturasEmpresaFiltradas.length / facturasModalPageSize));
 
   return (
     <div className="space-y-6 pb-12">
       {/* ─── TARJETAS DE MÉTRICAS CONTABLES ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1 */}
+        {/* Card 1: Total Empresas */}
         <div className="p-5 rounded-2xl bg-white border shadow-xs flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
           <div className="space-y-1">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Empresas en Padrón</span>
@@ -275,38 +329,40 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
           </div>
         </div>
 
-        {/* Card 2 */}
+        {/* Card 2: Total Facturas */}
         <div className="p-5 rounded-2xl bg-white border shadow-xs flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
           <div className="space-y-1">
-            <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Documento Vigente</span>
-            <div className="text-2xl font-black text-emerald-700">{stats.conDocVigente}</div>
-            <span className="text-[11px] text-emerald-600 font-medium">Documento en regla</span>
+            <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Facturas Totales</span>
+            <div className="text-2xl font-black text-emerald-700">{stats.totalFacturas}</div>
+            <span className="text-[11px] text-emerald-600 font-medium">Historial acumulado</span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
-            <IconShieldCheck className="w-6 h-6" />
+            <IconReceipt className="w-6 h-6" />
           </div>
         </div>
 
-        {/* Card 3 */}
+        {/* Card 3: Empresas con Facturas */}
         <div className="p-5 rounded-2xl bg-white border shadow-xs flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
           <div className="space-y-1">
-            <span className="text-xs font-bold text-amber-700 uppercase tracking-wider">Pendiente / Vencido</span>
-            <div className="text-2xl font-black text-amber-700">{stats.conDocPendienteOVencido}</div>
-            <span className="text-[11px] text-amber-600 font-medium">Sin subir o por renovar</span>
+            <span className="text-xs font-bold text-teal-700 uppercase tracking-wider">Empresas con Trabajos</span>
+            <div className="text-2xl font-black text-teal-800">
+              {stats.empresasConFacturas} <span className="text-xs font-semibold text-slate-400">/ {stats.totalEmpresas}</span>
+            </div>
+            <span className="text-[11px] text-teal-600 font-medium">Con facturas registradas</span>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100">
-            <IconAlertTriangle className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center border border-teal-100">
+            <IconReceipt className="w-6 h-6" />
           </div>
         </div>
 
-        {/* Card 4 */}
+        {/* Card 4: Flotilla y Personal */}
         <div className="p-5 rounded-2xl bg-white border shadow-xs flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
           <div className="space-y-1">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Flotilla y Personal</span>
             <div className="text-2xl font-black text-slate-900">
               {stats.totalFlotilla} <span className="text-xs font-semibold text-slate-400">veh. / {stats.totalPersonal} colab.</span>
             </div>
-            <span className="text-[11px] text-slate-400 font-medium">Total amparado en el predio</span>
+            <span className="text-[11px] text-slate-400 font-medium">Amparados en el predio</span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
             <IconUsers className="w-6 h-6" />
@@ -340,28 +396,29 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => setFilterEstatus('con_documento')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${filterEstatus === 'con_documento' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            onClick={() => setFilterEstatus('con_facturas')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${filterEstatus === 'con_facturas' ? 'bg-white text-[#0D6E5F] shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
           >
-            Documento Vigente
+            <IconReceipt className="w-3.5 h-3.5" />
+            <span>Con Facturas ({stats.empresasConFacturas})</span>
           </button>
           <button
             type="button"
-            onClick={() => setFilterEstatus('pendientes')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${filterEstatus === 'pendientes' ? 'bg-white text-amber-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            onClick={() => setFilterEstatus('sin_facturas')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${filterEstatus === 'sin_facturas' ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
           >
-            Sin Documento / Por Actualizar
+            Sin Facturas ({stats.totalEmpresas - stats.empresasConFacturas})
           </button>
         </div>
       </div>
 
-      {/* ─── TABLA DE EMPRESAS Y DOCUMENTO ─── */}
+      {/* ─── TABLA DE EMPRESAS Y FACTURACIÓN ─── */}
       <div className="rounded-2xl border bg-white shadow-xs overflow-hidden" style={{ borderColor: "var(--color-border)" }}>
         <div className="px-5 py-4 border-b bg-slate-50/80 flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
           <div className="flex items-center gap-2">
-            <h2 className="font-bold text-sm text-slate-800">Directorio de Empresas y Documentación</h2>
+            <h2 className="font-bold text-sm text-slate-800">Directorio de Empresas y Facturas</h2>
             <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold">
               {empresasFiltradas.length} resultados
             </span>
@@ -379,7 +436,7 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
-                  {["Empresa / Razón Social", "RFC & Fiscal", "Contacto & Teléfono", "Flotilla / Personal", "Documento del Proveedor", "Acción"].map((h) => (
+                  {["Empresa / Razón Social", "RFC & Fiscal", "Contacto & Teléfono", "Flotilla / Personal", "Historial de Facturas", "Acción"].map((h) => (
                     <th key={h} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
@@ -387,10 +444,12 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
               <tbody className="divide-y divide-slate-100">
                 {empresasFiltradas.map((emp) => {
                   const empName = getEmpName(emp);
-                  const doc = getDocumentoDeEmpresa(emp.id, emp.rfc);
+                  const empFacturas = getFacturasDeEmpresa(emp.id);
                   const empVehicles = vehicles.filter(v => v.empresaNombre === empName || String(v.empresaId) === String(emp.id));
                   const empTrabajadores = trabajadores.filter(t => t.empresaNombre === empName || String(t.id_empresa) === String(emp.id));
                   const isSuspendida = emp.estatus === 'SUSPENDIDA' || emp.estado === 'suspendido';
+
+                  const pendientes = empFacturas.filter(f => f.estatus === 'pendiente_pago' || f.estatus === 'en_revision');
 
                   return (
                     <tr key={emp.id} className="hover:bg-slate-50/70 transition-colors">
@@ -443,30 +502,28 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
                         </div>
                       </td>
 
-                      {/* Estatus del Documento Único */}
+                      {/* Historial de Facturas */}
                       <td className="px-5 py-4">
-                        {doc ? (
+                        {empFacturas.length > 0 ? (
                           <div className="space-y-1">
                             <div className="flex items-center gap-1.5">
-                              {doc.estatus === 'vigente' ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 shadow-2xs">
-                                  <IconCheckCircle className="w-3.5 h-3.5 text-emerald-600" />
-                                  <span>Documento Vigente</span>
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-50 text-red-700 border border-red-300 shadow-2xs">
-                                  <IconAlertTriangle className="w-3.5 h-3.5 text-red-600" />
-                                  <span>Documento Vencido</span>
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-teal-50 text-[#0D6E5F] border border-teal-200">
+                                <IconReceipt className="w-3 h-3 text-[#0D6E5F]" />
+                                <span>{empFacturas.length} {empFacturas.length === 1 ? 'factura' : 'facturas'}</span>
+                              </span>
+                              {pendientes.length > 0 && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                  {pendientes.length} pendiente(s)
                                 </span>
                               )}
                             </div>
-                            <div className="text-[11px] text-slate-400 font-mono">
-                              Vigencia: {doc.fechaVigencia || 'Indefinida'}
+                            <div className="text-[10px] text-slate-400 font-mono">
+                              Última: {empFacturas[0].folio}
                             </div>
                           </div>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
-                            <span>Pendiente de Carga</span>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-400 border border-slate-200">
+                            <span>Sin facturas</span>
                           </span>
                         )}
                       </td>
@@ -477,12 +534,15 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
                           type="button"
                           onClick={() => {
                             setSelectedEmpresaExpediente(emp);
-                            setModalTab('documento');
+                            setModalTab('facturas');
+                            setFacturasModalSearch('');
+                            setFacturasModalFilterStatus('todas');
+                            setFacturasModalPage(1);
                           }}
-                          className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0a5a4e] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap"
+                          className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0a5a4e] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap ml-auto"
                         >
                           <IconEye className="w-3.5 h-3.5" />
-                          <span>Ver Información</span>
+                          <span>Ver Facturas</span>
                         </button>
                       </td>
                     </tr>
@@ -494,10 +554,10 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
         )}
       </div>
 
-      {/* ─── MODAL DE VISUALIZACIÓN DE EMPRESA Y DOCUMENTO (SOLO LECTURA) ─── */}
+      {/* ─── MODAL DE VISUALIZACIÓN DE FACTURAS (HISTORIAL RECURRENTE) ─── */}
       {selectedEmpresaExpediente && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
             <div className="px-6 py-5 border-b bg-slate-50 flex items-start justify-between gap-4" style={{ borderColor: "var(--color-border)" }}>
               <div className="space-y-1">
@@ -528,22 +588,23 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
             </div>
 
             {/* Sub-Header Tabs */}
-            <div className="px-6 border-b bg-white flex items-center gap-3">
+            <div className="px-6 border-b bg-white flex items-center gap-3 overflow-x-auto">
               <button
                 type="button"
-                onClick={() => setModalTab('documento')}
-                className={`py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${modalTab === 'documento'
+                onClick={() => setModalTab('facturas')}
+                className={`py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${modalTab === 'facturas'
                   ? 'border-[#0D6E5F] text-[#0D6E5F]'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
               >
-                <IconFileText className="w-4 h-4" />
-                <span>Documento del Proveedor</span>
+                <IconReceipt className="w-4 h-4" />
+                <span>Historial de Facturas ({facturasEmpresaActiva.length})</span>
               </button>
+
               <button
                 type="button"
                 onClick={() => setModalTab('flotilla')}
-                className={`py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${modalTab === 'flotilla'
+                className={`py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${modalTab === 'flotilla'
                   ? 'border-[#0D6E5F] text-[#0D6E5F]'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
@@ -551,10 +612,11 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
                 <IconCar className="w-4 h-4" />
                 <span>Flotilla ({vehicles.filter(v => v.empresaNombre === getEmpName(selectedEmpresaExpediente) || String(v.empresaId) === String(selectedEmpresaExpediente.id)).length})</span>
               </button>
+
               <button
                 type="button"
                 onClick={() => setModalTab('personal')}
-                className={`py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${modalTab === 'personal'
+                className={`py-3 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${modalTab === 'personal'
                   ? 'border-[#0D6E5F] text-[#0D6E5F]'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
@@ -566,79 +628,200 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
 
             {/* Modal Body */}
             <div className="p-6 overflow-y-auto flex-1 space-y-4">
-              {/* TAB 1: DOCUMENTO ÚNICO */}
-              {modalTab === 'documento' && (() => {
-                const doc = getDocumentoDeEmpresa(selectedEmpresaExpediente.id, selectedEmpresaExpediente.rfc);
+              {/* ─── TAB: HISTORIAL DE FACTURAS (RECURRENTE) ─── */}
+              {modalTab === 'facturas' && (() => {
+                const totalEmpresaMonto = facturasEmpresaActiva.reduce((acc, f) => acc + (Number(f.monto) || 0), 0);
+                const totalEmpresaPagado = facturasEmpresaActiva
+                  .filter(f => f.estatus === 'pagada')
+                  .reduce((acc, f) => acc + (Number(f.monto) || 0), 0);
+                const totalEmpresaPendiente = facturasEmpresaActiva
+                  .filter(f => f.estatus === 'pendiente_pago' || f.estatus === 'en_revision')
+                  .reduce((acc, f) => acc + (Number(f.monto) || 0), 0);
 
                 return (
                   <div className="space-y-4">
-                    <div className="p-3.5 rounded-2xl bg-teal-50/70 border border-teal-200/80 text-[#094E43] text-xs flex items-center gap-2.5">
-                      <IconShieldCheck className="w-4 h-4 shrink-0 text-[#0D6E5F]" />
-                      <span>
-                        <strong>Consulta Contable:</strong> Visualiza el documento oficial que el proveedor sube a la plataforma. No se requieren modificaciones.
-                      </span>
-                    </div>
+                    {/* Resumen Acumulado de Trabajos de la Empresa */}
+                    {facturasEmpresaActiva.length > 0 && (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                        <div>
+                          <span className="text-[10px] font-bold uppercase text-slate-400 block">Total Facturado Histórico:</span>
+                          <span className="text-sm font-black text-slate-900">{formatMonto(totalEmpresaMonto)}</span>
+                          <span className="text-[10px] text-slate-500 block">{facturasEmpresaActiva.length} facturas acumuladas</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold uppercase text-emerald-600 block">Total Liquidado:</span>
+                          <span className="text-sm font-black text-emerald-700">{formatMonto(totalEmpresaPagado)}</span>
+                          <span className="text-[10px] text-emerald-600 block">{facturasEmpresaActiva.filter(f => f.estatus === 'pagada').length} facturas pagadas</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold uppercase text-amber-600 block">Por Pagar / Revisión:</span>
+                          <span className="text-sm font-black text-amber-700">{formatMonto(totalEmpresaPendiente)}</span>
+                          <span className="text-[10px] text-amber-600 block">{facturasEmpresaActiva.filter(f => f.estatus === 'pendiente_pago' || f.estatus === 'en_revision').length} facturas pendientes</span>
+                        </div>
+                      </div>
+                    )}
 
-                    {doc ? (
-                      <div className="p-5 rounded-2xl border bg-slate-50/60 space-y-4" style={{ borderColor: "var(--color-border)" }}>
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-2xl bg-teal-100/90 text-[#0D6E5F] flex items-center justify-center font-bold shadow-xs">
-                              <IconFileText className="w-6 h-6" />
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-bold text-slate-900">{doc.nombreDocumento}</h4>
-                              <p className="text-xs text-slate-500 mt-0.5">{doc.descripcion}</p>
-                            </div>
-                          </div>
-
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-bold border uppercase ${doc.estatus === 'vigente'
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
-                            : 'bg-red-50 text-red-700 border-red-300'
-                            }`}>
-                            {doc.estatus}
-                          </span>
+                    {/* Barra de Filtros y Búsqueda interna para empresas con muchas facturas */}
+                    {facturasEmpresaActiva.length > 0 && (
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <div className="relative w-full sm:w-72">
+                          <IconSearch className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                          <input
+                            type="text"
+                            value={facturasModalSearch}
+                            onChange={(e) => {
+                              setFacturasModalSearch(e.target.value);
+                              setFacturasModalPage(1);
+                            }}
+                            placeholder="Buscar por folio o trabajo..."
+                            className="w-full rounded-xl pl-9 pr-3 py-1.5 text-xs border border-slate-200 outline-none focus:ring-2 focus:ring-teal-200 font-medium text-slate-800"
+                          />
                         </div>
 
-                        {/* Metadatos */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-white border border-slate-200 text-xs">
-                          <div>
-                            <span className="text-[10px] font-bold uppercase text-slate-400 block">Fecha de Carga:</span>
-                            <span className="font-mono font-semibold text-slate-700">{doc.fechaSubida}</span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] font-bold uppercase text-slate-400 block">Vigencia Oficial:</span>
-                            <span className="font-mono font-semibold text-teal-800">{doc.fechaVigencia || 'No especificada'}</span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] font-bold uppercase text-slate-400 block">Subido Por:</span>
-                            <span className="font-semibold text-slate-700 truncate block">{doc.subidoPor}</span>
-                          </div>
-                        </div>
-
-                        {doc.notasAuditoria && (
-                          <div className="p-3 rounded-xl bg-slate-100/80 text-xs text-slate-600">
-                            <strong>Notas de Auditoría:</strong> {doc.notasAuditoria}
-                          </div>
-                        )}
-
-                        <div className="flex items-center justify-end gap-2 pt-2">
+                        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-stretch sm:self-auto">
                           <button
                             type="button"
-                            onClick={() => setSelectedDocumentoPreview(doc)}
-                            className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0a5a4e] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                            onClick={() => {
+                              setFacturasModalFilterStatus('todas');
+                              setFacturasModalPage(1);
+                            }}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${facturasModalFilterStatus === 'todas' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600'
+                              }`}
                           >
-                            <IconEye className="w-3.5 h-3.5" />
-                            <span>Visualizar Documento</span>
+                            Todas ({facturasEmpresaActiva.length})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFacturasModalFilterStatus('pendientes');
+                              setFacturasModalPage(1);
+                            }}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${facturasModalFilterStatus === 'pendientes' ? 'bg-white text-amber-700 shadow-2xs' : 'text-slate-600'
+                              }`}
+                          >
+                            Pendientes ({facturasEmpresaActiva.filter(f => f.estatus === 'pendiente_pago' || f.estatus === 'en_revision').length})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFacturasModalFilterStatus('pagadas');
+                              setFacturasModalPage(1);
+                            }}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${facturasModalFilterStatus === 'pagadas' ? 'bg-white text-emerald-700 shadow-2xs' : 'text-slate-600'
+                              }`}
+                          >
+                            Pagadas ({facturasEmpresaActiva.filter(f => f.estatus === 'pagada').length})
                           </button>
                         </div>
                       </div>
+                    )}
+
+                    {/* Listado de Facturas */}
+                    {facturasPaginadas.length > 0 ? (
+                      <div className="space-y-3">
+                        {facturasPaginadas.map((fac) => (
+                          <div
+                            key={fac.id}
+                            className="p-4 rounded-2xl border bg-slate-50/70 hover:bg-white transition-all space-y-3"
+                            style={{ borderColor: "var(--color-border)" }}
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                              <div className="flex items-start gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-teal-100 text-[#0D6E5F] flex items-center justify-center shrink-0 shadow-xs">
+                                  <IconReceipt className="w-5 h-5" />
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="text-sm font-black text-slate-900">{fac.folio}</h4>
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase ${fac.estatus === 'pagada'
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                                      : fac.estatus === 'pendiente_pago'
+                                        ? 'bg-amber-50 text-amber-700 border-amber-300'
+                                        : 'bg-blue-50 text-blue-700 border-blue-300'
+                                      }`}>
+                                      {fac.estatus.replace('_', ' ')}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-slate-700 font-medium mt-0.5">{fac.concepto}</p>
+                                  {fac.uuidSat && (
+                                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                                      UUID SAT: {fac.uuidSat}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="text-right sm:self-start">
+                                <div className="text-base font-black text-slate-900">
+                                  {formatMonto(fac.monto, fac.moneda)}
+                                </div>
+                                <div className="text-[10px] text-slate-400 font-mono">
+                                  Emisión: {fac.fechaEmision}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Metadatos y Botón */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-200/80 text-xs">
+                              <div className="flex items-center gap-4 text-slate-500 text-[11px]">
+                                <span>Recibida: <strong className="font-mono text-slate-700">{fac.fechaRecepcion}</strong></span>
+                                <span>Por: <strong className="text-slate-700">{fac.subidoPor}</strong></span>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => setSelectedFacturaPreview(fac)}
+                                className="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0a5a4e] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs self-end sm:self-auto"
+                              >
+                                <IconEye className="w-3.5 h-3.5" />
+                                <span>Visualizar Factura</span>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+
+                        {/* Controles de Paginación para cuando la empresa tiene muchas facturas */}
+                        {totalPagesModal > 1 && (
+                          <div className="flex items-center justify-between pt-2 border-t border-slate-200 text-xs text-slate-500">
+                            <span>
+                              Mostrando {((facturasModalPage - 1) * facturasModalPageSize) + 1} - {Math.min(facturasModalPage * facturasModalPageSize, facturasEmpresaFiltradas.length)} de {facturasEmpresaFiltradas.length} facturas
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                disabled={facturasModalPage <= 1}
+                                onClick={() => setFacturasModalPage(p => Math.max(1, p - 1))}
+                                className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                              >
+                                <IconChevronLeft className="w-4 h-4" />
+                              </button>
+                              <span className="px-2 font-bold text-slate-700">
+                                {facturasModalPage} / {totalPagesModal}
+                              </span>
+                              <button
+                                type="button"
+                                disabled={facturasModalPage >= totalPagesModal}
+                                onClick={() => setFacturasModalPage(p => Math.min(totalPagesModal, p + 1))}
+                                className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                              >
+                                <IconChevronRight className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     ) : (
-                      <div className="p-10 text-center rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                        <IconFileText className="w-10 h-10 mx-auto text-slate-300" />
-                        <div className="text-xs font-bold text-slate-700">Documento no subido aún por el proveedor</div>
-                        <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
-                          Una vez que el proveedor cargue su documento desde su interfaz, se mostrará aquí para su visualización contable.
+                      <div className="p-12 text-center rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                        <div className="w-12 h-12 rounded-2xl bg-teal-50 text-[#0D6E5F] flex items-center justify-center mx-auto border border-teal-100">
+                          <IconReceipt className="w-6 h-6" />
+                        </div>
+                        <div className="text-xs font-bold text-slate-800">
+                          {facturasEmpresaActiva.length === 0 ? "No hay facturas registradas" : "No hay facturas con el filtro aplicado"}
+                        </div>
+                        <p className="text-[11px] text-slate-500 max-w-md mx-auto">
+                          {facturasEmpresaActiva.length === 0
+                            ? "A medida que el proveedor realice trabajos y suba sus comprobantes a la plataforma, se irán acumulando en este historial."
+                            : "Prueba modificando el término de búsqueda o cambiando el filtro de estado."}
                         </p>
                       </div>
                     )}
@@ -646,7 +829,7 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
                 );
               })()}
 
-              {/* TAB 2: FLOTILLA */}
+              {/* ─── TAB: FLOTILLA ─── */}
               {modalTab === 'flotilla' && (
                 <div className="space-y-3">
                   {vehicles.filter(v => v.empresaNombre === getEmpName(selectedEmpresaExpediente) || String(v.empresaId) === String(selectedEmpresaExpediente.id)).length === 0 ? (
@@ -681,7 +864,7 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
                 </div>
               )}
 
-              {/* TAB 3: PERSONAL */}
+              {/* ─── TAB: PERSONAL ─── */}
               {modalTab === 'personal' && (
                 <div className="space-y-3">
                   {trabajadores.filter(t => t.empresaNombre === getEmpName(selectedEmpresaExpediente) || String(t.id_empresa) === String(selectedEmpresaExpediente.id)).length === 0 ? (
@@ -721,7 +904,7 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
             {/* Modal Footer */}
             <div className="px-6 py-4 border-t bg-slate-50 flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
               <span className="text-xs text-slate-400 font-medium">
-                Las Palomas HOA · Control de Acceso y Cumplimiento
+                Las Palomas HOA · Módulo Contable
               </span>
               <button
                 type="button"
@@ -735,65 +918,77 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
         </div>
       )}
 
-      {/* ─── MODAL DE PREVISUALIZACIÓN DE DOCUMENTO ─── */}
-      {selectedDocumentoPreview && (
+      {/* ─── MODAL DE PREVISUALIZACIÓN DE FACTURA ─── */}
+      {selectedFacturaPreview && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-xs">
           <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Header */}
             <div className="px-6 py-4 border-b bg-slate-50 flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
               <div className="flex items-center gap-2">
-                <IconFileText className="w-5 h-5 text-[#0D6E5F]" />
+                <IconReceipt className="w-5 h-5 text-[#0D6E5F]" />
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900">{selectedDocumentoPreview.nombreDocumento}</h4>
-                  <div className="text-[11px] text-slate-400 font-mono">Archivo: {selectedDocumentoPreview.formato.toUpperCase()} · {selectedDocumentoPreview.tamañoKb} KB</div>
+                  <h4 className="text-sm font-bold text-slate-900">{selectedFacturaPreview.folio}</h4>
+                  <div className="text-[11px] text-slate-500">
+                    Comprobante fiscal de proveedor
+                  </div>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => setSelectedDocumentoPreview(null)}
+                onClick={() => setSelectedFacturaPreview(null)}
                 className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
               >
                 <IconX className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Document Mock Viewer Body */}
+            {/* Factura Preview Body */}
             <div className="p-6 space-y-4">
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 relative overflow-hidden shadow-inner text-center space-y-3">
-                <div className="w-16 h-16 rounded-2xl bg-teal-100/80 text-[#0D6E5F] flex items-center justify-center mx-auto shadow-xs">
-                  <IconFileText className="w-8 h-8" />
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 relative overflow-hidden shadow-inner space-y-3">
+                <div className="w-16 h-16 rounded-2xl bg-teal-100 text-[#0D6E5F] flex items-center justify-center mx-auto shadow-xs">
+                  <IconReceipt className="w-8 h-8" />
                 </div>
-                <div className="space-y-1">
-                  <div className="font-bold text-sm text-slate-800">{selectedDocumentoPreview.nombreDocumento}</div>
-                  <p className="text-xs text-slate-500 max-w-md mx-auto">{selectedDocumentoPreview.descripcion}</p>
+                <div className="space-y-1 text-center">
+                  <div className="font-black text-lg text-slate-900">{formatMonto(selectedFacturaPreview.monto, selectedFacturaPreview.moneda)}</div>
+                  <p className="text-xs text-slate-600 max-w-md mx-auto">{selectedFacturaPreview.concepto}</p>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-white border border-slate-200 text-left text-xs space-y-1.5 max-w-md mx-auto">
+                <div className="p-3.5 rounded-xl bg-white border border-slate-200 text-left text-xs space-y-2 max-w-md mx-auto">
                   <div className="flex justify-between text-slate-600">
                     <span>Estatus:</span>
-                    <strong className="uppercase text-emerald-700">{selectedDocumentoPreview.estatus}</strong>
+                    <strong className="uppercase text-[#0D6E5F]">{selectedFacturaPreview.estatus.replace('_', ' ')}</strong>
                   </div>
-                  <div className="flex justify-between text-slate-600">
-                    <span>Fecha de Emisión / Carga:</span>
-                    <span className="font-mono font-semibold">{selectedDocumentoPreview.fechaSubida}</span>
-                  </div>
-                  <div className="flex justify-between text-slate-600">
-                    <span>Vigencia:</span>
-                    <span className="font-mono font-semibold text-teal-800">{selectedDocumentoPreview.fechaVigencia || 'No aplica'}</span>
-                  </div>
-                  <div className="flex justify-between text-slate-600">
-                    <span>Suministrado por:</span>
-                    <span>{selectedDocumentoPreview.subidoPor}</span>
-                  </div>
-                  {selectedDocumentoPreview.notasAuditoria && (
-                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-500">
-                      <strong>Dictamen de Auditoría:</strong> {selectedDocumentoPreview.notasAuditoria}
+                  {selectedFacturaPreview.uuidSat && (
+                    <div className="flex justify-between text-slate-600">
+                      <span>UUID SAT:</span>
+                      <span className="font-mono text-[11px] font-semibold truncate max-w-[200px]" title={selectedFacturaPreview.uuidSat}>
+                        {selectedFacturaPreview.uuidSat}
+                      </span>
                     </div>
                   )}
-                </div>
-
-                <div className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">
-                  Documento de Proveedor · HOA Las Palomas
+                  <div className="flex justify-between text-slate-600">
+                    <span>Fecha Emisión:</span>
+                    <span className="font-mono font-semibold">{selectedFacturaPreview.fechaEmision}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600">
+                    <span>Fecha Recepción:</span>
+                    <span className="font-mono font-semibold">{selectedFacturaPreview.fechaRecepcion}</span>
+                  </div>
+                  {selectedFacturaPreview.metodoPago && (
+                    <div className="flex justify-between text-slate-600">
+                      <span>Método de Pago:</span>
+                      <span>{selectedFacturaPreview.metodoPago}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-slate-600">
+                    <span>Subido Por:</span>
+                    <span>{selectedFacturaPreview.subidoPor}</span>
+                  </div>
+                  {selectedFacturaPreview.observaciones && (
+                    <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-500">
+                      <strong>Observaciones:</strong> {selectedFacturaPreview.observaciones}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -802,21 +997,21 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
             <div className="px-6 py-4 border-t bg-slate-50 flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
               <button
                 type="button"
-                onClick={() => setSelectedDocumentoPreview(null)}
+                onClick={() => setSelectedFacturaPreview(null)}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
               >
                 Regresar
               </button>
 
               <a
-                href={selectedDocumentoPreview.archivoUrl}
+                href={selectedFacturaPreview.archivoUrl}
                 target="_blank"
                 rel="noreferrer"
-                download
+                download={selectedFacturaPreview.nombreArchivo}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0a5a4e] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
                 <IconDownload className="w-3.5 h-3.5" />
-                <span>Descargar Copia de Respaldo</span>
+                <span>Descargar Factura</span>
               </a>
             </div>
           </div>
