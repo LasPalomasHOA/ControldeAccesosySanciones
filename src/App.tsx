@@ -2046,6 +2046,36 @@ export default function App() {
   const currentCasetaCorbatinVerde = selectedCorbatinVerdeId
     ? corbatinesVerdes.find((c) => c.id === selectedCorbatinVerdeId)
     : undefined;
+
+  // Detección de vehículo o corbatín verde actualmente dentro del predio (sin salida registrada)
+  const currentVehicleDentro = useMemo(() => {
+    if (!currentCasetaVehicle) return null;
+    return (
+      bitacora.find(
+        (b) =>
+          b.estado === "Dentro" &&
+          (
+            (b.vehicleId && String(b.vehicleId) === String(currentCasetaVehicle.id)) ||
+            (b.placas && currentCasetaVehicle.placas && b.placas.trim().toUpperCase() === currentCasetaVehicle.placas.trim().toUpperCase())
+          )
+      ) || null
+    );
+  }, [currentCasetaVehicle, bitacora]);
+
+  const currentCorbatinVerdeDentro = useMemo(() => {
+    if (!currentCasetaCorbatinVerde) return null;
+    const numFmt = formatCorbatinVerdeNum(currentCasetaCorbatinVerde.corbatinNum);
+    return (
+      bitacora.find(
+        (b) =>
+          b.estado === "Dentro" &&
+          (
+            (b.corbatinNum && (b.corbatinNum === numFmt || b.corbatinNum === currentCasetaCorbatinVerde.corbatinNum || b.corbatinNum === ("00" + parseInt(currentCasetaCorbatinVerde.corbatinNum, 10)))) ||
+            (casetaPlacasVerde && b.placas && b.placas.trim().toUpperCase() === casetaPlacasVerde.trim().toUpperCase())
+          )
+      ) || null
+    );
+  }, [currentCasetaCorbatinVerde, bitacora, casetaPlacasVerde]);
   const empresaTrabajadores = selectedEmpresaId
     ? trabajadores.filter((t) => (t.id_empresa === selectedEmpresaId || t.empresaNombre === currentEmpresa?.nombre) && t.activo !== false)
     : trabajadores.filter((t) => t.activo !== false);
@@ -4962,6 +4992,14 @@ export default function App() {
 
       // Registro en Modalidad Corbatín Verde (Proyectos / Larga Estancia)
       if (currentCasetaCorbatinVerde) {
+        if (currentCorbatinVerdeDentro) {
+          showToast(
+            "El Corbatín Verde #" + formatCorbatinVerdeNum(currentCasetaCorbatinVerde.corbatinNum) + " ya cuenta con un ingreso activo registrado a las " + formatHoraLocal(currentCorbatinVerdeDentro.raw_hora_entrada || currentCorbatinVerdeDentro.horaEntrada) + ". Debe registrar su salida antes de registrar una nueva entrada.",
+            "warning",
+            "Unidad ya dentro"
+          );
+          return;
+        }
         if (!currentCasetaCorbatinVerde.activo && !casetaOverrideActive) {
           showToast("Este Corbatín Verde se encuentra inactivo o deshabilitado.", "error", "Acceso Denegado");
           return;
@@ -5015,6 +5053,15 @@ export default function App() {
       // Registro en Modalidad Vehicular Regular
       if (!currentCasetaVehicle) {
         showToast("Selecciona un vehículo o corbatín verde habilitado para registrar la entrada.", "warning");
+        return;
+      }
+
+      if (currentVehicleDentro) {
+        showToast(
+          "El vehículo (" + currentCasetaVehicle.placas + ") ya cuenta con una entrada activa registrada a las " + formatHoraLocal(currentVehicleDentro.raw_hora_entrada || currentVehicleDentro.horaEntrada) + ". Debe registrar su salida antes de registrar una nueva entrada.",
+          "warning",
+          "Vehículo actualmente dentro"
+        );
         return;
       }
 
@@ -11967,7 +12014,36 @@ export default function App() {
                             {/* BANNERS DE DIAGNÓSTICO / STATUS */}
                             {currentCasetaVehicle ? (
                               <>
-                                {currentCasetaVehicle.permisoTemporal?.activo && new Date(currentCasetaVehicle.permisoTemporal.fechaExpiracion).getTime() > Date.now() ? (
+                                {currentVehicleDentro ? (
+                                  <div className="p-2.5 rounded-xl border bg-amber-50 border-amber-300 text-amber-950 space-y-1.5">
+                                    <div className="font-bold text-xs uppercase flex items-center justify-between text-amber-900">
+                                      <div className="flex items-center gap-1.5">
+                                        <IconAlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                        <span>Unidad Actualmente Dentro del Predio</span>
+                                      </div>
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-900 uppercase tracking-wide">
+                                        Pendiente de Salida
+                                      </span>
+                                    </div>
+                                    <p className="text-xs leading-relaxed text-amber-900">
+                                      Este vehículo ya cuenta con una entrada activa registrada a las <strong className="font-mono">{formatHoraLocal(currentVehicleDentro.raw_hora_entrada || currentVehicleDentro.horaEntrada)}</strong> ({currentVehicleDentro.fecha ? (currentVehicleDentro.fecha === new Date().toISOString().split("T")[0] ? "Hoy" : formatFechaLegible(currentVehicleDentro.fecha, false)) : "Hoy"}). Solo se puede registrar una nueva entrada una vez que haya salido.
+                                    </p>
+                                    <div className="pt-1.5 flex flex-wrap items-center justify-between gap-2 border-t border-amber-200/80">
+                                      <span className="text-[11px] text-amber-800 font-medium truncate max-w-[220px]">
+                                        Destino: {currentVehicleDentro.trabajos || "En predio"}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleMarcarSalida(currentVehicleDentro.id)}
+                                        disabled={Boolean(marcandoSalidaIds[currentVehicleDentro.id])}
+                                        className="py-1 px-3 rounded-lg text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 disabled:opacity-50"
+                                      >
+                                        <IconLogOut className="w-3.5 h-3.5" />
+                                        <span>{marcandoSalidaIds[currentVehicleDentro.id] ? "Registrando salida..." : "Registrar Salida de Unidad"}</span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : currentCasetaVehicle.permisoTemporal?.activo && new Date(currentCasetaVehicle.permisoTemporal.fechaExpiracion).getTime() > Date.now() ? (
                                   <div className="p-3 rounded-xl bg-amber-500/10 border-2 border-amber-400 text-amber-950 space-y-1.5 shadow-2xs">
                                     <div className="flex items-center justify-between">
                                       <div className="font-bold text-xs uppercase flex items-center gap-1.5 text-amber-900">
@@ -12113,7 +12189,25 @@ export default function App() {
 
                         {/* 6. BOTÓN DE ENVÍO */}
                         <div className="pt-1">
-                          {currentCasetaVehicle?.status === "Suspendido" && !casetaOverrideActive ? (
+                          {currentVehicleDentro ? (
+                            <button
+                              type="button"
+                              disabled
+                              className="w-full h-11 rounded-xl text-xs sm:text-sm font-bold text-amber-900 bg-amber-100 border border-amber-300 cursor-not-allowed shadow-xs flex items-center justify-center gap-2"
+                            >
+                              <IconAlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                              <span>Entrada Bloqueada — La unidad ya está dentro (requiere registrar salida)</span>
+                            </button>
+                          ) : currentCorbatinVerdeDentro ? (
+                            <button
+                              type="button"
+                              disabled
+                              className="w-full h-11 rounded-xl text-xs sm:text-sm font-bold text-amber-900 bg-amber-100 border border-amber-300 cursor-not-allowed shadow-xs flex items-center justify-center gap-2"
+                            >
+                              <IconAlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                              <span>Entrada Bloqueada — Corbatín Verde con ingreso activo pendiente de salida</span>
+                            </button>
+                          ) : currentCasetaVehicle?.status === "Suspendido" && !casetaOverrideActive ? (
                             <button
                               type="button"
                               disabled

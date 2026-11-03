@@ -107,8 +107,8 @@ router.get('/', async (req, res) => {
         raw_hora_entrada: rawHoraEntrada || plain.hora_entrada,
         raw_hora_salida: rawHoraSalida || plain.hora_salida,
         fecha: plain.fecha || (rawHoraEntrada ? rawHoraEntrada.split('T')[0] : (plain.created_at ? new Date(plain.created_at).toISOString().split('T')[0] : null)),
-        hora_entrada: rawHoraEntrada || (plain.hora_entrada ? new Date(plain.hora_entrada).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' hrs' : ''),
-        hora_salida: rawHoraSalida || (plain.hora_salida ? new Date(plain.hora_salida).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' hrs' : null),
+        hora_entrada: plain.hora_entrada ? new Date(plain.hora_entrada).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (rawHoraEntrada || ''),
+        hora_salida: plain.hora_salida ? new Date(plain.hora_salida).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null,
         fechaHora: rawHoraEntrada || (plain.created_at ? new Date(plain.created_at).toISOString() : new Date().toISOString()),
         tipo: tipoFinal,
         tipoAcceso: tipoFinal,
@@ -152,6 +152,41 @@ router.post('/', async (req, res) => {
     const finalVehiculoId = (id_vehiculo && !isNaN(Number(id_vehiculo))) ? Number(id_vehiculo) : null;
     const finalConductorId = (id_conductor && !isNaN(Number(id_conductor))) ? Number(id_conductor) : null;
     const finalCorbatinId = (id_corbatin && !isNaN(Number(id_corbatin))) ? Number(id_corbatin) : null;
+
+    // VALIDACIÓN: No permitir registrar entrada si el vehículo ya está dentro sin salida registrada
+    if (!esSalida && finalVehiculoId) {
+      const accesoActivo = await db.BitacoraAcceso.findOne({
+        where: {
+          id_vehiculo: finalVehiculoId,
+          hora_salida: null
+        },
+        order: [['created_at', 'DESC']]
+      });
+
+      if (accesoActivo) {
+        return res.status(400).json({ 
+          error: 'El vehículo ya se encuentra dentro de las instalaciones. Debe registrar su salida antes de registrar una nueva entrada.',
+          id_acceso_activo: accesoActivo.id_acceso
+        });
+      }
+    }
+
+    if (!esSalida && finalCorbatinId) {
+      const accesoActivo = await db.BitacoraAcceso.findOne({
+        where: {
+          id_corbatin: finalCorbatinId,
+          hora_salida: null
+        },
+        order: [['created_at', 'DESC']]
+      });
+
+      if (accesoActivo) {
+        return res.status(400).json({ 
+          error: 'El corbatín ya cuenta con una entrada activa pendiente de salida.',
+          id_acceso_activo: accesoActivo.id_acceso
+        });
+      }
+    }
 
     const nuevoAcceso = await db.BitacoraAcceso.create({
       id_caseta: finalCasetaId,
