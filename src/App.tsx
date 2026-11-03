@@ -1839,6 +1839,16 @@ export default function App() {
   const [vincularError, setVincularError] = useState("");
   const [isSubmittingVinculacion, setIsSubmittingVinculacion] = useState(false);
 
+  // Modal con diseño para confirmaciones de Corbatines Verdes (Liberar / Eliminar)
+  const [actionConfirmModal, setActionConfirmModal] = useState<{
+    isOpen: boolean;
+    type: "liberar" | "eliminar";
+    title: string;
+    corbatinNum: string;
+    empresaNombre?: string;
+    actionCallback: () => void;
+  } | null>(null);
+
   // Form states para creación / emisión de Corbatines Verdes
   const [nuevoCVModo, setNuevoCVModo] = useState<"individual" | "lote">("individual");
   const [nuevoCVEmpresaNombre, setNuevoCVEmpresaNombre] = useState("");
@@ -9708,9 +9718,14 @@ export default function App() {
                                             <button
                                               type="button"
                                               onClick={() => {
-                                                if (confirm(`¿Desvincular el Corbatín #${numFmt} de "${activeItem.empresaNombre}" y devolverlo a Disponibles en inventario?`)) {
-                                                  handleDesvincularCorbatinVerde(activeItem.id);
-                                                }
+                                                setActionConfirmModal({
+                                                  isOpen: true,
+                                                  type: "liberar",
+                                                  title: `¿Liberar Corbatín #${numFmt}?`,
+                                                  corbatinNum: numFmt,
+                                                  empresaNombre: activeItem.empresaNombre,
+                                                  actionCallback: () => handleDesvincularCorbatinVerde(activeItem.id)
+                                                });
                                               }}
                                               className="px-3 py-1.5 rounded-xl text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors flex items-center gap-1.5 cursor-pointer"
                                               title="Liberar corbatín para volver a usarlo con otra empresa"
@@ -9794,9 +9809,14 @@ export default function App() {
                                     <button
                                       type="button"
                                       onClick={() => {
-                                        if (confirm(`¿Estás seguro de eliminar permanentemente el Corbatín Verde #${numFmt} del pool de inventario?`)) {
-                                          handleEliminarCorbatinVerde(activeItem.id);
-                                        }
+                                        setActionConfirmModal({
+                                          isOpen: true,
+                                          type: "eliminar",
+                                          title: `¿Eliminar Corbatín #${numFmt} del Pool?`,
+                                          corbatinNum: numFmt,
+                                          empresaNombre: activeItem.empresaNombre,
+                                          actionCallback: () => handleEliminarCorbatinVerde(activeItem.id)
+                                        });
                                       }}
                                       className="px-3.5 py-2 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 border border-red-200 transition-colors flex items-center gap-1.5 cursor-pointer"
                                     >
@@ -9962,9 +9982,14 @@ export default function App() {
                                                     <button
                                                       type="button"
                                                       onClick={() => {
-                                                        if (confirm(`¿Liberar el Corbatín #${numFmt} de "${c.empresaNombre}" y devolverlo al inventario Disponible?`)) {
-                                                          handleDesvincularCorbatinVerde(c.id);
-                                                        }
+                                                        setActionConfirmModal({
+                                                          isOpen: true,
+                                                          type: "liberar",
+                                                          title: `¿Liberar Corbatín #${numFmt}?`,
+                                                          corbatinNum: numFmt,
+                                                          empresaNombre: c.empresaNombre,
+                                                          actionCallback: () => handleDesvincularCorbatinVerde(c.id)
+                                                        });
                                                       }}
                                                       className="p-1.5 px-2 rounded-lg text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-all cursor-pointer"
                                                       title="Liberar corbatín"
@@ -15622,6 +15647,165 @@ export default function App() {
           </div>
         );
       })()}
+
+      {/* ─── MODAL ELEGANTE DE CONFIRMACIÓN (LIBERAR / ELIMINAR CORBATÍN) ─── */}
+      {actionConfirmModal && actionConfirmModal.isOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150"
+          onClick={() => setActionConfirmModal(null)}
+        >
+          <div
+            className="relative bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 my-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Cabecera con Icono y Botón Cerrar */}
+            <div className="flex items-start justify-between gap-3 pt-1">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${
+                    actionConfirmModal.type === "eliminar"
+                      ? "bg-rose-50 border-rose-200 text-rose-600 shadow-sm shadow-rose-100"
+                      : "bg-amber-50 border-amber-200 text-amber-600 shadow-sm shadow-amber-100"
+                  }`}
+                >
+                  {actionConfirmModal.type === "eliminar" ? (
+                    <IconTrash className="w-6 h-6" />
+                  ) : (
+                    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="1 4 1 10 7 10" />
+                      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                    </svg>
+                  )}
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono font-bold text-xs text-[#0D6E5F] bg-teal-50 border border-teal-200 px-2.5 py-0.5 rounded-lg">
+                      #{actionConfirmModal.corbatinNum}
+                    </span>
+                    <span
+                      className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${
+                        actionConfirmModal.type === "eliminar"
+                          ? "bg-rose-50 text-rose-700 border-rose-200"
+                          : "bg-amber-50 text-amber-800 border-amber-200"
+                      }`}
+                    >
+                      {actionConfirmModal.type === "eliminar" ? "Eliminar del Pool" : "Liberar de Empresa"}
+                    </span>
+                  </div>
+                  <h3 className="font-black text-lg text-slate-900 mt-1">
+                    {actionConfirmModal.type === "eliminar"
+                      ? `¿Eliminar Corbatín #${actionConfirmModal.corbatinNum}?`
+                      : `¿Liberar Corbatín #${actionConfirmModal.corbatinNum}?`}
+                  </h3>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setActionConfirmModal(null)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                title="Cerrar modal"
+              >
+                <IconX className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Tarjeta de Información Detallada */}
+            <div className="my-5 space-y-3">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 text-xs space-y-2.5">
+                {actionConfirmModal.empresaNombre && (
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200/70">
+                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Empresa Actual</span>
+                    <span className="font-bold text-slate-800 text-xs text-right max-w-[220px] truncate">
+                      {actionConfirmModal.empresaNombre}
+                    </span>
+                  </div>
+                )}
+
+                <div className="text-slate-600 leading-relaxed font-medium">
+                  {actionConfirmModal.type === "eliminar" ? (
+                    <span>
+                      Esta acción removerá permanentemente la unidad <strong>#{actionConfirmModal.corbatinNum}</strong> del pool de inventario físico. Su acreditación y código QR quedarán anulados.
+                    </span>
+                  ) : (
+                    <span>
+                      El corbatín se desvinculará de <strong>&quot;{actionConfirmModal.empresaNombre || "la empresa"}&quot;</strong> y volverá de inmediato al catálogo general como unidad <strong className="text-emerald-700">Disponible</strong> para ser reasignada.
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Puntos informativos / Consecuencias */}
+              <div className="space-y-1.5 px-1 text-[11px] text-slate-500 font-medium">
+                {actionConfirmModal.type === "eliminar" ? (
+                  <>
+                    <div className="flex items-center gap-2 text-rose-600">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                      <span>Esta acción es irreversible y no se puede deshacer.</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
+                      <span>El registro previo permanecerá respaldado en la bitácora general.</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 text-emerald-700">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                      <span>El tarjetón físico queda libre para asignarse a otro contratista cuando sea requerido.</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
+                      <span>Los permisos de acceso vehicular activos en caseta para esta unidad se suspenderán.</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Botones de Acción */}
+            <div className="pt-3 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setActionConfirmModal(null)}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer text-center"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const cb = actionConfirmModal.actionCallback;
+                  setActionConfirmModal(null);
+                  cb();
+                }}
+                className={`w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2 ${
+                  actionConfirmModal.type === "eliminar"
+                    ? "bg-rose-600 hover:bg-rose-700 active:scale-95 shadow-rose-600/20"
+                    : "bg-amber-600 hover:bg-amber-700 active:scale-95 shadow-amber-600/20"
+                }`}
+              >
+                {actionConfirmModal.type === "eliminar" ? (
+                  <>
+                    <IconTrash className="w-4 h-4" />
+                    <span>Sí, Eliminar del Pool</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="1 4 1 10 7 10" />
+                      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                    </svg>
+                    <span>Sí, Liberar Corbatín</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── MODAL: VINCULAR CORBATÍN VERDE TEMPORALMENTE A EMPRESA ─── */}
       {showVincularCorbatinModal && corbatinParaVincular && (
