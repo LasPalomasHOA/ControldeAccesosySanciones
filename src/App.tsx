@@ -997,26 +997,29 @@ function CorbatinDocument({ vehicle, sections }: { vehicle: Vehicle; sections?: 
               }}
             >
               {(() => {
-                const totalItemCount = docSections.reduce((acc, s) => acc + (s.items ? s.items.length : 0), 0);
-                const isDense = totalItemCount > 24;
-                const isVeryDense = totalItemCount > 30;
-                const titleFontSize = isVeryDense ? "9.5px" : isDense ? "10px" : "10.5px";
-                const secMargin = isVeryDense ? "3.5px" : isDense ? "4.5px" : "6px";
-                const itemFontSize = isVeryDense ? "9px" : isDense ? "9.5px" : "10px";
-                const itemLineHeight = isVeryDense ? "1.24" : isDense ? "1.3" : "1.35";
-                const itemMargin = isVeryDense ? "0.5px" : isDense ? "1px" : "1.5px";
+                let estLines = docSections.length * 1.5;
+                docSections.forEach((sec) => {
+                  (sec.items || []).forEach((it) => {
+                    estLines += Math.max(1, Math.ceil((it || "").length / 58));
+                  });
+                });
+                const unitPx = Math.min(15.5, Math.max(8.4, 510 / Math.max(1, estLines + docSections.length * 0.25)));
+                const itemFontPx = Math.min(10.0, Math.max(7.2, unitPx * 0.72));
+                const titleFontPx = Math.min(10.5, Math.max(7.8, itemFontPx * 1.06));
+                const secMarginPx = Math.min(6, Math.max(2, unitPx * 0.35));
+                const itemLineHeight = estLines > 44 ? "1.16" : estLines > 36 ? "1.22" : "1.28";
 
                 return (
                   <div style={{ overflow: "hidden" }}>
-                    <div style={{ fontSize: "11.5px", fontWeight: "900", textAlign: "center", marginBottom: isVeryDense ? "5px" : "8px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    <div style={{ fontSize: "11.5px", fontWeight: "900", textAlign: "center", marginBottom: estLines > 36 ? "4px" : "7px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                       Reglamento para externos en áreas comunes:
                     </div>
                     {docSections.map((sec, idx) => (
-                      <div key={sec.title || idx} style={{ marginBottom: secMargin }}>
-                        <div style={{ fontSize: titleFontSize, fontWeight: "bold", color: "#000000", marginBottom: "1.5px" }}>{sec.title}</div>
+                      <div key={sec.title || idx} style={{ marginBottom: `${secMarginPx}px` }}>
+                        <div style={{ fontSize: `${titleFontPx}px`, fontWeight: "bold", color: "#000000", marginBottom: "1px", lineHeight: "1.2" }}>{sec.title}</div>
                         <ul style={{ margin: 0, paddingLeft: "14px", listStyleType: "disc" }}>
                           {sec.items.map((item, i) => (
-                            <li key={i} style={{ fontSize: itemFontSize, color: "#222222", lineHeight: itemLineHeight, marginBottom: itemMargin }}>{item}</li>
+                            <li key={i} style={{ fontSize: `${itemFontPx}px`, color: "#222222", lineHeight: itemLineHeight, marginBottom: "0.5px" }}>{item}</li>
                           ))}
                         </ul>
                       </div>
@@ -1130,26 +1133,29 @@ function TarjetaCorbatinVerdePrintable({ corb, sections }: { corb: CorbatinVerde
               }}
             >
               {(() => {
-                const totalItemCount = docSections.reduce((acc, s) => acc + (s.items ? s.items.length : 0), 0);
-                const isDense = totalItemCount > 24;
-                const isVeryDense = totalItemCount > 30;
-                const titleFontSize = isVeryDense ? "9.5px" : isDense ? "10px" : "10.5px";
-                const secMargin = isVeryDense ? "3.5px" : isDense ? "4.5px" : "6px";
-                const itemFontSize = isVeryDense ? "9px" : isDense ? "9.5px" : "10px";
-                const itemLineHeight = isVeryDense ? "1.24" : isDense ? "1.3" : "1.35";
-                const itemMargin = isVeryDense ? "0.5px" : isDense ? "1px" : "1.5px";
+                let estLines = docSections.length * 1.5;
+                docSections.forEach((sec) => {
+                  (sec.items || []).forEach((it) => {
+                    estLines += Math.max(1, Math.ceil((it || "").length / 58));
+                  });
+                });
+                const unitPx = Math.min(15.5, Math.max(8.4, 510 / Math.max(1, estLines + docSections.length * 0.25)));
+                const itemFontPx = Math.min(10.0, Math.max(7.2, unitPx * 0.72));
+                const titleFontPx = Math.min(10.5, Math.max(7.8, itemFontPx * 1.06));
+                const secMarginPx = Math.min(6, Math.max(2, unitPx * 0.35));
+                const itemLineHeight = estLines > 44 ? "1.16" : estLines > 36 ? "1.22" : "1.28";
 
                 return (
                   <div style={{ overflow: "hidden" }}>
-                    <div style={{ fontSize: "11.5px", fontWeight: "900", textAlign: "center", marginBottom: isVeryDense ? "5px" : "8px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    <div style={{ fontSize: "11.5px", fontWeight: "900", textAlign: "center", marginBottom: estLines > 36 ? "4px" : "7px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                       Reglamento para externos en áreas comunes:
                     </div>
                     {docSections.map((sec, idx) => (
-                      <div key={sec.title || idx} style={{ marginBottom: secMargin }}>
-                        <div style={{ fontSize: titleFontSize, fontWeight: "bold", color: "#000000", marginBottom: "1.5px" }}>{sec.title}</div>
+                      <div key={sec.title || idx} style={{ marginBottom: `${secMarginPx}px` }}>
+                        <div style={{ fontSize: `${titleFontPx}px`, fontWeight: "bold", color: "#000000", marginBottom: "1px", lineHeight: "1.2" }}>{sec.title}</div>
                         <ul style={{ margin: 0, paddingLeft: "14px", listStyleType: "disc" }}>
                           {sec.items.map((item, i) => (
-                            <li key={i} style={{ fontSize: itemFontSize, color: "#222222", lineHeight: itemLineHeight, marginBottom: itemMargin }}>{item}</li>
+                            <li key={i} style={{ fontSize: `${itemFontPx}px`, color: "#222222", lineHeight: itemLineHeight, marginBottom: "0.5px" }}>{item}</li>
                           ))}
                         </ul>
                       </div>
@@ -3782,7 +3788,110 @@ export default function App() {
     });
   };
 
-  // Native Vector High-Resolution PDF Generator (Mathematically Centered, Exact Branding)
+  // Helper compartido para renderizar el Reverso del Reglamento en PDF garantizando el 100% de las reglas sin cortes
+  const renderReversoReglamentoPDF = (
+    pdf: jsPDF,
+    activeSections: ReglamentoSection[],
+    midX: number,
+    colW: number,
+    startX: number,
+    startY: number,
+    cardW: number,
+    cardH: number,
+    footerRightText: string
+  ) => {
+    const rightMargin = midX + 8.5;
+    const contentWidth = colW - 16.5; // 113.5 mm de área imprimible respetando márgenes laterales
+    const footerLineY = startY + cardH - 10; // Línea divisoria del pie de página
+    const maxY = footerLineY - 2.0; // Margen de seguridad antes de la línea del pie
+    const headerY = startY + 10.5;
+    let textY = startY + 17.5;
+    const availableH = maxY - textY; // ~165.5 mm disponibles en tarjeta de 19.5 cm de alto
+
+    // Encabezado del Reverso
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(11);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text("REGLAMENTO PARA EXTERNOS EN ÁREAS COMUNES:", midX + colW / 2, headerY, { align: "center" });
+
+    // Paso 1: Estimación inicial para determinar el tamaño de fuente óptimo
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8.5);
+    let estBulletLines = 0;
+    activeSections.forEach((sec) => {
+      (sec.items || []).forEach((it) => {
+        const rawBullet = it.startsWith("•") ? it : `• ${it}`;
+        const lines = pdf.splitTextToSize(rawBullet, contentWidth - 1.5);
+        estBulletLines += lines.length;
+      });
+    });
+
+    const estUnits = estBulletLines + activeSections.length * 1.6;
+    const estSpacing = Math.min(4.8, availableH / Math.max(1, estUnits));
+    const dynamicFontSize = Math.min(9.8, Math.max(5.8, estSpacing * 2.04));
+    const dynamicTitleSize = Math.min(10.5, Math.max(6.4, dynamicFontSize * 1.08));
+
+    // Paso 2: Medición exacta de líneas con el tamaño de fuente real que se va a imprimir
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(dynamicFontSize);
+    const preparedSections = activeSections.map((sec) => {
+      const wrappedItems = (sec.items || []).map((it) => {
+        const rawBullet = it.startsWith("•") ? it : `• ${it}`;
+        return pdf.splitTextToSize(rawBullet, contentWidth - 1.5) as string[];
+      });
+      const secLines = wrappedItems.reduce((acc, l) => acc + l.length, 0);
+      return {
+        title: sec.title || "",
+        wrappedItems,
+        secLines,
+      };
+    });
+
+    const exactBulletLines = preparedSections.reduce((acc, s) => acc + s.secLines, 0);
+    // Cada sección ocupa: 1.12 (título) + 0.45 (espacio entre secciones) = 1.57 unidades de línea
+    const exactTotalUnits = exactBulletLines + preparedSections.length * 1.57;
+    const lineSpacing = Math.min(4.8, (availableH - 0.8) / Math.max(1, exactTotalUnits));
+    const titleSpacing = lineSpacing * 1.12;
+    const secGap = lineSpacing * 0.45;
+
+    // Renderizado completo de TODAS las secciones y normas (sin recortar tras la regla 7)
+    for (const sec of preparedSections) {
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(dynamicTitleSize);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(sec.title, rightMargin, textY);
+      textY += titleSpacing;
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(dynamicFontSize);
+      pdf.setTextColor(25, 25, 25);
+
+      for (const lines of sec.wrappedItems) {
+        for (const line of lines) {
+          pdf.text(line, rightMargin + 1.5, textY);
+          textY += lineSpacing;
+        }
+      }
+      textY += secGap;
+    }
+
+    // Pie de página anclado respetando el margen inferior
+    pdf.setLineWidth(0.3);
+    pdf.setDrawColor(200, 200, 200);
+    pdf.line(rightMargin, footerLineY, startX + cardW - 8, footerLineY);
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(6.5);
+    pdf.setTextColor(110, 110, 110);
+    pdf.text("Las Palomas Rocky Point HOA", rightMargin, startY + cardH - 5.5);
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(6.5);
+    pdf.setTextColor(80, 80, 80);
+    pdf.text(footerRightText, startX + cardW - 8, startY + cardH - 5.5, { align: "right" });
+  };
+
+  // Native Vector High-Resolution PDF Generator (Mathematically Centered on Letter 21.5 x 28 cm, Exact Branding)
   const handleDescargarPDFDirecto = async (veh: Vehicle, isPrintOnly: boolean = false) => {
     try {
       setIsGeneratingPDF(true);
@@ -3805,15 +3914,17 @@ export default function App() {
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "mm",
-        format: "a4", // 297 x 210 mm
+        format: "letter", // Hoja Tamaño Carta: 279.4 x 215.9 mm (~28.0 x 21.5 cm)
       });
 
-      const cardW = 260; // 26.0 cm total width
-      const cardH = 175; // 17.5 cm total height
-      const startX = (297 - cardW) / 2; // 18.5 mm
-      const startY = (210 - cardH) / 2; // 17.5 mm
+      const pageW = pdf.internal.pageSize.getWidth(); // 279.4 mm
+      const pageH = pdf.internal.pageSize.getHeight(); // 215.9 mm
+      const cardW = 260; // 26.0 cm total width (13.0 cm por cara)
+      const cardH = 195; // 19.5 cm total height (aprovecha la hoja Carta respetando ~1.0 cm de margen)
+      const startX = (pageW - cardW) / 2; // ~9.7 mm
+      const startY = (pageH - cardH) / 2; // ~10.45 mm
       const colW = cardW / 2; // 130 mm (exact 50% width)
-      const midX = startX + colW; // center fold line (148.5 mm)
+      const midX = startX + colW; // center fold line
 
       // Outer Solid Border
       pdf.setDrawColor(0, 0, 0);
@@ -3830,80 +3941,80 @@ export default function App() {
       pdf.setLineDashPattern([], 0);
 
       // ── LEFT SIDE: ANVERSO (100% Mathematically Centered on leftCenterX) ───
-      const leftCenterX = startX + colW / 2; // 83.5 mm
+      const leftCenterX = startX + colW / 2;
 
       // 1. Title CONTRATISTA
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(17);
       pdf.setTextColor(0, 0, 0);
-      pdf.text("CONTRATISTA", leftCenterX, startY + 12, { align: "center" });
+      pdf.text("CONTRATISTA", leftCenterX, startY + 13, { align: "center" });
 
       // Double Line 1
       pdf.setLineWidth(0.6);
       pdf.setDrawColor(0, 0, 0);
-      pdf.line(startX + 7, startY + 15.5, midX - 7, startY + 15.5);
-      pdf.line(startX + 7, startY + 16.8, midX - 7, startY + 16.8);
+      pdf.line(startX + 7, startY + 17, midX - 7, startY + 17);
+      pdf.line(startX + 7, startY + 18.3, midX - 7, startY + 18.3);
 
       // 2. Logo HOA with Colorful Waves
       if (logoDataUrl) {
-        const logoW = 50;
-        const logoH = 16;
-        pdf.addImage(logoDataUrl, "PNG", leftCenterX - logoW / 2, startY + 19, logoW, logoH);
+        const logoW = 52;
+        const logoH = 17;
+        pdf.addImage(logoDataUrl, "PNG", leftCenterX - logoW / 2, startY + 21, logoW, logoH);
       } else {
         pdf.setFont("times", "bold");
         pdf.setFontSize(15);
         pdf.setTextColor(0, 0, 0);
-        pdf.text("Las Palomas", leftCenterX, startY + 26.5, { align: "center" });
+        pdf.text("Las Palomas", leftCenterX, startY + 28.5, { align: "center" });
         pdf.setFontSize(9);
         pdf.setTextColor(80, 80, 80);
-        pdf.text("Rocky Point HOA, A.C.", leftCenterX, startY + 31.5, { align: "center" });
+        pdf.text("Rocky Point HOA, A.C.", leftCenterX, startY + 33.5, { align: "center" });
       }
 
       // Double Line 2
       pdf.setDrawColor(0, 0, 0);
-      pdf.line(startX + 7, startY + 37.5, midX - 7, startY + 37.5);
-      pdf.line(startX + 7, startY + 38.8, midX - 7, startY + 38.8);
+      pdf.line(startX + 7, startY + 41, midX - 7, startY + 41);
+      pdf.line(startX + 7, startY + 42.3, midX - 7, startY + 42.3);
 
-      // 3. NUMBER 70 — MATHEMATICALLY CENTERED
+      // 3. NUMBER — MATHEMATICALLY CENTERED
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(52);
+      pdf.setFontSize(54);
       pdf.setTextColor(0, 0, 0);
-      pdf.text(veh.corbatinNum, leftCenterX, startY + 54.5, { align: "center" });
+      pdf.text(veh.corbatinNum, leftCenterX, startY + 59.5, { align: "center" });
 
       // Double Line 3
-      pdf.line(startX + 7, startY + 59.5, midX - 7, startY + 59.5);
-      pdf.line(startX + 7, startY + 60.8, midX - 7, startY + 60.8);
+      pdf.line(startX + 7, startY + 65, midX - 7, startY + 65);
+      pdf.line(startX + 7, startY + 66.3, midX - 7, startY + 66.3);
 
       // 4. Vehicle & Driver Information
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(10);
+      pdf.setFontSize(10.5);
       pdf.setTextColor(0, 0, 0);
-      pdf.text(`${veh.marca} ${veh.modelo} (${veh.anio})`, leftCenterX, startY + 67.5, { align: "center" });
+      pdf.text(`${veh.marca} ${veh.modelo} (${veh.anio})`, leftCenterX, startY + 74, { align: "center" });
 
       pdf.setFont("courier", "bold");
-      pdf.setFontSize(13);
-      pdf.text(veh.placas, leftCenterX, startY + 73.5, { align: "center" });
+      pdf.setFontSize(13.5);
+      pdf.text(veh.placas, leftCenterX, startY + 80.5, { align: "center" });
 
       pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(8.5);
+      pdf.setFontSize(9);
       pdf.setTextColor(50, 50, 50);
-      pdf.text(veh.conductor, leftCenterX, startY + 78.5, { align: "center" });
+      pdf.text(veh.conductor, leftCenterX, startY + 86.5, { align: "center" });
 
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(10);
+      pdf.setFontSize(10.5);
       pdf.setTextColor(13, 110, 95);
-      pdf.text(veh.empresaNombre, leftCenterX, startY + 83.5, { align: "center" });
+      pdf.text(veh.empresaNombre, leftCenterX, startY + 92.5, { align: "center" });
 
       // Divider Line
       pdf.setLineDashPattern([1.5, 1.5], 0);
       pdf.setDrawColor(170, 170, 170);
-      pdf.line(startX + 10, startY + 87.5, midX - 10, startY + 87.5);
+      pdf.line(startX + 10, startY + 97.5, midX - 10, startY + 97.5);
       pdf.setLineDashPattern([], 0);
 
       // 5. Large Centered QR Code
-      const qrSize = 44; // 44 x 44 mm
+      const qrSize = 48; // 48 x 48 mm
       const qrX = leftCenterX - qrSize / 2;
-      const qrY = startY + 91;
+      const qrY = startY + 103;
 
       pdf.setDrawColor(0, 0, 0);
       pdf.setLineWidth(0.6);
@@ -3914,95 +4025,26 @@ export default function App() {
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(8.5);
       pdf.setTextColor(13, 110, 95);
-      pdf.text(`VIGENCIA: 1 AÑO (${currentYear} – ${nextYear})`, leftCenterX, startY + 144.5, { align: "center" });
+      pdf.text(`VIGENCIA: 1 AÑO (${currentYear} – ${nextYear})`, leftCenterX, startY + 161, { align: "center" });
 
-      pdf.setFontSize(8);
+      pdf.setFontSize(8.5);
       pdf.setTextColor(0, 0, 0);
-      pdf.text("POR FAVOR DE COLOCAR", leftCenterX, startY + 150.5, { align: "center" });
-      pdf.text("EN EL RETROVISOR", leftCenterX, startY + 155, { align: "center" });
+      pdf.text("POR FAVOR DE COLOCAR", leftCenterX, startY + 168, { align: "center" });
+      pdf.text("EN EL RETROVISOR", leftCenterX, startY + 173, { align: "center" });
 
-      // ── RIGHT SIDE: REVERSO (Reglamento Oficial - Proporción Idéntica a Vista Web) ───
-      const rightMargin = midX + 9;
-      const contentWidth = colW - 17; // 113 mm printable area for right side
-      const maxY = startY + cardH - 12; // 180.5 mm hard stop before footer line
-      let textY = startY + 11.5;
-
+      // ── RIGHT SIDE: REVERSO (Reglamento Oficial Completo sin recortes) ───
       const activeSections = reglamentoSecciones && reglamentoSecciones.length > 0 ? reglamentoSecciones : DEFAULT_REGLAMENTO_SECTIONS;
-
-      // 1. Calculate required line weight
-      let totalLineCount = 0;
-      activeSections.forEach((sec) => {
-        totalLineCount += 1.3; // section title weight
-        (sec.items || []).forEach((it) => {
-          const rawBullet = it.startsWith("•") ? it : `• ${it}`;
-          const lines = pdf.splitTextToSize(rawBullet, contentWidth);
-          totalLineCount += lines.length;
-        });
-      });
-
-      // Available vertical space between header and footer: ~140 mm
-      const targetAvailableH = 138;
-      // Compute dynamic spacing per line so it spans the entire card naturally
-      const dynamicSpacing = Math.min(5.2, Math.max(3.3, targetAvailableH / Math.max(1, totalLineCount + activeSections.length * 0.4)));
-      const dynamicFontSize = Math.min(10.2, Math.max(7.2, dynamicSpacing * 1.96));
-      const dynamicTitleSize = Math.min(11.0, dynamicFontSize * 1.12);
-      const dynamicTitleSpacing = dynamicSpacing * 1.18;
-      const dynamicSecMargin = dynamicSpacing * 0.75;
-
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(11.5);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text("REGLAMENTO PARA EXTERNOS EN ÁREAS COMUNES:", midX + colW / 2, textY, { align: "center" });
-
-      textY += 8.5;
-
-      for (const sec of activeSections) {
-        if (textY + dynamicTitleSpacing >= maxY) break;
-
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(dynamicTitleSize);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text(sec.title || "", rightMargin, textY);
-        textY += dynamicTitleSpacing;
-
-        pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(dynamicFontSize);
-        pdf.setTextColor(25, 25, 25);
-
-        let itemStopped = false;
-        for (const it of (sec.items || [])) {
-          if (textY + dynamicSpacing >= maxY) {
-            itemStopped = true;
-            break;
-          }
-          const rawBullet = it.startsWith("•") ? it : `• ${it}`;
-          const lines = pdf.splitTextToSize(rawBullet, contentWidth);
-          for (const line of lines) {
-            if (textY + dynamicSpacing >= maxY) {
-              itemStopped = true;
-              break;
-            }
-            pdf.text(line, rightMargin + 1.5, textY);
-            textY += dynamicSpacing;
-          }
-        }
-        textY += dynamicSecMargin;
-        if (itemStopped || textY >= maxY) break;
-      }
-
-      // Bottom Footer (Always strictly anchored at card bottom)
-      pdf.setLineWidth(0.3);
-      pdf.setDrawColor(200, 200, 200);
-      pdf.line(rightMargin, startY + cardH - 10, startX + cardW - 8, startY + cardH - 10);
-
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(6.5);
-      pdf.setTextColor(110, 110, 110);
-      pdf.text("Las Palomas Rocky Point HOA", rightMargin, startY + cardH - 5.5);
-
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(6.5);
-      pdf.text(`Corb. #${veh.corbatinNum} · ${veh.placas} · Vig. ${currentYear}–${nextYear}`, startX + cardW - 8, startY + cardH - 5.5, { align: "right" });
+      renderReversoReglamentoPDF(
+        pdf,
+        activeSections,
+        midX,
+        colW,
+        startX,
+        startY,
+        cardW,
+        cardH,
+        `Corb. #${veh.corbatinNum} · ${veh.placas} · Vig. ${currentYear}–${nextYear}`
+      );
 
       if (isPrintOnly) {
         pdf.autoPrint({ variant: "non-conform" });
@@ -4058,15 +4100,17 @@ export default function App() {
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "mm",
-        format: "a4", // 297 x 210 mm
+        format: "letter", // Hoja Tamaño Carta: 279.4 x 215.9 mm (~28.0 x 21.5 cm)
       });
 
-      const cardW = 260; // 26.0 cm total width
-      const cardH = 175; // 17.5 cm total height
-      const startX = (297 - cardW) / 2; // 18.5 mm
-      const startY = (210 - cardH) / 2; // 17.5 mm
+      const pageW = pdf.internal.pageSize.getWidth(); // 279.4 mm
+      const pageH = pdf.internal.pageSize.getHeight(); // 215.9 mm
+      const cardW = 260; // 26.0 cm total width (13.0 cm por cara)
+      const cardH = 195; // 19.5 cm total height
+      const startX = (pageW - cardW) / 2; // ~9.7 mm
+      const startY = (pageH - cardH) / 2; // ~10.45 mm
       const colW = cardW / 2; // 130 mm
-      const midX = startX + colW; // 148.5 mm
+      const midX = startX + colW;
 
       // Outer Solid Black Border
       pdf.setDrawColor(0, 0, 0);
@@ -4085,67 +4129,67 @@ export default function App() {
 
       // 1. Title PROVEEDOR — ACCESO TEMPORAL
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(13);
+      pdf.setFontSize(13.5);
       pdf.setTextColor(0, 0, 0);
-      pdf.text("PROVEEDOR — ACCESO TEMPORAL", leftCenterX, startY + 11.5, { align: "center" });
+      pdf.text("PROVEEDOR — ACCESO TEMPORAL", leftCenterX, startY + 13, { align: "center" });
 
       // Double Line 1 (Black)
       pdf.setLineWidth(0.6);
       pdf.setDrawColor(0, 0, 0);
-      pdf.line(startX + 7, startY + 15, midX - 7, startY + 15);
-      pdf.line(startX + 7, startY + 16.3, midX - 7, startY + 16.3);
+      pdf.line(startX + 7, startY + 17, midX - 7, startY + 17);
+      pdf.line(startX + 7, startY + 18.3, midX - 7, startY + 18.3);
 
       // 2. Logo HOA
       if (logoDataUrl) {
-        const logoW = 50;
-        const logoH = 16;
-        pdf.addImage(logoDataUrl, "PNG", leftCenterX - logoW / 2, startY + 18.5, logoW, logoH);
+        const logoW = 52;
+        const logoH = 17;
+        pdf.addImage(logoDataUrl, "PNG", leftCenterX - logoW / 2, startY + 21, logoW, logoH);
       } else {
         pdf.setFont("times", "bold");
         pdf.setFontSize(14);
         pdf.setTextColor(0, 0, 0);
-        pdf.text("Las Palomas", leftCenterX, startY + 25.5, { align: "center" });
+        pdf.text("Las Palomas", leftCenterX, startY + 28, { align: "center" });
         pdf.setFontSize(8.5);
         pdf.setTextColor(100, 116, 139);
-        pdf.text("Rocky Point HOA, A.C.", leftCenterX, startY + 30, { align: "center" });
+        pdf.text("Rocky Point HOA, A.C.", leftCenterX, startY + 32.5, { align: "center" });
       }
 
       // Double Line 2 (Black)
       pdf.setDrawColor(0, 0, 0);
-      pdf.line(startX + 7, startY + 37, midX - 7, startY + 37);
-      pdf.line(startX + 7, startY + 38.3, midX - 7, startY + 38.3);
+      pdf.line(startX + 7, startY + 41, midX - 7, startY + 41);
+      pdf.line(startX + 7, startY + 42.3, midX - 7, startY + 42.3);
 
       // 3. NUMBER 001 - BOLD BLACK
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(54);
+      pdf.setFontSize(56);
       pdf.setTextColor(0, 0, 0);
-      pdf.text(corbNumFormatted, leftCenterX, startY + 55, { align: "center" });
+      pdf.text(corbNumFormatted, leftCenterX, startY + 59.5, { align: "center" });
 
       // Double Line 3
-      pdf.line(startX + 7, startY + 60, midX - 7, startY + 60);
-      pdf.line(startX + 7, startY + 61.3, midX - 7, startY + 61.3);
+      pdf.line(startX + 7, startY + 65, midX - 7, startY + 65);
+      pdf.line(startX + 7, startY + 66.3, midX - 7, startY + 66.3);
 
       // 4. Branding & Context Information (Generic Reusable)
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(11);
       pdf.setTextColor(0, 0, 0);
-      pdf.text("LAS PALOMAS ROCKY POINT HOA", leftCenterX, startY + 68, { align: "center" });
+      pdf.text("LAS PALOMAS ROCKY POINT HOA", leftCenterX, startY + 75, { align: "center" });
 
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(9.5);
       pdf.setTextColor(60, 60, 60);
-      pdf.text("Control de Acceso Vehicular", leftCenterX, startY + 75, { align: "center" });
+      pdf.text("Control de Acceso Vehicular", leftCenterX, startY + 82, { align: "center" });
 
       // Divider Line
       pdf.setLineDashPattern([1.5, 1.5], 0);
       pdf.setDrawColor(170, 170, 170);
-      pdf.line(startX + 10, startY + 80, midX - 10, startY + 80);
+      pdf.line(startX + 10, startY + 88, midX - 10, startY + 88);
       pdf.setLineDashPattern([], 0);
 
       // 5. Large Centered QR Code
-      const qrSize = 46;
+      const qrSize = 50;
       const qrX = leftCenterX - qrSize / 2;
-      const qrY = startY + 85;
+      const qrY = startY + 95;
 
       pdf.setDrawColor(0, 0, 0);
       pdf.setLineWidth(0.6);
@@ -4156,59 +4200,21 @@ export default function App() {
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(8.5);
       pdf.setTextColor(0, 0, 0);
-      pdf.text("POR FAVOR DE COLOCAR EN EL RETROVISOR", leftCenterX, startY + 148, { align: "center" });
+      pdf.text("POR FAVOR DE COLOCAR EN EL RETROVISOR", leftCenterX, startY + 162, { align: "center" });
 
-      // ── RIGHT SIDE: REVERSO ──
-      const rightMargin = midX + 9;
-      const contentWidth = colW - 17;
-      const maxY = startY + cardH - 12;
-      let textY = startY + 11.5;
-
+      // ── RIGHT SIDE: REVERSO (Reglamento Oficial Completo sin recortes) ──
       const activeSections = reglamentoSecciones && reglamentoSecciones.length > 0 ? reglamentoSecciones : DEFAULT_REGLAMENTO_SECTIONS;
-
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(11.5);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text("REGLAMENTO PARA EXTERNOS EN ÁREAS COMUNES:", midX + colW / 2, textY, { align: "center" });
-      textY += 8.5;
-
-      for (const sec of activeSections) {
-        if (textY + 4 >= maxY) break;
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(9);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text(sec.title || "", rightMargin, textY);
-        textY += 4.5;
-
-        pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(8);
-        pdf.setTextColor(25, 25, 25);
-
-        for (const it of (sec.items || [])) {
-          if (textY + 3.5 >= maxY) break;
-          const rawBullet = it.startsWith("•") ? it : `• ${it}`;
-          const lines = pdf.splitTextToSize(rawBullet, contentWidth);
-          for (const line of lines) {
-            if (textY + 3.5 >= maxY) break;
-            pdf.text(line, rightMargin + 1.5, textY);
-            textY += 3.8;
-          }
-        }
-        textY += 2;
-      }
-
-      // Bottom Footer
-      pdf.setLineWidth(0.3);
-      pdf.setDrawColor(200, 200, 200);
-      pdf.line(rightMargin, startY + cardH - 10, startX + cardW - 8, startY + cardH - 10);
-
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(6.5);
-      pdf.setTextColor(110, 110, 110);
-      pdf.text("Las Palomas Rocky Point HOA", rightMargin, startY + cardH - 5.5);
-
-      pdf.setTextColor(80, 80, 80);
-      pdf.text(`Corbatín Verde #${corbNumFormatted}`, startX + cardW - 8, startY + cardH - 5.5, { align: "right" });
+      renderReversoReglamentoPDF(
+        pdf,
+        activeSections,
+        midX,
+        colW,
+        startX,
+        startY,
+        cardW,
+        cardH,
+        `Corbatín Verde #${corbNumFormatted}`
+      );
 
       if (isPrintOnly) {
         pdf.autoPrint({ variant: "non-conform" });
@@ -4255,20 +4261,22 @@ export default function App() {
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "mm",
-        format: "a4",
+        format: "letter", // Hoja Tamaño Carta: 279.4 x 215.9 mm (~28.0 x 21.5 cm)
       });
 
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
       const cardW = 260;
-      const cardH = 175;
-      const startX = (297 - cardW) / 2;
-      const startY = (210 - cardH) / 2;
+      const cardH = 195;
+      const startX = (pageW - cardW) / 2;
+      const startY = (pageH - cardH) / 2;
       const colW = cardW / 2;
       const midX = startX + colW;
 
       const activeSections = reglamentoSecciones && reglamentoSecciones.length > 0 ? reglamentoSecciones : DEFAULT_REGLAMENTO_SECTIONS;
 
       for (let i = 0; i < poolParaImprimir.length; i++) {
-        if (i > 0) pdf.addPage("a4", "landscape");
+        if (i > 0) pdf.addPage("letter", "landscape");
 
         const corb = poolParaImprimir[i];
         const corbNumFormatted = formatCorbatinVerdeNum(corb.corbatinNum);
@@ -4296,51 +4304,51 @@ export default function App() {
         const leftCenterX = startX + colW / 2;
 
         pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(13);
+        pdf.setFontSize(13.5);
         pdf.setTextColor(0, 0, 0);
-        pdf.text("PROVEEDOR — ACCESO TEMPORAL", leftCenterX, startY + 11.5, { align: "center" });
+        pdf.text("PROVEEDOR — ACCESO TEMPORAL", leftCenterX, startY + 13, { align: "center" });
 
         pdf.setLineWidth(0.6);
         pdf.setDrawColor(0, 0, 0);
-        pdf.line(startX + 7, startY + 15, midX - 7, startY + 15);
-        pdf.line(startX + 7, startY + 16.3, midX - 7, startY + 16.3);
+        pdf.line(startX + 7, startY + 17, midX - 7, startY + 17);
+        pdf.line(startX + 7, startY + 18.3, midX - 7, startY + 18.3);
 
         if (logoDataUrl) {
-          const logoW = 50;
-          const logoH = 16;
-          pdf.addImage(logoDataUrl, "PNG", leftCenterX - logoW / 2, startY + 18.5, logoW, logoH);
+          const logoW = 52;
+          const logoH = 17;
+          pdf.addImage(logoDataUrl, "PNG", leftCenterX - logoW / 2, startY + 21, logoW, logoH);
         }
 
         pdf.setDrawColor(0, 0, 0);
-        pdf.line(startX + 7, startY + 37, midX - 7, startY + 37);
-        pdf.line(startX + 7, startY + 38.3, midX - 7, startY + 38.3);
+        pdf.line(startX + 7, startY + 41, midX - 7, startY + 41);
+        pdf.line(startX + 7, startY + 42.3, midX - 7, startY + 42.3);
 
         pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(54);
+        pdf.setFontSize(56);
         pdf.setTextColor(0, 0, 0);
-        pdf.text(corbNumFormatted, leftCenterX, startY + 55, { align: "center" });
+        pdf.text(corbNumFormatted, leftCenterX, startY + 59.5, { align: "center" });
 
-        pdf.line(startX + 7, startY + 60, midX - 7, startY + 60);
-        pdf.line(startX + 7, startY + 61.3, midX - 7, startY + 61.3);
+        pdf.line(startX + 7, startY + 65, midX - 7, startY + 65);
+        pdf.line(startX + 7, startY + 66.3, midX - 7, startY + 66.3);
 
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(11);
         pdf.setTextColor(0, 0, 0);
-        pdf.text("LAS PALOMAS ROCKY POINT HOA", leftCenterX, startY + 68, { align: "center" });
+        pdf.text("LAS PALOMAS ROCKY POINT HOA", leftCenterX, startY + 75, { align: "center" });
 
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(9.5);
         pdf.setTextColor(60, 60, 60);
-        pdf.text("Control de Acceso Vehicular", leftCenterX, startY + 75, { align: "center" });
+        pdf.text("Control de Acceso Vehicular", leftCenterX, startY + 82, { align: "center" });
 
         pdf.setLineDashPattern([1.5, 1.5], 0);
         pdf.setDrawColor(170, 170, 170);
-        pdf.line(startX + 10, startY + 80, midX - 10, startY + 80);
+        pdf.line(startX + 10, startY + 88, midX - 10, startY + 88);
         pdf.setLineDashPattern([], 0);
 
-        const qrSize = 46;
+        const qrSize = 50;
         const qrX = leftCenterX - qrSize / 2;
-        const qrY = startY + 85;
+        const qrY = startY + 95;
 
         pdf.setDrawColor(0, 0, 0);
         pdf.setLineWidth(0.6);
@@ -4350,57 +4358,20 @@ export default function App() {
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(8.5);
         pdf.setTextColor(0, 0, 0);
-        pdf.text("POR FAVOR DE COLOCAR EN EL RETROVISOR", leftCenterX, startY + 148, { align: "center" });
+        pdf.text("POR FAVOR DE COLOCAR EN EL RETROVISOR", leftCenterX, startY + 162, { align: "center" });
 
-        // Reverso
-        const rightMargin = midX + 9;
-        const contentWidth = colW - 17;
-        const maxY = startY + cardH - 12;
-        let textY = startY + 11.5;
-
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(11.5);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text("REGLAMENTO PARA EXTERNOS EN ÁREAS COMUNES:", midX + colW / 2, textY, { align: "center" });
-        textY += 8.5;
-
-        for (const sec of activeSections) {
-          if (textY + 4 >= maxY) break;
-          pdf.setFont("helvetica", "bold");
-          pdf.setFontSize(9);
-          pdf.setTextColor(0, 0, 0);
-          pdf.text(sec.title || "", rightMargin, textY);
-          textY += 4.5;
-
-          pdf.setFont("helvetica", "normal");
-          pdf.setFontSize(8);
-          pdf.setTextColor(25, 25, 25);
-
-          for (const it of (sec.items || [])) {
-            if (textY + 3.5 >= maxY) break;
-            const rawBullet = it.startsWith("•") ? it : `• ${it}`;
-            const lines = pdf.splitTextToSize(rawBullet, contentWidth);
-            for (const line of lines) {
-              if (textY + 3.5 >= maxY) break;
-              pdf.text(line, rightMargin + 1.5, textY);
-              textY += 3.8;
-            }
-          }
-          textY += 2;
-        }
-
-        // Footer
-        pdf.setLineWidth(0.3);
-        pdf.setDrawColor(200, 200, 200);
-        pdf.line(rightMargin, startY + cardH - 10, startX + cardW - 8, startY + cardH - 10);
-
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(6.5);
-        pdf.setTextColor(110, 110, 110);
-        pdf.text("Las Palomas Rocky Point HOA", rightMargin, startY + cardH - 5.5);
-
-        pdf.setTextColor(80, 80, 80);
-        pdf.text(`Corbatín Verde #${corbNumFormatted}`, startX + cardW - 8, startY + cardH - 5.5, { align: "right" });
+        // Reverso Completo sin recortes
+        renderReversoReglamentoPDF(
+          pdf,
+          activeSections,
+          midX,
+          colW,
+          startX,
+          startY,
+          cardW,
+          cardH,
+          `Corbatín Verde #${corbNumFormatted}`
+        );
       }
 
       if (isPrintOnly) {
