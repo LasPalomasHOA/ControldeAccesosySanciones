@@ -7317,16 +7317,16 @@ export default function App() {
                                             </span>
                                           )}
                                         </td>
-                                        <td className="px-4 py-2.5">
+                                        <td className="px-4 py-2.5 whitespace-nowrap">
                                           <div className="flex items-center gap-1.5">
                                             {(v.status === "Suspendido" || v.status === "Restringido" || v.permisoTemporal?.activo) && (
                                               <button
                                                 type="button"
                                                 onClick={() => handleOpenGestionarCastigo(v)}
-                                                className="px-2.5 py-1 rounded-lg text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-600 hover:text-white border border-amber-300 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                                className="h-8 px-2.5 rounded-lg text-xs font-bold text-amber-900 bg-amber-50 hover:bg-amber-500 hover:text-white border border-amber-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 whitespace-nowrap"
                                                 title="Gestionar pase provisional o levantamiento de castigo por orden de Oficina"
                                               >
-                                                <IconShield className="w-3.5 h-3.5" />
+                                                <IconShield className="w-3.5 h-3.5 shrink-0" />
                                                 <span>Pase Oficina</span>
                                               </button>
                                             )}
@@ -7337,25 +7337,25 @@ export default function App() {
                                                 setSupervisorCorbatinEmpresaFilter(v.empresaNombre || "all");
                                                 setSupervisorTab("corbatines");
                                               }}
-                                              className="px-2.5 py-1 rounded-lg text-xs font-bold text-teal-700 bg-teal-50 hover:bg-[#0D6E5F] hover:text-white border border-teal-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                              className="h-8 px-2.5 rounded-lg text-xs font-bold text-[#0D6E5F] bg-teal-50 hover:bg-[#0D6E5F] hover:text-white border border-teal-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 whitespace-nowrap"
                                               title="Ver, descargar e imprimir corbatín"
                                             >
-                                              <IconFileText className="w-3.5 h-3.5" />
+                                              <IconFileText className="w-3.5 h-3.5 shrink-0" />
                                               <span>Corbatín</span>
                                             </button>
                                             <button
                                               type="button"
                                               onClick={() => handleOpenEditarVehiculo(v)}
-                                              className="px-2.5 py-1 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white border border-blue-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                              className="h-8 px-2.5 rounded-lg text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 hover:text-slate-900 border border-slate-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 whitespace-nowrap"
                                               title="Editar datos y cambiar estatus de acceso"
                                             >
-                                              <IconEdit className="w-3.5 h-3.5" />
+                                              <IconEdit className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                                               <span>Editar</span>
                                             </button>
                                             <button
                                               type="button"
                                               onClick={() => setSelectedVehiculoParaEliminar(v)}
-                                              className="p-1 px-2 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-600 hover:text-white border border-red-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                              className="h-8 w-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-all flex items-center justify-center cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 shrink-0"
                                               title="Eliminar vehículo"
                                             >
                                               <IconTrash className="w-3.5 h-3.5" />
@@ -7547,21 +7547,21 @@ export default function App() {
                                             )}
                                           </button>
                                         </td>
-                                        <td className="px-4 py-2.5">
+                                        <td className="px-4 py-2.5 whitespace-nowrap">
                                           <div className="flex items-center gap-1.5">
                                             <button
                                               type="button"
                                               onClick={() => handleOpenEditarTrabajador(t)}
-                                              className="px-2.5 py-1 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white border border-blue-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                              className="h-8 px-2.5 rounded-lg text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 hover:text-slate-900 border border-slate-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 whitespace-nowrap"
                                               title="Modificar datos del trabajador"
                                             >
-                                              <IconEdit className="w-3.5 h-3.5" />
+                                              <IconEdit className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                                               <span>Editar</span>
                                             </button>
                                             <button
                                               type="button"
                                               onClick={() => setSelectedTrabajadorParaEliminar(t)}
-                                              className="p-1 px-2 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-600 hover:text-white border border-red-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                              className="h-8 w-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-all flex items-center justify-center cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 shrink-0"
                                               title="Eliminar trabajador"
                                             >
                                               <IconTrash className="w-3.5 h-3.5" />
