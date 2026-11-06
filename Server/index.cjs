@@ -287,8 +287,19 @@ app.use((err, req, res, next) => {
 
 // Iniciar listener HTTP únicamente cuando se ejecuta directamente con `node Server/index.cjs`
 if (require.main === module) {
-  app.listen(PORT, '0.0.0.0', () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor Express listo en http://localhost:${PORT}`);
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`\n❌ Error: El puerto ${PORT} ya está ocupado por otra instancia.`);
+      console.error(`💡 Solución rápida en PowerShell para liberar el puerto:`);
+      console.error(`   Get-Process -Id (Get-NetTCPConnection -LocalPort ${PORT} -ErrorAction SilentlyContinue).OwningProcess -ErrorAction SilentlyContinue | Stop-Process -Force\n`);
+    } else {
+      console.error('❌ Error en el servidor Express:', err);
+    }
+    process.exit(1);
   });
 }
 
