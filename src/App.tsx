@@ -455,6 +455,7 @@ interface Trabajador {
   apellidos: string;
   telefono?: string;
   foto_url?: string;
+  foto?: string;
   comprobante_seguro_url?: string;
   dc3_documento_url?: string;
   activo: boolean;
@@ -10031,12 +10032,10 @@ export default function App() {
                                                       onClick={() => {
                                                         setActionConfirmModal({
                                                           isOpen: true,
-
-                                                          ...[truncated for diff preview]
-                                                    type: "liberar",
-                                                    title: `¿Liberar Corbatín #${numFmt}?`,
-                                                    corbatinNum: numFmt,
-                                                    empresaNombre: c.empresaNombre,
+                                                          type: "liberar",
+                                                          title: `¿Liberar Corbatín #${numFmt}?`,
+                                                          corbatinNum: numFmt,
+                                                          empresaNombre: c.empresaNombre,
                                                           actionCallback: () => handleDesvincularCorbatinVerde(c.id)
                                                         });
                                                       }}
