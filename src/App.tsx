@@ -1874,6 +1874,7 @@ export default function App() {
   const [nuevoCVCantidad, setNuevoCVCantidad] = useState(10);
   const [nuevoCVRangoInicio, setNuevoCVRangoInicio] = useState("");
   const [nuevoCVRangoFin, setNuevoCVRangoFin] = useState("");
+  const [nuevoCVNumeroIndividual, setNuevoCVNumeroIndividual] = useState("");
   const [nuevoCVNotas, setNuevoCVNotas] = useState("");
   const [nuevoCVError, setNuevoCVError] = useState("");
   const [isSubmittingNuevoCV, setIsSubmittingNuevoCV] = useState(false);
@@ -2990,7 +2991,18 @@ export default function App() {
         });
 
         if (mappedVerdes.length === 0) {
-          mappedVerdes = generateDefaultPoolCorbatinesVerdes(20);
+          try {
+            const saved = localStorage.getItem("hoa_corbatines_verdes");
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                mappedVerdes = parsed;
+              }
+            }
+          } catch { }
+          if (mappedVerdes.length === 0) {
+            mappedVerdes = generateDefaultPoolCorbatinesVerdes(20);
+          }
         }
 
         mappedVerdes.sort((a, b) => (a.numero || 1) - (b.numero || 1));
@@ -3357,7 +3369,18 @@ export default function App() {
         });
 
         if (mappedVerdes.length === 0) {
-          mappedVerdes = generateDefaultPoolCorbatinesVerdes(20);
+          try {
+            const saved = localStorage.getItem("hoa_corbatines_verdes");
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                mappedVerdes = parsed;
+              }
+            }
+          } catch { }
+          if (mappedVerdes.length === 0) {
+            mappedVerdes = generateDefaultPoolCorbatinesVerdes(20);
+          }
         }
 
         mappedVerdes.sort((a, b) => (a.numero || 1) - (b.numero || 1));
@@ -4437,15 +4460,65 @@ export default function App() {
     }
   };
 
-  const getNextCorbatinVerdeNum = (list: CorbatinVerde[]): string => {
-    const existingSet = new Set(
-      list.map(c => parseInt(String(c.corbatinNum).replace(/[^0-9]/g, ""), 10)).filter(n => !isNaN(n) && n > 0)
+  // ─── Helpers para asignación inteligente de Corbatines Verdes ───
+
+  // Obtiene los números que actualmente están ocupados / asignados a una empresa
+  const getCorbatinesVerdesOcupados = (list: CorbatinVerde[]) => {
+    return list.filter(c => {
+      const hasEmp = Boolean(c.empresaNombre && c.empresaNombre.trim());
+      const estatus = (c.estatus_inventario || "").toUpperCase();
+      return c.activo !== false && hasEmp && estatus === "ASIGNADO";
+    });
+  };
+
+  // Obtiene los corbatines que están registrados en el pool pero DESOCUPADOS (libres / DISPONIBLES)
+  const getCorbatinesVerdesDesocupados = (list: CorbatinVerde[]) => {
+    return list.filter(c => {
+      const hasEmp = Boolean(c.empresaNombre && c.empresaNombre.trim());
+      const estatus = (c.estatus_inventario || "").toUpperCase();
+      return c.activo !== false && (!hasEmp || estatus === "DISPONIBLE");
+    }).sort((a, b) => {
+      const numA = parseInt(String(a.numero || a.corbatinNum).replace(/[^0-9]/g, ""), 10) || 0;
+      const numB = parseInt(String(b.numero || b.corbatinNum).replace(/[^0-9]/g, ""), 10) || 0;
+      return numA - numB;
+    });
+  };
+
+  // El número correlativo más alto actualmente en uso (ej. 14)
+  const getMaxCorbatinVerdeOcupado = (list: CorbatinVerde[]): number => {
+    const ocupados = getCorbatinesVerdesOcupados(list);
+    if (ocupados.length === 0) return 0;
+    return Math.max(
+      ...ocupados.map(c => parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10) || 0)
     );
-    let next = 1;
-    while (existingSet.has(next)) {
-      next++;
+  };
+
+  // El siguiente consecutivo después del último ocupado (ej. si el último ocupado es 14, devuelve 15)
+  const getSiguienteConsecutivoNuevo = (list: CorbatinVerde[]): number => {
+    const maxOcupado = getMaxCorbatinVerdeOcupado(list);
+    const maxRegistrado = list.length > 0
+      ? Math.max(...list.map(c => parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10) || 0))
+      : 0;
+    return Math.max(maxOcupado, maxRegistrado) + 1;
+  };
+
+  // Sugerencia del primer número disponible:
+  // Si hay un hueco desocupado (ej. #5 está disponible), devuelve ese hueco primero.
+  // Si no hay huecos desocupados, devuelve el consecutivo tras el último ocupado (ej. 15).
+  const getPrimerCorbatinVerdeDisponible = (list: CorbatinVerde[]): number => {
+    const desocupados = getCorbatinesVerdesDesocupados(list);
+    if (desocupados.length > 0) {
+      const primerHueco = parseInt(String(desocupados[0].numero || desocupados[0].corbatinNum).replace(/[^0-9]/g, ""), 10);
+      if (!isNaN(primerHueco) && primerHueco > 0) {
+        return primerHueco;
+      }
     }
-    return formatCorbatinVerdeNum(next);
+    return getSiguienteConsecutivoNuevo(list);
+  };
+
+  // Mantener getNextCorbatinVerdeNum para compatibilidad de formato
+  const getNextCorbatinVerdeNum = (list: CorbatinVerde[]): string => {
+    return formatCorbatinVerdeNum(getPrimerCorbatinVerdeDisponible(list));
   };
 
   // ─── Modal de Vinculación Temporal: Abrir y Autocompletar ───
@@ -4621,25 +4694,43 @@ export default function App() {
     let end = 1;
 
     if (nuevoCVModo === "individual") {
-      const nextNum = parseInt(String(getNextCorbatinVerdeNum(corbatinesVerdes)).replace(/[^0-9]/g, ""), 10) || 1;
-      start = nextNum;
-      end = nextNum;
+      const parsed = parseInt(String(nuevoCVNumeroIndividual).replace(/[^0-9]/g, ""), 10);
+      const chosenNum = (!isNaN(parsed) && parsed > 0) ? parsed : getPrimerCorbatinVerdeDisponible(corbatinesVerdes);
+      start = chosenNum;
+      end = chosenNum;
     } else {
       let startParsed = parseInt(String(nuevoCVRangoInicio).replace(/[^0-9]/g, ""), 10);
       let endParsed = parseInt(String(nuevoCVRangoFin).replace(/[^0-9]/g, ""), 10);
 
-      if (isNaN(startParsed) || isNaN(endParsed)) {
-        const nextStart = parseInt(String(getNextCorbatinVerdeNum(corbatinesVerdes)).replace(/[^0-9]/g, ""), 10) || 1;
-        start = nextStart;
-        end = nextStart;
-      } else {
-        start = startParsed;
-        end = endParsed;
+      if (isNaN(startParsed) || isNaN(endParsed) || startParsed <= 0 || endParsed < startParsed) {
+        setNuevoCVError("El rango numérico especificado es inválido.");
+        return;
       }
+      start = startParsed;
+      end = endParsed;
     }
 
-    if (start <= 0 || end < start) {
-      setNuevoCVError("El rango numérico especificado es inválido.");
+    // ─── VALIDACIÓN ESTRICTA: NO PERMITIR EMITIR CORBATINES QUE YA ESTÁN EN USO ───
+    const enUsoEnRango = corbatinesVerdes.filter(c => {
+      const num = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
+      const hasEmp = Boolean(c.empresaNombre && c.empresaNombre.trim());
+      const estatus = (c.estatus_inventario || "").toUpperCase();
+      return num >= start && num <= end && c.activo !== false && hasEmp && estatus === "ASIGNADO";
+    });
+
+    if (enUsoEnRango.length > 0) {
+      if (nuevoCVModo === "individual") {
+        const itemOcupado = enUsoEnRango[0];
+        setNuevoCVError(
+          `El Corbatín #${formatCorbatinVerdeNum(itemOcupado.numero || itemOcupado.corbatinNum)} ya se encuentra asignado a "${itemOcupado.empresaNombre}". No puede ser re-emitido. Selecciona un número desocupado o consecutivo.`
+        );
+      } else {
+        const detalle = enUsoEnRango.slice(0, 4).map(c => `#${formatCorbatinVerdeNum(c.numero || c.corbatinNum)} (${c.empresaNombre})`).join(", ");
+        const sigSugerido = formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes));
+        setNuevoCVError(
+          `El rango seleccionado incluye ${enUsoEnRango.length} corbatín(es) actualmente en uso: ${detalle}${enUsoEnRango.length > 4 ? "..." : ""}. Por favor emite a partir del consecutivo #${sigSugerido} o selecciona números desocupados.`
+        );
+      }
       return;
     }
 
@@ -4739,9 +4830,10 @@ export default function App() {
         localStorage.setItem("hoa_corbatines_verdes", JSON.stringify(updatedList));
       } catch { }
 
-      // Persistir en base de datos
+      // Persistir en base de datos y recargar
       try {
         await api.createCorbatin(apiPayload.length === 1 ? apiPayload[0] : { items: apiPayload });
+        await reloadCorbatines();
       } catch (apiErr) {
         console.warn("Advertencia conectando con API de corbatines:", apiErr);
       }
@@ -9372,9 +9464,11 @@ export default function App() {
                                   setNuevoCVTelefono("");
                                   setNuevoCVEmail("");
                                   setNuevoCVVigencia("6 Meses (Recomendado)");
-                                  const next = getNextCorbatinVerdeNum(corbatinesVerdes);
-                                  setNuevoCVRangoInicio(next);
-                                  setNuevoCVRangoFin(next);
+                                  const primerDisp = formatCorbatinVerdeNum(getPrimerCorbatinVerdeDisponible(corbatinesVerdes));
+                                  const sigConsecutivo = formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes));
+                                  setNuevoCVNumeroIndividual(primerDisp);
+                                  setNuevoCVRangoInicio(sigConsecutivo);
+                                  setNuevoCVRangoFin(sigConsecutivo);
                                   setNuevoCVNotas("");
                                   setNuevoCVError("");
                                   setShowCreateCorbatinVerdeModal(true);
@@ -9956,66 +10050,7 @@ export default function App() {
                                             onClick={() => setSelectedCorbatinVerdeId(c.id)}
                                             className={`hover:bg-teal-50/50 cursor-pointer transition-colors ${selectedCorbatinVerdeId === c.id ? "bg-teal-50/60" : ""}`}
                                           >
-                                            <td className="px-5 py-3">
-                                              <span className="font-mono font-bold text-xs text-[#0D6E5F] bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200">
-                                                #{numFmt}
-                                              </span>
-                                            </td>
-                                            <td className="px-5 py-3">
-                                              {isDisp && (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                                  <span>Disponible</span>
-                                                </span>
-                                              )}
-                                              {isAsig && (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                                  <span>Asignado</span>
-                                                </span>
-                                              )}
-                                              {isVenc && (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
-                                                  <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                                                  <span>Vencido</span>
-                                                </span>
-                                              )}
-                                              {!c.activo && (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                                                  <span>Inactivo</span>
-                                                </span>
-                                              )}
-                                            </td>
-                                            <td className="px-5 py-3 font-bold text-xs text-slate-900">
-                                              {c.empresaNombre ? (
-                                                <span>{c.empresaNombre}</span>
-                                              ) : (
-                                                <span className="text-slate-400 italic font-normal">Libre para asignación</span>
-                                              )}
-                                            </td>
-                                            <td className="px-5 py-3 font-mono text-xs text-slate-600">
-                                              {c.telefono ? (
-                                                <CopyableInlineText text={c.telefono} label="Teléfono" onCopyToast={showToast} />
-                                              ) : (
-                                                <span className="text-slate-300 font-sans">—</span>
-                                              )}
-                                            </td>
-                                            <td className="px-5 py-3 text-xs text-slate-600 font-medium">
-                                              {c.vigenciaTexto || (isDisp ? "—" : "Temporal")}
-                                            </td>
-                                            <td className="px-5 py-3 text-xs text-slate-500">
-                                              {c.fechaVencimiento || (isDisp ? "—" : "Indefinida")}
-                                            </td>
-                                            <td className="px-5 py-3 text-right">
-                                              <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-                                                {isDisp ? (
-                                                  <button
-                                                    type="button"
-                                                    onClick={() => handleAbrirModalVincular(c)}
-                                                    className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0a574b] transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
-                                                    title="Vincular a Empresa"
-                                                  >
-                                                    <span>🔗 Vincular</span>
+                                            <td class
                                                   </button>
                                                 ) : (
                                                   <>
@@ -16366,7 +16401,12 @@ export default function App() {
           <div className="mt-5 p-1 bg-slate-100 rounded-2xl flex items-center gap-1 border border-slate-200/80">
             <button
               type="button"
-              onClick={() => setNuevoCVModo("individual")}
+              onClick={() => {
+                setNuevoCVModo("individual");
+                setNuevoCVError("");
+                const primerDisp = formatCorbatinVerdeNum(getPrimerCorbatinVerdeDisponible(corbatinesVerdes));
+                if (!nuevoCVNumeroIndividual) setNuevoCVNumeroIndividual(primerDisp);
+              }}
               className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${nuevoCVModo === "individual"
                 ? "bg-white text-[#0D6E5F] shadow-xs border border-slate-200"
                 : "text-slate-600 hover:text-slate-900"
@@ -16378,9 +16418,10 @@ export default function App() {
               type="button"
               onClick={() => {
                 setNuevoCVModo("lote");
-                const next = getNextCorbatinVerdeNum(corbatinesVerdes);
-                if (!nuevoCVRangoInicio) setNuevoCVRangoInicio(next);
-                if (!nuevoCVRangoFin) setNuevoCVRangoFin(next);
+                setNuevoCVError("");
+                const sigNuevo = formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes));
+                setNuevoCVRangoInicio(sigNuevo);
+                setNuevoCVRangoFin(sigNuevo);
               }}
               className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${nuevoCVModo === "lote"
                 ? "bg-white text-[#0D6E5F] shadow-xs border border-slate-200"
@@ -16472,20 +16513,131 @@ export default function App() {
               </div>
             </div>
 
-            {/* Modo Individual: Info del Correlativo */}
+            {/* Modo Individual: Selección o captura de Correlativo */}
             {nuevoCVModo === "individual" ? (
-              <div className="p-4 rounded-2xl bg-teal-50/70 border border-teal-200 flex items-center justify-between">
-                <div>
-                  <div className="text-[11px] font-bold text-teal-900 uppercase tracking-wider">
-                    Siguiente Correlativo Disponible
+              <div className="p-4 rounded-2xl bg-teal-50/70 border border-teal-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-[11px] font-extrabold text-[#0D6E5F] uppercase tracking-wider">
+                      Número de Corbatín a Emitir
+                    </div>
+                    <div className="text-xs text-teal-800 mt-0.5">
+                      Usa un correlativo desocupado para reutilizar o genera uno consecutivo nuevo.
+                    </div>
                   </div>
-                  <div className="text-xs text-teal-700 mt-0.5">
-                    Se registrará en el inventario como corbatín libre para asignación.
+                  <span className="font-mono font-black text-xl px-3 py-1 rounded-xl bg-white text-[#0D6E5F] border border-teal-200 shadow-2xs">
+                    #{formatCorbatinVerdeNum(nuevoCVNumeroIndividual || getPrimerCorbatinVerdeDisponible(corbatinesVerdes))}
+                  </span>
+                </div>
+
+                {/* Input para el correlativo individual */}
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Correlativo #:
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={nuevoCVNumeroIndividual}
+                    onChange={(e) => setNuevoCVNumeroIndividual(e.target.value)}
+                    placeholder={formatCorbatinVerdeNum(getPrimerCorbatinVerdeDisponible(corbatinesVerdes))}
+                    className="w-full text-xs font-bold font-mono px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                  />
+                </div>
+
+                {/* Opciones rápidas de selección: Huecos desocupados vs Consecutivo nuevo */}
+                <div className="space-y-1.5 pt-1">
+                  <div className="text-[11px] font-semibold text-slate-600 flex items-center justify-between">
+                    <span>Sugerencias rápidas:</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {getCorbatinesVerdesDesocupados(corbatinesVerdes).slice(0, 4).map((c) => {
+                      const numFmt = formatCorbatinVerdeNum(c.numero || c.corbatinNum);
+                      const isSelected = formatCorbatinVerdeNum(nuevoCVNumeroIndividual) === numFmt;
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => setNuevoCVNumeroIndividual(numFmt)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border ${
+                            isSelected
+                              ? "bg-emerald-600 text-white border-emerald-700 shadow-2xs"
+                              : "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
+                          }`}
+                          title="Corbatín libre en inventario listo para reutilizarse"
+                        >
+                          #{numFmt} (Desocupado)
+                        </button>
+                      );
+                    })}
+                    {(() => {
+                      const sigNuevo = getSiguienteConsecutivoNuevo(corbatinesVerdes);
+                      const sigNuevoFmt = formatCorbatinVerdeNum(sigNuevo);
+                      const isSelected = formatCorbatinVerdeNum(nuevoCVNumeroIndividual) === sigNuevoFmt;
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => setNuevoCVNumeroIndividual(sigNuevoFmt)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border ${
+                            isSelected
+                              ? "bg-teal-700 text-white border-teal-800 shadow-2xs"
+                              : "bg-white text-teal-800 border-teal-300 hover:bg-teal-50"
+                          }`}
+                          title="Siguiente número consecutivo nuevo tras el último asignado"
+                        >
+                          #{sigNuevoFmt} (Nuevo tras #{getMaxCorbatinVerdeOcupado(corbatinesVerdes)})
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
-                <span className="font-mono font-black text-2xl px-3.5 py-1.5 rounded-xl bg-white text-[#0D6E5F] border border-teal-200 shadow-2xs">
-                  #{getNextCorbatinVerdeNum(corbatinesVerdes)}
-                </span>
+
+                {/* Validación en tiempo real del número individual */}
+                {(() => {
+                  const numParsed = parseInt(String(nuevoCVNumeroIndividual).replace(/[^0-9]/g, ""), 10);
+                  if (isNaN(numParsed) || numParsed <= 0) return null;
+                  const numFmt = formatCorbatinVerdeNum(numParsed);
+                  const enUso = corbatinesVerdes.find(c => {
+                    const cNum = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
+                    return cNum === numParsed && c.activo !== false && c.empresaNombre && c.empresaNombre.trim() && c.estatus_inventario === "ASIGNADO";
+                  });
+
+                  if (enUso) {
+                    return (
+                      <div className="p-2.5 rounded-xl bg-red-50 border border-red-300 text-xs text-red-800 font-semibold flex items-center gap-2">
+                        <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                        <span>
+                          ⛔ Corbatín #{numFmt} ya está asignado a "{enUso.empresaNombre}". No puede ser re-emitido.
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  const desocupado = corbatinesVerdes.find(c => {
+                    const cNum = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
+                    return cNum === numParsed && (!c.empresaNombre || c.estatus_inventario === "DISPONIBLE");
+                  });
+
+                  if (desocupado) {
+                    return (
+                      <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-xs text-emerald-800 font-semibold flex items-center gap-2">
+                        <IconCheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>
+                          ✓ Corbatín #{numFmt} está desocupado en inventario y listo para asignarse.
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="p-2.5 rounded-xl bg-teal-50 border border-teal-300 text-xs text-teal-800 font-semibold flex items-center gap-2">
+                      <IconCheckCircle className="w-4 h-4 text-teal-600 shrink-0" />
+                      <span>
+                        ✓ Corbatín #{numFmt} es un nuevo correlativo consecutivo disponible.
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
             ) : (
               /* Modo Lote: Rango Consecutivo */
@@ -16495,7 +16647,7 @@ export default function App() {
                     RANGO DE CORBATINES VERDES
                   </span>
                   <span className="text-[11px] font-bold text-[#0D6E5F] bg-white px-2.5 py-0.5 rounded-lg border border-teal-200 font-mono">
-                    Inicio sugerido: #{getNextCorbatinVerdeNum(corbatinesVerdes)}
+                    Consecutivo sugerido: #{formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes))}
                   </span>
                 </div>
 
@@ -16509,7 +16661,7 @@ export default function App() {
                       required
                       value={nuevoCVRangoInicio}
                       onChange={(e) => setNuevoCVRangoInicio(e.target.value)}
-                      placeholder={getNextCorbatinVerdeNum(corbatinesVerdes)}
+                      placeholder={formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes))}
                       className="w-full text-xs font-bold font-mono px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
                     />
                   </div>
@@ -16523,22 +16675,51 @@ export default function App() {
                       required
                       value={nuevoCVRangoFin}
                       onChange={(e) => setNuevoCVRangoFin(e.target.value)}
-                      placeholder={getNextCorbatinVerdeNum(corbatinesVerdes)}
+                      placeholder={formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes))}
                       className="w-full text-xs font-bold font-mono px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
                     />
                   </div>
                 </div>
 
+                {/* Validación y cálculo en tiempo real del rango en Lote */}
                 {(() => {
                   const s = parseInt(String(nuevoCVRangoInicio).replace(/[^0-9]/g, ""), 10);
                   const e = parseInt(String(nuevoCVRangoFin).replace(/[^0-9]/g, ""), 10);
-                  const count = (!isNaN(s) && !isNaN(e) && e >= s) ? (e - s + 1) : 0;
+                  const isValidRange = (!isNaN(s) && !isNaN(e) && s > 0 && e >= s);
+                  const count = isValidRange ? (e - s + 1) : 0;
+
+                  // Buscar corbatines asignados dentro del rango solicitado
+                  const colisiones = isValidRange
+                    ? corbatinesVerdes.filter(c => {
+                        const num = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
+                        return num >= s && num <= e && c.activo !== false && c.empresaNombre && c.empresaNombre.trim() && c.estatus_inventario === "ASIGNADO";
+                      })
+                    : [];
+
                   return (
-                    <div className="text-xs text-teal-900 font-semibold bg-white p-2.5 rounded-xl border border-teal-200 flex items-center justify-between">
-                      <span>Total de corbatines a generar:</span>
-                      <span className="font-mono font-bold text-[#0D6E5F] px-2.5 py-0.5 rounded bg-teal-50 border border-teal-200">
-                        {count} {count === 1 ? "corbatín" : "corbatines"}
-                      </span>
+                    <div className="space-y-2">
+                      <div className="text-xs text-teal-900 font-semibold bg-white p-2.5 rounded-xl border border-teal-200 flex items-center justify-between">
+                        <span>Total de corbatines a generar:</span>
+                        <span className="font-mono font-bold text-[#0D6E5F] px-2.5 py-0.5 rounded bg-teal-50 border border-teal-200">
+                          {count} {count === 1 ? "corbatín" : "corbatines"}
+                        </span>
+                      </div>
+
+                      {colisiones.length > 0 && (
+                        <div className="p-3 rounded-xl bg-red-50 border border-red-300 text-xs text-red-800 space-y-1 font-semibold">
+                          <div className="flex items-center gap-1.5 text-red-700 font-bold">
+                            <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                            <span>⛔ El rango incluye {colisiones.length} corbatines que ya están en uso:</span>
+                          </div>
+                          <div className="text-[11px] text-red-700 pl-5 font-mono">
+                            {colisiones.slice(0, 5).map(c => `#${formatCorbatinVerdeNum(c.numero || c.corbatinNum)} (${c.empresaNombre})`).join(", ")}
+                            {colisiones.length > 5 ? ` y ${colisiones.length - 5} más...` : ""}
+                          </div>
+                          <p className="text-[11px] text-red-600 pl-5 pt-0.5">
+                            Por favor selecciona un rango a partir del #{formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes))} para evitar sobreescribir unidades asignadas.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
@@ -16581,34 +16762,54 @@ export default function App() {
             </div>
 
             {/* Modal Footer Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowCreateCorbatinVerdeModal(false);
-                  setNuevoCVError("");
-                }}
-                className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
-              >
-                Cancelar
-              </button>
+            {(() => {
+              const numIndividual = parseInt(String(nuevoCVNumeroIndividual || getPrimerCorbatinVerdeDisponible(corbatinesVerdes)).replace(/[^0-9]/g, ""), 10);
+              const isIndividualOcupado = !isNaN(numIndividual) && corbatinesVerdes.some(c => {
+                const num = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
+                return num === numIndividual && c.activo !== false && c.empresaNombre && c.empresaNombre.trim() && c.estatus_inventario === "ASIGNADO";
+              });
 
-              <button
-                type="submit"
-                disabled={isSubmittingNuevoCV}
-                style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-xs active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-              >
-                <IconCheckCircle className="w-4 h-4" />
-                <span>
-                  {isSubmittingNuevoCV ? "Guardando..." : (
-                    nuevoCVModo === "individual"
-                      ? `Emitir Corbatín #${getNextCorbatinVerdeNum(corbatinesVerdes)}`
-                      : "Emitir Lote de Corbatines"
-                  )}
-                </span>
-              </button>
-            </div>
+              const sLote = parseInt(String(nuevoCVRangoInicio).replace(/[^0-9]/g, ""), 10);
+              const eLote = parseInt(String(nuevoCVRangoFin).replace(/[^0-9]/g, ""), 10);
+              const isLoteInvalido = isNaN(sLote) || isNaN(eLote) || sLote <= 0 || eLote < sLote;
+              const isLoteOcupado = (!isLoteInvalido) && corbatinesVerdes.some(c => {
+                const num = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
+                return num >= sLote && num <= eLote && c.activo !== false && c.empresaNombre && c.empresaNombre.trim() && c.estatus_inventario === "ASIGNADO";
+              });
+
+              const isBlocked = nuevoCVModo === "individual" ? isIndividualOcupado : (isLoteInvalido || isLoteOcupado);
+
+              return (
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCreateCorbatinVerdeModal(false);
+                      setNuevoCVError("");
+                    }}
+                    className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmittingNuevoCV || isBlocked}
+                    style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
+                    className="px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-xs active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <IconCheckCircle className="w-4 h-4" />
+                    <span>
+                      {isSubmittingNuevoCV ? "Guardando..." : (
+                        nuevoCVModo === "individual"
+                          ? `Emitir Corbatín #${formatCorbatinVerdeNum(nuevoCVNumeroIndividual || getPrimerCorbatinVerdeDisponible(corbatinesVerdes))}`
+                          : "Emitir Lote de Corbatines"
+                      )}
+                    </span>
+                  </button>
+                </div>
+              );
+            })()}
           </form>
         </div>
       </div>

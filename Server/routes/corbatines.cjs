@@ -397,7 +397,7 @@ router.post('/', async (req, res) => {
       // Calcular fechas
       const fechaEmision = item.fechaEmision || item.fecha_emision ? new Date(item.fechaEmision || item.fecha_emision) : new Date();
       let fechaVencimiento = item.fechaVencimiento || item.fecha_vencimiento ? new Date(item.fechaVencimiento || item.fecha_vencimiento) : null;
-      
+
       if (!fechaVencimiento && empresaNom) {
         let months = 6;
         if (vigenciaTexto === '1 Mes') months = 1;
@@ -408,39 +408,66 @@ router.post('/', async (req, res) => {
         fechaVencimiento.setMonth(fechaVencimiento.getMonth() + months);
       }
 
-      const nuevo = await db.Corbatin.create({
-        id_vehiculo: item.id_vehiculo || null,
-        tipos: tipo,
-        numero: numeroInt,
-        qr_token: qrToken,
-        fecha_emision: fechaEmision,
-        fecha_vencimiento: fechaVencimiento,
-        estatus,
-        empresa_nombre: empresaNom,
-        telefono,
-        email,
-        vigencia_texto: vigenciaTexto,
-        notas,
-        creado_por: creadoPor,
-        activo
-      });
+      // Buscar si el corbatín ya existe en la base de datos (ej. parte del pool base o registrado previamente)
+      let corbatinExistente = await db.Corbatin.findOne({
+          where: {
+            numero: numeroInt,
+            [Op.or]: [{ tipos: tipo }, { tipos: tipo.toLowerCase() }]
+          }
+        });
 
-      creados.push(formatCorbatin(nuevo));
-    }
+        if(corbatinExistente) {
+          // Actualizar corbatín existente en lugar de fallar por colisión
+          await corbatinExistente.update({
+            empresa_nombre: empresaNom,
+            telefono,
+            email,
+            vigencia_texto: vigenciaTexto,
+            fecha_emision: fechaEmision,
+            fecha_asignacion: item.fechaAsignacion || item.fecha_asignacion ? new Date(item.fechaAsignacion || item.fecha_asignacion) : fechaEmision,
+            fecha_vencimiento: fechaVencimiento,
+            estatus,
+            activo,
+            notas: notas || corbatinExistente.notas,
+            creado_por: creadoPor,
+            qr_token: qrToken
+          });
+          creados.push(formatCorbatin(corbatinExistente));
+        } else {
+          const nuevo = await db.Corbatin.create({
+            id_vehiculo: item.id_vehiculo || null,
+            tipos: tipo,
+            numero: numeroInt,
+            qr_token: qrToken,
+            fecha_emision: fechaEmision,
+            fecha_asignacion: item.fechaAsignacion || item.fecha_asignacion ? new Date(item.fechaAsignacion || item.fecha_asignacion) : (empresaNom ? fechaEmision : null),
+            fecha_vencimiento: fechaVencimiento,
+            estatus,
+            empresa_nombre: empresaNom,
+            telefono,
+            email,
+            vigencia_texto: vigenciaTexto,
+            notas,
+            creado_por: creadoPor,
+            activo
+          });
+          creados.push(formatCorbatin(nuevo));
+        }
+      }
 
     if (creados.length === 1 && !Array.isArray(body) && !body.items && !body.corbatines) {
-      return res.status(201).json(creados[0]);
-    }
+        return res.status(201).json(creados[0]);
+      }
 
-    res.status(201).json({
-      message: `${creados.length} corbatín(es) registrado(s) exitosamente`,
-      corbatines: creados
-    });
-  } catch (error) {
-    console.error('Error al registrar corbatín(es):', error);
-    res.status(500).json({ error: 'Error al registrar corbatín(es)', details: error.message });
-  }
-});
+      res.status(201).json({
+        message: `${creados.length} corbatín(es) registrado(s) exitosamente`,
+        corbatines: creados
+      });
+    } catch (error) {
+      console.error('Error al registrar corbatín(es):', error);
+      res.status(500).json({ error: 'Error al registrar corbatín(es)', details: error.message });
+    }
+  });
 
 // PUT /api/corbatines/:id - Actualizar corbatín (activo, estatus, notas, etc.)
 router.put('/:id', async (req, res) => {
