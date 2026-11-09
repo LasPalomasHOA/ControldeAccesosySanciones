@@ -14148,9 +14148,12 @@ export default function App() {
               <form onSubmit={handleGuardarNuevoTrabajador} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                      Nombre(s) * <span className="text-slate-400 font-normal">(máx 80)</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5 min-h-[1.25rem]">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Nombre(s) <span className="text-red-500">*</span>
+                      </label>
+                      <span className="text-[10px] text-slate-400 font-medium tracking-normal lowercase">(máx 80)</span>
+                    </div>
                     <input
                       type="text"
                       required
@@ -14163,9 +14166,12 @@ export default function App() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                      Apellidos Completos * <span className="text-slate-400 font-normal">(máx 150)</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5 min-h-[1.25rem]">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Apellidos <span className="text-red-500">*</span>
+                      </label>
+                      <span className="text-[10px] text-slate-400 font-medium tracking-normal lowercase">(máx 150)</span>
+                    </div>
                     <input
                       type="text"
                       required
@@ -14179,9 +14185,12 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Teléfono Celular <span className="text-slate-400 font-normal">(opcional, máx 20)</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5 min-h-[1.25rem]">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Teléfono Celular
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-medium tracking-normal lowercase">(opcional, máx 20)</span>
+                  </div>
                   <input
                     type="text"
                     maxLength={20}
@@ -14461,9 +14470,12 @@ export default function App() {
               <form onSubmit={handleGuardarEdicionTrabajador} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                      Nombre(s) * <span className="text-slate-400 font-normal">(máx 80)</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5 min-h-[1.25rem]">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Nombre(s) <span className="text-red-500">*</span>
+                      </label>
+                      <span className="text-[10px] text-slate-400 font-medium tracking-normal lowercase">(máx 80)</span>
+                    </div>
                     <input
                       type="text"
                       required
@@ -14475,9 +14487,12 @@ export default function App() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                      Apellidos Completos * <span className="text-slate-400 font-normal">(máx 150)</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5 min-h-[1.25rem]">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Apellidos <span className="text-red-500">*</span>
+                      </label>
+                      <span className="text-[10px] text-slate-400 font-medium tracking-normal lowercase">(máx 150)</span>
+                    </div>
                     <input
                       type="text"
                       required
@@ -14490,9 +14505,12 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Teléfono Celular <span className="text-slate-400 font-normal">(opcional, máx 20)</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5 min-h-[1.25rem]">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Teléfono Celular
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-medium tracking-normal lowercase">(opcional, máx 20)</span>
+                  </div>
                   <input
                     type="text"
                     maxLength={20}
