@@ -54,8 +54,8 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
     setModalConfig((prev) => ({ ...prev, isOpen: false }));
   };
 
-  // Cálculo de Capacidad Física Real de la Tarjeta (13.0 × 17.5 cm = 151 mm útiles)
-  const { totalSections, totalItems, totalChars, capacityPercent, isFull, canAddSection, canAddItem } = useMemo(() => {
+  // Cálculo de Capacidad Física Real de la Tarjeta Ampliada en Hoja Carta (13.0 × 19.5 cm = 165 mm útiles de reverso)
+  const { totalSections, totalItems, totalChars, estimatedLines, capacityPercent, isFull, canAddSection, canAddItem } = useMemo(() => {
     const sectionsCount = (reglamentoSecciones || []).length;
     const itemsCount = (reglamentoSecciones || []).reduce((acc, s) => acc + (s.items ? s.items.length : 0), 0);
     const titleCharsCount = (reglamentoSecciones || []).reduce((acc, s) => acc + (s.title || "").length, 0);
@@ -66,27 +66,28 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
     const charsCount = titleCharsCount + itemCharsCount;
 
     // Estimación de líneas reales de impresión (títulos + viñetas + wrapping de textos largos)
-    let estimatedLines = sectionsCount * 1.5;
+    let estLines = sectionsCount * 1.5;
     (reglamentoSecciones || []).forEach((sec) => {
       (sec.items || []).forEach((it) => {
         const len = (it || "").length;
-        estimatedLines += Math.max(1, Math.ceil(len / 58)); // ~58 caracteres por línea en tarjeta de 348px
+        estLines += Math.max(1, Math.ceil(len / 58)); // ~58 caracteres por línea en reverso de 13.0 cm
       });
     });
 
-    const maxLines = 45; // Capacidad física real adaptativa de la tarjeta de 13.0 × 17.5 cm (el estándar de fábrica representa ~73%)
-    const percent = Math.min(100, Math.round((estimatedLines / maxLines) * 100));
+    const maxLines = 54; // Capacidad física real adaptativa de la tarjeta de 13.0 × 19.5 cm en Hoja Carta (21.5 × 28 cm)
+    const percent = Math.min(100, Math.round((estLines / maxLines) * 100));
 
     // Espacio para agregar una norma: disponible mientras las líneas estimadas no superen el límite físico
-    const canAddItem = estimatedLines < maxLines;
-    // Espacio para agregar una sección: disponible si hay menos de 10 secciones y cabe el bloque inicial (~2.5 líneas)
-    const canAddSection = sectionsCount < 10 && (estimatedLines + 2.5) <= maxLines;
+    const canAddItem = estLines < maxLines;
+    // Espacio para agregar una sección: disponible si hay menos de 12 secciones y cabe el bloque inicial (~2.5 líneas)
+    const canAddSection = sectionsCount < 12 && (estLines + 2.5) <= maxLines;
     const full = percent >= 100 || !canAddItem;
 
     return {
       totalSections: sectionsCount,
       totalItems: itemsCount,
       totalChars: charsCount,
+      estimatedLines: estLines,
       capacityPercent: percent,
       isFull: full,
       canAddSection,
@@ -115,8 +116,8 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
     if (!canAddItem) {
       setModalConfig({
         isOpen: true,
-        title: "Límite de Capacidad Física",
-        description: "La tarjeta de 13.0 × 17.5 cm ha alcanzado su capacidad máxima permitida para garantizar que el texto se imprima con total legibilidad. Te sugerimos compactar textos existentes o redactar cláusulas extensas en la pestaña de 'Términos y Condiciones Generales'.",
+        title: "Límite de Capacidad Física (100%)",
+        description: "La tarjeta de 13.0 × 19.5 cm (en Hoja Carta 21.5 × 28 cm) ha alcanzado el 100% de su capacidad física permitida para garantizar que todas las reglas aparezcan impresas respetando los márgenes. Te sugerimos compactar textos existentes o redactar cláusulas extensas en la pestaña de 'Términos y Condiciones Generales'.",
         confirmText: "Entendido",
         icon: "warning",
         isDestructive: false,
@@ -147,10 +148,10 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
     if (!canAddSection) {
       setModalConfig({
         isOpen: true,
-        title: "Capacidad Máxima de Secciones",
-        description: (reglamentoSecciones || []).length >= 10
-          ? "Se ha alcanzado el límite máximo de 10 secciones para el corbatín físico. Puedes organizar tus normas dentro de las secciones existentes."
-          : "La tarjeta física no cuenta con suficiente espacio vertical para agregar una nueva sección completa sin desbordar el documento al imprimir. Puedes compactar textos o agregar normas dentro de las secciones existentes.",
+        title: "Capacidad Máxima de Secciones (100%)",
+        description: (reglamentoSecciones || []).length >= 12
+          ? "Se ha alcanzado el límite máximo de 12 secciones para el corbatín físico. Puedes organizar tus normas dentro de las secciones existentes."
+          : "La tarjeta física (13.0 × 19.5 cm) ha llegado al límite de espacio vertical para agregar una nueva sección completa sin rebasar los márgenes de impresión. Puedes compactar textos o agregar normas dentro de las secciones existentes.",
         confirmText: "Entendido",
         icon: "warning",
         isDestructive: false,
@@ -317,7 +318,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
             </span>
           </div>
           <p className="text-[11px] text-slate-500 mt-1">
-            Secciones y normas impresas directamente en el reverso de la tarjeta vehicular de 13.0 × 17.5 cm.
+            Secciones y normas impresas directamente en el reverso de la tarjeta vehicular de 13.0 × 19.5 cm (Hoja Carta 21.5 × 28 cm).
           </p>
         </button>
 
@@ -360,7 +361,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
                 <line x1="3" y1="9" x2="21" y2="9" />
                 <line x1="9" y1="21" x2="9" y2="9" />
               </svg>
-              <span>Ocupación de la tarjeta física:</span>
+              <span>Ocupación de la tarjeta física (13.0 × 19.5 cm):</span>
               <strong className={
                 capacityPercent >= 100
                   ? "text-rose-600 font-bold"
@@ -373,7 +374,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
             </div>
 
             <div className="flex items-center gap-3 text-slate-500 font-mono text-[11px]">
-              <span>{totalSections} / 8 secciones rec.</span>
+              <span>{totalSections} / 12 secciones máx.</span>
               <span>{totalItems} normas</span>
             </div>
           </div>
@@ -491,48 +492,60 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
                     </span>
                   </div>
                   <span className="text-[10px] text-slate-400 font-mono">
-                    Reverso · 13.0 × 17.5 cm
+                    Reverso · 13.0 × 19.5 cm (Hoja Carta)
                   </span>
                 </div>
 
-                {/* Contenedor del Banderín Simulado con proporción exacta de tarjeta física */}
+                {/* Contenedor del Banderín Simulado con proporción exacta de tarjeta física (13.0 x 19.5 cm) */}
                 <div
                   className="bg-white border-2 border-black rounded p-3.5 font-sans text-black shadow-inner flex flex-col justify-between overflow-hidden"
                   style={{
                     fontFamily: "Arial, Helvetica, sans-serif",
-                    height: "560px",
+                    height: "620px",
                     boxSizing: "border-box",
                   }}
                 >
-                  <div className="overflow-hidden">
-                    <div className="text-center font-bold uppercase tracking-wide border-b border-black pb-1 mb-2.5 text-[11px]">
-                      Reglamento para Externos en Áreas Comunes
-                    </div>
+                  {(() => {
+                    const unitPx = Math.min(15.5, Math.max(8.6, 530 / Math.max(1, estimatedLines + totalSections * 0.25)));
+                    const itemFontPx = Math.min(10.0, Math.max(7.2, unitPx * 0.72));
+                    const titleFontPx = Math.min(10.5, Math.max(7.8, itemFontPx * 1.06));
+                    const secGapPx = Math.min(6, Math.max(2, unitPx * 0.35));
+                    const lineHeightVal = estimatedLines > 44 ? "1.16" : estimatedLines > 36 ? "1.22" : "1.28";
 
-                    <div className={`${totalItems > 24 ? "space-y-1.5" : "space-y-2"} pr-0.5`}>
-                      {reglamentoSecciones.map((sec, i) => (
-                        <div key={i} className="space-y-0.5">
-                          <div className={`font-bold text-black uppercase ${totalItems > 24 ? "text-[9.5px]" : "text-[10px]"}`}>
-                            {sec.title || "SECCIÓN SIN TÍTULO"}
-                          </div>
-                          <ul className="list-disc pl-4 space-y-0.5 m-0">
-                            {sec.items.map((item, j) => (
-                              <li
-                                key={j}
-                                className={`text-slate-900 leading-snug ${
-                                  totalItems > 28 ? "text-[8.5px]" : totalItems > 24 ? "text-[9px]" : "text-[9.5px]"
-                                }`}
-                              >
-                                {item || "Norma pendiente de redacción"}
-                              </li>
-                            ))}
-                          </ul>
+                    return (
+                      <div className="overflow-hidden">
+                        <div className="text-center font-bold uppercase tracking-wide border-b border-black pb-1 mb-2 text-[11px]">
+                          Reglamento para Externos en Áreas Comunes
                         </div>
-                      ))}
-                    </div>
-                  </div>
 
-                  <div className="border-t border-slate-300 pt-2 mt-4 flex justify-between items-center text-[7.5px] text-slate-500 shrink-0">
+                        <div style={{ display: "flex", flexDirection: "column", gap: `${secGapPx}px` }} className="pr-0.5">
+                          {reglamentoSecciones.map((sec, i) => (
+                            <div key={i}>
+                              <div
+                                className="font-bold text-black uppercase"
+                                style={{ fontSize: `${titleFontPx}px`, lineHeight: "1.2", marginBottom: "1px" }}
+                              >
+                                {sec.title || "SECCIÓN SIN TÍTULO"}
+                              </div>
+                              <ul className="list-disc pl-3.5 m-0" style={{ display: "flex", flexDirection: "column", gap: "0.5px" }}>
+                                {sec.items.map((item, j) => (
+                                  <li
+                                    key={j}
+                                    className="text-slate-900"
+                                    style={{ fontSize: `${itemFontPx}px`, lineHeight: lineHeightVal }}
+                                  >
+                                    {item || "Norma pendiente de redacción"}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="border-t border-slate-300 pt-2 mt-2 flex justify-between items-center text-[7.5px] text-slate-500 shrink-0">
                     <span>Las Palomas Rocky Point HOA</span>
                     <span className="font-mono">Vigencia 1 Año</span>
                   </div>

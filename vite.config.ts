@@ -6,39 +6,82 @@ import { spawn, type ChildProcess } from 'node:child_process'
 
 function expressServerPlugin(): Plugin {
   let serverProcess: ChildProcess | null = null
+  let isRestarting = false
+  let restartTimeout: ReturnType<typeof setTimeout> | null = null
+
+  const killServer = (onKilled?: () => void) => {
+    if (!serverProcess) {
+      if (onKilled) onKilled()
+      return
+    }
+
+    const proc = serverProcess
+    serverProcess = null
+
+    if (process.platform === 'win32' && proc.pid) {
+      try {
+        const killer = spawn('taskkill', ['/pid', String(proc.pid), '/f', '/t'], { stdio: 'ignore' })
+        killer.on('close', () => {
+          if (onKilled) onKilled()
+        })
+        killer.on('error', () => {
+          proc.kill('SIGKILL')
+          if (onKilled) onKilled()
+        })
+        return
+      } catch {
+        proc.kill('SIGKILL')
+      }
+    } else {
+      proc.kill('SIGTERM')
+    }
+
+    if (onKilled) {
+      setTimeout(onKilled, 300)
+    }
+  }
 
   const startServer = () => {
     if (serverProcess && !serverProcess.killed) return
     const serverScript = path.resolve(process.cwd(), 'Server/index.cjs')
-    serverProcess = spawn(process.execPath, [serverScript], {
+    const current = spawn(process.execPath, [serverScript], {
       stdio: 'inherit',
       env: { ...process.env },
     })
+    serverProcess = current
 
-    serverProcess.on('error', (err) => {
+    current.on('error', (err) => {
       console.error('❌ Error al iniciar el servidor Express:', err)
     })
 
-    serverProcess.on('exit', (code) => {
-      if (code !== 0 && code !== null) {
-        console.warn(`⚠️ Servidor Express finalizó con código: ${code}`)
+    current.on('exit', (code) => {
+      if (serverProcess === current) {
+        serverProcess = null
       }
-      serverProcess = null
+      if (code !== 0 && code !== null && !isRestarting) {
+        console.warn(`⚠️ Servidor Express finalizó con código: ${code}`)
+        // Auto-reintento si cayó por EADDRINUSE o cierre inesperado
+        setTimeout(() => {
+          if (!serverProcess && !isRestarting) {
+            console.log('🔄 Reintentando levantar servidor Express en puerto 5000...')
+            startServer()
+          }
+        }, 1500)
+      }
     })
   }
 
-  const killServer = () => {
-    if (serverProcess && !serverProcess.killed) {
-      serverProcess.kill()
-      serverProcess = null
-    }
-  }
-
   const restartServer = () => {
-    killServer()
-    setTimeout(() => {
-      startServer()
-    }, 400)
+    if (restartTimeout) clearTimeout(restartTimeout)
+    restartTimeout = setTimeout(() => {
+      isRestarting = true
+      killServer(() => {
+        setTimeout(() => {
+          isRestarting = false
+          startServer()
+        }, 300)
+      })
+    }, 200)
   }
 
   return {

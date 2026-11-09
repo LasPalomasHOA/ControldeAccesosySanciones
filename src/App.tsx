@@ -208,6 +208,15 @@ function IconUsers({ className = "w-4 h-4" }: { className?: string }) {
   );
 }
 
+function IconUser({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
 function IconEdit({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -446,6 +455,7 @@ interface Trabajador {
   apellidos: string;
   telefono?: string;
   foto_url?: string;
+  foto?: string;
   comprobante_seguro_url?: string;
   dc3_documento_url?: string;
   activo: boolean;
@@ -534,6 +544,7 @@ interface Vehicle {
 
 interface Sancion {
   id: string;
+  id_reporte?: string | number;
   vehicleId: string;
   empresaNombre: string;
   placas: string;
@@ -544,6 +555,8 @@ interface Sancion {
   medidaDisciplinaria: string;
   status: "Activa" | "En Apelación" | "Aclarada" | "Ratificada" | "Cumplida" | "Levantada" | "Permiso Provisional";
   descripcion: string;
+  evidenciaUrl?: string;
+  evidencias?: string[];
   apelacion?: {
     fecha: string;
     argumentos: string;
@@ -997,26 +1010,29 @@ function CorbatinDocument({ vehicle, sections }: { vehicle: Vehicle; sections?: 
               }}
             >
               {(() => {
-                const totalItemCount = docSections.reduce((acc, s) => acc + (s.items ? s.items.length : 0), 0);
-                const isDense = totalItemCount > 24;
-                const isVeryDense = totalItemCount > 30;
-                const titleFontSize = isVeryDense ? "9.5px" : isDense ? "10px" : "10.5px";
-                const secMargin = isVeryDense ? "3.5px" : isDense ? "4.5px" : "6px";
-                const itemFontSize = isVeryDense ? "9px" : isDense ? "9.5px" : "10px";
-                const itemLineHeight = isVeryDense ? "1.24" : isDense ? "1.3" : "1.35";
-                const itemMargin = isVeryDense ? "0.5px" : isDense ? "1px" : "1.5px";
+                let estLines = docSections.length * 1.5;
+                docSections.forEach((sec) => {
+                  (sec.items || []).forEach((it) => {
+                    estLines += Math.max(1, Math.ceil((it || "").length / 58));
+                  });
+                });
+                const unitPx = Math.min(15.5, Math.max(8.4, 510 / Math.max(1, estLines + docSections.length * 0.25)));
+                const itemFontPx = Math.min(10.0, Math.max(7.2, unitPx * 0.72));
+                const titleFontPx = Math.min(10.5, Math.max(7.8, itemFontPx * 1.06));
+                const secMarginPx = Math.min(6, Math.max(2, unitPx * 0.35));
+                const itemLineHeight = estLines > 44 ? "1.16" : estLines > 36 ? "1.22" : "1.28";
 
                 return (
                   <div style={{ overflow: "hidden" }}>
-                    <div style={{ fontSize: "11.5px", fontWeight: "900", textAlign: "center", marginBottom: isVeryDense ? "5px" : "8px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    <div style={{ fontSize: "11.5px", fontWeight: "900", textAlign: "center", marginBottom: estLines > 36 ? "4px" : "7px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                       Reglamento para externos en áreas comunes:
                     </div>
                     {docSections.map((sec, idx) => (
-                      <div key={sec.title || idx} style={{ marginBottom: secMargin }}>
-                        <div style={{ fontSize: titleFontSize, fontWeight: "bold", color: "#000000", marginBottom: "1.5px" }}>{sec.title}</div>
+                      <div key={sec.title || idx} style={{ marginBottom: `${secMarginPx}px` }}>
+                        <div style={{ fontSize: `${titleFontPx}px`, fontWeight: "bold", color: "#000000", marginBottom: "1px", lineHeight: "1.2" }}>{sec.title}</div>
                         <ul style={{ margin: 0, paddingLeft: "14px", listStyleType: "disc" }}>
                           {sec.items.map((item, i) => (
-                            <li key={i} style={{ fontSize: itemFontSize, color: "#222222", lineHeight: itemLineHeight, marginBottom: itemMargin }}>{item}</li>
+                            <li key={i} style={{ fontSize: `${itemFontPx}px`, color: "#222222", lineHeight: itemLineHeight, marginBottom: "0.5px" }}>{item}</li>
                           ))}
                         </ul>
                       </div>
@@ -1130,26 +1146,29 @@ function TarjetaCorbatinVerdePrintable({ corb, sections }: { corb: CorbatinVerde
               }}
             >
               {(() => {
-                const totalItemCount = docSections.reduce((acc, s) => acc + (s.items ? s.items.length : 0), 0);
-                const isDense = totalItemCount > 24;
-                const isVeryDense = totalItemCount > 30;
-                const titleFontSize = isVeryDense ? "9.5px" : isDense ? "10px" : "10.5px";
-                const secMargin = isVeryDense ? "3.5px" : isDense ? "4.5px" : "6px";
-                const itemFontSize = isVeryDense ? "9px" : isDense ? "9.5px" : "10px";
-                const itemLineHeight = isVeryDense ? "1.24" : isDense ? "1.3" : "1.35";
-                const itemMargin = isVeryDense ? "0.5px" : isDense ? "1px" : "1.5px";
+                let estLines = docSections.length * 1.5;
+                docSections.forEach((sec) => {
+                  (sec.items || []).forEach((it) => {
+                    estLines += Math.max(1, Math.ceil((it || "").length / 58));
+                  });
+                });
+                const unitPx = Math.min(15.5, Math.max(8.4, 510 / Math.max(1, estLines + docSections.length * 0.25)));
+                const itemFontPx = Math.min(10.0, Math.max(7.2, unitPx * 0.72));
+                const titleFontPx = Math.min(10.5, Math.max(7.8, itemFontPx * 1.06));
+                const secMarginPx = Math.min(6, Math.max(2, unitPx * 0.35));
+                const itemLineHeight = estLines > 44 ? "1.16" : estLines > 36 ? "1.22" : "1.28";
 
                 return (
                   <div style={{ overflow: "hidden" }}>
-                    <div style={{ fontSize: "11.5px", fontWeight: "900", textAlign: "center", marginBottom: isVeryDense ? "5px" : "8px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    <div style={{ fontSize: "11.5px", fontWeight: "900", textAlign: "center", marginBottom: estLines > 36 ? "4px" : "7px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                       Reglamento para externos en áreas comunes:
                     </div>
                     {docSections.map((sec, idx) => (
-                      <div key={sec.title || idx} style={{ marginBottom: secMargin }}>
-                        <div style={{ fontSize: titleFontSize, fontWeight: "bold", color: "#000000", marginBottom: "1.5px" }}>{sec.title}</div>
+                      <div key={sec.title || idx} style={{ marginBottom: `${secMarginPx}px` }}>
+                        <div style={{ fontSize: `${titleFontPx}px`, fontWeight: "bold", color: "#000000", marginBottom: "1px", lineHeight: "1.2" }}>{sec.title}</div>
                         <ul style={{ margin: 0, paddingLeft: "14px", listStyleType: "disc" }}>
                           {sec.items.map((item, i) => (
-                            <li key={i} style={{ fontSize: itemFontSize, color: "#222222", lineHeight: itemLineHeight, marginBottom: itemMargin }}>{item}</li>
+                            <li key={i} style={{ fontSize: `${itemFontPx}px`, color: "#222222", lineHeight: itemLineHeight, marginBottom: "0.5px" }}>{item}</li>
                           ))}
                         </ul>
                       </div>
@@ -1839,6 +1858,16 @@ export default function App() {
   const [vincularError, setVincularError] = useState("");
   const [isSubmittingVinculacion, setIsSubmittingVinculacion] = useState(false);
 
+  // Modal con diseño para confirmaciones de Corbatines Verdes (Liberar / Eliminar)
+  const [actionConfirmModal, setActionConfirmModal] = useState<{
+    isOpen: boolean;
+    type: "liberar" | "eliminar";
+    title: string;
+    corbatinNum: string;
+    empresaNombre?: string;
+    actionCallback: () => void;
+  } | null>(null);
+
   // Form states para creación / emisión de Corbatines Verdes
   const [nuevoCVModo, setNuevoCVModo] = useState<"individual" | "lote">("individual");
   const [nuevoCVEmpresaNombre, setNuevoCVEmpresaNombre] = useState("");
@@ -1848,6 +1877,7 @@ export default function App() {
   const [nuevoCVCantidad, setNuevoCVCantidad] = useState(10);
   const [nuevoCVRangoInicio, setNuevoCVRangoInicio] = useState("");
   const [nuevoCVRangoFin, setNuevoCVRangoFin] = useState("");
+  const [nuevoCVNumeroIndividual, setNuevoCVNumeroIndividual] = useState("");
   const [nuevoCVNotas, setNuevoCVNotas] = useState("");
   const [nuevoCVError, setNuevoCVError] = useState("");
   const [isSubmittingNuevoCV, setIsSubmittingNuevoCV] = useState(false);
@@ -2046,11 +2076,61 @@ export default function App() {
   const currentCasetaCorbatinVerde = selectedCorbatinVerdeId
     ? corbatinesVerdes.find((c) => c.id === selectedCorbatinVerdeId)
     : undefined;
+
+  // Detección de vehículo o corbatín verde actualmente dentro del predio (sin salida registrada)
+  const currentVehicleDentro = useMemo(() => {
+    if (!currentCasetaVehicle) return null;
+    return (
+      bitacora.find(
+        (b) =>
+          b.estado === "Dentro" &&
+          (
+            (b.vehicleId && String(b.vehicleId) === String(currentCasetaVehicle.id)) ||
+            (b.placas && currentCasetaVehicle.placas && b.placas.trim().toUpperCase() === currentCasetaVehicle.placas.trim().toUpperCase())
+          )
+      ) || null
+    );
+  }, [currentCasetaVehicle, bitacora]);
+
+  const currentCorbatinVerdeDentro = useMemo(() => {
+    if (!currentCasetaCorbatinVerde) return null;
+    const numFmt = formatCorbatinVerdeNum(currentCasetaCorbatinVerde.corbatinNum);
+    return (
+      bitacora.find(
+        (b) =>
+          b.estado === "Dentro" &&
+          (
+            (b.corbatinNum && (b.corbatinNum === numFmt || b.corbatinNum === currentCasetaCorbatinVerde.corbatinNum || b.corbatinNum === ("00" + parseInt(currentCasetaCorbatinVerde.corbatinNum, 10)))) ||
+            (casetaPlacasVerde && b.placas && b.placas.trim().toUpperCase() === casetaPlacasVerde.trim().toUpperCase())
+          )
+      ) || null
+    );
+  }, [currentCasetaCorbatinVerde, bitacora, casetaPlacasVerde]);
   const empresaTrabajadores = selectedEmpresaId
     ? trabajadores.filter((t) => (t.id_empresa === selectedEmpresaId || t.empresaNombre === currentEmpresa?.nombre) && t.activo !== false)
     : trabajadores.filter((t) => t.activo !== false);
   const currentTrabajadorPeatonal = empresaTrabajadores.find((t) => String(t.id_trabajador) === String(casetaPeatonalTrabajadorId));
-  const currentConductorVehicular = empresaTrabajadores.find((t) => String(t.id_trabajador) === String(casetaConductorId));
+  const currentConductorVehicular = useMemo(() => {
+    if (casetaConductorId) {
+      const byId = trabajadores.find((t) => String(t.id_trabajador) === String(casetaConductorId));
+      if (byId) return byId;
+    }
+    const queryName = (casetaConductorQuery || currentCasetaVehicle?.conductor || "").trim().toLowerCase();
+    if (queryName) {
+      const matchEmpresa = empresaTrabajadores.find((t) => {
+        const full = `${t.nombre} ${t.apellidos || ""}`.trim().toLowerCase();
+        return full === queryName || t.nombre.toLowerCase() === queryName;
+      });
+      if (matchEmpresa) return matchEmpresa;
+
+      const matchGeneral = trabajadores.find((t) => {
+        const full = `${t.nombre} ${t.apellidos || ""}`.trim().toLowerCase();
+        return full === queryName || t.nombre.toLowerCase() === queryName;
+      });
+      if (matchGeneral) return matchGeneral;
+    }
+    return null;
+  }, [casetaConductorId, casetaConductorQuery, currentCasetaVehicle?.conductor, empresaTrabajadores, trabajadores]);
 
   // Cerrar menú desplegable al hacer clic fuera del componente
   useEffect(() => {
@@ -2791,8 +2871,22 @@ export default function App() {
             ? medidasPorNivel[trueNivel]
             : cleanRawText(s.medidaDisciplinaria || s.regla?.mensaje_alerta || `Sanción Nivel ${s.numero_reincidencia || 1}`);
 
+          const rawEvidencias = (Array.isArray(s.evidencias) && s.evidencias.length > 0)
+            ? s.evidencias
+            : (s.reporte?.evidencias?.map((e: any) => e.archivo || e.url || e) || []);
+          const repEvidenciaUrl = s.evidenciaUrl || (rawEvidencias.length > 0 ? rawEvidencias[0] : "") || s.reporte?.evidencias?.[0]?.archivo || "";
+          let cleanEvidencias: string[] = Array.isArray(rawEvidencias) ? rawEvidencias.filter(Boolean) : (repEvidenciaUrl ? [repEvidenciaUrl] : []);
+
+          if (cleanEvidencias.length === 0 && resReportes.status === "fulfilled" && Array.isArray(resReportes.value)) {
+            const foundRep = resReportes.value.find((r: any) => String(r.id_reporte) === String(s.id_reporte) || (r.vehiculo?.placas === (s.placas || s.placa) && r.evidencias?.length > 0));
+            if (foundRep && Array.isArray(foundRep.evidencias)) {
+              cleanEvidencias = foundRep.evidencias.map((e: any) => e.archivo || e.url || e).filter(Boolean);
+            }
+          }
+
           return {
             id: sId,
+            id_reporte: s.id_reporte || s.reporte?.id_reporte,
             vehicleId: String(s.id_vehiculo || s.vehicleId || ""),
             empresaNombre: s.empresaNombre || s.empresa?.razon_social || "",
             placas: s.placas || s.placa || s.vehiculo?.placas || "",
@@ -2803,6 +2897,8 @@ export default function App() {
             medidaDisciplinaria: medidaLimpia,
             status: (s.status as any) || (s.estatus === "EN_APELACION" ? "En Apelación" : (s.estatus === "CANCELADA" || s.estatus === "ACLARADA" ? "Levantada" : (s.estatus === "RATIFICADA" ? "Ratificada" : (s.estatus === "VENCIDA" ? "Cumplida" : "Activa")))),
             descripcion: descClean || "Infracción detectada en campo y documentada por seguridad",
+            evidenciaUrl: repEvidenciaUrl || (cleanEvidencias.length > 0 ? cleanEvidencias[0] : undefined),
+            evidencias: cleanEvidencias,
             apelacion: s.apelacion || undefined,
             resolucionOficina: s.resolucionOficina || undefined,
           };
@@ -2950,7 +3046,18 @@ export default function App() {
         });
 
         if (mappedVerdes.length === 0) {
-          mappedVerdes = generateDefaultPoolCorbatinesVerdes(20);
+          try {
+            const saved = localStorage.getItem("hoa_corbatines_verdes");
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                mappedVerdes = parsed;
+              }
+            }
+          } catch { }
+          if (mappedVerdes.length === 0) {
+            mappedVerdes = generateDefaultPoolCorbatinesVerdes(20);
+          }
         }
 
         mappedVerdes.sort((a, b) => (a.numero || 1) - (b.numero || 1));
@@ -3239,8 +3346,22 @@ export default function App() {
             ? medidasPorNivel[trueNivel]
             : cleanRawText(s.medidaDisciplinaria || s.regla?.mensaje_alerta || `Sanción Nivel ${s.numero_reincidencia || 1}`);
 
+          const rawEvidencias = (Array.isArray(s.evidencias) && s.evidencias.length > 0)
+            ? s.evidencias
+            : (s.reporte?.evidencias?.map((e: any) => e.archivo || e.url || e) || []);
+          const repEvidenciaUrl = s.evidenciaUrl || (rawEvidencias.length > 0 ? rawEvidencias[0] : "") || s.reporte?.evidencias?.[0]?.archivo || "";
+          let cleanEvidencias: string[] = Array.isArray(rawEvidencias) ? rawEvidencias.filter(Boolean) : (repEvidenciaUrl ? [repEvidenciaUrl] : []);
+
+          if (cleanEvidencias.length === 0 && Array.isArray(infraccionesPendientes)) {
+            const foundRep = infraccionesPendientes.find((r: any) => String(r.id) === String(s.id_reporte) || (r.placas === (s.placas || s.placa) && r.evidencias?.length > 0));
+            if (foundRep && Array.isArray(foundRep.evidencias)) {
+              cleanEvidencias = foundRep.evidencias.filter(Boolean);
+            }
+          }
+
           return {
             id: sId,
+            id_reporte: s.id_reporte || s.reporte?.id_reporte,
             vehicleId: String(s.id_vehiculo || s.vehicleId || ""),
             empresaNombre: s.empresaNombre || s.empresa?.razon_social || "",
             placas: s.placas || s.placa || s.vehiculo?.placas || "",
@@ -3251,6 +3372,8 @@ export default function App() {
             medidaDisciplinaria: medidaLimpia,
             status: (s.status as any) || (s.estatus === "EN_APELACION" ? "En Apelación" : (s.estatus === "CANCELADA" || s.estatus === "ACLARADA" ? "Levantada" : (s.estatus === "RATIFICADA" ? "Ratificada" : (s.estatus === "VENCIDA" ? "Cumplida" : "Activa")))),
             descripcion: descClean || "Infracción detectada en campo y documentada por seguridad",
+            evidenciaUrl: repEvidenciaUrl || (cleanEvidencias.length > 0 ? cleanEvidencias[0] : undefined),
+            evidencias: cleanEvidencias,
             apelacion: s.apelacion || undefined,
             resolucionOficina: s.resolucionOficina || undefined,
           };
@@ -3353,7 +3476,18 @@ export default function App() {
         });
 
         if (mappedVerdes.length === 0) {
-          mappedVerdes = generateDefaultPoolCorbatinesVerdes(20);
+          try {
+            const saved = localStorage.getItem("hoa_corbatines_verdes");
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                mappedVerdes = parsed;
+              }
+            }
+          } catch { }
+          if (mappedVerdes.length === 0) {
+            mappedVerdes = generateDefaultPoolCorbatinesVerdes(20);
+          }
         }
 
         mappedVerdes.sort((a, b) => (a.numero || 1) - (b.numero || 1));
@@ -3814,7 +3948,110 @@ export default function App() {
     });
   };
 
-  // Native Vector High-Resolution PDF Generator (Mathematically Centered, Exact Branding)
+  // Helper compartido para renderizar el Reverso del Reglamento en PDF garantizando el 100% de las reglas sin cortes
+  const renderReversoReglamentoPDF = (
+    pdf: jsPDF,
+    activeSections: ReglamentoSection[],
+    midX: number,
+    colW: number,
+    startX: number,
+    startY: number,
+    cardW: number,
+    cardH: number,
+    footerRightText: string
+  ) => {
+    const rightMargin = midX + 8.5;
+    const contentWidth = colW - 16.5; // 113.5 mm de área imprimible respetando márgenes laterales
+    const footerLineY = startY + cardH - 10; // Línea divisoria del pie de página
+    const maxY = footerLineY - 2.0; // Margen de seguridad antes de la línea del pie
+    const headerY = startY + 10.5;
+    let textY = startY + 17.5;
+    const availableH = maxY - textY; // ~165.5 mm disponibles en tarjeta de 19.5 cm de alto
+
+    // Encabezado del Reverso
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(11);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text("REGLAMENTO PARA EXTERNOS EN ÁREAS COMUNES:", midX + colW / 2, headerY, { align: "center" });
+
+    // Paso 1: Estimación inicial para determinar el tamaño de fuente óptimo
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8.5);
+    let estBulletLines = 0;
+    activeSections.forEach((sec) => {
+      (sec.items || []).forEach((it) => {
+        const rawBullet = it.startsWith("•") ? it : `• ${it}`;
+        const lines = pdf.splitTextToSize(rawBullet, contentWidth - 1.5);
+        estBulletLines += lines.length;
+      });
+    });
+
+    const estUnits = estBulletLines + activeSections.length * 1.6;
+    const estSpacing = Math.min(4.8, availableH / Math.max(1, estUnits));
+    const dynamicFontSize = Math.min(9.8, Math.max(5.8, estSpacing * 2.04));
+    const dynamicTitleSize = Math.min(10.5, Math.max(6.4, dynamicFontSize * 1.08));
+
+    // Paso 2: Medición exacta de líneas con el tamaño de fuente real que se va a imprimir
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(dynamicFontSize);
+    const preparedSections = activeSections.map((sec) => {
+      const wrappedItems = (sec.items || []).map((it) => {
+        const rawBullet = it.startsWith("•") ? it : `• ${it}`;
+        return pdf.splitTextToSize(rawBullet, contentWidth - 1.5) as string[];
+      });
+      const secLines = wrappedItems.reduce((acc, l) => acc + l.length, 0);
+      return {
+        title: sec.title || "",
+        wrappedItems,
+        secLines,
+      };
+    });
+
+    const exactBulletLines = preparedSections.reduce((acc, s) => acc + s.secLines, 0);
+    // Cada sección ocupa: 1.12 (título) + 0.45 (espacio entre secciones) = 1.57 unidades de línea
+    const exactTotalUnits = exactBulletLines + preparedSections.length * 1.57;
+    const lineSpacing = Math.min(4.8, (availableH - 0.8) / Math.max(1, exactTotalUnits));
+    const titleSpacing = lineSpacing * 1.12;
+    const secGap = lineSpacing * 0.45;
+
+    // Renderizado completo de TODAS las secciones y normas (sin recortar tras la regla 7)
+    for (const sec of preparedSections) {
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(dynamicTitleSize);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(sec.title, rightMargin, textY);
+      textY += titleSpacing;
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(dynamicFontSize);
+      pdf.setTextColor(25, 25, 25);
+
+      for (const lines of sec.wrappedItems) {
+        for (const line of lines) {
+          pdf.text(line, rightMargin + 1.5, textY);
+          textY += lineSpacing;
+        }
+      }
+      textY += secGap;
+    }
+
+    // Pie de página anclado respetando el margen inferior
+    pdf.setLineWidth(0.3);
+    pdf.setDrawColor(200, 200, 200);
+    pdf.line(rightMargin, footerLineY, startX + cardW - 8, footerLineY);
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(6.5);
+    pdf.setTextColor(110, 110, 110);
+    pdf.text("Las Palomas Rocky Point HOA", rightMargin, startY + cardH - 5.5);
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(6.5);
+    pdf.setTextColor(80, 80, 80);
+    pdf.text(footerRightText, startX + cardW - 8, startY + cardH - 5.5, { align: "right" });
+  };
+
+  // Native Vector High-Resolution PDF Generator (Mathematically Centered on Letter 21.5 x 28 cm, Exact Branding)
   const handleDescargarPDFDirecto = async (veh: Vehicle, isPrintOnly: boolean = false) => {
     try {
       setIsGeneratingPDF(true);
@@ -3837,15 +4074,17 @@ export default function App() {
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "mm",
-        format: "a4", // 297 x 210 mm
+        format: "letter", // Hoja Tamaño Carta: 279.4 x 215.9 mm (~28.0 x 21.5 cm)
       });
 
-      const cardW = 260; // 26.0 cm total width
-      const cardH = 175; // 17.5 cm total height
-      const startX = (297 - cardW) / 2; // 18.5 mm
-      const startY = (210 - cardH) / 2; // 17.5 mm
+      const pageW = pdf.internal.pageSize.getWidth(); // 279.4 mm
+      const pageH = pdf.internal.pageSize.getHeight(); // 215.9 mm
+      const cardW = 260; // 26.0 cm total width (13.0 cm por cara)
+      const cardH = 195; // 19.5 cm total height (aprovecha la hoja Carta respetando ~1.0 cm de margen)
+      const startX = (pageW - cardW) / 2; // ~9.7 mm
+      const startY = (pageH - cardH) / 2; // ~10.45 mm
       const colW = cardW / 2; // 130 mm (exact 50% width)
-      const midX = startX + colW; // center fold line (148.5 mm)
+      const midX = startX + colW; // center fold line
 
       // Outer Solid Border
       pdf.setDrawColor(0, 0, 0);
@@ -3862,80 +4101,80 @@ export default function App() {
       pdf.setLineDashPattern([], 0);
 
       // ── LEFT SIDE: ANVERSO (100% Mathematically Centered on leftCenterX) ───
-      const leftCenterX = startX + colW / 2; // 83.5 mm
+      const leftCenterX = startX + colW / 2;
 
       // 1. Title CONTRATISTA
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(17);
       pdf.setTextColor(0, 0, 0);
-      pdf.text("CONTRATISTA", leftCenterX, startY + 12, { align: "center" });
+      pdf.text("CONTRATISTA", leftCenterX, startY + 13, { align: "center" });
 
       // Double Line 1
       pdf.setLineWidth(0.6);
       pdf.setDrawColor(0, 0, 0);
-      pdf.line(startX + 7, startY + 15.5, midX - 7, startY + 15.5);
-      pdf.line(startX + 7, startY + 16.8, midX - 7, startY + 16.8);
+      pdf.line(startX + 7, startY + 17, midX - 7, startY + 17);
+      pdf.line(startX + 7, startY + 18.3, midX - 7, startY + 18.3);
 
       // 2. Logo HOA with Colorful Waves
       if (logoDataUrl) {
-        const logoW = 50;
-        const logoH = 16;
-        pdf.addImage(logoDataUrl, "PNG", leftCenterX - logoW / 2, startY + 19, logoW, logoH);
+        const logoW = 52;
+        const logoH = 17;
+        pdf.addImage(logoDataUrl, "PNG", leftCenterX - logoW / 2, startY + 21, logoW, logoH);
       } else {
         pdf.setFont("times", "bold");
         pdf.setFontSize(15);
         pdf.setTextColor(0, 0, 0);
-        pdf.text("Las Palomas", leftCenterX, startY + 26.5, { align: "center" });
+        pdf.text("Las Palomas", leftCenterX, startY + 28.5, { align: "center" });
         pdf.setFontSize(9);
         pdf.setTextColor(80, 80, 80);
-        pdf.text("Rocky Point HOA, A.C.", leftCenterX, startY + 31.5, { align: "center" });
+        pdf.text("Rocky Point HOA, A.C.", leftCenterX, startY + 33.5, { align: "center" });
       }
 
       // Double Line 2
       pdf.setDrawColor(0, 0, 0);
-      pdf.line(startX + 7, startY + 37.5, midX - 7, startY + 37.5);
-      pdf.line(startX + 7, startY + 38.8, midX - 7, startY + 38.8);
+      pdf.line(startX + 7, startY + 41, midX - 7, startY + 41);
+      pdf.line(startX + 7, startY + 42.3, midX - 7, startY + 42.3);
 
-      // 3. NUMBER 70 — MATHEMATICALLY CENTERED
+      // 3. NUMBER — MATHEMATICALLY CENTERED
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(52);
+      pdf.setFontSize(54);
       pdf.setTextColor(0, 0, 0);
-      pdf.text(veh.corbatinNum, leftCenterX, startY + 54.5, { align: "center" });
+      pdf.text(veh.corbatinNum, leftCenterX, startY + 59.5, { align: "center" });
 
       // Double Line 3
-      pdf.line(startX + 7, startY + 59.5, midX - 7, startY + 59.5);
-      pdf.line(startX + 7, startY + 60.8, midX - 7, startY + 60.8);
+      pdf.line(startX + 7, startY + 65, midX - 7, startY + 65);
+      pdf.line(startX + 7, startY + 66.3, midX - 7, startY + 66.3);
 
       // 4. Vehicle & Driver Information
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(10);
+      pdf.setFontSize(10.5);
       pdf.setTextColor(0, 0, 0);
-      pdf.text(`${veh.marca} ${veh.modelo} (${veh.anio})`, leftCenterX, startY + 67.5, { align: "center" });
+      pdf.text(`${veh.marca} ${veh.modelo} (${veh.anio})`, leftCenterX, startY + 74, { align: "center" });
 
       pdf.setFont("courier", "bold");
-      pdf.setFontSize(13);
-      pdf.text(veh.placas, leftCenterX, startY + 73.5, { align: "center" });
+      pdf.setFontSize(13.5);
+      pdf.text(veh.placas, leftCenterX, startY + 80.5, { align: "center" });
 
       pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(8.5);
+      pdf.setFontSize(9);
       pdf.setTextColor(50, 50, 50);
-      pdf.text(veh.conductor, leftCenterX, startY + 78.5, { align: "center" });
+      pdf.text(veh.conductor, leftCenterX, startY + 86.5, { align: "center" });
 
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(10);
+      pdf.setFontSize(10.5);
       pdf.setTextColor(13, 110, 95);
-      pdf.text(veh.empresaNombre, leftCenterX, startY + 83.5, { align: "center" });
+      pdf.text(veh.empresaNombre, leftCenterX, startY + 92.5, { align: "center" });
 
       // Divider Line
       pdf.setLineDashPattern([1.5, 1.5], 0);
       pdf.setDrawColor(170, 170, 170);
-      pdf.line(startX + 10, startY + 87.5, midX - 10, startY + 87.5);
+      pdf.line(startX + 10, startY + 97.5, midX - 10, startY + 97.5);
       pdf.setLineDashPattern([], 0);
 
       // 5. Large Centered QR Code
-      const qrSize = 44; // 44 x 44 mm
+      const qrSize = 48; // 48 x 48 mm
       const qrX = leftCenterX - qrSize / 2;
-      const qrY = startY + 91;
+      const qrY = startY + 103;
 
       pdf.setDrawColor(0, 0, 0);
       pdf.setLineWidth(0.6);
@@ -3946,95 +4185,26 @@ export default function App() {
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(8.5);
       pdf.setTextColor(13, 110, 95);
-      pdf.text(`VIGENCIA: 1 AÑO (${currentYear} – ${nextYear})`, leftCenterX, startY + 144.5, { align: "center" });
+      pdf.text(`VIGENCIA: 1 AÑO (${currentYear} – ${nextYear})`, leftCenterX, startY + 161, { align: "center" });
 
-      pdf.setFontSize(8);
+      pdf.setFontSize(8.5);
       pdf.setTextColor(0, 0, 0);
-      pdf.text("POR FAVOR DE COLOCAR", leftCenterX, startY + 150.5, { align: "center" });
-      pdf.text("EN EL RETROVISOR", leftCenterX, startY + 155, { align: "center" });
+      pdf.text("POR FAVOR DE COLOCAR", leftCenterX, startY + 168, { align: "center" });
+      pdf.text("EN EL RETROVISOR", leftCenterX, startY + 173, { align: "center" });
 
-      // ── RIGHT SIDE: REVERSO (Reglamento Oficial - Proporción Idéntica a Vista Web) ───
-      const rightMargin = midX + 9;
-      const contentWidth = colW - 17; // 113 mm printable area for right side
-      const maxY = startY + cardH - 12; // 180.5 mm hard stop before footer line
-      let textY = startY + 11.5;
-
+      // ── RIGHT SIDE: REVERSO (Reglamento Oficial Completo sin recortes) ───
       const activeSections = reglamentoSecciones && reglamentoSecciones.length > 0 ? reglamentoSecciones : DEFAULT_REGLAMENTO_SECTIONS;
-
-      // 1. Calculate required line weight
-      let totalLineCount = 0;
-      activeSections.forEach((sec) => {
-        totalLineCount += 1.3; // section title weight
-        (sec.items || []).forEach((it) => {
-          const rawBullet = it.startsWith("•") ? it : `• ${it}`;
-          const lines = pdf.splitTextToSize(rawBullet, contentWidth);
-          totalLineCount += lines.length;
-        });
-      });
-
-      // Available vertical space between header and footer: ~140 mm
-      const targetAvailableH = 138;
-      // Compute dynamic spacing per line so it spans the entire card naturally
-      const dynamicSpacing = Math.min(5.2, Math.max(3.3, targetAvailableH / Math.max(1, totalLineCount + activeSections.length * 0.4)));
-      const dynamicFontSize = Math.min(10.2, Math.max(7.2, dynamicSpacing * 1.96));
-      const dynamicTitleSize = Math.min(11.0, dynamicFontSize * 1.12);
-      const dynamicTitleSpacing = dynamicSpacing * 1.18;
-      const dynamicSecMargin = dynamicSpacing * 0.75;
-
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(11.5);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text("REGLAMENTO PARA EXTERNOS EN ÁREAS COMUNES:", midX + colW / 2, textY, { align: "center" });
-
-      textY += 8.5;
-
-      for (const sec of activeSections) {
-        if (textY + dynamicTitleSpacing >= maxY) break;
-
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(dynamicTitleSize);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text(sec.title || "", rightMargin, textY);
-        textY += dynamicTitleSpacing;
-
-        pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(dynamicFontSize);
-        pdf.setTextColor(25, 25, 25);
-
-        let itemStopped = false;
-        for (const it of (sec.items || [])) {
-          if (textY + dynamicSpacing >= maxY) {
-            itemStopped = true;
-            break;
-          }
-          const rawBullet = it.startsWith("•") ? it : `• ${it}`;
-          const lines = pdf.splitTextToSize(rawBullet, contentWidth);
-          for (const line of lines) {
-            if (textY + dynamicSpacing >= maxY) {
-              itemStopped = true;
-              break;
-            }
-            pdf.text(line, rightMargin + 1.5, textY);
-            textY += dynamicSpacing;
-          }
-        }
-        textY += dynamicSecMargin;
-        if (itemStopped || textY >= maxY) break;
-      }
-
-      // Bottom Footer (Always strictly anchored at card bottom)
-      pdf.setLineWidth(0.3);
-      pdf.setDrawColor(200, 200, 200);
-      pdf.line(rightMargin, startY + cardH - 10, startX + cardW - 8, startY + cardH - 10);
-
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(6.5);
-      pdf.setTextColor(110, 110, 110);
-      pdf.text("Las Palomas Rocky Point HOA", rightMargin, startY + cardH - 5.5);
-
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(6.5);
-      pdf.text(`Corb. #${veh.corbatinNum} · ${veh.placas} · Vig. ${currentYear}–${nextYear}`, startX + cardW - 8, startY + cardH - 5.5, { align: "right" });
+      renderReversoReglamentoPDF(
+        pdf,
+        activeSections,
+        midX,
+        colW,
+        startX,
+        startY,
+        cardW,
+        cardH,
+        `Corb. #${veh.corbatinNum} · ${veh.placas} · Vig. ${currentYear}–${nextYear}`
+      );
 
       if (isPrintOnly) {
         pdf.autoPrint({ variant: "non-conform" });
@@ -4090,15 +4260,17 @@ export default function App() {
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "mm",
-        format: "a4", // 297 x 210 mm
+        format: "letter", // Hoja Tamaño Carta: 279.4 x 215.9 mm (~28.0 x 21.5 cm)
       });
 
-      const cardW = 260; // 26.0 cm total width
-      const cardH = 175; // 17.5 cm total height
-      const startX = (297 - cardW) / 2; // 18.5 mm
-      const startY = (210 - cardH) / 2; // 17.5 mm
+      const pageW = pdf.internal.pageSize.getWidth(); // 279.4 mm
+      const pageH = pdf.internal.pageSize.getHeight(); // 215.9 mm
+      const cardW = 260; // 26.0 cm total width (13.0 cm por cara)
+      const cardH = 195; // 19.5 cm total height
+      const startX = (pageW - cardW) / 2; // ~9.7 mm
+      const startY = (pageH - cardH) / 2; // ~10.45 mm
       const colW = cardW / 2; // 130 mm
-      const midX = startX + colW; // 148.5 mm
+      const midX = startX + colW;
 
       // Outer Solid Black Border
       pdf.setDrawColor(0, 0, 0);
@@ -4117,67 +4289,67 @@ export default function App() {
 
       // 1. Title PROVEEDOR — ACCESO TEMPORAL
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(13);
+      pdf.setFontSize(13.5);
       pdf.setTextColor(0, 0, 0);
-      pdf.text("PROVEEDOR — ACCESO TEMPORAL", leftCenterX, startY + 11.5, { align: "center" });
+      pdf.text("PROVEEDOR — ACCESO TEMPORAL", leftCenterX, startY + 13, { align: "center" });
 
       // Double Line 1 (Black)
       pdf.setLineWidth(0.6);
       pdf.setDrawColor(0, 0, 0);
-      pdf.line(startX + 7, startY + 15, midX - 7, startY + 15);
-      pdf.line(startX + 7, startY + 16.3, midX - 7, startY + 16.3);
+      pdf.line(startX + 7, startY + 17, midX - 7, startY + 17);
+      pdf.line(startX + 7, startY + 18.3, midX - 7, startY + 18.3);
 
       // 2. Logo HOA
       if (logoDataUrl) {
-        const logoW = 50;
-        const logoH = 16;
-        pdf.addImage(logoDataUrl, "PNG", leftCenterX - logoW / 2, startY + 18.5, logoW, logoH);
+        const logoW = 52;
+        const logoH = 17;
+        pdf.addImage(logoDataUrl, "PNG", leftCenterX - logoW / 2, startY + 21, logoW, logoH);
       } else {
         pdf.setFont("times", "bold");
         pdf.setFontSize(14);
         pdf.setTextColor(0, 0, 0);
-        pdf.text("Las Palomas", leftCenterX, startY + 25.5, { align: "center" });
+        pdf.text("Las Palomas", leftCenterX, startY + 28, { align: "center" });
         pdf.setFontSize(8.5);
         pdf.setTextColor(100, 116, 139);
-        pdf.text("Rocky Point HOA, A.C.", leftCenterX, startY + 30, { align: "center" });
+        pdf.text("Rocky Point HOA, A.C.", leftCenterX, startY + 32.5, { align: "center" });
       }
 
       // Double Line 2 (Black)
       pdf.setDrawColor(0, 0, 0);
-      pdf.line(startX + 7, startY + 37, midX - 7, startY + 37);
-      pdf.line(startX + 7, startY + 38.3, midX - 7, startY + 38.3);
+      pdf.line(startX + 7, startY + 41, midX - 7, startY + 41);
+      pdf.line(startX + 7, startY + 42.3, midX - 7, startY + 42.3);
 
       // 3. NUMBER 001 - BOLD BLACK
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(54);
+      pdf.setFontSize(56);
       pdf.setTextColor(0, 0, 0);
-      pdf.text(corbNumFormatted, leftCenterX, startY + 55, { align: "center" });
+      pdf.text(corbNumFormatted, leftCenterX, startY + 59.5, { align: "center" });
 
       // Double Line 3
-      pdf.line(startX + 7, startY + 60, midX - 7, startY + 60);
-      pdf.line(startX + 7, startY + 61.3, midX - 7, startY + 61.3);
+      pdf.line(startX + 7, startY + 65, midX - 7, startY + 65);
+      pdf.line(startX + 7, startY + 66.3, midX - 7, startY + 66.3);
 
       // 4. Branding & Context Information (Generic Reusable)
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(11);
       pdf.setTextColor(0, 0, 0);
-      pdf.text("LAS PALOMAS ROCKY POINT HOA", leftCenterX, startY + 68, { align: "center" });
+      pdf.text("LAS PALOMAS ROCKY POINT HOA", leftCenterX, startY + 75, { align: "center" });
 
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(9.5);
       pdf.setTextColor(60, 60, 60);
-      pdf.text("Control de Acceso Vehicular", leftCenterX, startY + 75, { align: "center" });
+      pdf.text("Control de Acceso Vehicular", leftCenterX, startY + 82, { align: "center" });
 
       // Divider Line
       pdf.setLineDashPattern([1.5, 1.5], 0);
       pdf.setDrawColor(170, 170, 170);
-      pdf.line(startX + 10, startY + 80, midX - 10, startY + 80);
+      pdf.line(startX + 10, startY + 88, midX - 10, startY + 88);
       pdf.setLineDashPattern([], 0);
 
       // 5. Large Centered QR Code
-      const qrSize = 46;
+      const qrSize = 50;
       const qrX = leftCenterX - qrSize / 2;
-      const qrY = startY + 85;
+      const qrY = startY + 95;
 
       pdf.setDrawColor(0, 0, 0);
       pdf.setLineWidth(0.6);
@@ -4188,59 +4360,21 @@ export default function App() {
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(8.5);
       pdf.setTextColor(0, 0, 0);
-      pdf.text("POR FAVOR DE COLOCAR EN EL RETROVISOR", leftCenterX, startY + 148, { align: "center" });
+      pdf.text("POR FAVOR DE COLOCAR EN EL RETROVISOR", leftCenterX, startY + 162, { align: "center" });
 
-      // ── RIGHT SIDE: REVERSO ──
-      const rightMargin = midX + 9;
-      const contentWidth = colW - 17;
-      const maxY = startY + cardH - 12;
-      let textY = startY + 11.5;
-
+      // ── RIGHT SIDE: REVERSO (Reglamento Oficial Completo sin recortes) ──
       const activeSections = reglamentoSecciones && reglamentoSecciones.length > 0 ? reglamentoSecciones : DEFAULT_REGLAMENTO_SECTIONS;
-
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(11.5);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text("REGLAMENTO PARA EXTERNOS EN ÁREAS COMUNES:", midX + colW / 2, textY, { align: "center" });
-      textY += 8.5;
-
-      for (const sec of activeSections) {
-        if (textY + 4 >= maxY) break;
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(9);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text(sec.title || "", rightMargin, textY);
-        textY += 4.5;
-
-        pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(8);
-        pdf.setTextColor(25, 25, 25);
-
-        for (const it of (sec.items || [])) {
-          if (textY + 3.5 >= maxY) break;
-          const rawBullet = it.startsWith("•") ? it : `• ${it}`;
-          const lines = pdf.splitTextToSize(rawBullet, contentWidth);
-          for (const line of lines) {
-            if (textY + 3.5 >= maxY) break;
-            pdf.text(line, rightMargin + 1.5, textY);
-            textY += 3.8;
-          }
-        }
-        textY += 2;
-      }
-
-      // Bottom Footer
-      pdf.setLineWidth(0.3);
-      pdf.setDrawColor(200, 200, 200);
-      pdf.line(rightMargin, startY + cardH - 10, startX + cardW - 8, startY + cardH - 10);
-
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(6.5);
-      pdf.setTextColor(110, 110, 110);
-      pdf.text("Las Palomas Rocky Point HOA", rightMargin, startY + cardH - 5.5);
-
-      pdf.setTextColor(80, 80, 80);
-      pdf.text(`Corbatín Verde #${corbNumFormatted}`, startX + cardW - 8, startY + cardH - 5.5, { align: "right" });
+      renderReversoReglamentoPDF(
+        pdf,
+        activeSections,
+        midX,
+        colW,
+        startX,
+        startY,
+        cardW,
+        cardH,
+        `Corbatín Verde #${corbNumFormatted}`
+      );
 
       if (isPrintOnly) {
         pdf.autoPrint({ variant: "non-conform" });
@@ -4287,20 +4421,22 @@ export default function App() {
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "mm",
-        format: "a4",
+        format: "letter", // Hoja Tamaño Carta: 279.4 x 215.9 mm (~28.0 x 21.5 cm)
       });
 
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
       const cardW = 260;
-      const cardH = 175;
-      const startX = (297 - cardW) / 2;
-      const startY = (210 - cardH) / 2;
+      const cardH = 195;
+      const startX = (pageW - cardW) / 2;
+      const startY = (pageH - cardH) / 2;
       const colW = cardW / 2;
       const midX = startX + colW;
 
       const activeSections = reglamentoSecciones && reglamentoSecciones.length > 0 ? reglamentoSecciones : DEFAULT_REGLAMENTO_SECTIONS;
 
       for (let i = 0; i < poolParaImprimir.length; i++) {
-        if (i > 0) pdf.addPage("a4", "landscape");
+        if (i > 0) pdf.addPage("letter", "landscape");
 
         const corb = poolParaImprimir[i];
         const corbNumFormatted = formatCorbatinVerdeNum(corb.corbatinNum);
@@ -4328,51 +4464,51 @@ export default function App() {
         const leftCenterX = startX + colW / 2;
 
         pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(13);
+        pdf.setFontSize(13.5);
         pdf.setTextColor(0, 0, 0);
-        pdf.text("PROVEEDOR — ACCESO TEMPORAL", leftCenterX, startY + 11.5, { align: "center" });
+        pdf.text("PROVEEDOR — ACCESO TEMPORAL", leftCenterX, startY + 13, { align: "center" });
 
         pdf.setLineWidth(0.6);
         pdf.setDrawColor(0, 0, 0);
-        pdf.line(startX + 7, startY + 15, midX - 7, startY + 15);
-        pdf.line(startX + 7, startY + 16.3, midX - 7, startY + 16.3);
+        pdf.line(startX + 7, startY + 17, midX - 7, startY + 17);
+        pdf.line(startX + 7, startY + 18.3, midX - 7, startY + 18.3);
 
         if (logoDataUrl) {
-          const logoW = 50;
-          const logoH = 16;
-          pdf.addImage(logoDataUrl, "PNG", leftCenterX - logoW / 2, startY + 18.5, logoW, logoH);
+          const logoW = 52;
+          const logoH = 17;
+          pdf.addImage(logoDataUrl, "PNG", leftCenterX - logoW / 2, startY + 21, logoW, logoH);
         }
 
         pdf.setDrawColor(0, 0, 0);
-        pdf.line(startX + 7, startY + 37, midX - 7, startY + 37);
-        pdf.line(startX + 7, startY + 38.3, midX - 7, startY + 38.3);
+        pdf.line(startX + 7, startY + 41, midX - 7, startY + 41);
+        pdf.line(startX + 7, startY + 42.3, midX - 7, startY + 42.3);
 
         pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(54);
+        pdf.setFontSize(56);
         pdf.setTextColor(0, 0, 0);
-        pdf.text(corbNumFormatted, leftCenterX, startY + 55, { align: "center" });
+        pdf.text(corbNumFormatted, leftCenterX, startY + 59.5, { align: "center" });
 
-        pdf.line(startX + 7, startY + 60, midX - 7, startY + 60);
-        pdf.line(startX + 7, startY + 61.3, midX - 7, startY + 61.3);
+        pdf.line(startX + 7, startY + 65, midX - 7, startY + 65);
+        pdf.line(startX + 7, startY + 66.3, midX - 7, startY + 66.3);
 
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(11);
         pdf.setTextColor(0, 0, 0);
-        pdf.text("LAS PALOMAS ROCKY POINT HOA", leftCenterX, startY + 68, { align: "center" });
+        pdf.text("LAS PALOMAS ROCKY POINT HOA", leftCenterX, startY + 75, { align: "center" });
 
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(9.5);
         pdf.setTextColor(60, 60, 60);
-        pdf.text("Control de Acceso Vehicular", leftCenterX, startY + 75, { align: "center" });
+        pdf.text("Control de Acceso Vehicular", leftCenterX, startY + 82, { align: "center" });
 
         pdf.setLineDashPattern([1.5, 1.5], 0);
         pdf.setDrawColor(170, 170, 170);
-        pdf.line(startX + 10, startY + 80, midX - 10, startY + 80);
+        pdf.line(startX + 10, startY + 88, midX - 10, startY + 88);
         pdf.setLineDashPattern([], 0);
 
-        const qrSize = 46;
+        const qrSize = 50;
         const qrX = leftCenterX - qrSize / 2;
-        const qrY = startY + 85;
+        const qrY = startY + 95;
 
         pdf.setDrawColor(0, 0, 0);
         pdf.setLineWidth(0.6);
@@ -4382,57 +4518,20 @@ export default function App() {
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(8.5);
         pdf.setTextColor(0, 0, 0);
-        pdf.text("POR FAVOR DE COLOCAR EN EL RETROVISOR", leftCenterX, startY + 148, { align: "center" });
+        pdf.text("POR FAVOR DE COLOCAR EN EL RETROVISOR", leftCenterX, startY + 162, { align: "center" });
 
-        // Reverso
-        const rightMargin = midX + 9;
-        const contentWidth = colW - 17;
-        const maxY = startY + cardH - 12;
-        let textY = startY + 11.5;
-
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(11.5);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text("REGLAMENTO PARA EXTERNOS EN ÁREAS COMUNES:", midX + colW / 2, textY, { align: "center" });
-        textY += 8.5;
-
-        for (const sec of activeSections) {
-          if (textY + 4 >= maxY) break;
-          pdf.setFont("helvetica", "bold");
-          pdf.setFontSize(9);
-          pdf.setTextColor(0, 0, 0);
-          pdf.text(sec.title || "", rightMargin, textY);
-          textY += 4.5;
-
-          pdf.setFont("helvetica", "normal");
-          pdf.setFontSize(8);
-          pdf.setTextColor(25, 25, 25);
-
-          for (const it of (sec.items || [])) {
-            if (textY + 3.5 >= maxY) break;
-            const rawBullet = it.startsWith("•") ? it : `• ${it}`;
-            const lines = pdf.splitTextToSize(rawBullet, contentWidth);
-            for (const line of lines) {
-              if (textY + 3.5 >= maxY) break;
-              pdf.text(line, rightMargin + 1.5, textY);
-              textY += 3.8;
-            }
-          }
-          textY += 2;
-        }
-
-        // Footer
-        pdf.setLineWidth(0.3);
-        pdf.setDrawColor(200, 200, 200);
-        pdf.line(rightMargin, startY + cardH - 10, startX + cardW - 8, startY + cardH - 10);
-
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(6.5);
-        pdf.setTextColor(110, 110, 110);
-        pdf.text("Las Palomas Rocky Point HOA", rightMargin, startY + cardH - 5.5);
-
-        pdf.setTextColor(80, 80, 80);
-        pdf.text(`Corbatín Verde #${corbNumFormatted}`, startX + cardW - 8, startY + cardH - 5.5, { align: "right" });
+        // Reverso Completo sin recortes
+        renderReversoReglamentoPDF(
+          pdf,
+          activeSections,
+          midX,
+          colW,
+          startX,
+          startY,
+          cardW,
+          cardH,
+          `Corbatín Verde #${corbNumFormatted}`
+        );
       }
 
       if (isPrintOnly) {
@@ -4468,15 +4567,65 @@ export default function App() {
     }
   };
 
-  const getNextCorbatinVerdeNum = (list: CorbatinVerde[]): string => {
-    const existingSet = new Set(
-      list.map(c => parseInt(String(c.corbatinNum).replace(/[^0-9]/g, ""), 10)).filter(n => !isNaN(n) && n > 0)
+  // ─── Helpers para asignación inteligente de Corbatines Verdes ───
+
+  // Obtiene los números que actualmente están ocupados / asignados a una empresa
+  const getCorbatinesVerdesOcupados = (list: CorbatinVerde[]) => {
+    return list.filter(c => {
+      const hasEmp = Boolean(c.empresaNombre && c.empresaNombre.trim());
+      const estatus = (c.estatus_inventario || "").toUpperCase();
+      return c.activo !== false && hasEmp && estatus === "ASIGNADO";
+    });
+  };
+
+  // Obtiene los corbatines que están registrados en el pool pero DESOCUPADOS (libres / DISPONIBLES)
+  const getCorbatinesVerdesDesocupados = (list: CorbatinVerde[]) => {
+    return list.filter(c => {
+      const hasEmp = Boolean(c.empresaNombre && c.empresaNombre.trim());
+      const estatus = (c.estatus_inventario || "").toUpperCase();
+      return c.activo !== false && (!hasEmp || estatus === "DISPONIBLE");
+    }).sort((a, b) => {
+      const numA = parseInt(String(a.numero || a.corbatinNum).replace(/[^0-9]/g, ""), 10) || 0;
+      const numB = parseInt(String(b.numero || b.corbatinNum).replace(/[^0-9]/g, ""), 10) || 0;
+      return numA - numB;
+    });
+  };
+
+  // El número correlativo más alto actualmente en uso (ej. 14)
+  const getMaxCorbatinVerdeOcupado = (list: CorbatinVerde[]): number => {
+    const ocupados = getCorbatinesVerdesOcupados(list);
+    if (ocupados.length === 0) return 0;
+    return Math.max(
+      ...ocupados.map(c => parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10) || 0)
     );
-    let next = 1;
-    while (existingSet.has(next)) {
-      next++;
+  };
+
+  // El siguiente consecutivo después del último ocupado (ej. si el último ocupado es 14, devuelve 15)
+  const getSiguienteConsecutivoNuevo = (list: CorbatinVerde[]): number => {
+    const maxOcupado = getMaxCorbatinVerdeOcupado(list);
+    const maxRegistrado = list.length > 0
+      ? Math.max(...list.map(c => parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10) || 0))
+      : 0;
+    return Math.max(maxOcupado, maxRegistrado) + 1;
+  };
+
+  // Sugerencia del primer número disponible:
+  // Si hay un hueco desocupado (ej. #5 está disponible), devuelve ese hueco primero.
+  // Si no hay huecos desocupados, devuelve el consecutivo tras el último ocupado (ej. 15).
+  const getPrimerCorbatinVerdeDisponible = (list: CorbatinVerde[]): number => {
+    const desocupados = getCorbatinesVerdesDesocupados(list);
+    if (desocupados.length > 0) {
+      const primerHueco = parseInt(String(desocupados[0].numero || desocupados[0].corbatinNum).replace(/[^0-9]/g, ""), 10);
+      if (!isNaN(primerHueco) && primerHueco > 0) {
+        return primerHueco;
+      }
     }
-    return formatCorbatinVerdeNum(next);
+    return getSiguienteConsecutivoNuevo(list);
+  };
+
+  // Mantener getNextCorbatinVerdeNum para compatibilidad de formato
+  const getNextCorbatinVerdeNum = (list: CorbatinVerde[]): string => {
+    return formatCorbatinVerdeNum(getPrimerCorbatinVerdeDisponible(list));
   };
 
   // ─── Modal de Vinculación Temporal: Abrir y Autocompletar ───
@@ -4652,25 +4801,43 @@ export default function App() {
     let end = 1;
 
     if (nuevoCVModo === "individual") {
-      const nextNum = parseInt(String(getNextCorbatinVerdeNum(corbatinesVerdes)).replace(/[^0-9]/g, ""), 10) || 1;
-      start = nextNum;
-      end = nextNum;
+      const parsed = parseInt(String(nuevoCVNumeroIndividual).replace(/[^0-9]/g, ""), 10);
+      const chosenNum = (!isNaN(parsed) && parsed > 0) ? parsed : getPrimerCorbatinVerdeDisponible(corbatinesVerdes);
+      start = chosenNum;
+      end = chosenNum;
     } else {
       let startParsed = parseInt(String(nuevoCVRangoInicio).replace(/[^0-9]/g, ""), 10);
       let endParsed = parseInt(String(nuevoCVRangoFin).replace(/[^0-9]/g, ""), 10);
 
-      if (isNaN(startParsed) || isNaN(endParsed)) {
-        const nextStart = parseInt(String(getNextCorbatinVerdeNum(corbatinesVerdes)).replace(/[^0-9]/g, ""), 10) || 1;
-        start = nextStart;
-        end = nextStart;
-      } else {
-        start = startParsed;
-        end = endParsed;
+      if (isNaN(startParsed) || isNaN(endParsed) || startParsed <= 0 || endParsed < startParsed) {
+        setNuevoCVError("El rango numérico especificado es inválido.");
+        return;
       }
+      start = startParsed;
+      end = endParsed;
     }
 
-    if (start <= 0 || end < start) {
-      setNuevoCVError("El rango numérico especificado es inválido.");
+    // ─── VALIDACIÓN ESTRICTA: NO PERMITIR EMITIR CORBATINES QUE YA ESTÁN EN USO ───
+    const enUsoEnRango = corbatinesVerdes.filter(c => {
+      const num = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
+      const hasEmp = Boolean(c.empresaNombre && c.empresaNombre.trim());
+      const estatus = (c.estatus_inventario || "").toUpperCase();
+      return num >= start && num <= end && c.activo !== false && hasEmp && estatus === "ASIGNADO";
+    });
+
+    if (enUsoEnRango.length > 0) {
+      if (nuevoCVModo === "individual") {
+        const itemOcupado = enUsoEnRango[0];
+        setNuevoCVError(
+          `El Corbatín #${formatCorbatinVerdeNum(itemOcupado.numero || itemOcupado.corbatinNum)} ya se encuentra asignado a "${itemOcupado.empresaNombre}". No puede ser re-emitido. Selecciona un número desocupado o consecutivo.`
+        );
+      } else {
+        const detalle = enUsoEnRango.slice(0, 4).map(c => `#${formatCorbatinVerdeNum(c.numero || c.corbatinNum)} (${c.empresaNombre})`).join(", ");
+        const sigSugerido = formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes));
+        setNuevoCVError(
+          `El rango seleccionado incluye ${enUsoEnRango.length} corbatín(es) actualmente en uso: ${detalle}${enUsoEnRango.length > 4 ? "..." : ""}. Por favor emite a partir del consecutivo #${sigSugerido} o selecciona números desocupados.`
+        );
+      }
       return;
     }
 
@@ -4770,9 +4937,10 @@ export default function App() {
         localStorage.setItem("hoa_corbatines_verdes", JSON.stringify(updatedList));
       } catch { }
 
-      // Persistir en base de datos
+      // Persistir en base de datos y recargar
       try {
         await api.createCorbatin(apiPayload.length === 1 ? apiPayload[0] : { items: apiPayload });
+        await reloadCorbatines();
       } catch (apiErr) {
         console.warn("Advertencia conectando con API de corbatines:", apiErr);
       }
@@ -5034,6 +5202,14 @@ export default function App() {
 
       // Registro en Modalidad Corbatín Verde (Proyectos / Larga Estancia)
       if (currentCasetaCorbatinVerde) {
+        if (currentCorbatinVerdeDentro) {
+          showToast(
+            "El Corbatín Verde #" + formatCorbatinVerdeNum(currentCasetaCorbatinVerde.corbatinNum) + " ya cuenta con un ingreso activo registrado a las " + formatHoraLocal(currentCorbatinVerdeDentro.raw_hora_entrada || currentCorbatinVerdeDentro.horaEntrada) + ". Debe registrar su salida antes de registrar una nueva entrada.",
+            "warning",
+            "Unidad ya dentro"
+          );
+          return;
+        }
         if (!currentCasetaCorbatinVerde.activo && !casetaOverrideActive) {
           showToast("Este Corbatín Verde se encuentra inactivo o deshabilitado.", "error", "Acceso Denegado");
           return;
@@ -5087,6 +5263,15 @@ export default function App() {
       // Registro en Modalidad Vehicular Regular
       if (!currentCasetaVehicle) {
         showToast("Selecciona un vehículo o corbatín verde habilitado para registrar la entrada.", "warning");
+        return;
+      }
+
+      if (currentVehicleDentro) {
+        showToast(
+          "El vehículo (" + currentCasetaVehicle.placas + ") ya cuenta con una entrada activa registrada a las " + formatHoraLocal(currentVehicleDentro.raw_hora_entrada || currentVehicleDentro.horaEntrada) + ". Debe registrar su salida antes de registrar una nueva entrada.",
+          "warning",
+          "Vehículo actualmente dentro"
+        );
         return;
       }
 
@@ -7332,16 +7517,16 @@ export default function App() {
                                             </span>
                                           )}
                                         </td>
-                                        <td className="px-4 py-2.5">
+                                        <td className="px-4 py-2.5 whitespace-nowrap">
                                           <div className="flex items-center gap-1.5">
                                             {(v.status === "Suspendido" || v.status === "Restringido" || v.permisoTemporal?.activo) && (
                                               <button
                                                 type="button"
                                                 onClick={() => handleOpenGestionarCastigo(v)}
-                                                className="px-2.5 py-1 rounded-lg text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-600 hover:text-white border border-amber-300 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                                className="h-8 px-2.5 rounded-lg text-xs font-bold text-amber-900 bg-amber-50 hover:bg-amber-500 hover:text-white border border-amber-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 whitespace-nowrap"
                                                 title="Gestionar pase provisional o levantamiento de castigo por orden de Oficina"
                                               >
-                                                <IconShield className="w-3.5 h-3.5" />
+                                                <IconShield className="w-3.5 h-3.5 shrink-0" />
                                                 <span>Pase Oficina</span>
                                               </button>
                                             )}
@@ -7352,25 +7537,25 @@ export default function App() {
                                                 setSupervisorCorbatinEmpresaFilter(v.empresaNombre || "all");
                                                 setSupervisorTab("corbatines");
                                               }}
-                                              className="px-2.5 py-1 rounded-lg text-xs font-bold text-teal-700 bg-teal-50 hover:bg-[#0D6E5F] hover:text-white border border-teal-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                              className="h-8 px-2.5 rounded-lg text-xs font-bold text-[#0D6E5F] bg-teal-50 hover:bg-[#0D6E5F] hover:text-white border border-teal-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 whitespace-nowrap"
                                               title="Ver, descargar e imprimir corbatín"
                                             >
-                                              <IconFileText className="w-3.5 h-3.5" />
+                                              <IconFileText className="w-3.5 h-3.5 shrink-0" />
                                               <span>Corbatín</span>
                                             </button>
                                             <button
                                               type="button"
                                               onClick={() => handleOpenEditarVehiculo(v)}
-                                              className="px-2.5 py-1 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white border border-blue-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                              className="h-8 px-2.5 rounded-lg text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 hover:text-slate-900 border border-slate-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 whitespace-nowrap"
                                               title="Editar datos y cambiar estatus de acceso"
                                             >
-                                              <IconEdit className="w-3.5 h-3.5" />
+                                              <IconEdit className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                                               <span>Editar</span>
                                             </button>
                                             <button
                                               type="button"
                                               onClick={() => setSelectedVehiculoParaEliminar(v)}
-                                              className="p-1 px-2 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-600 hover:text-white border border-red-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                              className="h-8 w-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-all flex items-center justify-center cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 shrink-0"
                                               title="Eliminar vehículo"
                                             >
                                               <IconTrash className="w-3.5 h-3.5" />
@@ -7562,21 +7747,21 @@ export default function App() {
                                             )}
                                           </button>
                                         </td>
-                                        <td className="px-4 py-2.5">
+                                        <td className="px-4 py-2.5 whitespace-nowrap">
                                           <div className="flex items-center gap-1.5">
                                             <button
                                               type="button"
                                               onClick={() => handleOpenEditarTrabajador(t)}
-                                              className="px-2.5 py-1 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white border border-blue-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                              className="h-8 px-2.5 rounded-lg text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 hover:text-slate-900 border border-slate-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 whitespace-nowrap"
                                               title="Modificar datos del trabajador"
                                             >
-                                              <IconEdit className="w-3.5 h-3.5" />
+                                              <IconEdit className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                                               <span>Editar</span>
                                             </button>
                                             <button
                                               type="button"
                                               onClick={() => setSelectedTrabajadorParaEliminar(t)}
-                                              className="p-1 px-2 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-600 hover:text-white border border-red-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                                              className="h-8 w-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-all flex items-center justify-center cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 shrink-0"
                                               title="Eliminar trabajador"
                                             >
                                               <IconTrash className="w-3.5 h-3.5" />
@@ -9386,9 +9571,11 @@ export default function App() {
                                   setNuevoCVTelefono("");
                                   setNuevoCVEmail("");
                                   setNuevoCVVigencia("6 Meses (Recomendado)");
-                                  const next = getNextCorbatinVerdeNum(corbatinesVerdes);
-                                  setNuevoCVRangoInicio(next);
-                                  setNuevoCVRangoFin(next);
+                                  const primerDisp = formatCorbatinVerdeNum(getPrimerCorbatinVerdeDisponible(corbatinesVerdes));
+                                  const sigConsecutivo = formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes));
+                                  setNuevoCVNumeroIndividual(primerDisp);
+                                  setNuevoCVRangoInicio(sigConsecutivo);
+                                  setNuevoCVRangoFin(sigConsecutivo);
                                   setNuevoCVNotas("");
                                   setNuevoCVError("");
                                   setShowCreateCorbatinVerdeModal(true);
@@ -9780,9 +9967,14 @@ export default function App() {
                                             <button
                                               type="button"
                                               onClick={() => {
-                                                if (confirm(`¿Desvincular el Corbatín #${numFmt} de "${activeItem.empresaNombre}" y devolverlo a Disponibles en inventario?`)) {
-                                                  handleDesvincularCorbatinVerde(activeItem.id);
-                                                }
+                                                setActionConfirmModal({
+                                                  isOpen: true,
+                                                  type: "liberar",
+                                                  title: `¿Liberar Corbatín #${numFmt}?`,
+                                                  corbatinNum: numFmt,
+                                                  empresaNombre: activeItem.empresaNombre,
+                                                  actionCallback: () => handleDesvincularCorbatinVerde(activeItem.id)
+                                                });
                                               }}
                                               className="px-3 py-1.5 rounded-xl text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors flex items-center gap-1.5 cursor-pointer"
                                               title="Liberar corbatín para volver a usarlo con otra empresa"
@@ -9866,9 +10058,14 @@ export default function App() {
                                     <button
                                       type="button"
                                       onClick={() => {
-                                        if (confirm(`¿Estás seguro de eliminar permanentemente el Corbatín Verde #${numFmt} del pool de inventario?`)) {
-                                          handleEliminarCorbatinVerde(activeItem.id);
-                                        }
+                                        setActionConfirmModal({
+                                          isOpen: true,
+                                          type: "eliminar",
+                                          title: `¿Eliminar Corbatín #${numFmt} del Pool?`,
+                                          corbatinNum: numFmt,
+                                          empresaNombre: activeItem.empresaNombre,
+                                          actionCallback: () => handleEliminarCorbatinVerde(activeItem.id)
+                                        });
                                       }}
                                       className="px-3.5 py-2 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 border border-red-200 transition-colors flex items-center gap-1.5 cursor-pointer"
                                     >
@@ -9960,68 +10157,61 @@ export default function App() {
                                             onClick={() => setSelectedCorbatinVerdeId(c.id)}
                                             className={`hover:bg-teal-50/50 cursor-pointer transition-colors ${selectedCorbatinVerdeId === c.id ? "bg-teal-50/60" : ""}`}
                                           >
-                                            <td className="px-5 py-3">
-                                              <span className="font-mono font-bold text-xs text-[#0D6E5F] bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200">
-                                                #{numFmt}
-                                              </span>
-                                            </td>
-                                            <td className="px-5 py-3">
-                                              {isDisp && (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                                  <span>Disponible</span>
+                                              <td className="px-5 py-3 font-mono font-bold text-teal-900">
+                                                <span className="bg-teal-50 text-[#0D6E5F] border border-teal-200 px-2 py-0.5 rounded-md">
+                                                  #{numFmt}
                                                 </span>
-                                              )}
-                                              {isAsig && (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                                  <span>Asignado</span>
-                                                </span>
-                                              )}
-                                              {isVenc && (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
-                                                  <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                                                  <span>Vencido</span>
-                                                </span>
-                                              )}
-                                              {!c.activo && (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                                                  <span>Inactivo</span>
-                                                </span>
-                                              )}
-                                            </td>
-                                            <td className="px-5 py-3 font-bold text-xs text-slate-900">
-                                              {c.empresaNombre ? (
-                                                <span>{c.empresaNombre}</span>
-                                              ) : (
-                                                <span className="text-slate-400 italic font-normal">Libre para asignación</span>
-                                              )}
-                                            </td>
-                                            <td className="px-5 py-3 font-mono text-xs text-slate-600">
-                                              {c.telefono ? (
-                                                <CopyableInlineText text={c.telefono} label="Teléfono" onCopyToast={showToast} />
-                                              ) : (
-                                                <span className="text-slate-300 font-sans">—</span>
-                                              )}
-                                            </td>
-                                            <td className="px-5 py-3 text-xs text-slate-600 font-medium">
-                                              {c.vigenciaTexto || (isDisp ? "—" : "Temporal")}
-                                            </td>
-                                            <td className="px-5 py-3 text-xs text-slate-500">
-                                              {c.fechaVencimiento || (isDisp ? "—" : "Indefinida")}
-                                            </td>
-                                            <td className="px-5 py-3 text-right">
-                                              <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                              </td>
+                                              <td className="px-5 py-3">
                                                 {isDisp ? (
-                                                  <button
-                                                    type="button"
-                                                    onClick={() => handleAbrirModalVincular(c)}
-                                                    className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0a574b] transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
-                                                    title="Vincular a Empresa"
-                                                  >
-                                                    <span>🔗 Vincular</span>
-                                                  </button>
+                                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                    Disponible
+                                                  </span>
+                                                ) : isVenc ? (
+                                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                                    Vencido
+                                                  </span>
                                                 ) : (
+                                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                                    Asignado
+                                                  </span>
+                                                )}
+                                              </td>
+                                              <td className="px-5 py-3 font-semibold text-slate-800">
+                                                {c.empresaNombre ? (
+                                                  <span>{c.empresaNombre}</span>
+                                                ) : (
+                                                  <span className="text-slate-400 italic font-normal">Libre para asignación</span>
+                                                )}
+                                              </td>
+                                              <td className="px-5 py-3 font-mono text-slate-600 text-xs">
+                                                {c.telefono || "—"}
+                                              </td>
+                                              <td className="px-5 py-3 text-slate-700 text-xs">
+                                                {c.vigenciaTexto || (isDisp ? "Disponible" : "6 Meses")}
+                                              </td>
+                                              <td className="px-5 py-3 font-mono text-slate-600 text-xs">
+                                                {c.fechaVencimiento || "—"}
+                                              </td>
+                                              <td className="px-5 py-3 text-right">
+                                                <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                                  {isDisp ? (
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => handleAbrirModalVincular(c)}
+                                                      className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#095247] transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                                                      title="Vincular corbatín a una empresa"
+                                                    >
+                                                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                                                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                                                      </svg>
+                                                      <span>Vincular</span>
+                                                    </button>
+                                                  ) : (
                                                   <>
                                                     <button
                                                       type="button"
@@ -10034,9 +10224,14 @@ export default function App() {
                                                     <button
                                                       type="button"
                                                       onClick={() => {
-                                                        if (confirm(`¿Liberar el Corbatín #${numFmt} de "${c.empresaNombre}" y devolverlo al inventario Disponible?`)) {
-                                                          handleDesvincularCorbatinVerde(c.id);
-                                                        }
+                                                        setActionConfirmModal({
+                                                          isOpen: true,
+                                                          type: "liberar",
+                                                          title: `¿Liberar Corbatín #${numFmt}?`,
+                                                          corbatinNum: numFmt,
+                                                          empresaNombre: c.empresaNombre,
+                                                          actionCallback: () => handleDesvincularCorbatinVerde(c.id)
+                                                        });
                                                       }}
                                                       className="p-1.5 px-2 rounded-lg text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-all cursor-pointer"
                                                       title="Liberar corbatín"
@@ -10065,119 +10260,121 @@ export default function App() {
                               </div>
 
                               {/* Footer de Paginación Robusto (10 registros por página) */}
-                              {filteredTableCorbatines.length > 0 && (
-                                <div className="px-5 py-3.5 border-t bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600" style={{ borderColor: "var(--color-border)" }}>
-                                  <div className="flex items-center gap-3">
-                                    <div>
-                                      Mostrando <strong className="text-slate-800">{cvStartIndex + 1}</strong> – <strong className="text-slate-800">{Math.min(cvStartIndex + cvPageSize, filteredTableCorbatines.length)}</strong> de <strong className="text-slate-800">{filteredTableCorbatines.length}</strong> {filteredTableCorbatines.length === 1 ? "corbatín" : "corbatines"}
-                                    </div>
-                                    <div className="hidden md:flex items-center gap-1 text-[11px] text-slate-500">
-                                      <span>•</span>
-                                      <label htmlFor="corbatines-page-size-select" className="text-slate-500">Ver:</label>
-                                      <select
-                                        id="corbatines-page-size-select"
-                                        value={cvPageSize}
-                                        onChange={(e) => {
-                                          setCorbatinVerdePageSize(Number(e.target.value));
-                                          setCorbatinVerdePage(1);
-                                        }}
-                                        className="bg-white border border-slate-300 rounded px-1.5 py-0.5 font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0D6E5F]"
-                                      >
-                                        <option value={10}>10 por pág.</option>
-                                        <option value={20}>20 por pág.</option>
-                                        <option value={50}>50 por pág.</option>
-                                      </select>
-                                    </div>
-                                  </div>
-
-                                  {totalCVPages > 1 && (
-                                    <div className="flex items-center gap-1.5">
-                                      {/* Primera Página */}
-                                      <button
-                                        type="button"
-                                        onClick={() => setCorbatinVerdePage(1)}
-                                        disabled={safeCVPage <= 1}
-                                        className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors cursor-pointer shadow-2xs"
-                                        title="Primera página"
-                                      >
-                                        <IconChevronsLeft className="w-3.5 h-3.5" />
-                                      </button>
-
-                                      {/* Anterior */}
-                                      <button
-                                        type="button"
-                                        onClick={() => setCorbatinVerdePage((p) => Math.max(1, p - 1))}
-                                        disabled={safeCVPage <= 1}
-                                        className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
-                                        title="Página anterior"
-                                      >
-                                        <IconChevronLeft className="w-3.5 h-3.5" />
-                                        <span className="hidden sm:inline">Anterior</span>
-                                      </button>
-
-                                      {/* Botones de Números de Página */}
-                                      <div className="flex items-center gap-1">
-                                        {Array.from({ length: totalCVPages }, (_, i) => i + 1).map((pageNum) => {
-                                          if (
-                                            totalCVPages > 7 &&
-                                            pageNum !== 1 &&
-                                            pageNum !== totalCVPages &&
-                                            Math.abs(pageNum - safeCVPage) > 1
-                                          ) {
-                                            if (pageNum === 2 || pageNum === totalCVPages - 1) {
-                                              return <span key={pageNum} className="px-1 text-slate-400">...</span>;
-                                            }
-                                            return null;
-                                          }
-
-                                          const isActive = pageNum === safeCVPage;
-                                          return (
-                                            <button
-                                              key={pageNum}
-                                              type="button"
-                                              onClick={() => setCorbatinVerdePage(pageNum)}
-                                              className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${isActive
-                                                ? "bg-[#0D6E5F] text-white shadow-xs"
-                                                : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-100"
-                                                }`}
-                                            >
-                                              {pageNum}
-                                            </button>
-                                          );
-                                        })}
+                              {
+                                filteredTableCorbatines.length > 0 && (
+                                  <div className="px-5 py-3.5 border-t bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600" style={{ borderColor: "var(--color-border)" }}>
+                                    <div className="flex items-center gap-3">
+                                      <div>
+                                        Mostrando <strong className="text-slate-800">{cvStartIndex + 1}</strong> – <strong className="text-slate-800">{Math.min(cvStartIndex + cvPageSize, filteredTableCorbatines.length)}</strong> de <strong className="text-slate-800">{filteredTableCorbatines.length}</strong> {filteredTableCorbatines.length === 1 ? "corbatín" : "corbatines"}
                                       </div>
-
-                                      {/* Siguiente */}
-                                      <button
-                                        type="button"
-                                        onClick={() => setCorbatinVerdePage((p) => Math.min(totalCVPages, p + 1))}
-                                        disabled={safeCVPage >= totalCVPages}
-                                        className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
-                                        title="Página siguiente"
-                                      >
-                                        <span className="hidden sm:inline">Siguiente</span>
-                                        <IconChevronRight className="w-3.5 h-3.5" />
-                                      </button>
-
-                                      {/* Última Página */}
-                                      <button
-                                        type="button"
-                                        onClick={() => setCorbatinVerdePage(totalCVPages)}
-                                        disabled={safeCVPage >= totalCVPages}
-                                        className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors cursor-pointer shadow-2xs"
-                                        title="Última página"
-                                      >
-                                        <IconChevronsRight className="w-3.5 h-3.5" />
-                                      </button>
-
-                                      <span className="text-[11px] text-slate-400 font-mono pl-1 hidden lg:inline">
-                                        Pág. {safeCVPage} / {totalCVPages}
-                                      </span>
+                                      <div className="hidden md:flex items-center gap-1 text-[11px] text-slate-500">
+                                        <span>•</span>
+                                        <label htmlFor="corbatines-page-size-select" className="text-slate-500">Ver:</label>
+                                        <select
+                                          id="corbatines-page-size-select"
+                                          value={cvPageSize}
+                                          onChange={(e) => {
+                                            setCorbatinVerdePageSize(Number(e.target.value));
+                                            setCorbatinVerdePage(1);
+                                          }}
+                                          className="bg-white border border-slate-300 rounded px-1.5 py-0.5 font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0D6E5F]"
+                                        >
+                                          <option value={10}>10 por pág.</option>
+                                          <option value={20}>20 por pág.</option>
+                                          <option value={50}>50 por pág.</option>
+                                        </select>
+                                      </div>
                                     </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
+
+                                    {totalCVPages > 1 && (
+                                      <div className="flex items-center gap-1.5">
+                                        {/* Primera Página */}
+                                        <button
+                                          type="button"
+                                          onClick={() => setCorbatinVerdePage(1)}
+                                          disabled={safeCVPage <= 1}
+                                          className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors cursor-pointer shadow-2xs"
+                                          title="Primera página"
+                                        >
+                                          <IconChevronsLeft className="w-3.5 h-3.5" />
+                                        </button>
+
+                                        {/* Anterior */}
+                                        <button
+                                          type="button"
+                                          onClick={() => setCorbatinVerdePage((p) => Math.max(1, p - 1))}
+                                          disabled={safeCVPage <= 1}
+                                          className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
+                                          title="Página anterior"
+                                        >
+                                          <IconChevronLeft className="w-3.5 h-3.5" />
+                                          <span className="hidden sm:inline">Anterior</span>
+                                        </button>
+
+                                        {/* Botones de Números de Página */}
+                                        <div className="flex items-center gap-1">
+                                          {Array.from({ length: totalCVPages }, (_, i) => i + 1).map((pageNum) => {
+                                            if (
+                                              totalCVPages > 7 &&
+                                              pageNum !== 1 &&
+                                              pageNum !== totalCVPages &&
+                                              Math.abs(pageNum - safeCVPage) > 1
+                                            ) {
+                                              if (pageNum === 2 || pageNum === totalCVPages - 1) {
+                                                return <span key={pageNum} className="px-1 text-slate-400">...</span>;
+                                              }
+                                              return null;
+                                            }
+
+                                            const isActive = pageNum === safeCVPage;
+                                            return (
+                                              <button
+                                                key={pageNum}
+                                                type="button"
+                                                onClick={() => setCorbatinVerdePage(pageNum)}
+                                                className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${isActive
+                                                  ? "bg-[#0D6E5F] text-white shadow-xs"
+                                                  : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-100"
+                                                  }`}
+                                              >
+                                                {pageNum}
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+
+                                        {/* Siguiente */}
+                                        <button
+                                          type="button"
+                                          onClick={() => setCorbatinVerdePage((p) => Math.min(totalCVPages, p + 1))}
+                                          disabled={safeCVPage >= totalCVPages}
+                                          className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
+                                          title="Página siguiente"
+                                        >
+                                          <span className="hidden sm:inline">Siguiente</span>
+                                          <IconChevronRight className="w-3.5 h-3.5" />
+                                        </button>
+
+                                        {/* Última Página */}
+                                        <button
+                                          type="button"
+                                          onClick={() => setCorbatinVerdePage(totalCVPages)}
+                                          disabled={safeCVPage >= totalCVPages}
+                                          className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors cursor-pointer shadow-2xs"
+                                          title="Última página"
+                                        >
+                                          <IconChevronsRight className="w-3.5 h-3.5" />
+                                        </button>
+
+                                        <span className="text-[11px] text-slate-400 font-mono pl-1 hidden lg:inline">
+                                          Pág. {safeCVPage} / {totalCVPages}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )
+                              }
+                            </div >
                           );
                         })()}
                       </>
@@ -11140,9 +11337,21 @@ export default function App() {
                               </p>
                             </div>
                           ) : (
-                            empresaSanciones.map((s) => (
-                              <div
-                                key={s.id}
+                            empresaSanciones.map((s) => {
+                              const cardEvidencias: string[] = (s.evidencias && s.evidencias.length > 0)
+                                ? s.evidencias
+                                : (s.evidenciaUrl ? [s.evidenciaUrl] : []);
+                              const matchedRep = !cardEvidencias.length
+                                ? (infraccionesPendientes || []).find((inf) =>
+                                    (s.id_reporte && String(inf.id) === String(s.id_reporte)) ||
+                                    (inf.placas === s.placas && inf.evidencias && inf.evidencias.length > 0)
+                                  )
+                                : null;
+                              const finalEvidencias: string[] = cardEvidencias.length > 0 ? cardEvidencias : (matchedRep?.evidencias || []);
+
+                              return (
+                                <div
+                                  key={s.id}
                                 className={`rounded-2xl border bg-white shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md ${s.status === "En Apelación"
                                   ? "border-sky-300 ring-1 ring-sky-100"
                                   : s.status === "Ratificada"
@@ -11228,6 +11437,47 @@ export default function App() {
                                       </div>
                                     </div>
                                   </div>
+
+                                  {/* Evidencias Fotográficas de la Sanción */}
+                                  {finalEvidencias.length > 0 && (
+                                    <div className="p-3 sm:p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+                                      <div className="flex items-center justify-between">
+                                        <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                                          <IconCamera className="w-3.5 h-3.5 text-[#0D6E5F]" />
+                                          <span>Evidencias Fotográficas Adjuntas ({finalEvidencias.length})</span>
+                                        </div>
+                                        <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">Clic en cualquier imagen para ampliar</span>
+                                      </div>
+                                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+                                        {finalEvidencias.map((foto, idx) => (
+                                          <div
+                                            key={idx}
+                                            onClick={() => setGenericImagePreview({
+                                              isOpen: true,
+                                              src: foto,
+                                              title: `Evidencia Fotográfica #${idx + 1}`,
+                                              subtitle: `Infracción: ${s.tipo} · Placas: ${s.placas} (${s.empresaNombre})`,
+                                              badge: `Folio #${s.id}`
+                                            })}
+                                            className="cursor-pointer group relative overflow-hidden rounded-xl border border-slate-200 shadow-2xs hover:border-[#0D6E5F] transition-all bg-slate-100 h-24 sm:h-28"
+                                            title="Clic para ver fotografía ampliada"
+                                          >
+                                            <img
+                                              src={foto}
+                                              alt={`Evidencia ${idx + 1}`}
+                                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                            />
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 flex items-center justify-center transition-colors">
+                                              <span className="opacity-0 group-hover:opacity-100 text-[10px] font-bold bg-white/95 text-slate-800 px-2 py-0.5 rounded-md shadow-sm transition-opacity flex items-center gap-1">
+                                                <IconEye className="w-3 h-3 text-[#0D6E5F]" />
+                                                <span>Ampliar</span>
+                                              </span>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
 
                                   {/* Sección de Apelación y Dictamen */}
                                   {s.apelacion && (
@@ -11330,8 +11580,9 @@ export default function App() {
                                   )}
                                 </div>
                               </div>
-                            ))
-                          )}
+                            );
+                          })
+                        )}
                         </div>
                       </>
                     );
@@ -11694,8 +11945,18 @@ export default function App() {
                             </label>
 
                             <div className="relative">
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
-                                <IconUsers className="w-3.5 h-3.5 text-emerald-600" />
+                              <span className="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none">
+                                {currentConductorVehicular && (currentConductorVehicular.foto_url || currentConductorVehicular.foto) ? (
+                                  <img
+                                    src={normalizeFotoUrl(currentConductorVehicular.foto_url || currentConductorVehicular.foto)}
+                                    alt="Chofer"
+                                    className="w-5 h-5 rounded-full object-cover border border-emerald-500 shadow-2xs pointer-events-auto cursor-pointer"
+                                    onClick={() => setSelectedFotoTrabajadorPreview(currentConductorVehicular)}
+                                    title="Clic para ver credencial del chofer"
+                                  />
+                                ) : (
+                                  <IconUsers className="w-3.5 h-3.5 text-emerald-600" />
+                                )}
                               </span>
                               <input
                                 type="text"
@@ -11710,7 +11971,7 @@ export default function App() {
                                       ? (empresaTrabajadores.length > 0 ? "Escribe o selecciona chofer..." : "Sin colaboradores registrados")
                                       : "Escribe o busca conductor..."
                                 }
-                                className="w-full h-10 rounded-xl pl-8 pr-14 text-sm font-semibold text-slate-900 bg-white border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-2xs outline-none transition-all placeholder:text-slate-400 placeholder:font-normal placeholder:text-xs"
+                                className="w-full h-10 rounded-xl pl-9 pr-14 text-sm font-semibold text-slate-900 bg-white border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-2xs outline-none transition-all placeholder:text-slate-400 placeholder:font-normal placeholder:text-xs"
                               />
                               <div className="absolute inset-y-0 right-0 flex items-center pr-1.5 gap-0.5">
                                 {casetaConductorQuery && (
@@ -11773,14 +12034,27 @@ export default function App() {
                                               : "hover:bg-slate-50 border-l-transparent"
                                             }`}
                                         >
-                                          <div className="flex items-center justify-between gap-2">
-                                            <div className="min-w-0">
-                                              <span className="font-bold text-slate-900 text-xs sm:text-sm block truncate">
-                                                {t.nombre} {t.apellidos}
-                                              </span>
-                                              <span className="text-[11px] text-slate-500 font-mono block">
-                                                📞 {t.telefono || "Sin teléfono"}
-                                              </span>
+                                          <div className="flex items-center justify-between gap-2.5">
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                              <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-slate-200 bg-slate-100 flex items-center justify-center">
+                                                {t.foto_url || t.foto ? (
+                                                  <img
+                                                    src={normalizeFotoUrl(t.foto_url || t.foto)}
+                                                    alt={t.nombre}
+                                                    className="w-full h-full object-cover"
+                                                  />
+                                                ) : (
+                                                  <IconUser className="w-4 h-4 text-slate-400" />
+                                                )}
+                                              </div>
+                                              <div className="min-w-0">
+                                                <span className="font-bold text-slate-900 text-xs sm:text-sm block truncate">
+                                                  {t.nombre} {t.apellidos}
+                                                </span>
+                                                <span className="text-[11px] text-slate-500 font-mono block">
+                                                  📞 {t.telefono || "Sin teléfono"}
+                                                </span>
+                                              </div>
                                             </div>
                                             <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                                               Acreditado
@@ -11930,7 +12204,22 @@ export default function App() {
                               </div>
                               <div>
                                 <span className="text-slate-400 block text-[9px] font-bold uppercase">Conductor:</span>
-                                <span className="font-semibold text-slate-800 truncate block">{casetaConductorQuery || "Chofer Asignado"}</span>
+                                <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+                                  {currentConductorVehicular && (currentConductorVehicular.foto_url || currentConductorVehicular.foto) && (
+                                    <img
+                                      src={normalizeFotoUrl(currentConductorVehicular.foto_url || currentConductorVehicular.foto)}
+                                      alt="Chofer"
+                                      className="w-4 h-4 rounded-full object-cover border border-emerald-400 shrink-0 cursor-pointer hover:scale-125 transition-transform"
+                                      onClick={() => setSelectedFotoTrabajadorPreview(currentConductorVehicular)}
+                                      title="Clic para ampliar credencial del chofer"
+                                    />
+                                  )}
+                                  <span className="font-semibold text-slate-800 truncate block">
+                                    {currentConductorVehicular
+                                      ? `${currentConductorVehicular.nombre} ${currentConductorVehicular.apellidos}`
+                                      : (casetaConductorQuery || "Chofer Asignado")}
+                                  </span>
+                                </div>
                               </div>
                               <div>
                                 <span className="text-slate-400 block text-[9px] font-bold uppercase">Teléfono:</span>
@@ -11946,36 +12235,71 @@ export default function App() {
                         ) : (
                           <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2.5 shadow-2xs">
                             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                              {/* FOTOGRAFÍA DEL VEHÍCULO O PLACEHOLDER */}
-                              <div className="relative shrink-0 w-full sm:w-26 sm:h-20 h-28 rounded-xl overflow-hidden bg-slate-900 border border-slate-200 shadow-2xs group">
-                                {currentCasetaVehicle?.foto ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => setSelectedFotoVehiculoPreview(currentCasetaVehicle)}
-                                    className="w-full h-full block cursor-pointer group focus:outline-none relative"
-                                    title="Clic para ampliar fotografía del vehículo"
-                                  >
-                                    <img
-                                      src={normalizeFotoUrl(currentCasetaVehicle.foto)}
-                                      alt={`${currentCasetaVehicle.marca} ${currentCasetaVehicle.modelo}`}
-                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                    />
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white gap-1 text-[11px] font-bold backdrop-blur-[1px]">
-                                      <IconEye className="w-3.5 h-3.5" />
-                                      <span>Ampliar</span>
+                              {/* FOTOGRAFÍAS DE CONTROL: VEHÍCULO Y CONDUCTOR */}
+                              <div className="flex items-center gap-2 shrink-0 self-center sm:self-auto">
+                                {/* FOTOGRAFÍA DEL VEHÍCULO O PLACEHOLDER */}
+                                <div className="relative shrink-0 w-24 sm:w-26 sm:h-20 h-24 rounded-xl overflow-hidden bg-slate-900 border border-slate-200 shadow-2xs group">
+                                  {currentCasetaVehicle?.foto ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedFotoVehiculoPreview(currentCasetaVehicle)}
+                                      className="w-full h-full block cursor-pointer group focus:outline-none relative"
+                                      title="Clic para ampliar fotografía del vehículo"
+                                    >
+                                      <img
+                                        src={normalizeFotoUrl(currentCasetaVehicle.foto)}
+                                        alt={`${currentCasetaVehicle.marca} ${currentCasetaVehicle.modelo}`}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                      />
+                                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white gap-1 text-[11px] font-bold backdrop-blur-[1px]">
+                                        <IconEye className="w-3.5 h-3.5" />
+                                        <span>Ampliar</span>
+                                      </div>
+                                      <span className="absolute bottom-1 right-1 bg-black/70 backdrop-blur-xs text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                                        Unidad
+                                      </span>
+                                    </button>
+                                  ) : (
+                                    <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 p-2 text-center">
+                                      <IconCar className="w-6 h-6 text-slate-400" />
+                                      <span className="text-[10px] font-medium text-slate-500 leading-tight">
+                                        {currentCasetaVehicle ? "Sin foto" : "Sin unidad"}
+                                      </span>
                                     </div>
-                                    <span className="absolute bottom-1 right-1 bg-black/70 backdrop-blur-xs text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
-                                      Foto
-                                    </span>
-                                  </button>
-                                ) : (
-                                  <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 p-2 text-center">
-                                    <IconCar className="w-6 h-6 text-slate-400" />
-                                    <span className="text-[10px] font-medium text-slate-500 leading-tight">
-                                      {currentCasetaVehicle ? "Sin foto" : "Sin unidad"}
-                                    </span>
-                                  </div>
-                                )}
+                                  )}
+                                </div>
+
+                                {/* FOTOGRAFÍA DEL CONDUCTOR / CHOFER */}
+                                <div className="relative shrink-0 w-20 sm:w-20 sm:h-20 h-24 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shadow-2xs group">
+                                  {currentConductorVehicular && (currentConductorVehicular.foto_url || currentConductorVehicular.foto) ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedFotoTrabajadorPreview(currentConductorVehicular)}
+                                      className="w-full h-full block cursor-pointer group focus:outline-none relative"
+                                      title="Clic para ampliar credencial del chofer"
+                                    >
+                                      <img
+                                        src={normalizeFotoUrl(currentConductorVehicular.foto_url || currentConductorVehicular.foto)}
+                                        alt={`${currentConductorVehicular.nombre} ${currentConductorVehicular.apellidos || ""}`}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                      />
+                                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white gap-1 text-[10px] font-bold backdrop-blur-[1px]">
+                                        <IconEye className="w-3 h-3" />
+                                        <span>Ver</span>
+                                      </div>
+                                      <span className="absolute bottom-1 right-1 bg-emerald-900/80 backdrop-blur-xs text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                                        Chofer
+                                      </span>
+                                    </button>
+                                  ) : (
+                                    <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-gradient-to-br from-slate-50 to-slate-100 text-slate-400 p-1 text-center">
+                                      <IconUser className="w-6 h-6 text-slate-400" />
+                                      <span className="text-[9px] font-medium text-slate-500 leading-tight">
+                                        {currentConductorVehicular ? "Sin foto" : "Chofer"}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
 
                               {/* INFORMACIÓN DEL VEHÍCULO Y STATUS */}
@@ -12017,11 +12341,22 @@ export default function App() {
                                   </div>
                                   <div>
                                     <span className="text-slate-400 block text-[9px] font-bold uppercase">Conductor:</span>
-                                    <span className="font-semibold text-slate-800 truncate block">
-                                      {currentConductorVehicular
-                                        ? `${currentConductorVehicular.nombre} ${currentConductorVehicular.apellidos}`
-                                        : (casetaConductorQuery || currentCasetaVehicle?.conductor || "—")}
-                                    </span>
+                                    <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+                                      {currentConductorVehicular && (currentConductorVehicular.foto_url || currentConductorVehicular.foto) && (
+                                        <img
+                                          src={normalizeFotoUrl(currentConductorVehicular.foto_url || currentConductorVehicular.foto)}
+                                          alt="Chofer"
+                                          className="w-4 h-4 rounded-full object-cover border border-emerald-400 shrink-0 cursor-pointer hover:scale-125 transition-transform"
+                                          onClick={() => setSelectedFotoTrabajadorPreview(currentConductorVehicular)}
+                                          title="Clic para ampliar credencial del chofer"
+                                        />
+                                      )}
+                                      <span className="font-semibold text-slate-800 truncate block">
+                                        {currentConductorVehicular
+                                          ? `${currentConductorVehicular.nombre} ${currentConductorVehicular.apellidos}`
+                                          : (casetaConductorQuery || currentCasetaVehicle?.conductor || "—")}
+                                      </span>
+                                    </div>
                                   </div>
                                   <div>
                                     <span className="text-slate-400 block text-[9px] font-bold uppercase">Teléfono:</span>
@@ -12039,7 +12374,36 @@ export default function App() {
                             {/* BANNERS DE DIAGNÓSTICO / STATUS */}
                             {currentCasetaVehicle ? (
                               <>
-                                {currentCasetaVehicle.permisoTemporal?.activo && new Date(currentCasetaVehicle.permisoTemporal.fechaExpiracion).getTime() > Date.now() ? (
+                                {currentVehicleDentro ? (
+                                  <div className="p-2.5 rounded-xl border bg-amber-50 border-amber-300 text-amber-950 space-y-1.5">
+                                    <div className="font-bold text-xs uppercase flex items-center justify-between text-amber-900">
+                                      <div className="flex items-center gap-1.5">
+                                        <IconAlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                        <span>Unidad Actualmente Dentro del Predio</span>
+                                      </div>
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-900 uppercase tracking-wide">
+                                        Pendiente de Salida
+                                      </span>
+                                    </div>
+                                    <p className="text-xs leading-relaxed text-amber-900">
+                                      Este vehículo ya cuenta con una entrada activa registrada a las <strong className="font-mono">{formatHoraLocal(currentVehicleDentro.raw_hora_entrada || currentVehicleDentro.horaEntrada)}</strong> ({currentVehicleDentro.fecha ? (currentVehicleDentro.fecha === new Date().toISOString().split("T")[0] ? "Hoy" : formatFechaLegible(currentVehicleDentro.fecha, false)) : "Hoy"}). Solo se puede registrar una nueva entrada una vez que haya salido.
+                                    </p>
+                                    <div className="pt-1.5 flex flex-wrap items-center justify-between gap-2 border-t border-amber-200/80">
+                                      <span className="text-[11px] text-amber-800 font-medium truncate max-w-[220px]">
+                                        Destino: {currentVehicleDentro.trabajos || "En predio"}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleMarcarSalida(currentVehicleDentro.id)}
+                                        disabled={Boolean(marcandoSalidaIds[currentVehicleDentro.id])}
+                                        className="py-1 px-3 rounded-lg text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 disabled:opacity-50"
+                                      >
+                                        <IconLogOut className="w-3.5 h-3.5" />
+                                        <span>{marcandoSalidaIds[currentVehicleDentro.id] ? "Registrando salida..." : "Registrar Salida de Unidad"}</span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : currentCasetaVehicle.permisoTemporal?.activo && new Date(currentCasetaVehicle.permisoTemporal.fechaExpiracion).getTime() > Date.now() ? (
                                   <div className="p-3 rounded-xl bg-amber-500/10 border-2 border-amber-400 text-amber-950 space-y-1.5 shadow-2xs">
                                     <div className="flex items-center justify-between">
                                       <div className="font-bold text-xs uppercase flex items-center gap-1.5 text-amber-900">
@@ -12185,7 +12549,25 @@ export default function App() {
 
                         {/* 6. BOTÓN DE ENVÍO */}
                         <div className="pt-1">
-                          {currentCasetaVehicle?.status === "Suspendido" && !casetaOverrideActive ? (
+                          {currentVehicleDentro ? (
+                            <button
+                              type="button"
+                              disabled
+                              className="w-full h-11 rounded-xl text-xs sm:text-sm font-bold text-amber-900 bg-amber-100 border border-amber-300 cursor-not-allowed shadow-xs flex items-center justify-center gap-2"
+                            >
+                              <IconAlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                              <span>Entrada Bloqueada — La unidad ya está dentro (requiere registrar salida)</span>
+                            </button>
+                          ) : currentCorbatinVerdeDentro ? (
+                            <button
+                              type="button"
+                              disabled
+                              className="w-full h-11 rounded-xl text-xs sm:text-sm font-bold text-amber-900 bg-amber-100 border border-amber-300 cursor-not-allowed shadow-xs flex items-center justify-center gap-2"
+                            >
+                              <IconAlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                              <span>Entrada Bloqueada — Corbatín Verde con ingreso activo pendiente de salida</span>
+                            </button>
+                          ) : currentCasetaVehicle?.status === "Suspendido" && !casetaOverrideActive ? (
                             <button
                               type="button"
                               disabled
@@ -12944,386 +13326,891 @@ export default function App() {
       </div>
 
       {/* ─── MODAL TI: MODIFICAR / RESTABLECER CONTRASEÑA ─── */}
-      {selectedUserParaPassword && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200">
-            <div className="flex items-center justify-between border-b pb-3.5">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-purple-50 text-purple-700">
-                  <IconKey className="w-5 h-5" />
+      {
+        selectedUserParaPassword && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200">
+              <div className="flex items-center justify-between border-b pb-3.5">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-purple-50 text-purple-700">
+                    <IconKey className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase">Restablecer Contraseña</h3>
+                    <p className="text-xs text-slate-500">Gestión de Seguridad TI · Usuario: {selectedUserParaPassword.username}</p>
+                  </div>
                 </div>
+                <button onClick={() => setSelectedUserParaPassword(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1">
+                <div><strong>Nombre:</strong> {selectedUserParaPassword.nombre}</div>
+                <div><strong>Rol:</strong> <span className="font-bold uppercase text-[#0D6E5F]">{selectedUserParaPassword.role}</span></div>
+                <div><strong>Correo:</strong> {selectedUserParaPassword.email}</div>
+              </div>
+
+              {passwordModalError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{passwordModalError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleGuardarNuevaPassword} className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 uppercase">Restablecer Contraseña</h3>
-                  <p className="text-xs text-slate-500">Gestión de Seguridad TI · Usuario: {selectedUserParaPassword.username}</p>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Nueva Contraseña *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={nuevaPassword}
+                    onChange={(e) => setNuevaPassword(e.target.value)}
+                    placeholder="Introduce la nueva clave temporal o definitiva"
+                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-purple-200 font-mono text-slate-800"
+                  />
                 </div>
-              </div>
-              <button onClick={() => setSelectedUserParaPassword(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-            </div>
 
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1">
-              <div><strong>Nombre:</strong> {selectedUserParaPassword.nombre}</div>
-              <div><strong>Rol:</strong> <span className="font-bold uppercase text-[#0D6E5F]">{selectedUserParaPassword.role}</span></div>
-              <div><strong>Correo:</strong> {selectedUserParaPassword.email}</div>
-            </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Confirmar Contraseña *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={confirmarPassword}
+                    onChange={(e) => setConfirmarPassword(e.target.value)}
+                    placeholder="Escribe la contraseña para confirmar"
+                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-purple-200 font-mono text-slate-800"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Debes teclear la clave manualmente como medida de verificación.
+                  </p>
+                </div>
 
-            {passwordModalError && (
-              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-                <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                <span>{passwordModalError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleGuardarNuevaPassword} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Nueva Contraseña *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={nuevaPassword}
-                  onChange={(e) => setNuevaPassword(e.target.value)}
-                  placeholder="Introduce la nueva clave temporal o definitiva"
-                  className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-purple-200 font-mono text-slate-800"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Confirmar Contraseña *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={confirmarPassword}
-                  onChange={(e) => setConfirmarPassword(e.target.value)}
-                  placeholder="Escribe la contraseña para confirmar"
-                  className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-purple-200 font-mono text-slate-800"
-                />
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Debes teclear la clave manualmente como medida de verificación.
-                </p>
-              </div>
-
-              <div className="flex justify-between items-center pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const temp = "LP-" + Math.random().toString(36).substring(2, 7).toUpperCase();
-                    setNuevaPassword(temp);
-                    setConfirmarPassword(""); // Exigir escribir a mano la confirmación
-                  }}
-                  className="text-xs text-purple-700 font-bold underline hover:text-purple-900 cursor-pointer"
-                >
-                  Generar Clave Segura
-                </button>
-
-                <div className="flex gap-2">
+                <div className="flex justify-between items-center pt-2">
                   <button
                     type="button"
-                    onClick={() => setSelectedUserParaPassword(null)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                    onClick={() => {
+                      const temp = "LP-" + Math.random().toString(36).substring(2, 7).toUpperCase();
+                      setNuevaPassword(temp);
+                      setConfirmarPassword(""); // Exigir escribir a mano la confirmación
+                    }}
+                    className="text-xs text-purple-700 font-bold underline hover:text-purple-900 cursor-pointer"
+                  >
+                    Generar Clave Segura
+                  </button>
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedUserParaPassword(null)}
+                      className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingPassword}
+                      className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isSubmittingPassword ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                        }`}
+                    >
+                      {isSubmittingPassword ? (
+                        <>
+                          <IconSpinner className="w-3.5 h-3.5" />
+                          <span>Guardando...</span>
+                        </>
+                      ) : (
+                        <span>Guardar Clave</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL APELACIÓN FORMAL (CONTRATISTA) ─── */}
+      {
+        selectedSancionParaApelar && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl p-4 sm:p-7 space-y-4 sm:space-y-5 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b pb-3.5">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-sky-50 text-sky-700">
+                    <IconMessageSquare className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase">Recurso de Apelación y Aclaración</h3>
+                    <p className="text-xs text-slate-500">Folio de Sanción: {selectedSancionParaApelar.id} · Placas: {selectedSancionParaApelar.placas}</p>
+                  </div>
+                </div>
+                <button onClick={() => setSelectedSancionParaApelar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+                <div><strong>Infracción:</strong> {selectedSancionParaApelar.tipo}</div>
+                <div><strong>Medida Disciplinaria:</strong> <span className="text-red-700 font-bold">{selectedSancionParaApelar.medidaDisciplinaria}</span></div>
+                <div><strong>Descripción oficial:</strong> {selectedSancionParaApelar.descripcion}</div>
+
+                {(() => {
+                  const modalEvidencias = (selectedSancionParaApelar.evidencias && selectedSancionParaApelar.evidencias.length > 0)
+                    ? selectedSancionParaApelar.evidencias
+                    : (selectedSancionParaApelar.evidenciaUrl ? [selectedSancionParaApelar.evidenciaUrl] : []);
+                  if (modalEvidencias.length === 0) return null;
+                  return (
+                    <div className="pt-1.5 border-t border-slate-200/80 space-y-1.5">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                        Evidencias Registradas ({modalEvidencias.length}):
+                      </span>
+                      <div className="flex gap-2 overflow-x-auto pb-1">
+                        {modalEvidencias.map((foto, idx) => (
+                          <div
+                            key={idx}
+                            onClick={() => setGenericImagePreview({
+                              isOpen: true,
+                              src: foto,
+                              title: `Evidencia #${idx + 1}`,
+                              subtitle: `Folio #${selectedSancionParaApelar.id} · Placas: ${selectedSancionParaApelar.placas}`,
+                            })}
+                            className="w-16 h-16 rounded-xl overflow-hidden border border-slate-200 shrink-0 cursor-pointer hover:border-sky-500 transition-all shadow-2xs group relative bg-slate-100"
+                            title="Clic para ampliar"
+                          >
+                            <img src={foto} alt={`Evidencia ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              <form onSubmit={handleEnviarApelacion} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Argumentos de Aclaración / Justificación *
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={apelacionArgumentos}
+                    onChange={(e) => setApelacionArgumentos(e.target.value)}
+                    placeholder="Describe detalladamente los motivos por los cuales se solicita la reconsideración o levantamiento de la suspensión..."
+                    className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-sky-200 text-slate-800 leading-relaxed"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Representante Acreditado que Firma *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    defaultValue={currentUser?.nombre || ""}
+                    className="w-full rounded-xl px-3.5 sm:px-4 py-2 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-sky-200 font-medium text-slate-800"
+                  />
+                </div>
+
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSancionParaApelar(null)}
+                    className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer active:scale-95"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    disabled={isSubmittingPassword}
-                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isSubmittingPassword ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    disabled={isSubmittingApelacion}
+                    className={`w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 active:scale-95 ${isSubmittingApelacion ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
                       }`}
                   >
-                    {isSubmittingPassword ? (
+                    {isSubmittingApelacion ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Enviando Recurso...</span>
+                      </>
+                    ) : (
+                      <span>Enviar Recurso a Supervisión HOA →</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL 1: ADMIN CREATES SUPERVISOR ─── */}
+      {
+        showCreateSupervisorModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200">
+              <div className="flex items-center justify-between border-b pb-3">
+                <h3 className="text-sm font-bold text-slate-900 uppercase">Crear Cuenta de Supervisor HOA</h3>
+                <button onClick={() => setShowCreateSupervisorModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">✕</button>
+              </div>
+              <form
+                onSubmit={handleGuardarNuevoSupervisor}
+                className="space-y-3"
+              >
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre Completo del Supervisor *</label>
+                  <input name="nombre" required placeholder="Ej. Comandante Fernando Ortiz" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico Oficial *</label>
+                  <input name="email" type="email" required placeholder="seguridad@laspalomasresort.net" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Contraseña *</label>
+                  <input name="password" type="password" required placeholder="Mínimo 6 caracteres" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+                  <p className="text-[10px] text-slate-400 mt-1">Si se deja en blanco, se usará "123456" por defecto.</p>
+                </div>
+                <div className="flex justify-end gap-2 pt-3">
+                  <button type="button" onClick={() => setShowCreateSupervisorModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingSupervisor}
+                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${isSubmittingSupervisor ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
+                  >
+                    {isSubmittingSupervisor ? (
                       <>
                         <IconSpinner className="w-3.5 h-3.5" />
                         <span>Guardando...</span>
                       </>
                     ) : (
-                      <span>Guardar Clave</span>
+                      <span>Guardar Supervisor</span>
                     )}
                   </button>
                 </div>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ─── MODAL APELACIÓN FORMAL (CONTRATISTA) ─── */}
-      {selectedSancionParaApelar && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl p-4 sm:p-7 space-y-4 sm:space-y-5 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b pb-3.5">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-sky-50 text-sky-700">
-                  <IconMessageSquare className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 uppercase">Recurso de Apelación y Aclaración</h3>
-                  <p className="text-xs text-slate-500">Folio de Sanción: {selectedSancionParaApelar.id} · Placas: {selectedSancionParaApelar.placas}</p>
-                </div>
-              </div>
-              <button onClick={() => setSelectedSancionParaApelar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+              </form>
             </div>
-
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1">
-              <div><strong>Infracción:</strong> {selectedSancionParaApelar.tipo}</div>
-              <div><strong>Medida Disciplinaria:</strong> <span className="text-red-700 font-bold">{selectedSancionParaApelar.medidaDisciplinaria}</span></div>
-              <div><strong>Descripción oficial:</strong> {selectedSancionParaApelar.descripcion}</div>
-            </div>
-
-            <form onSubmit={handleEnviarApelacion} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Argumentos de Aclaración / Justificación *
-                </label>
-                <textarea
-                  required
-                  rows={4}
-                  value={apelacionArgumentos}
-                  onChange={(e) => setApelacionArgumentos(e.target.value)}
-                  placeholder="Describe detalladamente los motivos por los cuales se solicita la reconsideración o levantamiento de la suspensión..."
-                  className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-sky-200 text-slate-800 leading-relaxed"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Representante Acreditado que Firma *
-                </label>
-                <input
-                  type="text"
-                  required
-                  defaultValue={currentUser?.nombre || ""}
-                  className="w-full rounded-xl px-3.5 sm:px-4 py-2 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-sky-200 font-medium text-slate-800"
-                />
-              </div>
-
-              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 pt-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setSelectedSancionParaApelar(null)}
-                  className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer active:scale-95"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingApelacion}
-                  className={`w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 active:scale-95 ${isSubmittingApelacion ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                    }`}
-                >
-                  {isSubmittingApelacion ? (
-                    <>
-                      <IconSpinner className="w-3.5 h-3.5" />
-                      <span>Enviando Recurso...</span>
-                    </>
-                  ) : (
-                    <span>Enviar Recurso a Supervisión HOA →</span>
-                  )}
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
-      )}
-
-      {/* ─── MODAL 1: ADMIN CREATES SUPERVISOR ─── */}
-      {showCreateSupervisorModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200">
-            <div className="flex items-center justify-between border-b pb-3">
-              <h3 className="text-sm font-bold text-slate-900 uppercase">Crear Cuenta de Supervisor HOA</h3>
-              <button onClick={() => setShowCreateSupervisorModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">✕</button>
-            </div>
-            <form
-              onSubmit={handleGuardarNuevoSupervisor}
-              className="space-y-3"
-            >
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre Completo del Supervisor *</label>
-                <input name="nombre" required placeholder="Ej. Comandante Fernando Ortiz" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico Oficial *</label>
-                <input name="email" type="email" required placeholder="seguridad@laspalomasresort.net" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Contraseña *</label>
-                <input name="password" type="password" required placeholder="Mínimo 6 caracteres" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
-                <p className="text-[10px] text-slate-400 mt-1">Si se deja en blanco, se usará "123456" por defecto.</p>
-              </div>
-              <div className="flex justify-end gap-2 pt-3">
-                <button type="button" onClick={() => setShowCreateSupervisorModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingSupervisor}
-                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${isSubmittingSupervisor ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                    }`}
-                >
-                  {isSubmittingSupervisor ? (
-                    <>
-                      <IconSpinner className="w-3.5 h-3.5" />
-                      <span>Guardando...</span>
-                    </>
-                  ) : (
-                    <span>Guardar Supervisor</span>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+        )
+      }
 
       {/* ─── MODAL ADMIN CREA ADMINISTRADOR TI ─── */}
-      {showCreateAdminModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200">
-            <div className="flex items-center justify-between border-b pb-3">
-              <div className="flex items-center gap-2 text-purple-700">
-                <div className="p-2 rounded-xl bg-purple-50">
-                  <IconServer className="w-5 h-5" />
+      {
+        showCreateAdminModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2 text-purple-700">
+                  <div className="p-2 rounded-xl bg-purple-50">
+                    <IconServer className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-900 uppercase">Crear Cuenta de Administrador</h3>
                 </div>
-                <h3 className="text-sm font-bold text-slate-900 uppercase">Crear Cuenta de Administrador</h3>
+                <button onClick={() => setShowCreateAdminModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
               </div>
-              <button onClick={() => setShowCreateAdminModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+              <form
+                onSubmit={handleGuardarNuevoAdmin}
+                className="space-y-3"
+              >
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre Completo del Administrador *</label>
+                  <input name="nombre" required placeholder="Ej. Ing. Carlos Mendoza (TI)" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico Oficial *</label>
+                  <input name="email" type="email" required placeholder="admin@laspalomashoa.com" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Contraseña de Acceso *</label>
+                  <input name="password" type="password" required placeholder="Mínimo 6 caracteres" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20" />
+                  <p className="text-[10px] text-slate-400 mt-1">Si se deja en blanco, se usará "123456" por defecto.</p>
+                </div>
+                <div className="p-3 rounded-xl bg-purple-50 border border-purple-100 text-purple-900 text-[11px] space-y-1">
+                  <div className="font-bold flex items-center gap-1.5">
+                    <IconShield className="w-3.5 h-3.5 text-purple-600" />
+                    <span>Privilegios Totales de Administrador</span>
+                  </div>
+                  <p className="text-purple-700">Esta cuenta tendrá acceso completo a la consola de sistemas, auditoría de eventos, cambio de contraseñas y gestión de todo el personal.</p>
+                </div>
+                <div className="flex justify-end gap-2 pt-3">
+                  <button type="button" onClick={() => setShowCreateAdminModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer hover:bg-slate-50">Cancelar</button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingAdmin}
+                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0b5d50] cursor-pointer flex items-center gap-1.5 shadow-sm ${isSubmittingAdmin ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
+                  >
+                    {isSubmittingAdmin ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Guardando...</span>
+                      </>
+                    ) : (
+                      <span>Guardar Administrador</span>
+                    )}
+                  </button>
+                </div>
+              </form>
             </div>
-            <form
-              onSubmit={handleGuardarNuevoAdmin}
-              className="space-y-3"
-            >
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre Completo del Administrador *</label>
-                <input name="nombre" required placeholder="Ej. Ing. Carlos Mendoza (TI)" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico Oficial *</label>
-                <input name="email" type="email" required placeholder="admin@laspalomashoa.com" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Contraseña de Acceso *</label>
-                <input name="password" type="password" required placeholder="Mínimo 6 caracteres" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20" />
-                <p className="text-[10px] text-slate-400 mt-1">Si se deja en blanco, se usará "123456" por defecto.</p>
-              </div>
-              <div className="p-3 rounded-xl bg-purple-50 border border-purple-100 text-purple-900 text-[11px] space-y-1">
-                <div className="font-bold flex items-center gap-1.5">
-                  <IconShield className="w-3.5 h-3.5 text-purple-600" />
-                  <span>Privilegios Totales de Administrador</span>
-                </div>
-                <p className="text-purple-700">Esta cuenta tendrá acceso completo a la consola de sistemas, auditoría de eventos, cambio de contraseñas y gestión de todo el personal.</p>
-              </div>
-              <div className="flex justify-end gap-2 pt-3">
-                <button type="button" onClick={() => setShowCreateAdminModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer hover:bg-slate-50">Cancelar</button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingAdmin}
-                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0b5d50] cursor-pointer flex items-center gap-1.5 shadow-sm ${isSubmittingAdmin ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                    }`}
-                >
-                  {isSubmittingAdmin ? (
-                    <>
-                      <IconSpinner className="w-3.5 h-3.5" />
-                      <span>Guardando...</span>
-                    </>
-                  ) : (
-                    <span>Guardar Administrador</span>
-                  )}
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* ─── MODAL 2: SUPERVISOR CREATES PROVEEDOR EMPRESA ─── */}
-      {showCreateEmpresaModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b pb-3">
-              <h3 className="text-sm font-bold text-slate-900 uppercase">Registrar Empresa Proveedora</h3>
-              <button onClick={() => { setShowCreateEmpresaModal(false); setEmpresaCreateError(""); setNuevaEmpresaPassword(""); setShowNuevaEmpresaPassword(false); }} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">✕</button>
+      {
+        showCreateEmpresaModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b pb-3">
+                <h3 className="text-sm font-bold text-slate-900 uppercase">Registrar Empresa Proveedora</h3>
+                <button onClick={() => { setShowCreateEmpresaModal(false); setEmpresaCreateError(""); setNuevaEmpresaPassword(""); setShowNuevaEmpresaPassword(false); }} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">✕</button>
+              </div>
+
+              {empresaCreateError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{empresaCreateError}</span>
+                </div>
+              )}
+
+              <form
+                onSubmit={handleGuardarNuevaEmpresa}
+                className="space-y-3"
+              >
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Razón Social de la Empresa *</label>
+                  <input name="nombre" required placeholder="Ej. Climas y Refrigeración Rocky Point" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre del Titular / Contacto *</label>
+                  <input name="contacto" required placeholder="Ej. Ing. Daniel Vázquez" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Teléfono Celular *</label>
+                    <input name="telefono" required placeholder="+52 638 000 0000" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico *</label>
+                    <input name="email" type="email" required placeholder="contacto@empresa.com" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-600">
+                      Contraseña de Acceso al Portal *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const temp = "LP-" + Math.random().toString(36).substring(2, 7).toUpperCase();
+                        setNuevaEmpresaPassword(temp);
+                        setShowNuevaEmpresaPassword(true);
+                        showToast(`Contraseña generada: ${temp}`, "info", "Clave Aleatoria");
+                      }}
+                      className="text-xs text-[#0D6E5F] font-bold hover:underline cursor-pointer flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 transition-all shadow-2xs"
+                      title="Generar contraseña aleatoria como en el módulo de IT"
+                    >
+                      <IconKey className="w-3.5 h-3.5 text-[#0D6E5F]" />
+                      <span>Generar Clave Segura</span>
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      name="password"
+                      type={showNuevaEmpresaPassword ? "text" : "password"}
+                      required
+                      value={nuevaEmpresaPassword}
+                      onChange={(e) => setNuevaEmpresaPassword(e.target.value)}
+                      placeholder="Mínimo 6 caracteres o genera una clave"
+                      className="w-full rounded-xl px-3 py-2 pr-20 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800 font-mono"
+                    />
+                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                      {nuevaEmpresaPassword && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(nuevaEmpresaPassword);
+                            showToast("Contraseña copiada al portapapeles", "success");
+                          }}
+                          className="text-slate-400 hover:text-emerald-700 cursor-pointer p-1 rounded-md hover:bg-emerald-50 transition-colors"
+                          title="Copiar contraseña"
+                        >
+                          <IconCopy className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setShowNuevaEmpresaPassword(!showNuevaEmpresaPassword)}
+                        className="text-slate-400 hover:text-slate-700 cursor-pointer p-1 rounded-md hover:bg-slate-100 transition-colors"
+                        title={showNuevaEmpresaPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                      >
+                        {showNuevaEmpresaPassword ? (
+                          <IconEyeOff className="w-4 h-4" />
+                        ) : (
+                          <IconEye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">El contratista usará esta contraseña para ingresar al portal.</p>
+                </div>
+
+                {/* Rango de Corbatines */}
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800">Rango de Corbatines Asignados</label>
+                    <span className="text-[10px] bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded-full">Control de Cupos</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500">Define los números de corbatines autorizados para esta empresa (ej. del 1 al 5). Al registrar vehículos, se asignarán números dentro de este intervalo.</p>
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Corbatín Inicial</label>
+                      <input name="corbatin_rango_inicio" type="number" min="1" placeholder="Ej. 1" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono" />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Corbatín Final</label>
+                      <input name="corbatin_rango_fin" type="number" min="1" placeholder="Ej. 5" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-3">
+                  <button type="button" onClick={() => { setShowCreateEmpresaModal(false); setEmpresaCreateError(""); setNuevaEmpresaPassword(""); setShowNuevaEmpresaPassword(false); }} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingEmpresa}
+                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${isSubmittingEmpresa ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
+                  >
+                    {isSubmittingEmpresa ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Creando Proveedor...</span>
+                      </>
+                    ) : (
+                      <span>Crear Proveedor</span>
+                    )}
+                  </button>
+                </div>
+              </form>
             </div>
+          </div>
+        )
+      }
 
-            {empresaCreateError && (
-              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-                <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                <span>{empresaCreateError}</span>
-              </div>
-            )}
-
-            <form
-              onSubmit={handleGuardarNuevaEmpresa}
-              className="space-y-3"
-            >
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Razón Social de la Empresa *</label>
-                <input name="nombre" required placeholder="Ej. Climas y Refrigeración Rocky Point" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre del Titular / Contacto *</label>
-                <input name="contacto" required placeholder="Ej. Ing. Daniel Vázquez" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {/* ─── MODAL EDITAR EMPRESA Y RANGO DE CORBATINES ─── */}
+      {
+        selectedEmpresaParaEditar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b pb-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Teléfono Celular *</label>
-                  <input name="telefono" required placeholder="+52 638 000 0000" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono" />
+                  <h3 className="text-sm font-bold text-slate-900 uppercase">Editar Empresa / Rango de Corbatines</h3>
+                  <p className="text-xs text-slate-500">{selectedEmpresaParaEditar.nombre}</p>
+                </div>
+                <button onClick={() => setSelectedEmpresaParaEditar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+              </div>
+
+              {empresaEditError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{empresaEditError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleGuardarEditarEmpresa} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Razón Social *</label>
+                  <input
+                    value={empresaEditNombre}
+                    onChange={(e) => setEmpresaEditNombre(e.target.value)}
+                    required
+                    className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico *</label>
-                  <input name="email" type="email" required placeholder="contacto@empresa.com" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre del Titular / Contacto *</label>
+                  <input
+                    value={empresaEditContacto}
+                    onChange={(e) => setEmpresaEditContacto(e.target.value)}
+                    required
+                    className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300"
+                  />
                 </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Teléfono</label>
+                    <input
+                      value={empresaEditTelefono}
+                      onChange={(e) => setEmpresaEditTelefono(e.target.value)}
+                      className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico</label>
+                    <input
+                      type="email"
+                      value={empresaEditEmail}
+                      onChange={(e) => setEmpresaEditEmail(e.target.value)}
+                      className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300"
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800">Rango de Corbatines Asignados</label>
+                    <span className="text-[10px] bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded-full">Control de Cupo</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500">Define los números de corbatín autorizados para esta empresa. El sistema asignará automáticamente números dentro de este intervalo al registrar vehículos.</p>
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Corbatín Inicial</label>
+                      <input
+                        type="number"
+                        min="1"
+                        placeholder="Ej. 1"
+                        value={empresaEditRangoInicio}
+                        onChange={(e) => setEmpresaEditRangoInicio(e.target.value)}
+                        className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Corbatín Final</label>
+                      <input
+                        type="number"
+                        min="1"
+                        placeholder="Ej. 5"
+                        value={empresaEditRangoFin}
+                        onChange={(e) => setEmpresaEditRangoFin(e.target.value)}
+                        className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono"
+                      />
+                    </div>
+                  </div>
+                  {empresaEditRangoInicio && empresaEditRangoFin && parseInt(empresaEditRangoFin, 10) >= parseInt(empresaEditRangoInicio, 10) && (
+                    <p className="text-[11px] font-bold text-teal-700 mt-1">
+                      ✓ Capacidad total: {parseInt(empresaEditRangoFin, 10) - parseInt(empresaEditRangoInicio, 10) + 1} vehículos autorizados
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex justify-end gap-2 pt-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedEmpresaParaEditar(null)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer hover:bg-slate-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingEmpresaEdit}
+                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${isSubmittingEmpresaEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
+                  >
+                    {isSubmittingEmpresaEdit ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Guardando Cambios...</span>
+                      </>
+                    ) : (
+                      <span>Guardar Cambios</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL 3: SUPERVISOR CREATES GUARDIA DE CASETA ─── */}
+      {
+        showCreateGuardiaModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
+                    <IconShield className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase">Crear Cuenta de Guardia de Caseta</h3>
+                    <p className="text-xs text-slate-500">Asigna credenciales y fotografía oficial para el operador de caseta</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowCreateGuardiaModal(false);
+                    setNuevoGuardiaFoto("");
+                    setNuevoGuardiaFotoError("");
+                    setNuevoGuardiaPassword("");
+                    setShowNuevoGuardiaPassword(false);
+                  }}
+                  className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1"
+                >
+                  ✕
+                </button>
               </div>
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-semibold text-slate-600">
-                    Contraseña de Acceso al Portal *
-                  </label>
+
+              {nuevoGuardiaFotoError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{nuevoGuardiaFotoError}</span>
+                </div>
+              )}
+
+              <form
+                onSubmit={handleGuardarNuevoGuardia}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre Completo del Oficial *</label>
+                  <input name="nombre" required placeholder="Ej. Oficial Ramón Beltrán" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Correo Electrónico Oficial *</label>
+                  <input name="email" type="email" required placeholder="caseta.sur@laspalomasresort.net" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800" />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Contraseña de Inicio de Sesión *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const temp = "LP-" + Math.random().toString(36).substring(2, 7).toUpperCase();
+                        setNuevoGuardiaPassword(temp);
+                        setShowNuevoGuardiaPassword(true);
+                      }}
+                      className="text-xs text-[#0D6E5F] font-bold hover:underline cursor-pointer flex items-center gap-1"
+                      title="Generar contraseña aleatoria como en el módulo de IT"
+                    >
+                      <span>⚡ Generar Clave Segura</span>
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      name="password"
+                      type={showNuevoGuardiaPassword ? "text" : "password"}
+                      required
+                      value={nuevoGuardiaPassword}
+                      onChange={(e) => setNuevoGuardiaPassword(e.target.value)}
+                      placeholder="Mínimo 6 caracteres"
+                      className="w-full rounded-xl px-4 py-2.5 pr-10 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800 font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNuevoGuardiaPassword(!showNuevoGuardiaPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1"
+                      title={showNuevoGuardiaPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                    >
+                      {showNuevoGuardiaPassword ? (
+                        <IconEyeOff className="w-4 h-4" />
+                      ) : (
+                        <IconEye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1">El oficial usará esta contraseña para iniciar sesión en el sistema.</p>
+                </div>
+
+                {/* FOTOGRAFÍA OBLIGATORIA DEL GUARDIA */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Fotografía Oficial del Oficial *
+                    </label>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                      Obligatoria
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                    <div className="sm:col-span-2 space-y-2">
+                      <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                        <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
+                        <span>{nuevoGuardiaFoto ? "Cambiar Fotografía" : "Subir Foto desde Dispositivo"}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleFotoGuardiaChange}
+                        />
+                      </label>
+                      <p className="text-[11px] text-slate-400">
+                        Fotografía frontal y nítida del rostro del oficial para control de caseta (JPG o PNG, máx 5MB).
+                      </p>
+                      {nuevoGuardiaFoto && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNuevoGuardiaFoto("");
+                            setNuevoGuardiaFotoError("");
+                          }}
+                          className="text-xs text-red-600 hover:underline flex items-center gap-1 cursor-pointer"
+                        >
+                          <IconTrash className="w-3.5 h-3.5" />
+                          <span>Remover fotografía</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className={`h-32 rounded-2xl border-2 ${nuevoGuardiaFoto ? 'border-emerald-400 bg-emerald-50/20' : 'border-dashed border-slate-300 bg-slate-50'} flex items-center justify-center overflow-hidden relative shadow-inner`}>
+                      {nuevoGuardiaFoto ? (
+                        <div className="relative w-full h-full group">
+                          <img src={nuevoGuardiaFoto} alt="Preview Guardia" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
+                            Foto Asignada ✓
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center p-2 text-slate-400">
+                          <IconUsers className="w-7 h-7 mx-auto mb-1 opacity-50" />
+                          <span className="text-[10px] block font-semibold text-amber-600">Foto Requerida *</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                   <button
                     type="button"
                     onClick={() => {
-                      const temp = "LP-" + Math.random().toString(36).substring(2, 7).toUpperCase();
-                      setNuevaEmpresaPassword(temp);
-                      setShowNuevaEmpresaPassword(true);
-                      showToast(`Contraseña generada: ${temp}`, "info", "Clave Aleatoria");
+                      setShowCreateGuardiaModal(false);
+                      setNuevoGuardiaFoto("");
+                      setNuevoGuardiaFotoError("");
                     }}
-                    className="text-xs text-[#0D6E5F] font-bold hover:underline cursor-pointer flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 transition-all shadow-2xs"
-                    title="Generar contraseña aleatoria como en el módulo de IT"
+                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
                   >
-                    <IconKey className="w-3.5 h-3.5 text-[#0D6E5F]" />
-                    <span>Generar Clave Segura</span>
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingGuardia}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isSubmittingGuardia ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
+                  >
+                    {isSubmittingGuardia ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Guardando Oficial...</span>
+                      </>
+                    ) : (
+                      <span>Guardar Oficial →</span>
+                    )}
                   </button>
                 </div>
-                <div className="relative">
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL EDITAR OFICIAL DE CASETA ─── */}
+      {
+        selectedGuardiaParaEditar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+            <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
+                    <IconShield className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase">Editar Oficial de Caseta</h3>
+                    <p className="text-xs text-slate-500">Actualiza los datos y fotografía oficial para el operador de caseta</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedGuardiaParaEditar(null);
+                    setEditGuardiaFotoError("");
+                  }}
+                  className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {editGuardiaFotoError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{editGuardiaFotoError}</span>
+                </div>
+              )}
+
+              <form
+                onSubmit={handleGuardarEditarGuardia}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre Completo del Oficial *</label>
                   <input
-                    name="password"
-                    type={showNuevaEmpresaPassword ? "text" : "password"}
+                    type="text"
+                    name="nombre"
                     required
-                    value={nuevaEmpresaPassword}
-                    onChange={(e) => setNuevaEmpresaPassword(e.target.value)}
-                    placeholder="Mínimo 6 caracteres o genera una clave"
-                    className="w-full rounded-xl px-3 py-2 pr-20 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800 font-mono"
+                    value={editGuardiaNombre}
+                    onChange={(e) => setEditGuardiaNombre(e.target.value)}
+                    placeholder="Ej. Oficial Ramón Beltrán"
+                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800"
                   />
-                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                    {nuevaEmpresaPassword && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText(nuevaEmpresaPassword);
-                          showToast("Contraseña copiada al portapapeles", "success");
-                        }}
-                        className="text-slate-400 hover:text-emerald-700 cursor-pointer p-1 rounded-md hover:bg-emerald-50 transition-colors"
-                        title="Copiar contraseña"
-                      >
-                        <IconCopy className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Correo Electrónico Oficial *</label>
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    value={editGuardiaEmail}
+                    onChange={(e) => setEditGuardiaEmail(e.target.value)}
+                    placeholder="caseta.sur@laspalomasresort.net"
+                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Contraseña *
+                    </label>
                     <button
                       type="button"
-                      onClick={() => setShowNuevaEmpresaPassword(!showNuevaEmpresaPassword)}
-                      className="text-slate-400 hover:text-slate-700 cursor-pointer p-1 rounded-md hover:bg-slate-100 transition-colors"
-                      title={showNuevaEmpresaPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                      onClick={() => {
+                        const temp = "LP-" + Math.random().toString(36).substring(2, 7).toUpperCase();
+                        setEditGuardiaPassword(temp);
+                        setShowEditGuardiaPassword(true);
+                      }}
+                      className="text-xs text-[#0D6E5F] font-bold hover:underline cursor-pointer flex items-center gap-1"
+                      title="Generar contraseña aleatoria como en el módulo de IT"
                     >
-                      {showNuevaEmpresaPassword ? (
+                      <span>⚡ Generar Clave Segura</span>
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showEditGuardiaPassword ? "text" : "password"}
+                      name="password"
+                      value={editGuardiaPassword}
+                      onChange={(e) => setEditGuardiaPassword(e.target.value)}
+                      placeholder="Mínimo 6 caracteres (o en blanco para conservar la actual)"
+                      className="w-full rounded-xl px-4 py-2.5 pr-10 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800 font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowEditGuardiaPassword(!showEditGuardiaPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1"
+                      title={showEditGuardiaPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                    >
+                      {showEditGuardiaPassword ? (
                         <IconEyeOff className="w-4 h-4" />
                       ) : (
                         <IconEye className="w-4 h-4" />
@@ -13331,2226 +14218,1821 @@ export default function App() {
                     </button>
                   </div>
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1">El contratista usará esta contraseña para ingresar al portal.</p>
-              </div>
 
-              {/* Rango de Corbatines */}
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-slate-800">Rango de Corbatines Asignados</label>
-                  <span className="text-[10px] bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded-full">Control de Cupos</span>
-                </div>
-                <p className="text-[11px] text-slate-500">Define los números de corbatines autorizados para esta empresa (ej. del 1 al 5). Al registrar vehículos, se asignarán números dentro de este intervalo.</p>
-                <div className="grid grid-cols-2 gap-3 pt-1">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Corbatín Inicial</label>
-                    <input name="corbatin_rango_inicio" type="number" min="1" placeholder="Ej. 1" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono" />
+                {/* FOTOGRAFÍA OBLIGATORIA DEL GUARDIA */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Fotografía Oficial del Oficial *
+                    </label>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                      Obligatoria
+                    </span>
                   </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Corbatín Final</label>
-                    <input name="corbatin_rango_fin" type="number" min="1" placeholder="Ej. 5" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono" />
-                  </div>
-                </div>
-              </div>
 
-              <div className="flex justify-end gap-2 pt-3">
-                <button type="button" onClick={() => { setShowCreateEmpresaModal(false); setEmpresaCreateError(""); setNuevaEmpresaPassword(""); setShowNuevaEmpresaPassword(false); }} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingEmpresa}
-                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${isSubmittingEmpresa ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                    }`}
-                >
-                  {isSubmittingEmpresa ? (
-                    <>
-                      <IconSpinner className="w-3.5 h-3.5" />
-                      <span>Creando Proveedor...</span>
-                    </>
-                  ) : (
-                    <span>Crear Proveedor</span>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                    <div className="sm:col-span-2 space-y-2">
+                      <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                        <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
+                        <span>{editGuardiaFoto ? "Cambiar Fotografía" : "Subir Foto desde Dispositivo"}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleFotoGuardiaEditChange}
+                        />
+                      </label>
+                      <p className="text-[11px] text-slate-400">
+                        Fotografía frontal y nítida del rostro del oficial para control de caseta (JPG o PNG, máx 5MB).
+                      </p>
+                      {editGuardiaFoto && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditGuardiaFoto("");
+                            setEditGuardiaFotoError("");
+                          }}
+                          className="text-xs text-red-600 hover:underline flex items-center gap-1 cursor-pointer"
+                        >
+                          <IconTrash className="w-3.5 h-3.5" />
+                          <span>Remover fotografía</span>
+                        </button>
+                      )}
+                    </div>
 
-      {/* ─── MODAL EDITAR EMPRESA Y RANGO DE CORBATINES ─── */}
-      {selectedEmpresaParaEditar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b pb-3">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 uppercase">Editar Empresa / Rango de Corbatines</h3>
-                <p className="text-xs text-slate-500">{selectedEmpresaParaEditar.nombre}</p>
-              </div>
-              <button onClick={() => setSelectedEmpresaParaEditar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-            </div>
-
-            {empresaEditError && (
-              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-                <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                <span>{empresaEditError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleGuardarEditarEmpresa} className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Razón Social *</label>
-                <input
-                  value={empresaEditNombre}
-                  onChange={(e) => setEmpresaEditNombre(e.target.value)}
-                  required
-                  className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre del Titular / Contacto *</label>
-                <input
-                  value={empresaEditContacto}
-                  onChange={(e) => setEmpresaEditContacto(e.target.value)}
-                  required
-                  className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300"
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Teléfono</label>
-                  <input
-                    value={empresaEditTelefono}
-                    onChange={(e) => setEmpresaEditTelefono(e.target.value)}
-                    className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico</label>
-                  <input
-                    type="email"
-                    value={empresaEditEmail}
-                    onChange={(e) => setEmpresaEditEmail(e.target.value)}
-                    className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300"
-                  />
-                </div>
-              </div>
-
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-slate-800">Rango de Corbatines Asignados</label>
-                  <span className="text-[10px] bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded-full">Control de Cupo</span>
-                </div>
-                <p className="text-[11px] text-slate-500">Define los números de corbatín autorizados para esta empresa. El sistema asignará automáticamente números dentro de este intervalo al registrar vehículos.</p>
-                <div className="grid grid-cols-2 gap-3 pt-1">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Corbatín Inicial</label>
-                    <input
-                      type="number"
-                      min="1"
-                      placeholder="Ej. 1"
-                      value={empresaEditRangoInicio}
-                      onChange={(e) => setEmpresaEditRangoInicio(e.target.value)}
-                      className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Corbatín Final</label>
-                    <input
-                      type="number"
-                      min="1"
-                      placeholder="Ej. 5"
-                      value={empresaEditRangoFin}
-                      onChange={(e) => setEmpresaEditRangoFin(e.target.value)}
-                      className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono"
-                    />
+                    <div className={`h-32 rounded-2xl border-2 ${editGuardiaFoto ? 'border-emerald-400 bg-emerald-50/20' : 'border-dashed border-slate-300 bg-slate-50'} flex items-center justify-center overflow-hidden relative shadow-inner`}>
+                      {editGuardiaFoto ? (
+                        <div className="relative w-full h-full group">
+                          <img src={editGuardiaFoto} alt="Preview Guardia" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
+                            Foto Asignada ✓
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center p-2 text-slate-400">
+                          <IconUsers className="w-7 h-7 mx-auto mb-1 opacity-50" />
+                          <span className="text-[10px] block font-semibold text-amber-600">Foto Requerida *</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-                {empresaEditRangoInicio && empresaEditRangoFin && parseInt(empresaEditRangoFin, 10) >= parseInt(empresaEditRangoInicio, 10) && (
-                  <p className="text-[11px] font-bold text-teal-700 mt-1">
-                    ✓ Capacidad total: {parseInt(empresaEditRangoFin, 10) - parseInt(empresaEditRangoInicio, 10) + 1} vehículos autorizados
-                  </p>
-                )}
-              </div>
 
-              <div className="flex justify-end gap-2 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setSelectedEmpresaParaEditar(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer hover:bg-slate-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingEmpresaEdit}
-                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${isSubmittingEmpresaEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                    }`}
-                >
-                  {isSubmittingEmpresaEdit ? (
-                    <>
-                      <IconSpinner className="w-3.5 h-3.5" />
-                      <span>Guardando Cambios...</span>
-                    </>
-                  ) : (
-                    <span>Guardar Cambios</span>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ─── MODAL 3: SUPERVISOR CREATES GUARDIA DE CASETA ─── */}
-      {showCreateGuardiaModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b pb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
-                  <IconShield className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 uppercase">Crear Cuenta de Guardia de Caseta</h3>
-                  <p className="text-xs text-slate-500">Asigna credenciales y fotografía oficial para el operador de caseta</p>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  setShowCreateGuardiaModal(false);
-                  setNuevoGuardiaFoto("");
-                  setNuevoGuardiaFotoError("");
-                  setNuevoGuardiaPassword("");
-                  setShowNuevoGuardiaPassword(false);
-                }}
-                className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1"
-              >
-                ✕
-              </button>
-            </div>
-
-            {nuevoGuardiaFotoError && (
-              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-                <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                <span>{nuevoGuardiaFotoError}</span>
-              </div>
-            )}
-
-            <form
-              onSubmit={handleGuardarNuevoGuardia}
-              className="space-y-4"
-            >
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre Completo del Oficial *</label>
-                <input name="nombre" required placeholder="Ej. Oficial Ramón Beltrán" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Correo Electrónico Oficial *</label>
-                <input name="email" type="email" required placeholder="caseta.sur@laspalomasresort.net" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800" />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Contraseña de Inicio de Sesión *
-                  </label>
+                <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                   <button
                     type="button"
                     onClick={() => {
-                      const temp = "LP-" + Math.random().toString(36).substring(2, 7).toUpperCase();
-                      setNuevoGuardiaPassword(temp);
-                      setShowNuevoGuardiaPassword(true);
+                      setSelectedGuardiaParaEditar(null);
+                      setEditGuardiaFotoError("");
                     }}
-                    className="text-xs text-[#0D6E5F] font-bold hover:underline cursor-pointer flex items-center gap-1"
-                    title="Generar contraseña aleatoria como en el módulo de IT"
+                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
                   >
-                    <span>⚡ Generar Clave Segura</span>
+                    Cancelar
                   </button>
-                </div>
-                <div className="relative">
-                  <input
-                    name="password"
-                    type={showNuevoGuardiaPassword ? "text" : "password"}
-                    required
-                    value={nuevoGuardiaPassword}
-                    onChange={(e) => setNuevoGuardiaPassword(e.target.value)}
-                    placeholder="Mínimo 6 caracteres"
-                    className="w-full rounded-xl px-4 py-2.5 pr-10 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800 font-mono"
-                  />
                   <button
-                    type="button"
-                    onClick={() => setShowNuevoGuardiaPassword(!showNuevoGuardiaPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1"
-                    title={showNuevoGuardiaPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                    type="submit"
+                    disabled={isSubmittingGuardiaEdit}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isSubmittingGuardiaEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
                   >
-                    {showNuevoGuardiaPassword ? (
-                      <IconEyeOff className="w-4 h-4" />
+                    {isSubmittingGuardiaEdit ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Guardando Oficial...</span>
+                      </>
                     ) : (
-                      <IconEye className="w-4 h-4" />
+                      <span>Guardar Cambios →</span>
                     )}
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1">El oficial usará esta contraseña para iniciar sesión en el sistema.</p>
-              </div>
-
-              {/* FOTOGRAFÍA OBLIGATORIA DEL GUARDIA */}
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Fotografía Oficial del Oficial *
-                  </label>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                    Obligatoria
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
-                  <div className="sm:col-span-2 space-y-2">
-                    <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
-                      <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
-                      <span>{nuevoGuardiaFoto ? "Cambiar Fotografía" : "Subir Foto desde Dispositivo"}</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleFotoGuardiaChange}
-                      />
-                    </label>
-                    <p className="text-[11px] text-slate-400">
-                      Fotografía frontal y nítida del rostro del oficial para control de caseta (JPG o PNG, máx 5MB).
-                    </p>
-                    {nuevoGuardiaFoto && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setNuevoGuardiaFoto("");
-                          setNuevoGuardiaFotoError("");
-                        }}
-                        className="text-xs text-red-600 hover:underline flex items-center gap-1 cursor-pointer"
-                      >
-                        <IconTrash className="w-3.5 h-3.5" />
-                        <span>Remover fotografía</span>
-                      </button>
-                    )}
-                  </div>
-
-                  <div className={`h-32 rounded-2xl border-2 ${nuevoGuardiaFoto ? 'border-emerald-400 bg-emerald-50/20' : 'border-dashed border-slate-300 bg-slate-50'} flex items-center justify-center overflow-hidden relative shadow-inner`}>
-                    {nuevoGuardiaFoto ? (
-                      <div className="relative w-full h-full group">
-                        <img src={nuevoGuardiaFoto} alt="Preview Guardia" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
-                          Foto Asignada ✓
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center p-2 text-slate-400">
-                        <IconUsers className="w-7 h-7 mx-auto mb-1 opacity-50" />
-                        <span className="text-[10px] block font-semibold text-amber-600">Foto Requerida *</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowCreateGuardiaModal(false);
-                    setNuevoGuardiaFoto("");
-                    setNuevoGuardiaFotoError("");
-                  }}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingGuardia}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isSubmittingGuardia ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                    }`}
-                >
-                  {isSubmittingGuardia ? (
-                    <>
-                      <IconSpinner className="w-3.5 h-3.5" />
-                      <span>Guardando Oficial...</span>
-                    </>
-                  ) : (
-                    <span>Guardar Oficial →</span>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ─── MODAL EDITAR OFICIAL DE CASETA ─── */}
-      {selectedGuardiaParaEditar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b pb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
-                  <IconShield className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 uppercase">Editar Oficial de Caseta</h3>
-                  <p className="text-xs text-slate-500">Actualiza los datos y fotografía oficial para el operador de caseta</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedGuardiaParaEditar(null);
-                  setEditGuardiaFotoError("");
-                }}
-                className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1"
-              >
-                ✕
-              </button>
+              </form>
             </div>
-
-            {editGuardiaFotoError && (
-              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-                <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                <span>{editGuardiaFotoError}</span>
-              </div>
-            )}
-
-            <form
-              onSubmit={handleGuardarEditarGuardia}
-              className="space-y-4"
-            >
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre Completo del Oficial *</label>
-                <input
-                  type="text"
-                  name="nombre"
-                  required
-                  value={editGuardiaNombre}
-                  onChange={(e) => setEditGuardiaNombre(e.target.value)}
-                  placeholder="Ej. Oficial Ramón Beltrán"
-                  className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Correo Electrónico Oficial *</label>
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  value={editGuardiaEmail}
-                  onChange={(e) => setEditGuardiaEmail(e.target.value)}
-                  placeholder="caseta.sur@laspalomasresort.net"
-                  className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800"
-                />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Contraseña *
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const temp = "LP-" + Math.random().toString(36).substring(2, 7).toUpperCase();
-                      setEditGuardiaPassword(temp);
-                      setShowEditGuardiaPassword(true);
-                    }}
-                    className="text-xs text-[#0D6E5F] font-bold hover:underline cursor-pointer flex items-center gap-1"
-                    title="Generar contraseña aleatoria como en el módulo de IT"
-                  >
-                    <span>⚡ Generar Clave Segura</span>
-                  </button>
-                </div>
-                <div className="relative">
-                  <input
-                    type={showEditGuardiaPassword ? "text" : "password"}
-                    name="password"
-                    value={editGuardiaPassword}
-                    onChange={(e) => setEditGuardiaPassword(e.target.value)}
-                    placeholder="Mínimo 6 caracteres (o en blanco para conservar la actual)"
-                    className="w-full rounded-xl px-4 py-2.5 pr-10 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800 font-mono"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowEditGuardiaPassword(!showEditGuardiaPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1"
-                    title={showEditGuardiaPassword ? "Ocultar contraseña" : "Ver contraseña"}
-                  >
-                    {showEditGuardiaPassword ? (
-                      <IconEyeOff className="w-4 h-4" />
-                    ) : (
-                      <IconEye className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* FOTOGRAFÍA OBLIGATORIA DEL GUARDIA */}
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Fotografía Oficial del Oficial *
-                  </label>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                    Obligatoria
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
-                  <div className="sm:col-span-2 space-y-2">
-                    <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
-                      <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
-                      <span>{editGuardiaFoto ? "Cambiar Fotografía" : "Subir Foto desde Dispositivo"}</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleFotoGuardiaEditChange}
-                      />
-                    </label>
-                    <p className="text-[11px] text-slate-400">
-                      Fotografía frontal y nítida del rostro del oficial para control de caseta (JPG o PNG, máx 5MB).
-                    </p>
-                    {editGuardiaFoto && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditGuardiaFoto("");
-                          setEditGuardiaFotoError("");
-                        }}
-                        className="text-xs text-red-600 hover:underline flex items-center gap-1 cursor-pointer"
-                      >
-                        <IconTrash className="w-3.5 h-3.5" />
-                        <span>Remover fotografía</span>
-                      </button>
-                    )}
-                  </div>
-
-                  <div className={`h-32 rounded-2xl border-2 ${editGuardiaFoto ? 'border-emerald-400 bg-emerald-50/20' : 'border-dashed border-slate-300 bg-slate-50'} flex items-center justify-center overflow-hidden relative shadow-inner`}>
-                    {editGuardiaFoto ? (
-                      <div className="relative w-full h-full group">
-                        <img src={editGuardiaFoto} alt="Preview Guardia" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
-                          Foto Asignada ✓
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center p-2 text-slate-400">
-                        <IconUsers className="w-7 h-7 mx-auto mb-1 opacity-50" />
-                        <span className="text-[10px] block font-semibold text-amber-600">Foto Requerida *</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedGuardiaParaEditar(null);
-                    setEditGuardiaFotoError("");
-                  }}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingGuardiaEdit}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isSubmittingGuardiaEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                    }`}
-                >
-                  {isSubmittingGuardiaEdit ? (
-                    <>
-                      <IconSpinner className="w-3.5 h-3.5" />
-                      <span>Guardando Oficial...</span>
-                    </>
-                  ) : (
-                    <span>Guardar Cambios →</span>
-                  )}
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* ─── MODAL ALTA TRABAJADOR (SUPERVISOR / CONTRATISTA) ─── */}
-      {showCreateTrabajadorModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl p-4 sm:p-7 space-y-4 sm:space-y-5 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b pb-3.5">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
-                  <IconUserPlus className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 uppercase">Alta de Nuevo Trabajador</h3>
-                  <p className="text-xs text-slate-500">
-                    Empresa: <strong className="text-slate-800">{targetEmpresaParaNuevoTrabajador?.nombre || currentUser?.empresaNombre || "Empresa Contratista"}</strong>
-                  </p>
-                </div>
-              </div>
-              <button onClick={() => setShowCreateTrabajadorModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-            </div>
-
-            {trabajadorFormError && (
-              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-                <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                <span>{trabajadorFormError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleGuardarNuevoTrabajador} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Nombre(s) * <span className="text-slate-400 font-normal">(máx 80)</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={80}
-                    value={trabajadorNombre}
-                    onChange={(e) => setTrabajadorNombre(e.target.value)}
-                    placeholder="Ej. Juan Carlos"
-                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Apellidos Completos * <span className="text-slate-400 font-normal">(máx 150)</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={150}
-                    value={trabajadorApellidos}
-                    onChange={(e) => setTrabajadorApellidos(e.target.value)}
-                    placeholder="Ej. Pérez Hernández"
-                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Teléfono Celular <span className="text-slate-400 font-normal">(opcional, máx 20)</span>
-                </label>
-                <input
-                  type="text"
-                  maxLength={20}
-                  value={trabajadorTelefono}
-                  onChange={(e) => setTrabajadorTelefono(e.target.value)}
-                  placeholder="Ej. +52 81 1234 5678"
-                  className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-mono text-slate-800"
-                />
-              </div>
-
-              {/* Fotografía de Credencial */}
-              <div className="space-y-2 pt-1 border-t border-slate-100">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Fotografía de Credencial / Identificación (URL o Archivo)
-                </label>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
-                  <div className="sm:col-span-2 space-y-2">
-                    <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
-                      <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
-                      <span>Subir Foto desde Dispositivo</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleFotoTrabajadorUpload}
-                      />
-                    </label>
-                    <p className="text-[11px] text-slate-400">
-                      Fotografía nítida tipo credencial del colaborador (JPG o PNG · Supabase Storage).
+      {
+        showCreateTrabajadorModal && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl p-4 sm:p-7 space-y-4 sm:space-y-5 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b pb-3.5">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
+                    <IconUserPlus className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase">Alta de Nuevo Trabajador</h3>
+                    <p className="text-xs text-slate-500">
+                      Empresa: <strong className="text-slate-800">{targetEmpresaParaNuevoTrabajador?.nombre || currentUser?.empresaNombre || "Empresa Contratista"}</strong>
                     </p>
                   </div>
+                </div>
+                <button onClick={() => setShowCreateTrabajadorModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+              </div>
 
-                  <div className="h-28 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
-                    {trabajadorFotoUrl ? (
-                      <div
-                        onClick={() => setGenericImagePreview({
-                          isOpen: true,
-                          src: trabajadorFotoUrl,
-                          title: "Fotografía de Credencial",
-                          subtitle: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Nuevo Trabajador",
-                        })}
-                        className="relative w-full h-full group cursor-pointer"
-                        title="Clic para ampliar imagen"
-                      >
-                        <img src={trabajadorFotoUrl} alt="Preview" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold gap-1">
-                          <IconEye className="w-3.5 h-3.5" />
-                          <span>Ampliar</span>
+              {trabajadorFormError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{trabajadorFormError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleGuardarNuevoTrabajador} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5 min-h-[1.25rem]">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Nombre(s) <span className="text-red-500">*</span>
+                      </label>
+                      <span className="text-[10px] text-slate-400 font-medium tracking-normal lowercase">(máx 80)</span>
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      maxLength={80}
+                      value={trabajadorNombre}
+                      onChange={(e) => setTrabajadorNombre(e.target.value)}
+                      placeholder="Ej. Juan Carlos"
+                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5 min-h-[1.25rem]">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Apellidos <span className="text-red-500">*</span>
+                      </label>
+                      <span className="text-[10px] text-slate-400 font-medium tracking-normal lowercase">(máx 150)</span>
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      maxLength={150}
+                      value={trabajadorApellidos}
+                      onChange={(e) => setTrabajadorApellidos(e.target.value)}
+                      placeholder="Ej. Pérez Hernández"
+                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5 min-h-[1.25rem]">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Teléfono Celular
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-medium tracking-normal lowercase">(opcional, máx 20)</span>
+                  </div>
+                  <input
+                    type="text"
+                    maxLength={20}
+                    value={trabajadorTelefono}
+                    onChange={(e) => setTrabajadorTelefono(e.target.value)}
+                    placeholder="Ej. +52 81 1234 5678"
+                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-mono text-slate-800"
+                  />
+                </div>
+
+                {/* Fotografía de Credencial */}
+                <div className="space-y-2 pt-1 border-t border-slate-100">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Fotografía de Credencial / Identificación (URL o Archivo)
+                  </label>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                    <div className="sm:col-span-2 space-y-2">
+                      <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                        <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
+                        <span>Subir Foto desde Dispositivo</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleFotoTrabajadorUpload}
+                        />
+                      </label>
+                      <p className="text-[11px] text-slate-400">
+                        Fotografía nítida tipo credencial del colaborador (JPG o PNG · Supabase Storage).
+                      </p>
+                    </div>
+
+                    <div className="h-28 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
+                      {trabajadorFotoUrl ? (
+                        <div
+                          onClick={() => setGenericImagePreview({
+                            isOpen: true,
+                            src: trabajadorFotoUrl,
+                            title: "Fotografía de Credencial",
+                            subtitle: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Nuevo Trabajador",
+                          })}
+                          className="relative w-full h-full group cursor-pointer"
+                          title="Clic para ampliar imagen"
+                        >
+                          <img src={trabajadorFotoUrl} alt="Preview" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold gap-1">
+                            <IconEye className="w-3.5 h-3.5" />
+                            <span>Ampliar</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center p-2 text-slate-400">
+                          <IconUsers className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                          <span className="text-[10px] block">Sin fotografía</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 1. Comprobante de Seguro Social (IMSS, ISSSTE, etc.) */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                      <IconShield className="w-3.5 h-3.5 text-[#0D6E5F]" />
+                      <span>Comprobante de Seguro (IMSS, etc.)</span>
+                    </label>
+                    {trabajadorSeguroUrl && (
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        Documento Listo ✓
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="border-2 border-dashed border-slate-300 hover:border-[#0D6E5F] rounded-2xl p-4 bg-slate-50/70 hover:bg-teal-50/20 transition-all text-center relative group">
+                    <input
+                      type="file"
+                      accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
+                      onChange={handleSeguroTrabajadorUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    {trabajadorSeguroUrl ? (
+                      <div className="flex items-center justify-between gap-3 p-1">
+                        <div className="flex items-center gap-2.5 min-w-0 text-left">
+                          <div className="w-9 h-9 rounded-xl bg-teal-100 text-[#0D6E5F] flex items-center justify-center shrink-0 shadow-2xs">
+                            <IconShield className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
+                              {trabajadorSeguroFileName || "Comprobante de Seguro Adjunto"}
+                            </div>
+                            <div className="text-[10px] text-teal-700 font-semibold">
+                              {trabajadorSeguroUrl.startsWith("data:application/pdf") || trabajadorSeguroUrl.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 relative z-20">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedDocTrabajadorPreview({
+                                isOpen: true,
+                                url: trabajadorSeguroUrl,
+                                title: "Comprobante de Seguro Social (IMSS)",
+                                workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Nuevo Trabajador",
+                                type: "seguro"
+                              });
+                            }}
+                            className="px-2.5 py-1 text-xs font-bold text-teal-800 bg-white border border-teal-300 rounded-lg hover:bg-teal-50 cursor-pointer shadow-2xs flex items-center gap-1"
+                            title="Visualizar documento"
+                          >
+                            <IconEye className="w-3.5 h-3.5" />
+                            <span>Ver</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setTrabajadorSeguroUrl("");
+                              setTrabajadorSeguroFileName("");
+                            }}
+                            className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
+                            title="Quitar archivo"
+                          >
+                            <IconTrash className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="text-center p-2 text-slate-400">
-                        <IconUsers className="w-6 h-6 mx-auto mb-1 opacity-50" />
-                        <span className="text-[10px] block">Sin fotografía</span>
+                      <div className="py-2 flex flex-col items-center gap-1">
+                        <IconShield className="w-6 h-6 text-slate-400 group-hover:text-[#0D6E5F] transition-colors" />
+                        <span className="text-xs font-bold text-slate-700">Subir Comprobante de Seguro (IMSS, ISSSTE, etc.)</span>
+                        <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
                       </div>
                     )}
                   </div>
                 </div>
-              </div>
 
-              {/* 1. Comprobante de Seguro Social (IMSS, ISSSTE, etc.) */}
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                    <IconShield className="w-3.5 h-3.5 text-[#0D6E5F]" />
-                    <span>Comprobante de Seguro (IMSS, etc.)</span>
-                  </label>
-                  {trabajadorSeguroUrl && (
-                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                      Documento Listo ✓
-                    </span>
-                  )}
-                </div>
+                {/* 2. Constancia de Competencias Laborales DC-3 */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                      <IconFileText className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Constancia de Competencias DC-3</span>
+                    </label>
+                    {trabajadorDC3Url && (
+                      <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                        Documento Listo ✓
+                      </span>
+                    )}
+                  </div>
 
-                <div className="border-2 border-dashed border-slate-300 hover:border-[#0D6E5F] rounded-2xl p-4 bg-slate-50/70 hover:bg-teal-50/20 transition-all text-center relative group">
-                  <input
-                    type="file"
-                    accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
-                    onChange={handleSeguroTrabajadorUpload}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                  />
-                  {trabajadorSeguroUrl ? (
-                    <div className="flex items-center justify-between gap-3 p-1">
-                      <div className="flex items-center gap-2.5 min-w-0 text-left">
-                        <div className="w-9 h-9 rounded-xl bg-teal-100 text-[#0D6E5F] flex items-center justify-center shrink-0 shadow-2xs">
-                          <IconShield className="w-5 h-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
-                            {trabajadorSeguroFileName || "Comprobante de Seguro Adjunto"}
+                  <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-4 bg-slate-50/70 hover:bg-blue-50/20 transition-all text-center relative group">
+                    <input
+                      type="file"
+                      accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
+                      onChange={handleDC3TrabajadorUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    {trabajadorDC3Url ? (
+                      <div className="flex items-center justify-between gap-3 p-1">
+                        <div className="flex items-center gap-2.5 min-w-0 text-left">
+                          <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 shadow-2xs">
+                            <IconFileText className="w-5 h-5" />
                           </div>
-                          <div className="text-[10px] text-teal-700 font-semibold">
-                            {trabajadorSeguroUrl.startsWith("data:application/pdf") || trabajadorSeguroUrl.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5 relative z-20">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedDocTrabajadorPreview({
-                              isOpen: true,
-                              url: trabajadorSeguroUrl,
-                              title: "Comprobante de Seguro Social (IMSS)",
-                              workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Nuevo Trabajador",
-                              type: "seguro"
-                            });
-                          }}
-                          className="px-2.5 py-1 text-xs font-bold text-teal-800 bg-white border border-teal-300 rounded-lg hover:bg-teal-50 cursor-pointer shadow-2xs flex items-center gap-1"
-                          title="Visualizar documento"
-                        >
-                          <IconEye className="w-3.5 h-3.5" />
-                          <span>Ver</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setTrabajadorSeguroUrl("");
-                            setTrabajadorSeguroFileName("");
-                          }}
-                          className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
-                          title="Quitar archivo"
-                        >
-                          <IconTrash className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="py-2 flex flex-col items-center gap-1">
-                      <IconShield className="w-6 h-6 text-slate-400 group-hover:text-[#0D6E5F] transition-colors" />
-                      <span className="text-xs font-bold text-slate-700">Subir Comprobante de Seguro (IMSS, ISSSTE, etc.)</span>
-                      <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* 2. Constancia de Competencias Laborales DC-3 */}
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                    <IconFileText className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Constancia de Competencias DC-3</span>
-                  </label>
-                  {trabajadorDC3Url && (
-                    <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                      Documento Listo ✓
-                    </span>
-                  )}
-                </div>
-
-                <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-4 bg-slate-50/70 hover:bg-blue-50/20 transition-all text-center relative group">
-                  <input
-                    type="file"
-                    accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
-                    onChange={handleDC3TrabajadorUpload}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                  />
-                  {trabajadorDC3Url ? (
-                    <div className="flex items-center justify-between gap-3 p-1">
-                      <div className="flex items-center gap-2.5 min-w-0 text-left">
-                        <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 shadow-2xs">
-                          <IconFileText className="w-5 h-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
-                            {trabajadorDC3FileName || "Constancia DC-3 Adjunta"}
-                          </div>
-                          <div className="text-[10px] text-blue-700 font-semibold">
-                            {trabajadorDC3Url.startsWith("data:application/pdf") || trabajadorDC3Url.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
+                              {trabajadorDC3FileName || "Constancia DC-3 Adjunta"}
+                            </div>
+                            <div className="text-[10px] text-blue-700 font-semibold">
+                              {trabajadorDC3Url.startsWith("data:application/pdf") || trabajadorDC3Url.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
+                            </div>
                           </div>
                         </div>
+                        <div className="flex items-center gap-1.5 relative z-20">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedDocTrabajadorPreview({
+                                isOpen: true,
+                                url: trabajadorDC3Url,
+                                title: "Constancia de Competencias Laborales DC-3",
+                                workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Nuevo Trabajador",
+                                type: "dc3"
+                              });
+                            }}
+                            className="px-2.5 py-1 text-xs font-bold text-blue-800 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 cursor-pointer shadow-2xs flex items-center gap-1"
+                            title="Visualizar documento"
+                          >
+                            <IconEye className="w-3.5 h-3.5" />
+                            <span>Ver</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setTrabajadorDC3Url("");
+                              setTrabajadorDC3FileName("");
+                            }}
+                            className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
+                            title="Quitar archivo"
+                          >
+                            <IconTrash className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5 relative z-20">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedDocTrabajadorPreview({
-                              isOpen: true,
-                              url: trabajadorDC3Url,
-                              title: "Constancia de Competencias Laborales DC-3",
-                              workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Nuevo Trabajador",
-                              type: "dc3"
-                            });
-                          }}
-                          className="px-2.5 py-1 text-xs font-bold text-blue-800 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 cursor-pointer shadow-2xs flex items-center gap-1"
-                          title="Visualizar documento"
-                        >
-                          <IconEye className="w-3.5 h-3.5" />
-                          <span>Ver</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setTrabajadorDC3Url("");
-                            setTrabajadorDC3FileName("");
-                          }}
-                          className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
-                          title="Quitar archivo"
-                        >
-                          <IconTrash className="w-3.5 h-3.5" />
-                        </button>
+                    ) : (
+                      <div className="py-2 flex flex-col items-center gap-1">
+                        <IconFileText className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                        <span className="text-xs font-bold text-slate-700">Subir Constancia DC-3</span>
+                        <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="py-2 flex flex-col items-center gap-1">
-                      <IconFileText className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
-                      <span className="text-xs font-bold text-slate-700">Subir Constancia DC-3</span>
-                      <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
 
 
-              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateTrabajadorModal(false)}
-                  className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer active:scale-95"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingTrabajador}
-                  className={`w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 active:scale-95 ${isSubmittingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                    }`}
-                  style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
-                >
-                  {isSubmittingTrabajador ? (
-                    <>
-                      <IconSpinner className="w-3.5 h-3.5" />
-                      <span>Guardando Trabajador...</span>
-                    </>
-                  ) : (
-                    <span>Guardar Trabajador →</span>
-                  )}
-                </button>
-              </div>
-            </form>
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateTrabajadorModal(false)}
+                    className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer active:scale-95"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingTrabajador}
+                    className={`w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 active:scale-95 ${isSubmittingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
+                    style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
+                  >
+                    {isSubmittingTrabajador ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Guardando Trabajador...</span>
+                      </>
+                    ) : (
+                      <span>Guardar Trabajador →</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* ─── MODAL MODIFICAR TRABAJADOR (CONTRATISTA) ─── */}
-      {selectedTrabajadorParaEditar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b pb-3.5">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-blue-50 text-blue-700">
-                  <IconEdit className="w-5 h-5" />
+      {
+        selectedTrabajadorParaEditar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b pb-3.5">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-700">
+                    <IconEdit className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase">Modificar Trabajador</h3>
+                    <p className="text-xs text-slate-500">ID: #{selectedTrabajadorParaEditar.id_trabajador} · {selectedTrabajadorParaEditar.empresaNombre}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 uppercase">Modificar Trabajador</h3>
-                  <p className="text-xs text-slate-500">ID: #{selectedTrabajadorParaEditar.id_trabajador} · {selectedTrabajadorParaEditar.empresaNombre}</p>
-                </div>
-              </div>
-              <button onClick={() => setSelectedTrabajadorParaEditar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-            </div>
-
-            {trabajadorFormError && (
-              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-                <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                <span>{trabajadorFormError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleGuardarEdicionTrabajador} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Nombre(s) * <span className="text-slate-400 font-normal">(máx 80)</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={80}
-                    value={trabajadorNombre}
-                    onChange={(e) => setTrabajadorNombre(e.target.value)}
-                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Apellidos Completos * <span className="text-slate-400 font-normal">(máx 150)</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={150}
-                    value={trabajadorApellidos}
-                    onChange={(e) => setTrabajadorApellidos(e.target.value)}
-                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
-                  />
-                </div>
+                <button onClick={() => setSelectedTrabajadorParaEditar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Teléfono Celular <span className="text-slate-400 font-normal">(opcional, máx 20)</span>
-                </label>
-                <input
-                  type="text"
-                  maxLength={20}
-                  value={trabajadorTelefono}
-                  onChange={(e) => setTrabajadorTelefono(e.target.value)}
-                  placeholder="Ej. +52 81 1234 5678"
-                  className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-mono text-slate-800"
-                />
-              </div>
+              {trabajadorFormError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{trabajadorFormError}</span>
+                </div>
+              )}
 
-              {/* Fotografía de Credencial */}
-              <div className="space-y-2 pt-1 border-t border-slate-100">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Actualizar Fotografía de Credencial
-                </label>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
-                  <div className="sm:col-span-2 space-y-2">
-                    <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
-                      <IconCamera className="w-4 h-4 text-blue-600" />
-                      <span>Cambiar Foto desde Dispositivo</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleFotoTrabajadorUpload}
-                      />
-                    </label>
-                    <p className="text-[11px] text-slate-400">
-                      Fotografía nítida tipo credencial del colaborador (JPG o PNG · Supabase Storage).
-                    </p>
+              <form onSubmit={handleGuardarEdicionTrabajador} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5 min-h-[1.25rem]">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Nombre(s) <span className="text-red-500">*</span>
+                      </label>
+                      <span className="text-[10px] text-slate-400 font-medium tracking-normal lowercase">(máx 80)</span>
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      maxLength={80}
+                      value={trabajadorNombre}
+                      onChange={(e) => setTrabajadorNombre(e.target.value)}
+                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
+                    />
                   </div>
 
-                  <div className="h-28 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
-                    {trabajadorFotoUrl ? (
-                      <div
-                        onClick={() => setGenericImagePreview({
-                          isOpen: true,
-                          src: trabajadorFotoUrl,
-                          title: "Fotografía de Credencial",
-                          subtitle: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Trabajador",
-                        })}
-                        className="relative w-full h-full group cursor-pointer"
-                        title="Clic para ampliar imagen"
-                      >
-                        <img src={trabajadorFotoUrl} alt="Preview" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold gap-1">
-                          <IconEye className="w-3.5 h-3.5" />
-                          <span>Ampliar</span>
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5 min-h-[1.25rem]">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Apellidos <span className="text-red-500">*</span>
+                      </label>
+                      <span className="text-[10px] text-slate-400 font-medium tracking-normal lowercase">(máx 150)</span>
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      maxLength={150}
+                      value={trabajadorApellidos}
+                      onChange={(e) => setTrabajadorApellidos(e.target.value)}
+                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5 min-h-[1.25rem]">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Teléfono Celular
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-medium tracking-normal lowercase">(opcional, máx 20)</span>
+                  </div>
+                  <input
+                    type="text"
+                    maxLength={20}
+                    value={trabajadorTelefono}
+                    onChange={(e) => setTrabajadorTelefono(e.target.value)}
+                    placeholder="Ej. +52 81 1234 5678"
+                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-mono text-slate-800"
+                  />
+                </div>
+
+                {/* Fotografía de Credencial */}
+                <div className="space-y-2 pt-1 border-t border-slate-100">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Actualizar Fotografía de Credencial
+                  </label>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                    <div className="sm:col-span-2 space-y-2">
+                      <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                        <IconCamera className="w-4 h-4 text-blue-600" />
+                        <span>Cambiar Foto desde Dispositivo</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleFotoTrabajadorUpload}
+                        />
+                      </label>
+                      <p className="text-[11px] text-slate-400">
+                        Fotografía nítida tipo credencial del colaborador (JPG o PNG · Supabase Storage).
+                      </p>
+                    </div>
+
+                    <div className="h-28 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
+                      {trabajadorFotoUrl ? (
+                        <div
+                          onClick={() => setGenericImagePreview({
+                            isOpen: true,
+                            src: trabajadorFotoUrl,
+                            title: "Fotografía de Credencial",
+                            subtitle: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Trabajador",
+                          })}
+                          className="relative w-full h-full group cursor-pointer"
+                          title="Clic para ampliar imagen"
+                        >
+                          <img src={trabajadorFotoUrl} alt="Preview" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold gap-1">
+                            <IconEye className="w-3.5 h-3.5" />
+                            <span>Ampliar</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center p-2 text-slate-400">
+                          <IconUsers className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                          <span className="text-[10px] block">Sin fotografía</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 1. Comprobante de Seguro Social (IMSS, ISSSTE, etc.) */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                      <IconShield className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Comprobante de Seguro Social (IMSS, etc.)</span>
+                    </label>
+                    {trabajadorSeguroUrl && (
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        Documento Listo ✓
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-4 bg-slate-50/70 hover:bg-blue-50/20 transition-all text-center relative group">
+                    <input
+                      type="file"
+                      accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
+                      onChange={handleSeguroTrabajadorUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    {trabajadorSeguroUrl ? (
+                      <div className="flex items-center justify-between gap-3 p-1">
+                        <div className="flex items-center gap-2.5 min-w-0 text-left">
+                          <div className="w-9 h-9 rounded-xl bg-teal-100 text-[#0D6E5F] flex items-center justify-center shrink-0 shadow-2xs">
+                            <IconShield className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
+                              {trabajadorSeguroFileName || "Comprobante de Seguro Adjunto"}
+                            </div>
+                            <div className="text-[10px] text-teal-700 font-semibold">
+                              {trabajadorSeguroUrl.startsWith("data:application/pdf") || trabajadorSeguroUrl.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 relative z-20">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedDocTrabajadorPreview({
+                                isOpen: true,
+                                url: trabajadorSeguroUrl,
+                                title: "Comprobante de Seguro Social (IMSS)",
+                                workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Trabajador",
+                                type: "seguro"
+                              });
+                            }}
+                            className="px-2.5 py-1 text-xs font-bold text-teal-800 bg-white border border-teal-300 rounded-lg hover:bg-teal-50 cursor-pointer shadow-2xs flex items-center gap-1"
+                            title="Visualizar documento"
+                          >
+                            <IconEye className="w-3.5 h-3.5" />
+                            <span>Ver</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setTrabajadorSeguroUrl("");
+                              setTrabajadorSeguroFileName("");
+                            }}
+                            className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
+                            title="Quitar archivo"
+                          >
+                            <IconTrash className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="text-center p-2 text-slate-400">
-                        <IconUsers className="w-6 h-6 mx-auto mb-1 opacity-50" />
-                        <span className="text-[10px] block">Sin fotografía</span>
+                      <div className="py-2 flex flex-col items-center gap-1">
+                        <IconShield className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                        <span className="text-xs font-bold text-slate-700">Actualizar / Reemplazar Comprobante de Seguro</span>
+                        <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
                       </div>
                     )}
                   </div>
                 </div>
-              </div>
 
-              {/* 1. Comprobante de Seguro Social (IMSS, ISSSTE, etc.) */}
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                    <IconShield className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Comprobante de Seguro Social (IMSS, etc.)</span>
-                  </label>
-                  {trabajadorSeguroUrl && (
-                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                      Documento Listo ✓
-                    </span>
-                  )}
-                </div>
-
-                <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-4 bg-slate-50/70 hover:bg-blue-50/20 transition-all text-center relative group">
-                  <input
-                    type="file"
-                    accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
-                    onChange={handleSeguroTrabajadorUpload}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                  />
-                  {trabajadorSeguroUrl ? (
-                    <div className="flex items-center justify-between gap-3 p-1">
-                      <div className="flex items-center gap-2.5 min-w-0 text-left">
-                        <div className="w-9 h-9 rounded-xl bg-teal-100 text-[#0D6E5F] flex items-center justify-center shrink-0 shadow-2xs">
-                          <IconShield className="w-5 h-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
-                            {trabajadorSeguroFileName || "Comprobante de Seguro Adjunto"}
-                          </div>
-                          <div className="text-[10px] text-teal-700 font-semibold">
-                            {trabajadorSeguroUrl.startsWith("data:application/pdf") || trabajadorSeguroUrl.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5 relative z-20">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedDocTrabajadorPreview({
-                              isOpen: true,
-                              url: trabajadorSeguroUrl,
-                              title: "Comprobante de Seguro Social (IMSS)",
-                              workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Trabajador",
-                              type: "seguro"
-                            });
-                          }}
-                          className="px-2.5 py-1 text-xs font-bold text-teal-800 bg-white border border-teal-300 rounded-lg hover:bg-teal-50 cursor-pointer shadow-2xs flex items-center gap-1"
-                          title="Visualizar documento"
-                        >
-                          <IconEye className="w-3.5 h-3.5" />
-                          <span>Ver</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setTrabajadorSeguroUrl("");
-                            setTrabajadorSeguroFileName("");
-                          }}
-                          className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
-                          title="Quitar archivo"
-                        >
-                          <IconTrash className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="py-2 flex flex-col items-center gap-1">
-                      <IconShield className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
-                      <span className="text-xs font-bold text-slate-700">Actualizar / Reemplazar Comprobante de Seguro</span>
-                      <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* 2. Constancia de Competencias Laborales DC-3 */}
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                    <IconFileText className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Constancia de Competencias DC-3</span>
-                  </label>
-                  {trabajadorDC3Url && (
-                    <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                      Documento Listo ✓
-                    </span>
-                  )}
-                </div>
-
-                <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-4 bg-slate-50/70 hover:bg-blue-50/20 transition-all text-center relative group">
-                  <input
-                    type="file"
-                    accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
-                    onChange={handleDC3TrabajadorUpload}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                  />
-                  {trabajadorDC3Url ? (
-                    <div className="flex items-center justify-between gap-3 p-1">
-                      <div className="flex items-center gap-2.5 min-w-0 text-left">
-                        <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 shadow-2xs">
-                          <IconFileText className="w-5 h-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
-                            {trabajadorDC3FileName || "Constancia DC-3 Adjunta"}
-                          </div>
-                          <div className="text-[10px] text-blue-700 font-semibold">
-                            {trabajadorDC3Url.startsWith("data:application/pdf") || trabajadorDC3Url.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5 relative z-20">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedDocTrabajadorPreview({
-                              isOpen: true,
-                              url: trabajadorDC3Url,
-                              title: "Constancia de Competencias Laborales DC-3",
-                              workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Trabajador",
-                              type: "dc3"
-                            });
-                          }}
-                          className="px-2.5 py-1 text-xs font-bold text-blue-800 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 cursor-pointer shadow-2xs flex items-center gap-1"
-                          title="Visualizar documento"
-                        >
-                          <IconEye className="w-3.5 h-3.5" />
-                          <span>Ver</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setTrabajadorDC3Url("");
-                            setTrabajadorDC3FileName("");
-                          }}
-                          className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
-                          title="Quitar archivo"
-                        >
-                          <IconTrash className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="py-2 flex flex-col items-center gap-1">
-                      <IconFileText className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
-                      <span className="text-xs font-bold text-slate-700">Actualizar / Reemplazar Constancia DC-3</span>
-                      <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Estatus Activo */}
-              <div className="pt-2 border-t border-slate-100">
-                <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl bg-slate-50 border border-slate-200">
-                  <input
-                    type="checkbox"
-                    checked={trabajadorActivo}
-                    onChange={(e) => setTrabajadorActivo(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 rounded cursor-pointer"
-                  />
-                  <div>
-                    <div className="text-xs font-bold text-slate-800">Estatus de Autorización: {trabajadorActivo ? "Activo (Autorizado)" : "Inactivo (Sin Acceso)"}</div>
-                    <div className="text-[11px] text-slate-500">Determina si el colaborador puede ingresar por caseta.</div>
+                {/* 2. Constancia de Competencias Laborales DC-3 */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                      <IconFileText className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Constancia de Competencias DC-3</span>
+                    </label>
+                    {trabajadorDC3Url && (
+                      <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                        Documento Listo ✓
+                      </span>
+                    )}
                   </div>
-                </label>
-              </div>
 
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 font-mono flex flex-col sm:flex-row justify-between gap-1">
-                <span>Fecha de Alta: {formatFechaLegible(selectedTrabajadorParaEditar.created_at)}</span>
-                <span>Última modif: {formatFechaLegible(selectedTrabajadorParaEditar.updated_at)}</span>
-              </div>
+                  <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-4 bg-slate-50/70 hover:bg-blue-50/20 transition-all text-center relative group">
+                    <input
+                      type="file"
+                      accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
+                      onChange={handleDC3TrabajadorUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    {trabajadorDC3Url ? (
+                      <div className="flex items-center justify-between gap-3 p-1">
+                        <div className="flex items-center gap-2.5 min-w-0 text-left">
+                          <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 shadow-2xs">
+                            <IconFileText className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
+                              {trabajadorDC3FileName || "Constancia DC-3 Adjunta"}
+                            </div>
+                            <div className="text-[10px] text-blue-700 font-semibold">
+                              {trabajadorDC3Url.startsWith("data:application/pdf") || trabajadorDC3Url.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 relative z-20">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedDocTrabajadorPreview({
+                                isOpen: true,
+                                url: trabajadorDC3Url,
+                                title: "Constancia de Competencias Laborales DC-3",
+                                workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Trabajador",
+                                type: "dc3"
+                              });
+                            }}
+                            className="px-2.5 py-1 text-xs font-bold text-blue-800 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 cursor-pointer shadow-2xs flex items-center gap-1"
+                            title="Visualizar documento"
+                          >
+                            <IconEye className="w-3.5 h-3.5" />
+                            <span>Ver</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setTrabajadorDC3Url("");
+                              setTrabajadorDC3FileName("");
+                            }}
+                            className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
+                            title="Quitar archivo"
+                          >
+                            <IconTrash className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="py-2 flex flex-col items-center gap-1">
+                        <IconFileText className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                        <span className="text-xs font-bold text-slate-700">Actualizar / Reemplazar Constancia DC-3</span>
+                        <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setSelectedTrabajadorParaEditar(null)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingTrabajadorEdit}
-                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingTrabajadorEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                    }`}
-                >
-                  {isSubmittingTrabajadorEdit ? (
-                    <>
-                      <IconSpinner className="w-3.5 h-3.5" />
-                      <span>Guardando Cambios...</span>
-                    </>
-                  ) : (
-                    <span>Guardar Cambios →</span>
-                  )}
-                </button>
-              </div>
-            </form>
+                {/* Estatus Activo */}
+                <div className="pt-2 border-t border-slate-100">
+                  <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl bg-slate-50 border border-slate-200">
+                    <input
+                      type="checkbox"
+                      checked={trabajadorActivo}
+                      onChange={(e) => setTrabajadorActivo(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 rounded cursor-pointer"
+                    />
+                    <div>
+                      <div className="text-xs font-bold text-slate-800">Estatus de Autorización: {trabajadorActivo ? "Activo (Autorizado)" : "Inactivo (Sin Acceso)"}</div>
+                      <div className="text-[11px] text-slate-500">Determina si el colaborador puede ingresar por caseta.</div>
+                    </div>
+                  </label>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 font-mono flex flex-col sm:flex-row justify-between gap-1">
+                  <span>Fecha de Alta: {formatFechaLegible(selectedTrabajadorParaEditar.created_at)}</span>
+                  <span>Última modif: {formatFechaLegible(selectedTrabajadorParaEditar.updated_at)}</span>
+                </div>
+
+                <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTrabajadorParaEditar(null)}
+                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingTrabajadorEdit}
+                    className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingTrabajadorEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
+                  >
+                    {isSubmittingTrabajadorEdit ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Guardando Cambios...</span>
+                      </>
+                    ) : (
+                      <span>Guardar Cambios →</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* ─── MODAL ELIMINAR TRABAJADOR ─── */}
-      {selectedTrabajadorParaEliminar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
-            <div className="flex items-center justify-between border-b pb-3">
-              <div className="flex items-center gap-2 text-red-600">
-                <div className="p-2 rounded-xl bg-red-50">
-                  <IconTrash className="w-5 h-5" />
+      {
+        selectedTrabajadorParaEliminar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2 text-red-600">
+                  <div className="p-2 rounded-xl bg-red-50">
+                    <IconTrash className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-sm font-bold uppercase">Eliminar Trabajador</h3>
                 </div>
-                <h3 className="text-sm font-bold uppercase">Eliminar Trabajador</h3>
+                <button onClick={() => setSelectedTrabajadorParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
               </div>
-              <button onClick={() => setSelectedTrabajadorParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-            </div>
 
-            <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
-              <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este colaborador?</p>
-              <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
-                <div><strong>Nombre:</strong> {selectedTrabajadorParaEliminar.nombre} {selectedTrabajadorParaEliminar.apellidos}</div>
-                <div><strong>ID:</strong> <span className="font-mono">#{selectedTrabajadorParaEliminar.id_trabajador}</span></div>
-                <div><strong>Empresa:</strong> {selectedTrabajadorParaEliminar.empresaNombre}</div>
-                <div><strong>Teléfono:</strong> {selectedTrabajadorParaEliminar.telefono || "N/A"}</div>
+              <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
+                <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este colaborador?</p>
+                <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
+                  <div><strong>Nombre:</strong> {selectedTrabajadorParaEliminar.nombre} {selectedTrabajadorParaEliminar.apellidos}</div>
+                  <div><strong>ID:</strong> <span className="font-mono">#{selectedTrabajadorParaEliminar.id_trabajador}</span></div>
+                  <div><strong>Empresa:</strong> {selectedTrabajadorParaEliminar.empresaNombre}</div>
+                  <div><strong>Teléfono:</strong> {selectedTrabajadorParaEliminar.telefono || "N/A"}</div>
+                </div>
+                <p className="text-[11px] text-red-700">Esta acción no se puede deshacer y revocará su credencial de acceso.</p>
               </div>
-              <p className="text-[11px] text-red-700">Esta acción no se puede deshacer y revocará su credencial de acceso.</p>
-            </div>
 
-            <div className="flex justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => setSelectedTrabajadorParaEliminar(null)}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmarEliminarTrabajador}
-                disabled={isDeletingTrabajador}
-                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
-              >
-                {isDeletingTrabajador ? (
-                  <>
-                    <IconSpinner className="w-4 h-4" />
-                    <span>Eliminando...</span>
-                  </>
-                ) : (
-                  <>
-                    <IconTrash className="w-4 h-4" />
-                    <span>Eliminar Definitivamente</span>
-                  </>
-                )}
-              </button>
+              <div className="flex justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedTrabajadorParaEliminar(null)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmarEliminarTrabajador}
+                  disabled={isDeletingTrabajador}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
+                >
+                  {isDeletingTrabajador ? (
+                    <>
+                      <IconSpinner className="w-4 h-4" />
+                      <span>Eliminando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <IconTrash className="w-4 h-4" />
+                      <span>Eliminar Definitivamente</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* ─── MODAL ELIMINAR SUPERVISOR HOA ─── */}
-      {selectedSupervisorParaEliminar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
-            <div className="flex items-center justify-between border-b pb-3">
-              <div className="flex items-center gap-2 text-red-600">
-                <div className="p-2 rounded-xl bg-red-50">
-                  <IconTrash className="w-5 h-5" />
+      {
+        selectedSupervisorParaEliminar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2 text-red-600">
+                  <div className="p-2 rounded-xl bg-red-50">
+                    <IconTrash className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-sm font-bold uppercase">Eliminar Supervisor HOA</h3>
                 </div>
-                <h3 className="text-sm font-bold uppercase">Eliminar Supervisor HOA</h3>
+                <button onClick={() => setSelectedSupervisorParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
               </div>
-              <button onClick={() => setSelectedSupervisorParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-            </div>
 
-            <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
-              <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este Supervisor HOA del sistema?</p>
-              <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
-                <div><strong>Nombre:</strong> {selectedSupervisorParaEliminar.nombre}</div>
-                <div><strong>ID:</strong> <span className="font-mono">#{selectedSupervisorParaEliminar.id}</span></div>
-                <div><strong>Usuario / Correo:</strong> {selectedSupervisorParaEliminar.username}</div>
-                <div><strong>Rol:</strong> <span className="font-semibold uppercase text-blue-700">Supervisor de Seguridad HOA</span></div>
+              <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
+                <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este Supervisor HOA del sistema?</p>
+                <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
+                  <div><strong>Nombre:</strong> {selectedSupervisorParaEliminar.nombre}</div>
+                  <div><strong>ID:</strong> <span className="font-mono">#{selectedSupervisorParaEliminar.id}</span></div>
+                  <div><strong>Usuario / Correo:</strong> {selectedSupervisorParaEliminar.username}</div>
+                  <div><strong>Rol:</strong> <span className="font-semibold uppercase text-blue-700">Supervisor de Seguridad HOA</span></div>
+                </div>
+                <p className="text-[11px] text-red-700">Esta acción no se puede deshacer y revocará inmediatamente su acceso al portal de administración y a la aplicación móvil.</p>
               </div>
-              <p className="text-[11px] text-red-700">Esta acción no se puede deshacer y revocará inmediatamente su acceso al portal de administración y a la aplicación móvil.</p>
-            </div>
 
-            <div className="flex justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => setSelectedSupervisorParaEliminar(null)}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmarEliminarSupervisor}
-                disabled={isDeletingSupervisor}
-                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingSupervisor ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
-              >
-                {isDeletingSupervisor ? (
-                  <>
-                    <IconSpinner className="w-4 h-4" />
-                    <span>Eliminando...</span>
-                  </>
-                ) : (
-                  <>
-                    <IconTrash className="w-4 h-4" />
-                    <span>Eliminar Definitivamente</span>
-                  </>
-                )}
-              </button>
+              <div className="flex justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedSupervisorParaEliminar(null)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmarEliminarSupervisor}
+                  disabled={isDeletingSupervisor}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingSupervisor ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
+                >
+                  {isDeletingSupervisor ? (
+                    <>
+                      <IconSpinner className="w-4 h-4" />
+                      <span>Eliminando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <IconTrash className="w-4 h-4" />
+                      <span>Eliminar Definitivamente</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* ─── MODAL ELIMINAR GUARDIA / OFICIAL DE CASETA ─── */}
-      {selectedGuardiaParaEliminar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
-            <div className="flex items-center justify-between border-b pb-3">
-              <div className="flex items-center gap-2 text-red-600">
-                <div className="p-2 rounded-xl bg-red-50">
-                  <IconTrash className="w-5 h-5" />
+      {
+        selectedGuardiaParaEliminar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2 text-red-600">
+                  <div className="p-2 rounded-xl bg-red-50">
+                    <IconTrash className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-sm font-bold uppercase">Eliminar Oficial de Caseta</h3>
                 </div>
-                <h3 className="text-sm font-bold uppercase">Eliminar Oficial de Caseta</h3>
+                <button onClick={() => setSelectedGuardiaParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
               </div>
-              <button onClick={() => setSelectedGuardiaParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-            </div>
 
-            <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
-              <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este Oficial de Caseta del sistema?</p>
-              <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
-                <div><strong>Nombre:</strong> {selectedGuardiaParaEliminar.nombre}</div>
-                <div><strong>ID:</strong> <span className="font-mono">#{selectedGuardiaParaEliminar.id}</span></div>
-                <div><strong>Usuario / Correo:</strong> {selectedGuardiaParaEliminar.username}</div>
-                <div><strong>Rol:</strong> <span className="font-semibold uppercase text-emerald-700">Oficial de Caseta</span></div>
+              <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
+                <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este Oficial de Caseta del sistema?</p>
+                <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
+                  <div><strong>Nombre:</strong> {selectedGuardiaParaEliminar.nombre}</div>
+                  <div><strong>ID:</strong> <span className="font-mono">#{selectedGuardiaParaEliminar.id}</span></div>
+                  <div><strong>Usuario / Correo:</strong> {selectedGuardiaParaEliminar.username}</div>
+                  <div><strong>Rol:</strong> <span className="font-semibold uppercase text-emerald-700">Oficial de Caseta</span></div>
+                </div>
+                <p className="text-[11px] text-red-700">Esta acción eliminará permanentemente la cuenta del oficial. Para suspender temporalmente su acceso sin borrarlo, utiliza el botón de estatus (En Servicio / Inactivo).</p>
               </div>
-              <p className="text-[11px] text-red-700">Esta acción eliminará permanentemente la cuenta del oficial. Para suspender temporalmente su acceso sin borrarlo, utiliza el botón de estatus (En Servicio / Inactivo).</p>
-            </div>
 
-            <div className="flex justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => setSelectedGuardiaParaEliminar(null)}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmarEliminarGuardia}
-                disabled={isDeletingGuardia}
-                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingGuardia ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
-              >
-                {isDeletingGuardia ? (
-                  <>
-                    <IconSpinner className="w-4 h-4" />
-                    <span>Eliminando...</span>
-                  </>
-                ) : (
-                  <>
-                    <IconTrash className="w-4 h-4" />
-                    <span>Eliminar Definitivamente</span>
-                  </>
-                )}
-              </button>
+              <div className="flex justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedGuardiaParaEliminar(null)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmarEliminarGuardia}
+                  disabled={isDeletingGuardia}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingGuardia ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
+                >
+                  {isDeletingGuardia ? (
+                    <>
+                      <IconSpinner className="w-4 h-4" />
+                      <span>Eliminando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <IconTrash className="w-4 h-4" />
+                      <span>Eliminar Definitivamente</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* ─── MODAL ELIMINAR ADMINISTRADOR TI ─── */}
-      {selectedAdminParaEliminar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
-            <div className="flex items-center justify-between border-b pb-3">
-              <div className="flex items-center gap-2 text-red-600">
-                <div className="p-2 rounded-xl bg-red-50">
-                  <IconTrash className="w-5 h-5" />
+      {
+        selectedAdminParaEliminar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2 text-red-600">
+                  <div className="p-2 rounded-xl bg-red-50">
+                    <IconTrash className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-sm font-bold uppercase">Eliminar Administrador TI</h3>
                 </div>
-                <h3 className="text-sm font-bold uppercase">Eliminar Administrador TI</h3>
+                <button onClick={() => setSelectedAdminParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
               </div>
-              <button onClick={() => setSelectedAdminParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-            </div>
 
-            <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
-              <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este Administrador TI del sistema?</p>
-              <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
-                <div><strong>Nombre:</strong> {selectedAdminParaEliminar.nombre}</div>
-                <div><strong>ID:</strong> <span className="font-mono">#{selectedAdminParaEliminar.id}</span></div>
-                <div><strong>Usuario / Correo:</strong> {selectedAdminParaEliminar.username}</div>
-                <div><strong>Rol:</strong> <span className="font-semibold uppercase text-indigo-700">Administrador TI</span></div>
+              <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
+                <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este Administrador TI del sistema?</p>
+                <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
+                  <div><strong>Nombre:</strong> {selectedAdminParaEliminar.nombre}</div>
+                  <div><strong>ID:</strong> <span className="font-mono">#{selectedAdminParaEliminar.id}</span></div>
+                  <div><strong>Usuario / Correo:</strong> {selectedAdminParaEliminar.username}</div>
+                  <div><strong>Rol:</strong> <span className="font-semibold uppercase text-indigo-700">Administrador TI</span></div>
+                </div>
+                <p className="text-[11px] text-red-700">Esta acción eliminará de forma irreversible el acceso administrativo de esta cuenta.</p>
               </div>
-              <p className="text-[11px] text-red-700">Esta acción eliminará de forma irreversible el acceso administrativo de esta cuenta.</p>
-            </div>
 
-            <div className="flex justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => setSelectedAdminParaEliminar(null)}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmarEliminarAdmin}
-                disabled={isDeletingAdmin}
-                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingAdmin ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
-              >
-                {isDeletingAdmin ? (
-                  <>
-                    <IconSpinner className="w-4 h-4" />
-                    <span>Eliminando...</span>
-                  </>
-                ) : (
-                  <>
-                    <IconTrash className="w-4 h-4" />
-                    <span>Eliminar Definitivamente</span>
-                  </>
-                )}
-              </button>
+              <div className="flex justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedAdminParaEliminar(null)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmarEliminarAdmin}
+                  disabled={isDeletingAdmin}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingAdmin ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
+                >
+                  {isDeletingAdmin ? (
+                    <>
+                      <IconSpinner className="w-4 h-4" />
+                      <span>Eliminando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <IconTrash className="w-4 h-4" />
+                      <span>Eliminar Definitivamente</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* ─── MODAL VISTA PREVIA DE FOTOGRAFÍA DE CREDENCIAL ─── */}
-      {selectedFotoTrabajadorPreview && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoTrabajadorPreview(null)}>
-          <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h4 className="font-bold text-base text-slate-900">{selectedFotoTrabajadorPreview.nombre} {selectedFotoTrabajadorPreview.apellidos}</h4>
-                <p className="text-xs text-slate-500 font-mono">Fotografía de Credencial · ID: #{selectedFotoTrabajadorPreview.id_trabajador}</p>
+      {
+        selectedFotoTrabajadorPreview && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoTrabajadorPreview(null)}>
+            <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                  <h4 className="font-bold text-base text-slate-900">{selectedFotoTrabajadorPreview.nombre} {selectedFotoTrabajadorPreview.apellidos}</h4>
+                  <p className="text-xs text-slate-500 font-mono">Fotografía de Credencial · ID: #{selectedFotoTrabajadorPreview.id_trabajador}</p>
+                </div>
+                <button onClick={() => setSelectedFotoTrabajadorPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
               </div>
-              <button onClick={() => setSelectedFotoTrabajadorPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
-            </div>
 
-            <div className="w-full h-[260px] xs:h-[320px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2">
-              {selectedFotoTrabajadorPreview.foto_url ? (
-                <img src={selectedFotoTrabajadorPreview.foto_url} alt="Credencial" className="max-w-full max-h-full object-contain rounded-xl shadow-lg" />
-              ) : (
-                <IconUsers className="w-20 h-20 text-slate-600" />
-              )}
-            </div>
+              <div className="w-full h-[260px] xs:h-[320px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2">
+                {selectedFotoTrabajadorPreview.foto_url || selectedFotoTrabajadorPreview.foto ? (
+                  <img
+                    src={normalizeFotoUrl(selectedFotoTrabajadorPreview.foto_url || selectedFotoTrabajadorPreview.foto)}
+                    alt="Credencial"
+                    className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
+                  />
+                ) : (
+                  <IconUsers className="w-20 h-20 text-slate-600" />
+                )}
+              </div>
 
-            <div className="flex justify-between items-center text-xs pt-1">
-              <span className="font-semibold text-slate-700">{selectedFotoTrabajadorPreview.empresaNombre}</span>
-              <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoTrabajadorPreview.activo ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
-                {selectedFotoTrabajadorPreview.activo ? "Autorizado" : "Inactivo"}
-              </span>
+              <div className="flex justify-between items-center text-xs pt-1">
+                <span className="font-semibold text-slate-700">{selectedFotoTrabajadorPreview.empresaNombre}</span>
+                <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoTrabajadorPreview.activo ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+                  {selectedFotoTrabajadorPreview.activo ? "Autorizado" : "Inactivo"}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* ─── MODAL VISTA PREVIA DE DOCUMENTOS DE TRABAJADOR (SEGURO IMSS / CONSTANCIA DC-3) ─── */}
-      {selectedDocTrabajadorPreview && selectedDocTrabajadorPreview.isOpen && (
-        <div
-          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-3 sm:p-5 backdrop-blur-md animate-in fade-in duration-150"
-          onClick={() => setSelectedDocTrabajadorPreview(null)}
-        >
+      {
+        selectedDocTrabajadorPreview && selectedDocTrabajadorPreview.isOpen && (
           <div
-            className="w-full max-w-4xl bg-white rounded-3xl overflow-hidden shadow-2xl border border-slate-200 flex flex-col max-h-[92vh]"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-3 sm:p-5 backdrop-blur-md animate-in fade-in duration-150"
+            onClick={() => setSelectedDocTrabajadorPreview(null)}
           >
-            {/* Header */}
-            <div className="px-6 py-4 border-b bg-slate-50 flex items-center justify-between gap-4" style={{ borderColor: "var(--color-border)" }}>
-              <div className="flex items-center gap-3 min-w-0">
-                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold shrink-0 border ${selectedDocTrabajadorPreview.type === "seguro"
-                  ? "bg-teal-50 text-[#0D6E5F] border-teal-200"
-                  : "bg-indigo-50 text-indigo-700 border-indigo-200"
-                  }`}>
-                  {selectedDocTrabajadorPreview.type === "seguro" ? (
-                    <IconShield className="w-5 h-5" />
+            <div
+              className="w-full max-w-4xl bg-white rounded-3xl overflow-hidden shadow-2xl border border-slate-200 flex flex-col max-h-[92vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="px-6 py-4 border-b bg-slate-50 flex items-center justify-between gap-4" style={{ borderColor: "var(--color-border)" }}>
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold shrink-0 border ${selectedDocTrabajadorPreview.type === "seguro"
+                    ? "bg-teal-50 text-[#0D6E5F] border-teal-200"
+                    : "bg-indigo-50 text-indigo-700 border-indigo-200"
+                    }`}>
+                    {selectedDocTrabajadorPreview.type === "seguro" ? (
+                      <IconShield className="w-5 h-5" />
+                    ) : (
+                      <IconFileText className="w-5 h-5" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-slate-900 truncate">
+                        {selectedDocTrabajadorPreview.title}
+                      </h3>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 shrink-0">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        <span>Documento Oficial ✓</span>
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5 truncate">
+                      Colaborador: <strong className="text-slate-800">{selectedDocTrabajadorPreview.workerName}</strong>
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedDocTrabajadorPreview(null)}
+                  className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Document Viewer Body */}
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-100/50 flex flex-col items-center justify-center">
+                <div className="w-full rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm flex items-center justify-center min-h-[420px]">
+                  {selectedDocTrabajadorPreview.url ? (
+                    (selectedDocTrabajadorPreview.url.startsWith("data:application/pdf") || selectedDocTrabajadorPreview.url.toLowerCase().includes(".pdf")) ? (
+                      <div className="w-full flex flex-col items-center">
+                        <iframe
+                          src={selectedDocTrabajadorPreview.url}
+                          className="w-full h-[540px] border-none"
+                          title={selectedDocTrabajadorPreview.title}
+                        />
+                      </div>
+                    ) : (
+                      <div className="p-4 flex items-center justify-center max-h-[540px]">
+                        <img
+                          src={selectedDocTrabajadorPreview.url}
+                          alt={selectedDocTrabajadorPreview.title}
+                          className="max-h-[500px] w-auto object-contain rounded-xl shadow-xs"
+                        />
+                      </div>
+                    )
                   ) : (
-                    <IconFileText className="w-5 h-5" />
+                    <div className="p-8 text-center text-slate-400 text-xs">
+                      No se encontró documento adjunto disponible.
+                    </div>
                   )}
                 </div>
-                <div className="min-w-0">
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 py-3.5 border-t bg-slate-50 flex items-center justify-between gap-3" style={{ borderColor: "var(--color-border)" }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDocTrabajadorPreview(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200 bg-slate-100 transition-colors cursor-pointer"
+                >
+                  Cerrar
+                </button>
+
+                {selectedDocTrabajadorPreview.url && (
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-slate-900 truncate">
-                      {selectedDocTrabajadorPreview.title}
-                    </h3>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 shrink-0">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      <span>Documento Oficial ✓</span>
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-0.5 truncate">
-                    Colaborador: <strong className="text-slate-800">{selectedDocTrabajadorPreview.workerName}</strong>
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setSelectedDocTrabajadorPreview(null)}
-                className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Document Viewer Body */}
-            <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-100/50 flex flex-col items-center justify-center">
-              <div className="w-full rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm flex items-center justify-center min-h-[420px]">
-                {selectedDocTrabajadorPreview.url ? (
-                  (selectedDocTrabajadorPreview.url.startsWith("data:application/pdf") || selectedDocTrabajadorPreview.url.toLowerCase().includes(".pdf")) ? (
-                    <div className="w-full flex flex-col items-center">
-                      <iframe
-                        src={selectedDocTrabajadorPreview.url}
-                        className="w-full h-[540px] border-none"
-                        title={selectedDocTrabajadorPreview.title}
-                      />
-                    </div>
-                  ) : (
-                    <div className="p-4 flex items-center justify-center max-h-[540px]">
-                      <img
-                        src={selectedDocTrabajadorPreview.url}
-                        alt={selectedDocTrabajadorPreview.title}
-                        className="max-h-[500px] w-auto object-contain rounded-xl shadow-xs"
-                      />
-                    </div>
-                  )
-                ) : (
-                  <div className="p-8 text-center text-slate-400 text-xs">
-                    No se encontró documento adjunto disponible.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 py-3.5 border-t bg-slate-50 flex items-center justify-between gap-3" style={{ borderColor: "var(--color-border)" }}>
-              <button
-                type="button"
-                onClick={() => setSelectedDocTrabajadorPreview(null)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200 bg-slate-100 transition-colors cursor-pointer"
-              >
-                Cerrar
-              </button>
-
-              {selectedDocTrabajadorPreview.url && (
-                <div className="flex items-center gap-2">
-                  {selectedDocTrabajadorPreview.url.startsWith("http") && (
+                    {selectedDocTrabajadorPreview.url.startsWith("http") && (
+                      <a
+                        href={selectedDocTrabajadorPreview.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3.5 py-2 rounded-xl text-xs font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                      >
+                        <IconEye className="w-3.5 h-3.5" />
+                        <span>Abrir en Nueva Pestaña</span>
+                      </a>
+                    )}
                     <a
                       href={selectedDocTrabajadorPreview.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3.5 py-2 rounded-xl text-xs font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                      download={`${selectedDocTrabajadorPreview.type === "seguro" ? "comprobante_seguro" : "constancia_dc3"}_${selectedDocTrabajadorPreview.workerName.toLowerCase().replace(/\s+/g, "_")}.${(selectedDocTrabajadorPreview.url.startsWith("data:application/pdf") || selectedDocTrabajadorPreview.url.toLowerCase().includes(".pdf")) ? "pdf" : "png"}`}
+                      className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#094E43] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
                     >
-                      <IconEye className="w-3.5 h-3.5" />
-                      <span>Abrir en Nueva Pestaña</span>
+                      <IconDownload className="w-3.5 h-3.5" />
+                      <span>Descargar Archivo</span>
                     </a>
-                  )}
-                  <a
-                    href={selectedDocTrabajadorPreview.url}
-                    download={`${selectedDocTrabajadorPreview.type === "seguro" ? "comprobante_seguro" : "constancia_dc3"}_${selectedDocTrabajadorPreview.workerName.toLowerCase().replace(/\s+/g, "_")}.${(selectedDocTrabajadorPreview.url.startsWith("data:application/pdf") || selectedDocTrabajadorPreview.url.toLowerCase().includes(".pdf")) ? "pdf" : "png"}`}
-                    className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#094E43] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-                  >
-                    <IconDownload className="w-3.5 h-3.5" />
-                    <span>Descargar Archivo</span>
-                  </a>
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* ─── MODAL VISTA PREVIA DE FOTOGRAFÍA DE OFICIAL DE CASETA ─── */}
-      {selectedFotoGuardiaPreview && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoGuardiaPreview(null)}>
-          <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
-                  <IconShield className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-base text-slate-900">{selectedFotoGuardiaPreview.nombre}</h4>
-                  <p className="text-xs text-slate-500 font-mono">Oficial de Caseta · ID: #{selectedFotoGuardiaPreview.id}</p>
-                </div>
-              </div>
-              <button onClick={() => setSelectedFotoGuardiaPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
-            </div>
-
-            <div className="w-full h-[380px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 relative">
-              {selectedFotoGuardiaPreview.foto_url ? (
-                <>
-                  <img
-                    src={selectedFotoGuardiaPreview.foto_url}
-                    alt={selectedFotoGuardiaPreview.nombre}
-                    className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                      const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                      if (fallback) fallback.style.display = "flex";
-                    }}
-                  />
-                  <div className="hidden flex-col items-center justify-center p-6 text-center text-slate-400">
-                    <IconUsers className="w-20 h-20 mb-2 text-slate-600" />
-                    <span className="text-xs font-medium">Fotografía no disponible</span>
+      {
+        selectedFotoGuardiaPreview && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoGuardiaPreview(null)}>
+            <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
+                    <IconShield className="w-5 h-5" />
                   </div>
-                </>
-              ) : (
-                <IconUsers className="w-20 h-20 text-slate-600" />
-              )}
-            </div>
+                  <div>
+                    <h4 className="font-bold text-base text-slate-900">{selectedFotoGuardiaPreview.nombre}</h4>
+                    <p className="text-xs text-slate-500 font-mono">Oficial de Caseta · ID: #{selectedFotoGuardiaPreview.id}</p>
+                  </div>
+                </div>
+                <button onClick={() => setSelectedFotoGuardiaPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
+              </div>
 
-            <div className="flex justify-between items-center text-xs">
-              <span className="font-mono text-slate-600 font-semibold">{selectedFotoGuardiaPreview.username}</span>
-              <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoGuardiaPreview.activo !== false ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
-                {selectedFotoGuardiaPreview.activo !== false ? "En Servicio" : "Inactivo"}
-              </span>
-            </div>
+              <div className="w-full h-[380px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 relative">
+                {selectedFotoGuardiaPreview.foto_url ? (
+                  <>
+                    <img
+                      src={selectedFotoGuardiaPreview.foto_url}
+                      alt={selectedFotoGuardiaPreview.nombre}
+                      className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                        if (fallback) fallback.style.display = "flex";
+                      }}
+                    />
+                    <div className="hidden flex-col items-center justify-center p-6 text-center text-slate-400">
+                      <IconUsers className="w-20 h-20 mb-2 text-slate-600" />
+                      <span className="text-xs font-medium">Fotografía no disponible</span>
+                    </div>
+                  </>
+                ) : (
+                  <IconUsers className="w-20 h-20 text-slate-600" />
+                )}
+              </div>
 
-            {/* Acción para cambiar o subir fotografía a la Base de Datos */}
-            <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
-              <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-[#0D6E5F] border border-slate-200 hover:border-emerald-300 font-bold text-xs cursor-pointer shadow-sm transition-all hover:scale-[1.01]">
-                <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
-                <span>{selectedFotoGuardiaPreview.foto_url ? "Cambiar Fotografía del Oficial" : "Subir Fotografía del Oficial"}</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => handleUpdateGuardiaFoto(selectedFotoGuardiaPreview.id, e)}
-                />
-              </label>
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-mono text-slate-600 font-semibold">{selectedFotoGuardiaPreview.username}</span>
+                <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoGuardiaPreview.activo !== false ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+                  {selectedFotoGuardiaPreview.activo !== false ? "En Servicio" : "Inactivo"}
+                </span>
+              </div>
+
+              {/* Acción para cambiar o subir fotografía a la Base de Datos */}
+              <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+                <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-[#0D6E5F] border border-slate-200 hover:border-emerald-300 font-bold text-xs cursor-pointer shadow-sm transition-all hover:scale-[1.01]">
+                  <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
+                  <span>{selectedFotoGuardiaPreview.foto_url ? "Cambiar Fotografía del Oficial" : "Subir Fotografía del Oficial"}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleUpdateGuardiaFoto(selectedFotoGuardiaPreview.id, e)}
+                  />
+                </label>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* ─── MODAL EDITAR VEHÍCULO (SUPERVISOR / ADMIN) ─── */}
-      {selectedVehiculoParaEditar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b pb-3.5">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-blue-50 text-blue-700">
-                  <IconEdit className="w-5 h-5" />
+      {
+        selectedVehiculoParaEditar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b pb-3.5">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-700">
+                    <IconEdit className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase">Modificar Unidad Vehicular</h3>
+                    <p className="text-xs text-slate-500">ID: #{selectedVehiculoParaEditar.id} · {selectedVehiculoParaEditar.empresaNombre}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 uppercase">Modificar Unidad Vehicular</h3>
-                  <p className="text-xs text-slate-500">ID: #{selectedVehiculoParaEditar.id} · {selectedVehiculoParaEditar.empresaNombre}</p>
-                </div>
-              </div>
-              <button onClick={() => setSelectedVehiculoParaEditar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-            </div>
-
-            {vehiculoEditError && (
-              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-                <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                <span>{vehiculoEditError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleGuardarEdicionVehiculo} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Marca *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={vehiculoEditMarca}
-                    onChange={(e) => setVehiculoEditMarca(e.target.value)}
-                    placeholder="Ej. Toyota, Nissan, Ford"
-                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Modelo *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={vehiculoEditModelo}
-                    onChange={(e) => setVehiculoEditModelo(e.target.value)}
-                    placeholder="Ej. Hilux, NP300, Transit"
-                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
-                  />
-                </div>
+                <button onClick={() => setSelectedVehiculoParaEditar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Año
-                  </label>
-                  <input
-                    type="text"
-                    value={vehiculoEditAnio}
-                    onChange={(e) => setVehiculoEditAnio(e.target.value)}
-                    placeholder="Ej. 2024"
-                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
-                  />
+              {vehiculoEditError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{vehiculoEditError}</span>
                 </div>
+              )}
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Placas Oficiales *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={vehiculoEditPlacas}
-                    onChange={(e) => setVehiculoEditPlacas(e.target.value.toUpperCase())}
-                    placeholder="Ej. MTY-1234"
-                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-mono font-bold text-slate-800"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Color
-                  </label>
-                  <input
-                    type="text"
-                    value={vehiculoEditColor}
-                    onChange={(e) => setVehiculoEditColor(e.target.value)}
-                    placeholder="Ej. Blanco, Gris"
-                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
-                  />
-                </div>
-              </div>
-
-              {/* Control de Estatus de Acceso Exclusivo para Supervisor / Administrador */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  Estatus de Acceso en Casetas (Supervisor / Admin) *
-                </label>
-                <select
-                  value={vehiculoEditEstatus}
-                  onChange={(e) => setVehiculoEditEstatus(e.target.value as any)}
-                  className="w-full rounded-xl px-4 py-2.5 text-xs font-bold border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-blue-200 text-slate-800 cursor-pointer"
-                >
-                  <option value="HABILITADO">HABILITADO — Acceso vehicular autorizado en casetas</option>
-                  <option value="DESHABILITADO">DESHABILITADO — Inactivo o en mantenimiento</option>
-                  <option value="SUSPENDIDO">SUSPENDIDO — Suspensión por sanción disciplinaria</option>
-                  <option value="RESTRINGIDO">RESTRINGIDO — Bloqueo definitivo de acceso</option>
-                </select>
-                <p className="text-[11px] text-slate-500">
-                  Como supervisor o administrador, el cambio de estatus se refleja de forma instantánea en todas las casetas de control.
-                </p>
-              </div>
-
-              {/* Actualizar Fotografía del Vehículo */}
-              <div className="space-y-2 pt-1 border-t border-slate-100">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Fotografía de la Unidad Vehicular
-                </label>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
-                  <div className="sm:col-span-2 space-y-2">
-                    <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
-                      <IconCamera className="w-4 h-4 text-blue-600" />
-                      <span>Cambiar Fotografía</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleFotoVehiculoUpload(e, true)}
-                      />
+              <form onSubmit={handleGuardarEdicionVehiculo} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Marca *
                     </label>
-                    <p className="text-[11px] text-slate-400">
-                      Fotografía clara donde se aprecien las placas y características del vehículo.
-                    </p>
+                    <input
+                      type="text"
+                      required
+                      value={vehiculoEditMarca}
+                      onChange={(e) => setVehiculoEditMarca(e.target.value)}
+                      placeholder="Ej. Toyota, Nissan, Ford"
+                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
+                    />
                   </div>
 
-                  <div className="h-24 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
-                    {vehiculoEditFoto ? (
-                      <div className="relative w-full h-full group">
-                        <img src={normalizeFotoUrl(vehiculoEditFoto)} alt="Preview" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
-                          Foto Cargada ✓
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center p-2 text-slate-400">
-                        <IconCar className="w-6 h-6 mx-auto mb-1 opacity-50" />
-                        <span className="text-[10px] block">Sin foto</span>
-                      </div>
-                    )}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Modelo *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={vehiculoEditModelo}
+                      onChange={(e) => setVehiculoEditModelo(e.target.value)}
+                      placeholder="Ej. Hilux, NP300, Transit"
+                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
+                    />
                   </div>
                 </div>
-              </div>
 
-              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setSelectedVehiculoParaEditar(null)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingVehiculoEdit}
-                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingVehiculoEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                    }`}
-                  style={{ background: "linear-gradient(135deg, #2563EB, #1D4ED8)" }}
-                >
-                  {isSubmittingVehiculoEdit ? (
-                    <>
-                      <IconSpinner className="w-3.5 h-3.5" />
-                      <span>Guardando Cambios...</span>
-                    </>
-                  ) : (
-                    <span>Guardar Cambios →</span>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ─── MODAL ALTA DE VEHÍCULO POR SUPERVISOR / ADMIN ─── */}
-      {showCreateVehiculoModalAdmin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b pb-3.5">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
-                  <IconCar className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 uppercase">Alta de Vehículo Autorizado</h3>
-                  <p className="text-xs text-slate-500">
-                    Empresa: {targetEmpresaParaNuevoVehiculo?.nombre || "Seleccionar Empresa"}
-                  </p>
-                </div>
-              </div>
-              <button onClick={() => { setShowCreateVehiculoModalAdmin(false); setTargetEmpresaParaNuevoVehiculo(null); }} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-            </div>
-
-            {targetEmpresaParaNuevoVehiculo && (() => {
-              const currentEmp = targetEmpresaParaNuevoVehiculo;
-              const empVehs = vehicles.filter(v => v.empresaId === currentEmp.id);
-              const rInicio = currentEmp.corbatin_rango_inicio;
-              const rFin = currentEmp.corbatin_rango_fin;
-              const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
-              const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
-              const cuposOcupados = empVehs.length;
-              const isQuotaFull = hasRange && totalCupos !== null && cuposOcupados >= totalCupos;
-
-              return (
-                <div className={`p-3.5 rounded-2xl border text-xs space-y-1 ${isQuotaFull ? "bg-amber-50/90 border-amber-300 text-amber-900" : "bg-slate-50 border-slate-200 text-slate-700"
-                  }`}>
-                  <div className="flex items-center justify-between font-bold">
-                    <span>Control de Corbatines de la Empresa:</span>
-                    {hasRange ? (
-                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${isQuotaFull ? "bg-amber-200 text-amber-900" : "bg-teal-100 text-teal-800"}`}>
-                        {cuposOcupados} / {totalCupos} cupos ocupados
-                      </span>
-                    ) : (
-                      <span className="text-slate-500 font-normal">Sin rango asignado</span>
-                    )}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Año
+                    </label>
+                    <input
+                      type="text"
+                      value={vehiculoEditAnio}
+                      onChange={(e) => setVehiculoEditAnio(e.target.value)}
+                      placeholder="Ej. 2024"
+                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
+                    />
                   </div>
-                  {hasRange && (
-                    <p className="text-[11px] text-slate-500">
-                      Rango asignado: <strong>#{rInicio} al #{rFin}</strong>. El sistema asignará automáticamente el primer corbatín disponible.
-                    </p>
-                  )}
-                  {isQuotaFull && (
-                    <p className="text-[11px] font-bold text-red-600 pt-1">
-                      Atención: La empresa ha completado el total de cupos asignados ({totalCupos} corbatines). Puedes ampliar el rango en "Editar Rango / Empresa".
-                    </p>
-                  )}
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Placas Oficiales *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={vehiculoEditPlacas}
+                      onChange={(e) => setVehiculoEditPlacas(e.target.value.toUpperCase())}
+                      placeholder="Ej. MTY-1234"
+                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-mono font-bold text-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Color
+                    </label>
+                    <input
+                      type="text"
+                      value={vehiculoEditColor}
+                      onChange={(e) => setVehiculoEditColor(e.target.value)}
+                      placeholder="Ej. Blanco, Gris"
+                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
+                    />
+                  </div>
                 </div>
-              );
-            })()}
 
-            {nuevoVehiculoFotoError && (
-              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-                <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                <span>{nuevoVehiculoFotoError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleGuardarNuevoVehiculoPorSupervisor} className="space-y-4">
-              {!targetEmpresaParaNuevoVehiculo && (
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Empresa Proveedora *
+                {/* Control de Estatus de Acceso Exclusivo para Supervisor / Administrador */}
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                  <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    Estatus de Acceso en Casetas (Supervisor / Admin) *
                   </label>
                   <select
-                    name="empresaId"
-                    required
-                    className="w-full rounded-xl px-4 py-2.5 text-xs font-bold border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800"
+                    value={vehiculoEditEstatus}
+                    onChange={(e) => setVehiculoEditEstatus(e.target.value as any)}
+                    className="w-full rounded-xl px-4 py-2.5 text-xs font-bold border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-blue-200 text-slate-800 cursor-pointer"
                   >
-                    {empresas.map(e => (
-                      <option key={e.id} value={e.id}>{e.nombre}</option>
-                    ))}
+                    <option value="HABILITADO">HABILITADO — Acceso vehicular autorizado en casetas</option>
+                    <option value="DESHABILITADO">DESHABILITADO — Inactivo o en mantenimiento</option>
+                    <option value="SUSPENDIDO">SUSPENDIDO — Suspensión por sanción disciplinaria</option>
+                    <option value="RESTRINGIDO">RESTRINGIDO — Bloqueo definitivo de acceso</option>
                   </select>
+                  <p className="text-[11px] text-slate-500">
+                    Como supervisor o administrador, el cambio de estatus se refleja de forma instantánea en todas las casetas de control.
+                  </p>
+                </div>
+
+                {/* Actualizar Fotografía del Vehículo */}
+                <div className="space-y-2 pt-1 border-t border-slate-100">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Fotografía de la Unidad Vehicular
+                  </label>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                    <div className="sm:col-span-2 space-y-2">
+                      <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                        <IconCamera className="w-4 h-4 text-blue-600" />
+                        <span>Cambiar Fotografía</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleFotoVehiculoUpload(e, true)}
+                        />
+                      </label>
+                      <p className="text-[11px] text-slate-400">
+                        Fotografía clara donde se aprecien las placas y características del vehículo.
+                      </p>
+                    </div>
+
+                    <div className="h-24 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
+                      {vehiculoEditFoto ? (
+                        <div className="relative w-full h-full group">
+                          <img src={normalizeFotoUrl(vehiculoEditFoto)} alt="Preview" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
+                            Foto Cargada ✓
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center p-2 text-slate-400">
+                          <IconCar className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                          <span className="text-[10px] block">Sin foto</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedVehiculoParaEditar(null)}
+                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingVehiculoEdit}
+                    className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingVehiculoEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
+                    style={{ background: "linear-gradient(135deg, #2563EB, #1D4ED8)" }}
+                  >
+                    {isSubmittingVehiculoEdit ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Guardando Cambios...</span>
+                      </>
+                    ) : (
+                      <span>Guardar Cambios →</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL ALTA DE VEHÍCULO POR SUPERVISOR / ADMIN ─── */}
+      {
+        showCreateVehiculoModalAdmin && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b pb-3.5">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
+                    <IconCar className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase">Alta de Vehículo Autorizado</h3>
+                    <p className="text-xs text-slate-500">
+                      Empresa: {targetEmpresaParaNuevoVehiculo?.nombre || "Seleccionar Empresa"}
+                    </p>
+                  </div>
+                </div>
+                <button onClick={() => { setShowCreateVehiculoModalAdmin(false); setTargetEmpresaParaNuevoVehiculo(null); }} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+              </div>
+
+              {targetEmpresaParaNuevoVehiculo && (() => {
+                const currentEmp = targetEmpresaParaNuevoVehiculo;
+                const empVehs = vehicles.filter(v => v.empresaId === currentEmp.id);
+                const rInicio = currentEmp.corbatin_rango_inicio;
+                const rFin = currentEmp.corbatin_rango_fin;
+                const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
+                const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
+                const cuposOcupados = empVehs.length;
+                const isQuotaFull = hasRange && totalCupos !== null && cuposOcupados >= totalCupos;
+
+                return (
+                  <div className={`p-3.5 rounded-2xl border text-xs space-y-1 ${isQuotaFull ? "bg-amber-50/90 border-amber-300 text-amber-900" : "bg-slate-50 border-slate-200 text-slate-700"
+                    }`}>
+                    <div className="flex items-center justify-between font-bold">
+                      <span>Control de Corbatines de la Empresa:</span>
+                      {hasRange ? (
+                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${isQuotaFull ? "bg-amber-200 text-amber-900" : "bg-teal-100 text-teal-800"}`}>
+                          {cuposOcupados} / {totalCupos} cupos ocupados
+                        </span>
+                      ) : (
+                        <span className="text-slate-500 font-normal">Sin rango asignado</span>
+                      )}
+                    </div>
+                    {hasRange && (
+                      <p className="text-[11px] text-slate-500">
+                        Rango asignado: <strong>#{rInicio} al #{rFin}</strong>. El sistema asignará automáticamente el primer corbatín disponible.
+                      </p>
+                    )}
+                    {isQuotaFull && (
+                      <p className="text-[11px] font-bold text-red-600 pt-1">
+                        Atención: La empresa ha completado el total de cupos asignados ({totalCupos} corbatines). Puedes ampliar el rango en "Editar Rango / Empresa".
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {nuevoVehiculoFotoError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{nuevoVehiculoFotoError}</span>
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Marca *</label>
-                  <input name="marca" required placeholder="Ej. Toyota, Nissan" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Modelo *</label>
-                  <input name="modelo" required placeholder="Ej. Hilux, NP300" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Año</label>
-                  <input name="año" placeholder="Ej. 2024" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Placas *</label>
-                  <input name="placas" required placeholder="Ej. MTY-0001" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-mono font-bold text-slate-800" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Color *</label>
-                  <input name="color" required placeholder="Ej. Blanco" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Estatus Inicial
-                </label>
-                <select
-                  name="estatus_acceso"
-                  defaultValue="HABILITADO"
-                  className="w-full rounded-xl px-4 py-2.5 text-xs font-bold border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800"
-                >
-                  <option value="HABILITADO">HABILITADO - Acceso vehicular autorizado</option>
-                  <option value="DESHABILITADO">DESHABILITADO - Inactivo o en mantenimiento</option>
-                  <option value="SUSPENDIDO">SUSPENDIDO - Suspensión preventiva</option>
-                </select>
-              </div>
-
-              {/* Fotografía Obligatoria del Vehículo */}
-              <div className="space-y-2 pt-1 border-t border-slate-100">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Fotografía Oficial del Vehículo *
-                </label>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
-                  <div className="sm:col-span-2 space-y-2">
-                    <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
-                      <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
-                      <span>Subir Foto desde Dispositivo</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleFotoVehiculoUpload(e, false)}
-                      />
+              <form onSubmit={handleGuardarNuevoVehiculoPorSupervisor} className="space-y-4">
+                {!targetEmpresaParaNuevoVehiculo && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Empresa Proveedora *
                     </label>
-                    <p className="text-[11px] text-slate-400">
-                      Fotografía nítida del vehículo para verificación en caseta.
-                    </p>
+                    <select
+                      name="empresaId"
+                      required
+                      className="w-full rounded-xl px-4 py-2.5 text-xs font-bold border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800"
+                    >
+                      {empresas.map(e => (
+                        <option key={e.id} value={e.id}>{e.nombre}</option>
+                      ))}
+                    </select>
                   </div>
+                )}
 
-                  <div className="h-24 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
-                    {nuevoVehiculoFoto ? (
-                      <div className="relative w-full h-full group">
-                        <img src={nuevoVehiculoFoto} alt="Preview" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
-                          Foto Cargada ✓
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center p-2 text-slate-400">
-                        <IconCar className="w-6 h-6 mx-auto mb-1 opacity-50" />
-                        <span className="text-[10px] block">Sin foto</span>
-                      </div>
-                    )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Marca *</label>
+                    <input name="marca" required placeholder="Ej. Toyota, Nissan" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Modelo *</label>
+                    <input name="modelo" required placeholder="Ej. Hilux, NP300" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
                   </div>
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Año</label>
+                    <input name="año" placeholder="Ej. 2024" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Placas *</label>
+                    <input name="placas" required placeholder="Ej. MTY-0001" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-mono font-bold text-slate-800" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Color *</label>
+                    <input name="color" required placeholder="Ej. Blanco" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Estatus Inicial
+                  </label>
+                  <select
+                    name="estatus_acceso"
+                    defaultValue="HABILITADO"
+                    className="w-full rounded-xl px-4 py-2.5 text-xs font-bold border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800"
+                  >
+                    <option value="HABILITADO">HABILITADO - Acceso vehicular autorizado</option>
+                    <option value="DESHABILITADO">DESHABILITADO - Inactivo o en mantenimiento</option>
+                    <option value="SUSPENDIDO">SUSPENDIDO - Suspensión preventiva</option>
+                  </select>
+                </div>
+
+                {/* Fotografía Obligatoria del Vehículo */}
+                <div className="space-y-2 pt-1 border-t border-slate-100">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Fotografía Oficial del Vehículo *
+                  </label>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                    <div className="sm:col-span-2 space-y-2">
+                      <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                        <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
+                        <span>Subir Foto desde Dispositivo</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleFotoVehiculoUpload(e, false)}
+                        />
+                      </label>
+                      <p className="text-[11px] text-slate-400">
+                        Fotografía nítida del vehículo para verificación en caseta.
+                      </p>
+                    </div>
+
+                    <div className="h-24 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
+                      {nuevoVehiculoFoto ? (
+                        <div className="relative w-full h-full group">
+                          <img src={nuevoVehiculoFoto} alt="Preview" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
+                            Foto Cargada ✓
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center p-2 text-slate-400">
+                          <IconCar className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                          <span className="text-[10px] block">Sin foto</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => { setShowCreateVehiculoModalAdmin(false); setTargetEmpresaParaNuevoVehiculo(null); }}
+                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingVehiculo || (() => {
+                      if (!targetEmpresaParaNuevoVehiculo) return false;
+                      const empVehs = vehicles.filter(v => v.empresaId === targetEmpresaParaNuevoVehiculo.id);
+                      const rInicio = targetEmpresaParaNuevoVehiculo.corbatin_rango_inicio;
+                      const rFin = targetEmpresaParaNuevoVehiculo.corbatin_rango_fin;
+                      const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
+                      const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
+                      return Boolean(hasRange && totalCupos !== null && empVehs.length >= totalCupos);
+                    })()}
+                    className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingVehiculo || (() => {
+                      if (!targetEmpresaParaNuevoVehiculo) return false;
+                      const empVehs = vehicles.filter(v => v.empresaId === targetEmpresaParaNuevoVehiculo.id);
+                      const rInicio = targetEmpresaParaNuevoVehiculo.corbatin_rango_inicio;
+                      const rFin = targetEmpresaParaNuevoVehiculo.corbatin_rango_fin;
+                      const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
+                      const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
+                      return Boolean(hasRange && totalCupos !== null && empVehs.length >= totalCupos);
+                    })()
+                      ? "opacity-60 cursor-not-allowed pointer-events-none"
+                      : ""
+                      }`}
+                    style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
+                  >
+                    {isSubmittingVehiculo ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Registrando Unidad...</span>
+                      </>
+                    ) : (
+                      <span>Registrar Vehículo →</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL ELIMINAR EMPRESA PROVEEDORA ─── */}
+      {
+        selectedEmpresaParaEliminar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2 text-red-600">
+                  <div className="p-2 rounded-xl bg-red-50">
+                    <IconTrash className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-sm font-bold uppercase">Eliminar Empresa Proveedora</h3>
+                </div>
+                <button onClick={() => setSelectedEmpresaParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
+                <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente esta empresa proveedora?</p>
+                <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
+                  <div><strong>Empresa:</strong> {selectedEmpresaParaEliminar.nombre}</div>
+                  <div><strong>Contacto:</strong> {selectedEmpresaParaEliminar.contacto}</div>
+                  <div><strong>Teléfono:</strong> {selectedEmpresaParaEliminar.telefono || "S/N"}</div>
+                  {selectedEmpresaParaEliminar.corbatin_rango_inicio && selectedEmpresaParaEliminar.corbatin_rango_fin && (
+                    <div><strong>Rango Corbatines:</strong> #{selectedEmpresaParaEliminar.corbatin_rango_inicio} - #{selectedEmpresaParaEliminar.corbatin_rango_fin}</div>
+                  )}
+                </div>
+                <p className="text-[11px] text-red-700">Esta acción eliminará permanentemente la empresa, su cuenta de acceso al portal y todos sus vehículos y trabajadores vinculados.</p>
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-2">
                 <button
                   type="button"
-                  onClick={() => { setShowCreateVehiculoModalAdmin(false); setTargetEmpresaParaNuevoVehiculo(null); }}
+                  onClick={() => setSelectedEmpresaParaEliminar(null)}
                   className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
-                  type="submit"
-                  disabled={isSubmittingVehiculo || (() => {
-                    if (!targetEmpresaParaNuevoVehiculo) return false;
-                    const empVehs = vehicles.filter(v => v.empresaId === targetEmpresaParaNuevoVehiculo.id);
-                    const rInicio = targetEmpresaParaNuevoVehiculo.corbatin_rango_inicio;
-                    const rFin = targetEmpresaParaNuevoVehiculo.corbatin_rango_fin;
-                    const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
-                    const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
-                    return Boolean(hasRange && totalCupos !== null && empVehs.length >= totalCupos);
-                  })()}
-                  className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingVehiculo || (() => {
-                    if (!targetEmpresaParaNuevoVehiculo) return false;
-                    const empVehs = vehicles.filter(v => v.empresaId === targetEmpresaParaNuevoVehiculo.id);
-                    const rInicio = targetEmpresaParaNuevoVehiculo.corbatin_rango_inicio;
-                    const rFin = targetEmpresaParaNuevoVehiculo.corbatin_rango_fin;
-                    const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
-                    const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
-                    return Boolean(hasRange && totalCupos !== null && empVehs.length >= totalCupos);
-                  })()
-                    ? "opacity-60 cursor-not-allowed pointer-events-none"
-                    : ""
+                  type="button"
+                  onClick={handleConfirmarEliminarEmpresa}
+                  disabled={isDeletingEmpresa}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingEmpresa ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
                     }`}
-                  style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                 >
-                  {isSubmittingVehiculo ? (
+                  {isDeletingEmpresa ? (
                     <>
-                      <IconSpinner className="w-3.5 h-3.5" />
-                      <span>Registrando Unidad...</span>
+                      <IconSpinner className="w-4 h-4" />
+                      <span>Eliminando...</span>
                     </>
                   ) : (
-                    <span>Registrar Vehículo →</span>
+                    <>
+                      <IconTrash className="w-4 h-4" />
+                      <span>Eliminar Empresa</span>
+                    </>
                   )}
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ─── MODAL ELIMINAR EMPRESA PROVEEDORA ─── */}
-      {selectedEmpresaParaEliminar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
-            <div className="flex items-center justify-between border-b pb-3">
-              <div className="flex items-center gap-2 text-red-600">
-                <div className="p-2 rounded-xl bg-red-50">
-                  <IconTrash className="w-5 h-5" />
-                </div>
-                <h3 className="text-sm font-bold uppercase">Eliminar Empresa Proveedora</h3>
-              </div>
-              <button onClick={() => setSelectedEmpresaParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
-              <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente esta empresa proveedora?</p>
-              <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
-                <div><strong>Empresa:</strong> {selectedEmpresaParaEliminar.nombre}</div>
-                <div><strong>Contacto:</strong> {selectedEmpresaParaEliminar.contacto}</div>
-                <div><strong>Teléfono:</strong> {selectedEmpresaParaEliminar.telefono || "S/N"}</div>
-                {selectedEmpresaParaEliminar.corbatin_rango_inicio && selectedEmpresaParaEliminar.corbatin_rango_fin && (
-                  <div><strong>Rango Corbatines:</strong> #{selectedEmpresaParaEliminar.corbatin_rango_inicio} - #{selectedEmpresaParaEliminar.corbatin_rango_fin}</div>
-                )}
-              </div>
-              <p className="text-[11px] text-red-700">Esta acción eliminará permanentemente la empresa, su cuenta de acceso al portal y todos sus vehículos y trabajadores vinculados.</p>
-            </div>
-
-            <div className="flex justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => setSelectedEmpresaParaEliminar(null)}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmarEliminarEmpresa}
-                disabled={isDeletingEmpresa}
-                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingEmpresa ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
-              >
-                {isDeletingEmpresa ? (
-                  <>
-                    <IconSpinner className="w-4 h-4" />
-                    <span>Eliminando...</span>
-                  </>
-                ) : (
-                  <>
-                    <IconTrash className="w-4 h-4" />
-                    <span>Eliminar Empresa</span>
-                  </>
-                )}
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* ─── MODAL ELIMINAR VEHÍCULO ─── */}
-      {selectedVehiculoParaEliminar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
-            <div className="flex items-center justify-between border-b pb-3">
-              <div className="flex items-center gap-2 text-red-600">
-                <div className="p-2 rounded-xl bg-red-50">
-                  <IconTrash className="w-5 h-5" />
+      {
+        selectedVehiculoParaEliminar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2 text-red-600">
+                  <div className="p-2 rounded-xl bg-red-50">
+                    <IconTrash className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-sm font-bold uppercase">Eliminar Vehículo</h3>
                 </div>
-                <h3 className="text-sm font-bold uppercase">Eliminar Vehículo</h3>
+                <button onClick={() => setSelectedVehiculoParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
               </div>
-              <button onClick={() => setSelectedVehiculoParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-            </div>
 
-            <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
-              <p className="font-semibold">¿Estás seguro de que deseas dar de baja y eliminar esta unidad vehicular?</p>
-              <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
-                <div><strong>Vehículo:</strong> {selectedVehiculoParaEliminar.marca} {selectedVehiculoParaEliminar.modelo} ({selectedVehiculoParaEliminar.anio || selectedVehiculoParaEliminar.año || "N/A"})</div>
-                <div><strong>Placas:</strong> <span className="font-mono font-bold text-slate-900">{selectedVehiculoParaEliminar.placas}</span></div>
-                <div><strong>Corbatín:</strong> #{selectedVehiculoParaEliminar.corbatinNum}</div>
-                <div><strong>Empresa:</strong> {selectedVehiculoParaEliminar.empresaNombre}</div>
+              <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
+                <p className="font-semibold">¿Estás seguro de que deseas dar de baja y eliminar esta unidad vehicular?</p>
+                <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
+                  <div><strong>Vehículo:</strong> {selectedVehiculoParaEliminar.marca} {selectedVehiculoParaEliminar.modelo} ({selectedVehiculoParaEliminar.anio || selectedVehiculoParaEliminar.año || "N/A"})</div>
+                  <div><strong>Placas:</strong> <span className="font-mono font-bold text-slate-900">{selectedVehiculoParaEliminar.placas}</span></div>
+                  <div><strong>Corbatín:</strong> #{selectedVehiculoParaEliminar.corbatinNum}</div>
+                  <div><strong>Empresa:</strong> {selectedVehiculoParaEliminar.empresaNombre}</div>
+                </div>
+                <p className="text-[11px] text-red-700">Esta acción eliminará permanentemente la unidad y desvinculará el corbatín QR asociado.</p>
               </div>
-              <p className="text-[11px] text-red-700">Esta acción eliminará permanentemente la unidad y desvinculará el corbatín QR asociado.</p>
-            </div>
 
-            <div className="flex justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => setSelectedVehiculoParaEliminar(null)}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmarEliminarVehiculo}
-                disabled={isDeletingVehiculo}
-                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingVehiculo ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
-              >
-                {isDeletingVehiculo ? (
-                  <>
-                    <IconSpinner className="w-4 h-4" />
-                    <span>Eliminando...</span>
-                  </>
-                ) : (
-                  <>
-                    <IconTrash className="w-4 h-4" />
-                    <span>Eliminar Vehículo</span>
-                  </>
-                )}
-              </button>
+              <div className="flex justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedVehiculoParaEliminar(null)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmarEliminarVehiculo}
+                  disabled={isDeletingVehiculo}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingVehiculo ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
+                >
+                  {isDeletingVehiculo ? (
+                    <>
+                      <IconSpinner className="w-4 h-4" />
+                      <span>Eliminando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <IconTrash className="w-4 h-4" />
+                      <span>Eliminar Vehículo</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* ─── MODAL VISTA PREVIA DE FOTOGRAFÍA DE VEHÍCULO ─── */}
-      {selectedFotoVehiculoPreview && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoVehiculoPreview(null)}>
-          <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
-                  <IconCar className="w-5 h-5" />
+      {
+        selectedFotoVehiculoPreview && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoVehiculoPreview(null)}>
+            <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
+                    <IconCar className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-base text-slate-900">{selectedFotoVehiculoPreview.marca} {selectedFotoVehiculoPreview.modelo}</h4>
+                    <p className="text-xs text-slate-500 font-mono">Placas: {selectedFotoVehiculoPreview.placas} · Corbatín #{selectedFotoVehiculoPreview.corbatinNum}</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-bold text-base text-slate-900">{selectedFotoVehiculoPreview.marca} {selectedFotoVehiculoPreview.modelo}</h4>
-                  <p className="text-xs text-slate-500 font-mono">Placas: {selectedFotoVehiculoPreview.placas} · Corbatín #{selectedFotoVehiculoPreview.corbatinNum}</p>
-                </div>
+                <button onClick={() => setSelectedFotoVehiculoPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
               </div>
-              <button onClick={() => setSelectedFotoVehiculoPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
-            </div>
 
-            <div className="w-full h-[260px] xs:h-[320px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 relative">
-              {selectedFotoVehiculoPreview.foto ? (
-                <img
-                  src={normalizeFotoUrl(selectedFotoVehiculoPreview.foto)}
-                  alt={`${selectedFotoVehiculoPreview.marca} ${selectedFotoVehiculoPreview.modelo}`}
-                  className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
-                />
-              ) : (
-                <IconCar className="w-20 h-20 text-slate-600" />
-              )}
-            </div>
-
-            <div className="flex justify-between items-center text-xs pt-1">
-              <span className="font-semibold text-slate-700">{selectedFotoVehiculoPreview.empresaNombre}</span>
-              <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoVehiculoPreview.status === "Habilitado"
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                : selectedFotoVehiculoPreview.status === "Suspendido"
-                  ? "bg-red-50 text-red-700 border border-red-200"
-                  : "bg-slate-100 text-slate-600 border border-slate-200"
-                }`}>
-                {selectedFotoVehiculoPreview.status}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── MODAL VISOR GENERAL DE IMÁGENES Y EVIDENCIAS (LIGHTBOX) ─── */}
-      {genericImagePreview && genericImagePreview.isOpen && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setGenericImagePreview(null)}>
-          <div className="max-w-3xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h4 className="font-bold text-base text-slate-900">{genericImagePreview.title || "Fotografía de Evidencia"}</h4>
-                {genericImagePreview.subtitle && (
-                  <p className="text-xs text-slate-500 mt-0.5">{genericImagePreview.subtitle}</p>
+              <div className="w-full h-[260px] xs:h-[320px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 relative">
+                {selectedFotoVehiculoPreview.foto ? (
+                  <img
+                    src={normalizeFotoUrl(selectedFotoVehiculoPreview.foto)}
+                    alt={`${selectedFotoVehiculoPreview.marca} ${selectedFotoVehiculoPreview.modelo}`}
+                    className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
+                  />
+                ) : (
+                  <IconCar className="w-20 h-20 text-slate-600" />
                 )}
               </div>
-              <button onClick={() => setGenericImagePreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
-            </div>
 
-            <div className="w-full h-[400px] sm:h-[500px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 relative">
-              <img
-                src={genericImagePreview.src}
-                alt="Vista Ampliada"
-                className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
-              />
-            </div>
-
-            <div className="flex justify-between items-center text-xs pt-1">
-              <span className="text-slate-400 font-mono text-[11px]">Alta Resolución</span>
-              {genericImagePreview.badge && (
-                <span className="px-3 py-1 rounded-full font-bold bg-[#0D6E5F]/10 text-[#0D6E5F] border border-[#0D6E5F]/20 font-mono">
-                  {genericImagePreview.badge}
+              <div className="flex justify-between items-center text-xs pt-1">
+                <span className="font-semibold text-slate-700">{selectedFotoVehiculoPreview.empresaNombre}</span>
+                <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoVehiculoPreview.status === "Habilitado"
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  : selectedFotoVehiculoPreview.status === "Suspendido"
+                    ? "bg-red-50 text-red-700 border border-red-200"
+                    : "bg-slate-100 text-slate-600 border border-slate-200"
+                  }`}>
+                  {selectedFotoVehiculoPreview.status}
                 </span>
-              )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
+
+      {/* ─── MODAL VISOR GENERAL DE IMÁGENES Y EVIDENCIAS (LIGHTBOX) ─── */}
+      {
+        genericImagePreview && genericImagePreview.isOpen && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setGenericImagePreview(null)}>
+            <div className="max-w-3xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                  <h4 className="font-bold text-base text-slate-900">{genericImagePreview.title || "Fotografía de Evidencia"}</h4>
+                  {genericImagePreview.subtitle && (
+                    <p className="text-xs text-slate-500 mt-0.5">{genericImagePreview.subtitle}</p>
+                  )}
+                </div>
+                <button onClick={() => setGenericImagePreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
+              </div>
+
+              <div className="w-full h-[400px] sm:h-[500px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 relative">
+                <img
+                  src={genericImagePreview.src}
+                  alt="Vista Ampliada"
+                  className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
+                />
+              </div>
+
+              <div className="flex justify-between items-center text-xs pt-1">
+                <span className="text-slate-400 font-mono text-[11px]">Alta Resolución</span>
+                {genericImagePreview.badge && (
+                  <span className="px-3 py-1 rounded-full font-bold bg-[#0D6E5F]/10 text-[#0D6E5F] border border-[#0D6E5F]/20 font-mono">
+                    {genericImagePreview.badge}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      }
 
       <footer className="mt-16 border-t py-6 px-6 text-center bg-white no-print" style={{ borderColor: "var(--color-border)" }}>
 
@@ -15560,920 +16042,1063 @@ export default function App() {
       </footer>
 
       {/* ─── VENTANA FLOTANTE DE ALERTA DE INFRACCIÓN/SANCIÓN PARA PROVEEDOR ─── */}
-      {currentUser?.role === "contratista" && sancionesAlertaParaProveedor.length > 0 && (() => {
-        const safeIdx = Math.min(activeSancionAlertIndex, sancionesAlertaParaProveedor.length - 1);
-        const alertItem = sancionesAlertaParaProveedor[safeIdx] || sancionesAlertaParaProveedor[0];
-        if (!alertItem) return null;
+      {
+        currentUser?.role === "contratista" && sancionesAlertaParaProveedor.length > 0 && (() => {
+          const safeIdx = Math.min(activeSancionAlertIndex, sancionesAlertaParaProveedor.length - 1);
+          const alertItem = sancionesAlertaParaProveedor[safeIdx] || sancionesAlertaParaProveedor[0];
+          if (!alertItem) return null;
 
-        return (
-          <div
-            key={alertItem.id}
-            className="fixed bottom-3 sm:bottom-6 left-3 right-3 sm:left-auto sm:right-6 z-[9990] w-auto sm:w-[26rem] max-w-full bg-white/98 text-slate-800 backdrop-blur-xl border border-rose-200 shadow-2xl rounded-2xl sm:rounded-3xl p-4 sm:p-5 ring-1 ring-black/5 animate-in fade-in slide-in-from-bottom-5 duration-300 transition-all font-sans"
-            style={{ boxShadow: "0 20px 45px -10px rgba(225, 29, 72, 0.18), 0 8px 20px -6px rgba(0, 0, 0, 0.08)" }}
-          >
-            {/* Header */}
-            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2.5">
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-600"></span>
-                </span>
-                <div>
-                  <h4 className="text-xs font-black uppercase tracking-wider text-rose-700 flex items-center gap-1.5">
-                    <span>Infracción Aprobada</span>
-                    {sancionesAlertaParaProveedor.length > 1 && (
-                      <span className="bg-rose-100 text-rose-800 border border-rose-200 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                        {safeIdx + 1} de {sancionesAlertaParaProveedor.length}
-                      </span>
-                    )}
-                  </h4>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    Notificación oficial de resolución de Supervisión HOA
-                  </p>
-                </div>
-              </div>
-
-              {/* Botón cerrar / descartar individual */}
-              <button
-                type="button"
-                onClick={() => handleDismissSancionAlert(alertItem.id)}
-                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer text-xs"
-                title="Quitar notificación"
-                aria-label="Cerrar notificación"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Contenido de la sanción */}
-            <div className="mt-3.5 space-y-2.5 text-xs">
-              <div className="bg-rose-50/40 rounded-2xl p-3.5 border border-rose-100 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-mono font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-md text-[11px]">
-                    Placas: {alertItem.placas || "N/A"}
+          return (
+            <div
+              key={alertItem.id}
+              className="fixed bottom-3 sm:bottom-6 left-3 right-3 sm:left-auto sm:right-6 z-[9990] w-auto sm:w-[26rem] max-w-full bg-white/98 text-slate-800 backdrop-blur-xl border border-rose-200 shadow-2xl rounded-2xl sm:rounded-3xl p-4 sm:p-5 ring-1 ring-black/5 animate-in fade-in slide-in-from-bottom-5 duration-300 transition-all font-sans"
+              style={{ boxShadow: "0 20px 45px -10px rgba(225, 29, 72, 0.18), 0 8px 20px -6px rgba(0, 0, 0, 0.08)" }}
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-600"></span>
                   </span>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    Folio: #{alertItem.id}
-                  </span>
-                </div>
-
-                <div>
-                  <p className="text-slate-900 font-bold text-xs leading-snug">
-                    {alertItem.tipo}
-                  </p>
-                  {alertItem.descripcion && alertItem.descripcion !== alertItem.tipo && (
-                    <p className="text-[11px] text-slate-600 mt-1 line-clamp-2">
-                      {alertItem.descripcion}
+                  <div>
+                    <h4 className="text-xs font-black uppercase tracking-wider text-rose-700 flex items-center gap-1.5">
+                      <span>Infracción Aprobada</span>
+                      {sancionesAlertaParaProveedor.length > 1 && (
+                        <span className="bg-rose-100 text-rose-800 border border-rose-200 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          {safeIdx + 1} de {sancionesAlertaParaProveedor.length}
+                        </span>
+                      )}
+                    </h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Notificación oficial de resolución de Supervisión HOA
                     </p>
-                  )}
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2 pt-1 border-t border-rose-100/80">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Medida:</span>
-                  <span className="text-xs font-bold text-rose-800 bg-rose-100/90 border border-rose-200 px-2.5 py-0.5 rounded-md">
-                    {alertItem.medidaDisciplinaria || "Amonestación / Suspensión"}
-                  </span>
-                </div>
+                {/* Botón cerrar / descartar individual */}
+                <button
+                  type="button"
+                  onClick={() => handleDismissSancionAlert(alertItem.id)}
+                  className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer text-xs"
+                  title="Quitar notificación"
+                  aria-label="Cerrar notificación"
+                >
+                  ✕
+                </button>
               </div>
 
-              {/* Controles de paginación si hay múltiples */}
-              {sancionesAlertaParaProveedor.length > 1 && (
-                <div className="flex items-center justify-between text-[11px] text-slate-500 px-1 pt-1">
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      disabled={safeIdx === 0}
-                      onClick={() => setActiveSancionAlertIndex(Math.max(0, safeIdx - 1))}
-                      className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-40 font-medium cursor-pointer disabled:cursor-not-allowed text-[11px]"
-                    >
-                      ← Anterior
-                    </button>
-                    <button
-                      type="button"
-                      disabled={safeIdx >= sancionesAlertaParaProveedor.length - 1}
-                      onClick={() => setActiveSancionAlertIndex(Math.min(sancionesAlertaParaProveedor.length - 1, safeIdx + 1))}
-                      className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-40 font-medium cursor-pointer disabled:cursor-not-allowed text-[11px]"
-                    >
-                      Siguiente →
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleDismissAllSancionAlerts(sancionesAlertaParaProveedor.map((s) => s.id))}
-                    className="text-[11px] text-slate-500 hover:text-slate-800 underline cursor-pointer"
-                  >
-                    Quitar todas ({sancionesAlertaParaProveedor.length})
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Acciones principales */}
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedSancionParaApelar(alertItem);
-                  setPortalScreen("sanciones");
-                  handleDismissSancionAlert(alertItem.id);
-                }}
-                className="flex-1 py-2.5 px-3.5 rounded-xl bg-[#0D6E5F] hover:bg-[#0a574b] text-white font-bold text-xs shadow-md shadow-emerald-900/10 flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-[0.98]"
-              >
-                <IconMessageSquare className="w-3.5 h-3.5" />
-                <span>Interponer Apelación</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleDismissSancionAlert(alertItem.id)}
-                className="py-2.5 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 font-semibold text-xs border border-slate-200 transition-colors cursor-pointer"
-              >
-                Entendido
-              </button>
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* ─── MODAL: VINCULAR CORBATÍN VERDE TEMPORALMENTE A EMPRESA ─── */}
-      {showVincularCorbatinModal && corbatinParaVincular && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="relative bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-100 my-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            {/* Header del Modal */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0D6E5F] shadow-2xs font-mono font-black text-sm">
-                  #{formatCorbatinVerdeNum(corbatinParaVincular.corbatinNum)}
-                </div>
-                <div>
-                  <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                    <span>Vincular Corbatín #{formatCorbatinVerdeNum(corbatinParaVincular.corbatinNum)}</span>
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-extrabold uppercase">
-                      Inventario Físico
+              {/* Contenido de la sanción */}
+              <div className="mt-3.5 space-y-2.5 text-xs">
+                <div className="bg-rose-50/40 rounded-2xl p-3.5 border border-rose-100 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-md text-[11px]">
+                      Placas: {alertItem.placas || "N/A"}
                     </span>
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Asigna temporalmente este tarjetón físico a una empresa o contratista por un tiempo determinado.
-                  </p>
-                </div>
-              </div>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      Folio: #{alertItem.id}
+                    </span>
+                  </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setShowVincularCorbatinModal(false);
-                  setVincularError("");
-                }}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-                title="Cerrar modal"
-              >
-                <IconX className="w-5 h-5" />
-              </button>
-            </div>
+                  <div>
+                    <p className="text-slate-900 font-bold text-xs leading-snug">
+                      {alertItem.tipo}
+                    </p>
+                    {alertItem.descripcion && alertItem.descripcion !== alertItem.tipo && (
+                      <p className="text-[11px] text-slate-600 mt-1 line-clamp-2">
+                        {alertItem.descripcion}
+                      </p>
+                    )}
+                  </div>
 
-            <form onSubmit={handleConfirmarVinculacion} className="mt-5 space-y-4">
-              {/* Error Banner */}
-              {vincularError && (
-                <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2.5 text-xs text-red-700 font-medium">
-                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                  <span>{vincularError}</span>
-                </div>
-              )}
-
-              {/* Empresa / Contratista */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Empresa / Contratista Asignado <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    required
-                    list="empresas-list-vincular"
-                    value={vincularEmpresaNombre}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setVincularEmpresaNombre(val);
-                      const found = empresas.find(emp => emp.nombre.toLowerCase() === val.toLowerCase());
-                      if (found) {
-                        setVincularEmpresaId(found.id);
-                        if (found.telefono && !vincularTelefono) setVincularTelefono(found.telefono);
-                        if (found.email && !vincularEmail) setVincularEmail(found.email);
-                      } else {
-                        setVincularEmpresaId("");
-                      }
-                    }}
-                    placeholder="Escribe o selecciona la empresa..."
-                    className="w-full text-xs font-semibold pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                  />
-                  <IconBuilding className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <datalist id="empresas-list-vincular">
-                    {empresas.map((emp) => (
-                      <option key={emp.id} value={emp.nombre} />
-                    ))}
-                  </datalist>
-                </div>
-              </div>
-
-              {/* Teléfono y Correo */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Teléfono de Contacto
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="tel"
-                      value={vincularTelefono}
-                      onChange={(e) => setVincularTelefono(e.target.value)}
-                      placeholder="Ej. 638 123 4567"
-                      className="w-full text-xs font-semibold pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F] font-mono"
-                    />
-                    <IconPhone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <div className="flex items-center gap-2 pt-1 border-t border-rose-100/80">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Medida:</span>
+                    <span className="text-xs font-bold text-rose-800 bg-rose-100/90 border border-rose-200 px-2.5 py-0.5 rounded-md">
+                      {alertItem.medidaDisciplinaria || "Amonestación / Suspensión"}
+                    </span>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Correo Electrónico
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="email"
-                      value={vincularEmail}
-                      onChange={(e) => setVincularEmail(e.target.value)}
-                      placeholder="contacto@empresa.com"
-                      className="w-full text-xs font-semibold pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                    />
-                    <IconMail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Vigencia y Fecha de Vencimiento */}
-              <div className="p-4 rounded-2xl bg-teal-50/70 border border-teal-200 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-teal-900 uppercase tracking-wider">
-                    Periodo de Vigencia Temporal
-                  </label>
-                  <span className="text-[11px] font-bold text-[#0D6E5F]">
-                    {vincularFechaFin ? `Vence: ${vincularFechaFin}` : "Calculando..."}
-                  </span>
-                </div>
-
-                {/* Presets rápidos */}
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-                  {["1 Día", "1 Semana", "15 Días", "1 Mes", "3 Meses", "6 Meses"].map((preset) => {
-                    const isSel = vincularVigencia === preset;
-                    return (
+                {/* Controles de paginación si hay múltiples */}
+                {sancionesAlertaParaProveedor.length > 1 && (
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 px-1 pt-1">
+                    <div className="flex items-center gap-1.5">
                       <button
-                        key={preset}
                         type="button"
-                        onClick={() => {
-                          setVincularVigencia(preset);
-                          const today = new Date();
-                          let days = 30;
-                          if (preset === "1 Día") days = 1;
-                          else if (preset === "1 Semana") days = 7;
-                          else if (preset === "15 Días") days = 15;
-                          else if (preset === "1 Mes") days = 30;
-                          else if (preset === "3 Meses") days = 90;
-                          else if (preset === "6 Meses") days = 180;
-                          const venc = new Date(today);
-                          venc.setDate(venc.getDate() + days);
-                          setVincularFechaFin(venc.toISOString().split("T")[0]);
-                        }}
-                        className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${isSel
-                          ? "bg-[#0D6E5F] text-white shadow-2xs"
-                          : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+                        disabled={safeIdx === 0}
+                        onClick={() => setActiveSancionAlertIndex(Math.max(0, safeIdx - 1))}
+                        className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-40 font-medium cursor-pointer disabled:cursor-not-allowed text-[11px]"
+                      >
+                        ← Anterior
+                      </button>
+                      <button
+                        type="button"
+                        disabled={safeIdx >= sancionesAlertaParaProveedor.length - 1}
+                        onClick={() => setActiveSancionAlertIndex(Math.min(sancionesAlertaParaProveedor.length - 1, safeIdx + 1))}
+                        className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-40 font-medium cursor-pointer disabled:cursor-not-allowed text-[11px]"
+                      >
+                        Siguiente →
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDismissAllSancionAlerts(sancionesAlertaParaProveedor.map((s) => s.id))}
+                      className="text-[11px] text-slate-500 hover:text-slate-800 underline cursor-pointer"
+                    >
+                      Quitar todas ({sancionesAlertaParaProveedor.length})
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Acciones principales */}
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedSancionParaApelar(alertItem);
+                    setPortalScreen("sanciones");
+                    handleDismissSancionAlert(alertItem.id);
+                  }}
+                  className="flex-1 py-2.5 px-3.5 rounded-xl bg-[#0D6E5F] hover:bg-[#0a574b] text-white font-bold text-xs shadow-md shadow-emerald-900/10 flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-[0.98]"
+                >
+                  <IconMessageSquare className="w-3.5 h-3.5" />
+                  <span>Interponer Apelación</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDismissSancionAlert(alertItem.id)}
+                  className="py-2.5 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 font-semibold text-xs border border-slate-200 transition-colors cursor-pointer"
+                >
+                  Entendido
+                </button>
+              </div>
+            </div>
+          );
+        })()
+      }
+
+      {/* ─── MODAL ELEGANTE DE CONFIRMACIÓN (LIBERAR / ELIMINAR CORBATÍN) ─── */}
+      {
+        actionConfirmModal && actionConfirmModal.isOpen && (
+          <div
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150"
+            onClick={() => setActionConfirmModal(null)}
+          >
+            <div
+              className="relative bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 my-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Cabecera con Icono y Botón Cerrar */}
+              <div className="flex items-start justify-between gap-3 pt-1">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${actionConfirmModal.type === "eliminar"
+                      ? "bg-rose-50 border-rose-200 text-rose-600 shadow-sm shadow-rose-100"
+                      : "bg-amber-50 border-amber-200 text-amber-600 shadow-sm shadow-amber-100"
+                      }`}
+                  >
+                    {actionConfirmModal.type === "eliminar" ? (
+                      <IconTrash className="w-6 h-6" />
+                    ) : (
+                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="1 4 1 10 7 10" />
+                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                      </svg>
+                    )}
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono font-bold text-xs text-[#0D6E5F] bg-teal-50 border border-teal-200 px-2.5 py-0.5 rounded-lg">
+                        #{actionConfirmModal.corbatinNum}
+                      </span>
+                      <span
+                        className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${actionConfirmModal.type === "eliminar"
+                          ? "bg-rose-50 text-rose-700 border-rose-200"
+                          : "bg-amber-50 text-amber-800 border-amber-200"
                           }`}
                       >
-                        {preset}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                      Etiqueta de Vigencia:
-                    </label>
-                    <select
-                      value={vincularVigencia}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setVincularVigencia(val);
-                        const today = new Date();
-                        let days = 30;
-                        if (val === "1 Día") days = 1;
-                        else if (val === "1 Semana") days = 7;
-                        else if (val === "15 Días") days = 15;
-                        else if (val === "1 Mes") days = 30;
-                        else if (val === "3 Meses") days = 90;
-                        else if (val === "6 Meses") days = 180;
-                        else if (val === "1 Año") days = 365;
-                        else if (val === "Permanente") days = 730;
-                        const venc = new Date(today);
-                        venc.setDate(venc.getDate() + days);
-                        setVincularFechaFin(venc.toISOString().split("T")[0]);
-                      }}
-                      className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                    >
-                      <option value="1 Día">1 Día (Pase Rápido)</option>
-                      <option value="1 Semana">1 Semana</option>
-                      <option value="15 Días">15 Días (Quincenal)</option>
-                      <option value="1 Mes">1 Mes (Estándar)</option>
-                      <option value="3 Meses">3 Meses (Trimestral)</option>
-                      <option value="6 Meses">6 Meses (Semestral)</option>
-                      <option value="1 Año">1 Año Completo</option>
-                      <option value="Permanente">Permanente / Indefinido</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                      Fecha Límite Exacta:
-                    </label>
-                    <input
-                      type="date"
-                      required
-                      value={vincularFechaFin}
-                      onChange={(e) => setVincularFechaFin(e.target.value)}
-                      className="w-full text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                    />
+                        {actionConfirmModal.type === "eliminar" ? "Eliminar del Pool" : "Liberar de Empresa"}
+                      </span>
+                    </div>
+                    <h3 className="font-black text-lg text-slate-900 mt-1">
+                      {actionConfirmModal.type === "eliminar"
+                        ? `¿Eliminar Corbatín #${actionConfirmModal.corbatinNum}?`
+                        : `¿Liberar Corbatín #${actionConfirmModal.corbatinNum}?`}
+                    </h3>
                   </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => setActionConfirmModal(null)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                  title="Cerrar modal"
+                >
+                  <IconX className="w-5 h-5" />
+                </button>
               </div>
 
-              {/* Datos Opcionales: Chofer, Placas y Notas */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Placas del Vehículo (Opcional)
-                  </label>
-                  <input
-                    type="text"
-                    value={vincularPlacas}
-                    onChange={(e) => setVincularPlacas(e.target.value.toUpperCase())}
-                    placeholder="Ej. ABC-1234"
-                    className="w-full text-xs font-bold font-mono px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                  />
+              {/* Tarjeta de Información Detallada */}
+              <div className="my-5 space-y-3">
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 text-xs space-y-2.5">
+                  {actionConfirmModal.empresaNombre && (
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-200/70">
+                      <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Empresa Actual</span>
+                      <span className="font-bold text-slate-800 text-xs text-right max-w-[220px] truncate">
+                        {actionConfirmModal.empresaNombre}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="text-slate-600 leading-relaxed font-medium">
+                    {actionConfirmModal.type === "eliminar" ? (
+                      <span>
+                        Esta acción removerá permanentemente la unidad <strong>#{actionConfirmModal.corbatinNum}</strong> del pool de inventario físico. Su acreditación y código QR quedarán anulados.
+                      </span>
+                    ) : (
+                      <span>
+                        El corbatín se desvinculará de <strong>&quot;{actionConfirmModal.empresaNombre || "la empresa"}&quot;</strong> y volverá de inmediato al catálogo general como unidad <strong className="text-emerald-700">Disponible</strong> para ser reasignada.
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Nombre del Conductor (Opcional)
-                  </label>
-                  <input
-                    type="text"
-                    value={vincularConductor}
-                    onChange={(e) => setVincularConductor(e.target.value)}
-                    placeholder="Ej. Juan Pérez"
-                    className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                  />
+                {/* Puntos informativos / Consecuencias */}
+                <div className="space-y-1.5 px-1 text-[11px] text-slate-500 font-medium">
+                  {actionConfirmModal.type === "eliminar" ? (
+                    <>
+                      <div className="flex items-center gap-2 text-rose-600">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                        <span>Esta acción es irreversible y no se puede deshacer.</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
+                        <span>El registro previo permanecerá respaldado en la bitácora general.</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2 text-emerald-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                        <span>El tarjetón físico queda libre para asignarse a otro contratista cuando sea requerido.</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
+                        <span>Los permisos de acceso vehicular activos en caseta para esta unidad se suspenderán.</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Notas / Observaciones del Proyecto (Opcional)
-                </label>
-                <input
-                  type="text"
-                  value={vincularNotas}
-                  onChange={(e) => setVincularNotas(e.target.value)}
-                  placeholder="Ej. Mantenimiento albercas Fase 2 Torre B"
-                  className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                />
-              </div>
+              {/* Botones de Acción */}
+              <div className="pt-3 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setActionConfirmModal(null)}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer text-center"
+                >
+                  Cancelar
+                </button>
 
-              {/* Modal Footer */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const cb = actionConfirmModal.actionCallback;
+                    setActionConfirmModal(null);
+                    cb();
+                  }}
+                  className={`w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2 ${actionConfirmModal.type === "eliminar"
+                    ? "bg-rose-600 hover:bg-rose-700 active:scale-95 shadow-rose-600/20"
+                    : "bg-amber-600 hover:bg-amber-700 active:scale-95 shadow-amber-600/20"
+                    }`}
+                >
+                  {actionConfirmModal.type === "eliminar" ? (
+                    <>
+                      <IconTrash className="w-4 h-4" />
+                      <span>Sí, Eliminar del Pool</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="1 4 1 10 7 10" />
+                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                      </svg>
+                      <span>Sí, Liberar Corbatín</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL: VINCULAR CORBATÍN VERDE TEMPORALMENTE A EMPRESA ─── */}
+      {
+        showVincularCorbatinModal && corbatinParaVincular && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+            <div className="relative bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-100 my-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              {/* Header del Modal */}
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0D6E5F] shadow-2xs font-mono font-black text-sm">
+                    #{formatCorbatinVerdeNum(corbatinParaVincular.corbatinNum)}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+                      <span>Vincular Corbatín #{formatCorbatinVerdeNum(corbatinParaVincular.corbatinNum)}</span>
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-extrabold uppercase">
+                        Inventario Físico
+                      </span>
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Asigna temporalmente este tarjetón físico a una empresa o contratista por un tiempo determinado.
+                    </p>
+                  </div>
+                </div>
+
                 <button
                   type="button"
                   onClick={() => {
                     setShowVincularCorbatinModal(false);
                     setVincularError("");
                   }}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                  title="Cerrar modal"
                 >
-                  Cancelar
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={isSubmittingVinculacion}
-                  style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
-                  className="px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-xs active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                  </svg>
-                  <span>{isSubmittingVinculacion ? "Guardando..." : `Vincular Corbatín #${formatCorbatinVerdeNum(corbatinParaVincular.corbatinNum)}`}</span>
+                  <IconX className="w-5 h-5" />
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
 
-      {/* ─── MODAL: EMITIR CORBATÍN(ES) VERDE(S) (EMPRESA + CORRELATIVO) ─── */}
-      {showCreateCorbatinVerdeModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="relative bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-100 my-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            {/* Header decorativo */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0D6E5F] shadow-2xs">
-                  <IconCheckCircle className="w-6 h-6 text-[#0D6E5F]" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                    <span>Emitir Corbatín(es) Verde(s)</span>
-                    <span className="px-2 py-0.5 rounded-md bg-teal-50 text-[#0D6E5F] border border-teal-200 text-[10px] font-extrabold uppercase">
-                      LARGA ESTANCIA
-                    </span>
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Para empresas con estadía continua sin registro vehicular previo.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setShowCreateCorbatinVerdeModal(false);
-                  setNuevoCVError("");
-                }}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-                title="Cerrar modal"
-              >
-                <IconX className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Selector de Modo: Individual vs Lote */}
-            <div className="mt-5 p-1 bg-slate-100 rounded-2xl flex items-center gap-1 border border-slate-200/80">
-              <button
-                type="button"
-                onClick={() => setNuevoCVModo("individual")}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${nuevoCVModo === "individual"
-                  ? "bg-white text-[#0D6E5F] shadow-xs border border-slate-200"
-                  : "text-slate-600 hover:text-slate-900"
-                  }`}
-              >
-                Emisión Individual (1 Corbatín)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setNuevoCVModo("lote");
-                  const next = getNextCorbatinVerdeNum(corbatinesVerdes);
-                  if (!nuevoCVRangoInicio) setNuevoCVRangoInicio(next);
-                  if (!nuevoCVRangoFin) setNuevoCVRangoFin(next);
-                }}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${nuevoCVModo === "lote"
-                  ? "bg-white text-[#0D6E5F] shadow-xs border border-slate-200"
-                  : "text-slate-600 hover:text-slate-900"
-                  }`}
-              >
-                Emisión en Lote / Rango Consecutivo
-              </button>
-            </div>
-
-            <form onSubmit={handleGuardarNuevoCorbatinVerde} className="mt-5 space-y-4">
-              {/* Error Banner */}
-              {nuevoCVError && (
-                <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2.5 text-xs text-red-700 font-medium">
-                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                  <span>{nuevoCVError}</span>
-                </div>
-              )}
-
-              {/* Nombre de la Empresa / Contratista */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Nombre de la Empresa / Contratista <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    required
-                    list="empresas-list-nuevo-cv"
-                    value={nuevoCVEmpresaNombre}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setNuevoCVEmpresaNombre(val);
-                      const found = empresas.find(emp => emp.nombre.toLowerCase() === val.toLowerCase());
-                      if (found) {
-                        if (found.telefono && !nuevoCVTelefono) setNuevoCVTelefono(found.telefono);
-                        if (found.email && !nuevoCVEmail) setNuevoCVEmail(found.email);
-                      }
-                    }}
-                    placeholder="Ej. Albercas del Desierto S.A."
-                    className="w-full text-xs font-semibold pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                  />
-                  <IconBuilding className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <datalist id="empresas-list-nuevo-cv">
-                    {empresas.map((emp) => (
-                      <option key={emp.id} value={emp.nombre} />
-                    ))}
-                  </datalist>
-                </div>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Puedes seleccionar una empresa existente del padrón o escribir un nuevo proveedor.
-                </p>
-              </div>
-
-              {/* Teléfono de Contacto y Correo Electrónico */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Teléfono de Contacto <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="tel"
-                      required
-                      value={nuevoCVTelefono}
-                      onChange={(e) => setNuevoCVTelefono(e.target.value)}
-                      placeholder="Ej. 638 123 4567"
-                      className="w-full text-xs font-semibold pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F] font-mono"
-                    />
-                    <IconPhone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <form onSubmit={handleConfirmarVinculacion} className="mt-5 space-y-4">
+                {/* Error Banner */}
+                {vincularError && (
+                  <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2.5 text-xs text-red-700 font-medium">
+                    <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                    <span>{vincularError}</span>
                   </div>
-                </div>
+                )}
 
+                {/* Empresa / Contratista */}
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Correo Electrónico <span className="text-red-500">*</span>
+                    Empresa / Contratista Asignado <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <input
-                      type="email"
+                      type="text"
                       required
-                      value={nuevoCVEmail}
-                      onChange={(e) => setNuevoCVEmail(e.target.value)}
-                      placeholder="contacto@empresa.com"
+                      list="empresas-list-vincular"
+                      value={vincularEmpresaNombre}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setVincularEmpresaNombre(val);
+                        const found = empresas.find(emp => emp.nombre.toLowerCase() === val.toLowerCase());
+                        if (found) {
+                          setVincularEmpresaId(found.id);
+                          if (found.telefono && !vincularTelefono) setVincularTelefono(found.telefono);
+                          if (found.email && !vincularEmail) setVincularEmail(found.email);
+                        } else {
+                          setVincularEmpresaId("");
+                        }
+                      }}
+                      placeholder="Escribe o selecciona la empresa..."
                       className="w-full text-xs font-semibold pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
                     />
-                    <IconMail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <IconBuilding className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <datalist id="empresas-list-vincular">
+                      {empresas.map((emp) => (
+                        <option key={emp.id} value={emp.nombre} />
+                      ))}
+                    </datalist>
                   </div>
                 </div>
-              </div>
 
-              {/* Modo Individual: Info del Correlativo */}
-              {nuevoCVModo === "individual" ? (
-                <div className="p-4 rounded-2xl bg-teal-50/70 border border-teal-200 flex items-center justify-between">
+                {/* Teléfono y Correo */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <div className="text-[11px] font-bold text-teal-900 uppercase tracking-wider">
-                      Siguiente Correlativo Disponible
-                    </div>
-                    <div className="text-xs text-teal-700 mt-0.5">
-                      Se registrará en el inventario como corbatín libre para asignación.
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Teléfono de Contacto
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="tel"
+                        value={vincularTelefono}
+                        onChange={(e) => setVincularTelefono(e.target.value)}
+                        placeholder="Ej. 638 123 4567"
+                        className="w-full text-xs font-semibold pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F] font-mono"
+                      />
+                      <IconPhone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     </div>
                   </div>
-                  <span className="font-mono font-black text-2xl px-3.5 py-1.5 rounded-xl bg-white text-[#0D6E5F] border border-teal-200 shadow-2xs">
-                    #{getNextCorbatinVerdeNum(corbatinesVerdes)}
-                  </span>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Correo Electrónico
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        value={vincularEmail}
+                        onChange={(e) => setVincularEmail(e.target.value)}
+                        placeholder="contacto@empresa.com"
+                        className="w-full text-xs font-semibold pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                      />
+                      <IconMail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    </div>
+                  </div>
                 </div>
-              ) : (
-                /* Modo Lote: Rango Consecutivo */
-                <div className="p-4 rounded-2xl bg-[#f0fdfa] border border-[#99f6e4] space-y-3">
+
+                {/* Vigencia y Fecha de Vencimiento */}
+                <div className="p-4 rounded-2xl bg-teal-50/70 border border-teal-200 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-extrabold text-[#0D6E5F] uppercase tracking-wider">
-                      RANGO DE CORBATINES VERDES
-                    </span>
-                    <span className="text-[11px] font-bold text-[#0D6E5F] bg-white px-2.5 py-0.5 rounded-lg border border-teal-200 font-mono">
-                      Inicio sugerido: #{getNextCorbatinVerdeNum(corbatinesVerdes)}
+                    <label className="block text-xs font-bold text-teal-900 uppercase tracking-wider">
+                      Periodo de Vigencia Temporal
+                    </label>
+                    <span className="text-[11px] font-bold text-[#0D6E5F]">
+                      {vincularFechaFin ? `Vence: ${vincularFechaFin}` : "Calculando..."}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  {/* Presets rápidos */}
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                    {["1 Día", "1 Semana", "15 Días", "1 Mes", "3 Meses", "6 Meses"].map((preset) => {
+                      const isSel = vincularVigencia === preset;
+                      return (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => {
+                            setVincularVigencia(preset);
+                            const today = new Date();
+                            let days = 30;
+                            if (preset === "1 Día") days = 1;
+                            else if (preset === "1 Semana") days = 7;
+                            else if (preset === "15 Días") days = 15;
+                            else if (preset === "1 Mes") days = 30;
+                            else if (preset === "3 Meses") days = 90;
+                            else if (preset === "6 Meses") days = 180;
+                            const venc = new Date(today);
+                            venc.setDate(venc.getDate() + days);
+                            setVincularFechaFin(venc.toISOString().split("T")[0]);
+                          }}
+                          className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${isSel
+                            ? "bg-[#0D6E5F] text-white shadow-2xs"
+                            : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+                            }`}
+                        >
+                          {preset}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     <div>
                       <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                        Desde Correlativo #:
+                        Etiqueta de Vigencia:
                       </label>
-                      <input
-                        type="text"
-                        required
-                        value={nuevoCVRangoInicio}
-                        onChange={(e) => setNuevoCVRangoInicio(e.target.value)}
-                        placeholder={getNextCorbatinVerdeNum(corbatinesVerdes)}
-                        className="w-full text-xs font-bold font-mono px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                      />
+                      <select
+                        value={vincularVigencia}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setVincularVigencia(val);
+                          const today = new Date();
+                          let days = 30;
+                          if (val === "1 Día") days = 1;
+                          else if (val === "1 Semana") days = 7;
+                          else if (val === "15 Días") days = 15;
+                          else if (val === "1 Mes") days = 30;
+                          else if (val === "3 Meses") days = 90;
+                          else if (val === "6 Meses") days = 180;
+                          else if (val === "1 Año") days = 365;
+                          else if (val === "Permanente") days = 730;
+                          const venc = new Date(today);
+                          venc.setDate(venc.getDate() + days);
+                          setVincularFechaFin(venc.toISOString().split("T")[0]);
+                        }}
+                        className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                      >
+                        <option value="1 Día">1 Día (Pase Rápido)</option>
+                        <option value="1 Semana">1 Semana</option>
+                        <option value="15 Días">15 Días (Quincenal)</option>
+                        <option value="1 Mes">1 Mes (Estándar)</option>
+                        <option value="3 Meses">3 Meses (Trimestral)</option>
+                        <option value="6 Meses">6 Meses (Semestral)</option>
+                        <option value="1 Año">1 Año Completo</option>
+                        <option value="Permanente">Permanente / Indefinido</option>
+                      </select>
                     </div>
 
                     <div>
                       <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                        Hasta Correlativo #:
+                        Fecha Límite Exacta:
                       </label>
                       <input
-                        type="text"
+                        type="date"
                         required
-                        value={nuevoCVRangoFin}
-                        onChange={(e) => setNuevoCVRangoFin(e.target.value)}
-                        placeholder={getNextCorbatinVerdeNum(corbatinesVerdes)}
-                        className="w-full text-xs font-bold font-mono px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                        value={vincularFechaFin}
+                        onChange={(e) => setVincularFechaFin(e.target.value)}
+                        className="w-full text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
                       />
                     </div>
                   </div>
-
-                  {(() => {
-                    const s = parseInt(String(nuevoCVRangoInicio).replace(/[^0-9]/g, ""), 10);
-                    const e = parseInt(String(nuevoCVRangoFin).replace(/[^0-9]/g, ""), 10);
-                    const count = (!isNaN(s) && !isNaN(e) && e >= s) ? (e - s + 1) : 0;
-                    return (
-                      <div className="text-xs text-teal-900 font-semibold bg-white p-2.5 rounded-xl border border-teal-200 flex items-center justify-between">
-                        <span>Total de corbatines a generar:</span>
-                        <span className="font-mono font-bold text-[#0D6E5F] px-2.5 py-0.5 rounded bg-teal-50 border border-teal-200">
-                          {count} {count === 1 ? "corbatín" : "corbatines"}
-                        </span>
-                      </div>
-                    );
-                  })()}
                 </div>
-              )}
 
-              {/* Periodo de Vigencia y Notas */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Periodo de Vigencia
-                  </label>
-                  <select
-                    value={nuevoCVVigencia}
-                    onChange={(e) => setNuevoCVVigencia(e.target.value)}
-                    className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                  >
-                    <option value="1 Semana">1 Semana</option>
-                    <option value="15 Días">15 Días</option>
-                    <option value="1 Mes">1 Mes</option>
-                    <option value="3 Meses">3 Meses</option>
-                    <option value="6 Meses (Recomendado)">6 Meses (Recomendado)</option>
-                    <option value="1 Año">1 Año</option>
-                    <option value="Permanente">Permanente / Indefinido</option>
-                  </select>
+                {/* Datos Opcionales: Chofer, Placas y Notas */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Placas del Vehículo (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={vincularPlacas}
+                      onChange={(e) => setVincularPlacas(e.target.value.toUpperCase())}
+                      placeholder="Ej. ABC-1234"
+                      className="w-full text-xs font-bold font-mono px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Nombre del Conductor (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={vincularConductor}
+                      onChange={(e) => setVincularConductor(e.target.value)}
+                      placeholder="Ej. Juan Pérez"
+                      className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                    />
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Notas u Observaciones (Opcional)
+                    Notas / Observaciones del Proyecto (Opcional)
                   </label>
                   <input
                     type="text"
-                    value={nuevoCVNotas}
-                    onChange={(e) => setNuevoCVNotas(e.target.value)}
-                    placeholder="Ej. Proyecto Fase 2 Torre A"
+                    value={vincularNotas}
+                    onChange={(e) => setVincularNotas(e.target.value)}
+                    placeholder="Ej. Mantenimiento albercas Fase 2 Torre B"
                     className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
                   />
                 </div>
-              </div>
 
-              {/* Modal Footer Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                {/* Modal Footer */}
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowVincularCorbatinModal(false);
+                      setVincularError("");
+                    }}
+                    className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmittingVinculacion}
+                    style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
+                    className="px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-xs active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    </svg>
+                    <span>{isSubmittingVinculacion ? "Guardando..." : `Vincular Corbatín #${formatCorbatinVerdeNum(corbatinParaVincular.corbatinNum)}`}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL: EMITIR CORBATÍN(ES) VERDE(S) (EMPRESA + CORRELATIVO) ─── */}
+      {
+        showCreateCorbatinVerdeModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+            <div className="relative bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-100 my-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              {/* Header decorativo */}
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0D6E5F] shadow-2xs">
+                    <IconCheckCircle className="w-6 h-6 text-[#0D6E5F]" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+                      <span>Emitir Corbatín(es) Verde(s)</span>
+                      <span className="px-2 py-0.5 rounded-md bg-teal-50 text-[#0D6E5F] border border-teal-200 text-[10px] font-extrabold uppercase">
+                        LARGA ESTANCIA
+                      </span>
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Para empresas con estadía continua sin registro vehicular previo.
+                    </p>
+                  </div>
+                </div>
+
                 <button
                   type="button"
                   onClick={() => {
                     setShowCreateCorbatinVerdeModal(false);
                     setNuevoCVError("");
                   }}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                  title="Cerrar modal"
                 >
-                  Cancelar
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={isSubmittingNuevoCV}
-                  style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
-                  className="px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-xs active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                >
-                  <IconCheckCircle className="w-4 h-4" />
-                  <span>
-                    {isSubmittingNuevoCV ? "Guardando..." : (
-                      nuevoCVModo === "individual"
-                        ? `Emitir Corbatín #${getNextCorbatinVerdeNum(corbatinesVerdes)}`
-                        : "Emitir Lote de Corbatines"
-                    )}
-                  </span>
+                  <IconX className="w-5 h-5" />
                 </button>
               </div>
-            </form>
+
+              {/* Selector de Modo: Individual vs Lote */}
+              <div className="mt-5 p-1 bg-slate-100 rounded-2xl flex items-center gap-1 border border-slate-200/80">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNuevoCVModo("individual");
+                    setNuevoCVError("");
+                    const primerDisp = formatCorbatinVerdeNum(getPrimerCorbatinVerdeDisponible(corbatinesVerdes));
+                    if (!nuevoCVNumeroIndividual) setNuevoCVNumeroIndividual(primerDisp);
+                  }}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${nuevoCVModo === "individual"
+                    ? "bg-white text-[#0D6E5F] shadow-xs border border-slate-200"
+                    : "text-slate-600 hover:text-slate-900"
+                    }`}
+                >
+                  Emisión Individual (1 Corbatín)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNuevoCVModo("lote");
+                    setNuevoCVError("");
+                    const sigNuevo = formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes));
+                    setNuevoCVRangoInicio(sigNuevo);
+                    setNuevoCVRangoFin(sigNuevo);
+                  }}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${nuevoCVModo === "lote"
+                    ? "bg-white text-[#0D6E5F] shadow-xs border border-slate-200"
+                    : "text-slate-600 hover:text-slate-900"
+                    }`}
+                >
+                  Emisión en Lote / Rango Consecutivo
+                </button>
+              </div>
+
+              <form onSubmit={handleGuardarNuevoCorbatinVerde} className="mt-5 space-y-4">
+                {/* Error Banner */}
+                {nuevoCVError && (
+                  <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2.5 text-xs text-red-700 font-medium">
+                    <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                    <span>{nuevoCVError}</span>
+                  </div>
+                )}
+
+                {/* Nombre de la Empresa / Contratista */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Nombre de la Empresa / Contratista <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      list="empresas-list-nuevo-cv"
+                      value={nuevoCVEmpresaNombre}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNuevoCVEmpresaNombre(val);
+                        const found = empresas.find(emp => emp.nombre.toLowerCase() === val.toLowerCase());
+                        if (found) {
+                          if (found.telefono && !nuevoCVTelefono) setNuevoCVTelefono(found.telefono);
+                          if (found.email && !nuevoCVEmail) setNuevoCVEmail(found.email);
+                        }
+                      }}
+                      placeholder="Ej. Albercas del Desierto S.A."
+                      className="w-full text-xs font-semibold pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                    />
+                    <IconBuilding className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <datalist id="empresas-list-nuevo-cv">
+                      {empresas.map((emp) => (
+                        <option key={emp.id} value={emp.nombre} />
+                      ))}
+                    </datalist>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Puedes seleccionar una empresa existente del padrón o escribir un nuevo proveedor.
+                  </p>
+                </div>
+
+                {/* Teléfono de Contacto y Correo Electrónico */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Teléfono de Contacto <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="tel"
+                        required
+                        value={nuevoCVTelefono}
+                        onChange={(e) => setNuevoCVTelefono(e.target.value)}
+                        placeholder="Ej. 638 123 4567"
+                        className="w-full text-xs font-semibold pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F] font-mono"
+                      />
+                      <IconPhone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Correo Electrónico <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        required
+                        value={nuevoCVEmail}
+                        onChange={(e) => setNuevoCVEmail(e.target.value)}
+                        placeholder="contacto@empresa.com"
+                        className="w-full text-xs font-semibold pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                      />
+                      <IconMail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Modo Individual: Selección o captura de Correlativo */}
+                {nuevoCVModo === "individual" ? (
+                  <div className="p-4 rounded-2xl bg-teal-50/70 border border-teal-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-[11px] font-extrabold text-[#0D6E5F] uppercase tracking-wider">
+                          Número de Corbatín a Emitir
+                        </div>
+                        <div className="text-xs text-teal-800 mt-0.5">
+                          Usa un correlativo desocupado para reutilizar o genera uno consecutivo nuevo.
+                        </div>
+                      </div>
+                      <span className="font-mono font-black text-xl px-3 py-1 rounded-xl bg-white text-[#0D6E5F] border border-teal-200 shadow-2xs">
+                        #{formatCorbatinVerdeNum(nuevoCVNumeroIndividual || getPrimerCorbatinVerdeDisponible(corbatinesVerdes))}
+                      </span>
+                    </div>
+
+                    {/* Input para el correlativo individual */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Correlativo #:
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={nuevoCVNumeroIndividual}
+                        onChange={(e) => setNuevoCVNumeroIndividual(e.target.value)}
+                        placeholder={formatCorbatinVerdeNum(getPrimerCorbatinVerdeDisponible(corbatinesVerdes))}
+                        className="w-full text-xs font-bold font-mono px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                      />
+                    </div>
+
+                    {/* Opciones rápidas de selección: Huecos desocupados vs Consecutivo nuevo */}
+                    <div className="space-y-1.5 pt-1">
+                      <div className="text-[11px] font-semibold text-slate-600 flex items-center justify-between">
+                        <span>Sugerencias rápidas:</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {getCorbatinesVerdesDesocupados(corbatinesVerdes).slice(0, 4).map((c) => {
+                          const numFmt = formatCorbatinVerdeNum(c.numero || c.corbatinNum);
+                          const isSelected = formatCorbatinVerdeNum(nuevoCVNumeroIndividual) === numFmt;
+                          return (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => setNuevoCVNumeroIndividual(numFmt)}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border ${isSelected
+                                  ? "bg-emerald-600 text-white border-emerald-700 shadow-2xs"
+                                  : "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
+                                }`}
+                              title="Corbatín libre en inventario listo para reutilizarse"
+                            >
+                              #{numFmt} (Desocupado)
+                            </button>
+                          );
+                        })}
+                        {(() => {
+                          const sigNuevo = getSiguienteConsecutivoNuevo(corbatinesVerdes);
+                          const sigNuevoFmt = formatCorbatinVerdeNum(sigNuevo);
+                          const isSelected = formatCorbatinVerdeNum(nuevoCVNumeroIndividual) === sigNuevoFmt;
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => setNuevoCVNumeroIndividual(sigNuevoFmt)}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border ${isSelected
+                                  ? "bg-teal-700 text-white border-teal-800 shadow-2xs"
+                                  : "bg-white text-teal-800 border-teal-300 hover:bg-teal-50"
+                                }`}
+                              title="Siguiente número consecutivo nuevo tras el último asignado"
+                            >
+                              #{sigNuevoFmt} (Nuevo tras #{getMaxCorbatinVerdeOcupado(corbatinesVerdes)})
+                            </button>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Validación en tiempo real del número individual */}
+                    {(() => {
+                      const numParsed = parseInt(String(nuevoCVNumeroIndividual).replace(/[^0-9]/g, ""), 10);
+                      if (isNaN(numParsed) || numParsed <= 0) return null;
+                      const numFmt = formatCorbatinVerdeNum(numParsed);
+                      const enUso = corbatinesVerdes.find(c => {
+                        const cNum = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
+                        return cNum === numParsed && c.activo !== false && c.empresaNombre && c.empresaNombre.trim() && c.estatus_inventario === "ASIGNADO";
+                      });
+
+                      if (enUso) {
+                        return (
+                          <div className="p-2.5 rounded-xl bg-red-50 border border-red-300 text-xs text-red-800 font-semibold flex items-center gap-2">
+                            <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                            <span>
+                              ⛔ Corbatín #{numFmt} ya está asignado a "{enUso.empresaNombre}". No puede ser re-emitido.
+                            </span>
+                          </div>
+                        );
+                      }
+
+                      const desocupado = corbatinesVerdes.find(c => {
+                        const cNum = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
+                        return cNum === numParsed && (!c.empresaNombre || c.estatus_inventario === "DISPONIBLE");
+                      });
+
+                      if (desocupado) {
+                        return (
+                          <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-xs text-emerald-800 font-semibold flex items-center gap-2">
+                            <IconCheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <span>
+                              ✓ Corbatín #{numFmt} está desocupado en inventario y listo para asignarse.
+                            </span>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="p-2.5 rounded-xl bg-teal-50 border border-teal-300 text-xs text-teal-800 font-semibold flex items-center gap-2">
+                          <IconCheckCircle className="w-4 h-4 text-teal-600 shrink-0" />
+                          <span>
+                            ✓ Corbatín #{numFmt} es un nuevo correlativo consecutivo disponible.
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                ) : (
+                  /* Modo Lote: Rango Consecutivo */
+                  <div className="p-4 rounded-2xl bg-[#f0fdfa] border border-[#99f6e4] space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-extrabold text-[#0D6E5F] uppercase tracking-wider">
+                        RANGO DE CORBATINES VERDES
+                      </span>
+                      <span className="text-[11px] font-bold text-[#0D6E5F] bg-white px-2.5 py-0.5 rounded-lg border border-teal-200 font-mono">
+                        Consecutivo sugerido: #{formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes))}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          Desde Correlativo #:
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={nuevoCVRangoInicio}
+                          onChange={(e) => setNuevoCVRangoInicio(e.target.value)}
+                          placeholder={formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes))}
+                          className="w-full text-xs font-bold font-mono px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          Hasta Correlativo #:
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={nuevoCVRangoFin}
+                          onChange={(e) => setNuevoCVRangoFin(e.target.value)}
+                          placeholder={formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes))}
+                          className="w-full text-xs font-bold font-mono px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Validación y cálculo en tiempo real del rango en Lote */}
+                    {(() => {
+                      const s = parseInt(String(nuevoCVRangoInicio).replace(/[^0-9]/g, ""), 10);
+                      const e = parseInt(String(nuevoCVRangoFin).replace(/[^0-9]/g, ""), 10);
+                      const isValidRange = (!isNaN(s) && !isNaN(e) && s > 0 && e >= s);
+                      const count = isValidRange ? (e - s + 1) : 0;
+
+                      // Buscar corbatines asignados dentro del rango solicitado
+                      const colisiones = isValidRange
+                        ? corbatinesVerdes.filter(c => {
+                          const num = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
+                          return num >= s && num <= e && c.activo !== false && c.empresaNombre && c.empresaNombre.trim() && c.estatus_inventario === "ASIGNADO";
+                        })
+                        : [];
+
+                      return (
+                        <div className="space-y-2">
+                          <div className="text-xs text-teal-900 font-semibold bg-white p-2.5 rounded-xl border border-teal-200 flex items-center justify-between">
+                            <span>Total de corbatines a generar:</span>
+                            <span className="font-mono font-bold text-[#0D6E5F] px-2.5 py-0.5 rounded bg-teal-50 border border-teal-200">
+                              {count} {count === 1 ? "corbatín" : "corbatines"}
+                            </span>
+                          </div>
+
+                          {colisiones.length > 0 && (
+                            <div className="p-3 rounded-xl bg-red-50 border border-red-300 text-xs text-red-800 space-y-1 font-semibold">
+                              <div className="flex items-center gap-1.5 text-red-700 font-bold">
+                                <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                                <span>⛔ El rango incluye {colisiones.length} corbatines que ya están en uso:</span>
+                              </div>
+                              <div className="text-[11px] text-red-700 pl-5 font-mono">
+                                {colisiones.slice(0, 5).map(c => `#${formatCorbatinVerdeNum(c.numero || c.corbatinNum)} (${c.empresaNombre})`).join(", ")}
+                                {colisiones.length > 5 ? ` y ${colisiones.length - 5} más...` : ""}
+                              </div>
+                              <p className="text-[11px] text-red-600 pl-5 pt-0.5">
+                                Por favor selecciona un rango a partir del #{formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes))} para evitar sobreescribir unidades asignadas.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {/* Periodo de Vigencia y Notas */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Periodo de Vigencia
+                    </label>
+                    <select
+                      value={nuevoCVVigencia}
+                      onChange={(e) => setNuevoCVVigencia(e.target.value)}
+                      className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                    >
+                      <option value="1 Semana">1 Semana</option>
+                      <option value="15 Días">15 Días</option>
+                      <option value="1 Mes">1 Mes</option>
+                      <option value="3 Meses">3 Meses</option>
+                      <option value="6 Meses (Recomendado)">6 Meses (Recomendado)</option>
+                      <option value="1 Año">1 Año</option>
+                      <option value="Permanente">Permanente / Indefinido</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Notas u Observaciones (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={nuevoCVNotas}
+                      onChange={(e) => setNuevoCVNotas(e.target.value)}
+                      placeholder="Ej. Proyecto Fase 2 Torre A"
+                      className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                    />
+                  </div>
+                </div>
+
+                {/* Modal Footer Buttons */}
+                {(() => {
+                  const numIndividual = parseInt(String(nuevoCVNumeroIndividual || getPrimerCorbatinVerdeDisponible(corbatinesVerdes)).replace(/[^0-9]/g, ""), 10);
+                  const isIndividualOcupado = !isNaN(numIndividual) && corbatinesVerdes.some(c => {
+                    const num = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
+                    return num === numIndividual && c.activo !== false && c.empresaNombre && c.empresaNombre.trim() && c.estatus_inventario === "ASIGNADO";
+                  });
+
+                  const sLote = parseInt(String(nuevoCVRangoInicio).replace(/[^0-9]/g, ""), 10);
+                  const eLote = parseInt(String(nuevoCVRangoFin).replace(/[^0-9]/g, ""), 10);
+                  const isLoteInvalido = isNaN(sLote) || isNaN(eLote) || sLote <= 0 || eLote < sLote;
+                  const isLoteOcupado = (!isLoteInvalido) && corbatinesVerdes.some(c => {
+                    const num = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
+                    return num >= sLote && num <= eLote && c.activo !== false && c.empresaNombre && c.empresaNombre.trim() && c.estatus_inventario === "ASIGNADO";
+                  });
+
+                  const isBlocked = nuevoCVModo === "individual" ? isIndividualOcupado : (isLoteInvalido || isLoteOcupado);
+
+                  return (
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCreateCorbatinVerdeModal(false);
+                          setNuevoCVError("");
+                        }}
+                        className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+                      >
+                        Cancelar
+                      </button>
+
+                      <button
+                        type="submit"
+                        disabled={isSubmittingNuevoCV || isBlocked}
+                        style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
+                        className="px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-xs active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <IconCheckCircle className="w-4 h-4" />
+                        <span>
+                          {isSubmittingNuevoCV ? "Guardando..." : (
+                            nuevoCVModo === "individual"
+                              ? `Emitir Corbatín #${formatCorbatinVerdeNum(nuevoCVNumeroIndividual || getPrimerCorbatinVerdeDisponible(corbatinesVerdes))}`
+                              : "Emitir Lote de Corbatines"
+                          )}
+                        </span>
+                      </button>
+                    </div>
+                  );
+                })()}
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
 
 
       {/* ─── MODAL OFICIAL PARA LEVANTAMIENTO DE CASTIGO O PASE PROVISIONAL (OFICINA) ─── */}
-      {selectedVehiculoParaGestionarCastigo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col border border-slate-200 shadow-2xl overflow-hidden">
-            {/* Modal Header (Fijo en el tope) */}
-            <div className="px-5 py-3.5 bg-gradient-to-r from-amber-500/10 via-teal-500/10 to-transparent border-b border-slate-200 flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="p-2 rounded-2xl bg-amber-500 text-white shadow-sm shrink-0">
-                  <IconShield className="w-5 h-5" />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">
-                    Resolución de Oficina: Castigo de Vehículo
-                  </h3>
-                  <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">
-                    {selectedVehiculoParaGestionarCastigo.marca} {selectedVehiculoParaGestionarCastigo.modelo} · Placas <span className="font-mono font-bold text-slate-800">{selectedVehiculoParaGestionarCastigo.placas}</span> · {selectedVehiculoParaGestionarCastigo.empresaNombre}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedVehiculoParaGestionarCastigo(null);
-                  setSelectedSancionParaGestionarCastigo(null);
-                  setResolucionError("");
-                }}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer shrink-0 ml-2"
-                title="Cerrar ventana"
-              >
-                <IconX className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Formulario con Scroll Interno fluido si la pantalla es corta */}
-            <form onSubmit={handleGuardarResolucionCastigo} className="flex flex-col flex-1 min-h-0 overflow-hidden">
-              <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
-                {/* Banner si ya cuenta con Permiso Provisional */}
-                {selectedVehiculoParaGestionarCastigo.permisoTemporal?.activo && (
-                  <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 flex items-start justify-between gap-3 text-xs">
-                    <div className="space-y-0.5">
-                      <span className="font-bold text-amber-900 block flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                        Pase Provisional Actualmente Activo
-                      </span>
-                      <span className="text-amber-800 text-[11px] block">
-                        Vigente hasta: <strong>{new Date(selectedVehiculoParaGestionarCastigo.permisoTemporal.fechaExpiracion).toLocaleString("es-MX", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</strong>
-                        {selectedVehiculoParaGestionarCastigo.permisoTemporal.autorizadoPorOficina ? ` (Autorizado: ${selectedVehiculoParaGestionarCastigo.permisoTemporal.autorizadoPorOficina})` : ""}
-                        {selectedVehiculoParaGestionarCastigo.permisoTemporal.notasSupervisor ? ` · Notas: ${selectedVehiculoParaGestionarCastigo.permisoTemporal.notasSupervisor}` : ""}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setResolucionTipo("levantamiento_definitivo");
-                        setResolucionMotivo("Cancelación / levantamiento definitivo de sanción acordada con oficina");
-                      }}
-                      className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition-colors cursor-pointer shrink-0"
-                    >
-                      Hacer Definitivo
-                    </button>
+      {
+        selectedVehiculoParaGestionarCastigo && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+            <div className="bg-white rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col border border-slate-200 shadow-2xl overflow-hidden">
+              {/* Modal Header (Fijo en el tope) */}
+              <div className="px-5 py-3.5 bg-gradient-to-r from-amber-500/10 via-teal-500/10 to-transparent border-b border-slate-200 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2 rounded-2xl bg-amber-500 text-white shadow-sm shrink-0">
+                    <IconShield className="w-5 h-5" />
                   </div>
-                )}
-
-                {/* Error Banner */}
-                {resolucionError && (
-                  <div className="p-3 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2.5 text-xs text-red-700 font-medium">
-                    <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                    <span>{resolucionError}</span>
-                  </div>
-                )}
-
-                {/* Selector de Modalidad */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Tipo de Resolución Acordada con la Oficina HOA <span className="text-red-500">*</span>
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <button
-                      type="button"
-                      onClick={() => setResolucionTipo("permiso_temporal")}
-                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 ${resolucionTipo === "permiso_temporal"
-                        ? "bg-amber-50/70 border-amber-400 ring-2 ring-amber-400/20"
-                        : "bg-white border-slate-200 hover:border-slate-300"
-                        }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-                          <IconClock className="w-4 h-4 text-amber-600" />
-                          Pase Provisional Temporal
-                        </span>
-                        <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${resolucionTipo === "permiso_temporal" ? "border-amber-600 bg-amber-600" : "border-slate-300"}`}>
-                          {resolucionTipo === "permiso_temporal" && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-500 leading-normal">
-                        Permiso especial por hoy o lapso determinado (colado, entrega urgente). Mantiene el registro de la sanción.
-                      </p>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setResolucionTipo("levantamiento_definitivo")}
-                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 ${resolucionTipo === "levantamiento_definitivo"
-                        ? "bg-emerald-50/70 border-emerald-500 ring-2 ring-emerald-500/20"
-                        : "bg-white border-slate-200 hover:border-slate-300"
-                        }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-                          <IconCheckCircle className="w-4 h-4 text-emerald-600" />
-                          Levantamiento Definitivo
-                        </span>
-                        <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${resolucionTipo === "levantamiento_definitivo" ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`}>
-                          {resolucionTipo === "levantamiento_definitivo" && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-500 leading-normal">
-                        La oficina acordó exonerar o dar por concluido el castigo restante. El vehículo queda habilitado permanentemente.
-                      </p>
-                    </button>
+                  <div className="min-w-0">
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                      Resolución de Oficina: Castigo de Vehículo
+                    </h3>
+                    <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">
+                      {selectedVehiculoParaGestionarCastigo.marca} {selectedVehiculoParaGestionarCastigo.modelo} · Placas <span className="font-mono font-bold text-slate-800">{selectedVehiculoParaGestionarCastigo.placas}</span> · {selectedVehiculoParaGestionarCastigo.empresaNombre}
+                    </p>
                   </div>
                 </div>
-
-                {/* Opciones de Vigencia si es Permiso Temporal */}
-                {resolucionTipo === "permiso_temporal" && (
-                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
-                    <label className="block text-xs font-bold text-slate-700">
-                      Vigencia del Permiso Provisional Vehicular
-                    </label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { id: "solo_hoy", label: "Solo por Hoy", sub: "Hasta 19:00 hrs" },
-                        { id: "24_horas", label: "24 Horas", sub: "1 día completo" },
-                        { id: "fecha_limite", label: "Fecha Límite", sub: "Fecha y hora exacta" },
-                      ].map((opt) => (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          onClick={() => setResolucionVigenciaTipo(opt.id as any)}
-                          className={`p-2 rounded-xl border text-center transition-all cursor-pointer ${resolucionVigenciaTipo === opt.id
-                            ? "bg-[#0D6E5F] text-white border-[#0D6E5F] shadow-2xs"
-                            : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
-                            }`}
-                        >
-                          <div className="text-xs font-bold">{opt.label}</div>
-                          <div className={`text-[10px] ${resolucionVigenciaTipo === opt.id ? "text-teal-100" : "text-slate-400"}`}>{opt.sub}</div>
-                        </button>
-                      ))}
-                    </div>
-
-                    {resolucionVigenciaTipo === "fecha_limite" && (
-                      <div className="pt-1">
-                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                          Selecciona Fecha y Hora de Expiración del Permiso:
-                        </label>
-                        <input
-                          type="datetime-local"
-                          required
-                          value={resolucionFechaLimite}
-                          onChange={(e) => setResolucionFechaLimite(e.target.value)}
-                          className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Motivo del Acuerdo / Justificación (Campo de texto libre) */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Motivo del Acuerdo o Causa de Levantamiento <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    rows={2}
-                    required
-                    value={resolucionMotivo}
-                    onChange={(e) => setResolucionMotivo(e.target.value)}
-                    placeholder="Ej. El contratista dialogó con la administración HOA y se acordó permitir el ingreso del vehículo para descarga urgente de material y colado estructural en Villa 14..."
-                    className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F] leading-relaxed"
-                  />
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    Campo de texto libre para detallar los términos acordados con la administración.
-                  </p>
-                </div>
-
-                {/* Observaciones Internas / Quién autorizó (Opcional) */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Notas u Observaciones del Supervisor (Opcional)
-                  </label>
-                  <input
-                    type="text"
-                    value={resolucionNotas}
-                    onChange={(e) => setResolucionNotas(e.target.value)}
-                    placeholder="Ej. Autorizó Lic. Roberto Gómez en administración. Notificado a caseta vía radio"
-                    className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                  />
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    Puedes registrar aquí quién autorizó en oficina o cualquier apunte para los oficiales de caseta.
-                  </p>
-                </div>
-              </div>
-
-              {/* Footer Fijo en la Base */}
-              <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3 shrink-0">
                 <button
                   type="button"
                   onClick={() => {
@@ -16481,40 +17106,227 @@ export default function App() {
                     setSelectedSancionParaGestionarCastigo(null);
                     setResolucionError("");
                   }}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-200 border border-slate-300 transition-colors cursor-pointer"
+                  className="p-1.5 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer shrink-0 ml-2"
+                  title="Cerrar ventana"
                 >
-                  Cancelar
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={isSubmittingResolucionOficina}
-                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white transition-all flex items-center gap-2 cursor-pointer shadow-sm ${resolucionTipo === "levantamiento_definitivo"
-                    ? "bg-emerald-600 hover:bg-emerald-700"
-                    : "bg-[#0D6E5F] hover:bg-[#0A574B]"
-                    } ${isSubmittingResolucionOficina ? "opacity-60 cursor-not-allowed" : ""}`}
-                >
-                  {isSubmittingResolucionOficina ? (
-                    <>
-                      <IconClock className="w-4 h-4 animate-spin" />
-                      <span>Guardando Resolución...</span>
-                    </>
-                  ) : (
-                    <>
-                      <IconCheckCircle className="w-4 h-4" />
-                      <span>
-                        {resolucionTipo === "levantamiento_definitivo"
-                          ? "Levantar Castigo Definitivamente"
-                          : "Emitir Pase Provisional Vehicular"}
-                      </span>
-                    </>
-                  )}
+                  <IconX className="w-5 h-5" />
                 </button>
               </div>
-            </form>
+
+              {/* Formulario con Scroll Interno fluido si la pantalla es corta */}
+              <form onSubmit={handleGuardarResolucionCastigo} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
+                  {/* Banner si ya cuenta con Permiso Provisional */}
+                  {selectedVehiculoParaGestionarCastigo.permisoTemporal?.activo && (
+                    <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 flex items-start justify-between gap-3 text-xs">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-amber-900 block flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                          Pase Provisional Actualmente Activo
+                        </span>
+                        <span className="text-amber-800 text-[11px] block">
+                          Vigente hasta: <strong>{new Date(selectedVehiculoParaGestionarCastigo.permisoTemporal.fechaExpiracion).toLocaleString("es-MX", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</strong>
+                          {selectedVehiculoParaGestionarCastigo.permisoTemporal.autorizadoPorOficina ? ` (Autorizado: ${selectedVehiculoParaGestionarCastigo.permisoTemporal.autorizadoPorOficina})` : ""}
+                          {selectedVehiculoParaGestionarCastigo.permisoTemporal.notasSupervisor ? ` · Notas: ${selectedVehiculoParaGestionarCastigo.permisoTemporal.notasSupervisor}` : ""}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setResolucionTipo("levantamiento_definitivo");
+                          setResolucionMotivo("Cancelación / levantamiento definitivo de sanción acordada con oficina");
+                        }}
+                        className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition-colors cursor-pointer shrink-0"
+                      >
+                        Hacer Definitivo
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Error Banner */}
+                  {resolucionError && (
+                    <div className="p-3 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2.5 text-xs text-red-700 font-medium">
+                      <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                      <span>{resolucionError}</span>
+                    </div>
+                  )}
+
+                  {/* Selector de Modalidad */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Tipo de Resolución Acordada con la Oficina HOA <span className="text-red-500">*</span>
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => setResolucionTipo("permiso_temporal")}
+                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 ${resolucionTipo === "permiso_temporal"
+                          ? "bg-amber-50/70 border-amber-400 ring-2 ring-amber-400/20"
+                          : "bg-white border-slate-200 hover:border-slate-300"
+                          }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                            <IconClock className="w-4 h-4 text-amber-600" />
+                            Pase Provisional Temporal
+                          </span>
+                          <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${resolucionTipo === "permiso_temporal" ? "border-amber-600 bg-amber-600" : "border-slate-300"}`}>
+                            {resolucionTipo === "permiso_temporal" && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 leading-normal">
+                          Permiso especial por hoy o lapso determinado (colado, entrega urgente). Mantiene el registro de la sanción.
+                        </p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setResolucionTipo("levantamiento_definitivo")}
+                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 ${resolucionTipo === "levantamiento_definitivo"
+                          ? "bg-emerald-50/70 border-emerald-500 ring-2 ring-emerald-500/20"
+                          : "bg-white border-slate-200 hover:border-slate-300"
+                          }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                            <IconCheckCircle className="w-4 h-4 text-emerald-600" />
+                            Levantamiento Definitivo
+                          </span>
+                          <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${resolucionTipo === "levantamiento_definitivo" ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`}>
+                            {resolucionTipo === "levantamiento_definitivo" && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 leading-normal">
+                          La oficina acordó exonerar o dar por concluido el castigo restante. El vehículo queda habilitado permanentemente.
+                        </p>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Opciones de Vigencia si es Permiso Temporal */}
+                  {resolucionTipo === "permiso_temporal" && (
+                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+                      <label className="block text-xs font-bold text-slate-700">
+                        Vigencia del Permiso Provisional Vehicular
+                      </label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { id: "solo_hoy", label: "Solo por Hoy", sub: "Hasta 19:00 hrs" },
+                          { id: "24_horas", label: "24 Horas", sub: "1 día completo" },
+                          { id: "fecha_limite", label: "Fecha Límite", sub: "Fecha y hora exacta" },
+                        ].map((opt) => (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => setResolucionVigenciaTipo(opt.id as any)}
+                            className={`p-2 rounded-xl border text-center transition-all cursor-pointer ${resolucionVigenciaTipo === opt.id
+                              ? "bg-[#0D6E5F] text-white border-[#0D6E5F] shadow-2xs"
+                              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                              }`}
+                          >
+                            <div className="text-xs font-bold">{opt.label}</div>
+                            <div className={`text-[10px] ${resolucionVigenciaTipo === opt.id ? "text-teal-100" : "text-slate-400"}`}>{opt.sub}</div>
+                          </button>
+                        ))}
+                      </div>
+
+                      {resolucionVigenciaTipo === "fecha_limite" && (
+                        <div className="pt-1">
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Selecciona Fecha y Hora de Expiración del Permiso:
+                          </label>
+                          <input
+                            type="datetime-local"
+                            required
+                            value={resolucionFechaLimite}
+                            onChange={(e) => setResolucionFechaLimite(e.target.value)}
+                            className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Motivo del Acuerdo / Justificación (Campo de texto libre) */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Motivo del Acuerdo o Causa de Levantamiento <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      rows={2}
+                      required
+                      value={resolucionMotivo}
+                      onChange={(e) => setResolucionMotivo(e.target.value)}
+                      placeholder="Ej. El contratista dialogó con la administración HOA y se acordó permitir el ingreso del vehículo para descarga urgente de material y colado estructural en Villa 14..."
+                      className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F] leading-relaxed"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Campo de texto libre para detallar los términos acordados con la administración.
+                    </p>
+                  </div>
+
+                  {/* Observaciones Internas / Quién autorizó (Opcional) */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Notas u Observaciones del Supervisor (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={resolucionNotas}
+                      onChange={(e) => setResolucionNotas(e.target.value)}
+                      placeholder="Ej. Autorizó Lic. Roberto Gómez en administración. Notificado a caseta vía radio"
+                      className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Puedes registrar aquí quién autorizó en oficina o cualquier apunte para los oficiales de caseta.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Footer Fijo en la Base */}
+                <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedVehiculoParaGestionarCastigo(null);
+                      setSelectedSancionParaGestionarCastigo(null);
+                      setResolucionError("");
+                    }}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-200 border border-slate-300 transition-colors cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmittingResolucionOficina}
+                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white transition-all flex items-center gap-2 cursor-pointer shadow-sm ${resolucionTipo === "levantamiento_definitivo"
+                      ? "bg-emerald-600 hover:bg-emerald-700"
+                      : "bg-[#0D6E5F] hover:bg-[#0A574B]"
+                      } ${isSubmittingResolucionOficina ? "opacity-60 cursor-not-allowed" : ""}`}
+                  >
+                    {isSubmittingResolucionOficina ? (
+                      <>
+                        <IconClock className="w-4 h-4 animate-spin" />
+                        <span>Guardando Resolución...</span>
+                      </>
+                    ) : (
+                      <>
+                        <IconCheckCircle className="w-4 h-4" />
+                        <span>
+                          {resolucionTipo === "levantamiento_definitivo"
+                            ? "Levantar Castigo Definitivamente"
+                            : "Emitir Pase Provisional Vehicular"}
+                        </span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* ─── MODAL DE ESCANEO QR PARA CASETA ─── */}
       <QRScannerModal
@@ -16554,6 +17366,6 @@ export default function App() {
 
       {/* ─── TOAST NOTIFICATIONS OVERLAY ─── */}
       <ToastContainer toasts={toasts} onClose={removeToast} />
-    </div>
+    </div >
   );
 }

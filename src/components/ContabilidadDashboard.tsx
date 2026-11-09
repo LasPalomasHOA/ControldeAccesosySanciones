@@ -9,6 +9,17 @@ function IconSearch({ className = "w-4 h-4" }: { className?: string }) {
   );
 }
 
+function IconCalendar({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
+
 function IconBuilding({ className = "w-5 h-5" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -24,7 +35,7 @@ function IconBuilding({ className = "w-5 h-5" }: { className?: string }) {
 function IconReceipt({ className = "w-5 h-5" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
+      <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
       <path d="M16 8h-8" />
       <path d="M16 12h-8" />
       <path d="M11 16H8" />
@@ -151,8 +162,8 @@ export interface ContabilidadVehiculo {
 }
 
 /**
- * Factura recurrente de proveedor
- * Diseñada para soportar múltiples facturas por empresa conforme realizan trabajos periódicos.
+ * Factura de proveedor
+ * Registro documental de las facturas que los contratistas suben a la plataforma.
  */
 export interface FacturaProveedor {
   id: string;
@@ -169,7 +180,6 @@ export interface FacturaProveedor {
   archivoXmlUrl?: string;      // Enlace al XML
   nombreArchivo: string;       // Nombre de archivo
   rutaStorage?: string;
-  estatus: 'pagada' | 'pendiente_pago' | 'en_revision' | 'rechazada';
   metodoPago?: 'PPD' | 'PUE' | string;
   subidoPor: string;
   observaciones?: string;
@@ -192,13 +202,12 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
   const [selectedFacturaPreview, setSelectedFacturaPreview] = useState<FacturaProveedor | null>(null);
   const [modalTab, setModalTab] = useState<'facturas' | 'flotilla' | 'personal'>('facturas');
 
-  // Estados de búsqueda y paginación interna para cuando la empresa tiene muchas facturas recurrentes
+  // Búsqueda y paginación para el historial de facturas en el modal
   const [facturasModalSearch, setFacturasModalSearch] = useState('');
-  const [facturasModalFilterStatus, setFacturasModalFilterStatus] = useState<'todas' | 'pendientes' | 'pagadas'>('todas');
   const [facturasModalPage, setFacturasModalPage] = useState(1);
   const facturasModalPageSize = 5;
 
-  // Facturas de proveedores (inicia vacío hasta que se carguen facturas reales)
+  // Facturas de proveedores (registro real)
   const [facturasList] = useState<FacturaProveedor[]>(() => {
     try {
       const saved = localStorage.getItem('las_palomas_facturas_proveedores');
@@ -231,13 +240,27 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
     }).format(monto);
   };
 
+  // Cálculo de mes actual
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+  const nombreMes = now.toLocaleDateString('es-MX', { month: 'long' });
+  const nombreMesFormateado = nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1);
+
   // Cálculo de estadísticas generales
   const stats = useMemo(() => {
     const totalEmpresas = empresas.length;
     const empresasConFacturas = empresas.filter(emp => getFacturasDeEmpresa(emp.id).length > 0).length;
     const totalFacturas = facturasList.length;
-    const facturasPendientes = facturasList.filter(f => f.estatus === 'pendiente_pago' || f.estatus === 'en_revision');
-    const montoTotalPendiente = facturasPendientes.reduce((acc, f) => acc + (Number(f.monto) || 0), 0);
+
+    // Conteo de facturas registradas en el mes actual
+    const facturasEsteMes = facturasList.filter(f => {
+      const dStr = f.fechaRecepcion || f.fechaEmision;
+      if (!dStr) return false;
+      const d = new Date(dStr);
+      return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+    }).length;
+
     const totalFlotilla = vehicles.length;
     const totalPersonal = trabajadores.filter(t => t.activo !== false).length;
 
@@ -245,12 +268,12 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
       totalEmpresas,
       empresasConFacturas,
       totalFacturas,
-      totalPendientesCount: facturasPendientes.length,
-      montoTotalPendiente,
+      facturasEsteMes,
+      nombreMes: nombreMesFormateado,
       totalFlotilla,
       totalPersonal,
     };
-  }, [empresas, vehicles, trabajadores, facturasList]);
+  }, [empresas, vehicles, trabajadores, facturasList, currentYear, currentMonth, nombreMesFormateado]);
 
   // Filtrado de empresas en la tabla principal
   const empresasFiltradas = useMemo(() => {
@@ -278,7 +301,7 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
     });
   }, [empresas, searchTerm, filterEstatus, facturasList]);
 
-  // Facturas de la empresa activa filtradas y paginadas (para historial recurrente)
+  // Facturas de la empresa activa filtradas y paginadas
   const facturasEmpresaActiva = useMemo(() => {
     if (!selectedEmpresaExpediente) return [];
     return getFacturasDeEmpresa(selectedEmpresaExpediente.id);
@@ -287,24 +310,12 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
   const facturasEmpresaFiltradas = useMemo(() => {
     return facturasEmpresaActiva.filter(fac => {
       const q = facturasModalSearch.toLowerCase().trim();
-      const matchQ =
-        !q ||
+      return !q ||
         fac.folio.toLowerCase().includes(q) ||
         fac.concepto.toLowerCase().includes(q) ||
         (fac.uuidSat && fac.uuidSat.toLowerCase().includes(q));
-
-      if (!matchQ) return false;
-
-      if (facturasModalFilterStatus === 'pendientes') {
-        return fac.estatus === 'pendiente_pago' || fac.estatus === 'en_revision';
-      }
-      if (facturasModalFilterStatus === 'pagadas') {
-        return fac.estatus === 'pagada';
-      }
-
-      return true;
     });
-  }, [facturasEmpresaActiva, facturasModalSearch, facturasModalFilterStatus]);
+  }, [facturasEmpresaActiva, facturasModalSearch]);
 
   const facturasPaginadas = useMemo(() => {
     const start = (facturasModalPage - 1) * facturasModalPageSize;
@@ -341,17 +352,17 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
           </div>
         </div>
 
-        {/* Card 3: Empresas con Facturas */}
+        {/* Card 3: Facturas Este Mes */}
         <div className="p-5 rounded-2xl bg-white border shadow-xs flex items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
           <div className="space-y-1">
-            <span className="text-xs font-bold text-teal-700 uppercase tracking-wider">Empresas con Trabajos</span>
-            <div className="text-2xl font-black text-teal-800">
-              {stats.empresasConFacturas} <span className="text-xs font-semibold text-slate-400">/ {stats.totalEmpresas}</span>
-            </div>
-            <span className="text-[11px] text-teal-600 font-medium">Con facturas registradas</span>
+            <span className="text-xs font-bold text-teal-700 uppercase tracking-wider">Facturas Este Mes</span>
+            <div className="text-2xl font-black text-teal-800">{stats.facturasEsteMes}</div>
+            <span className="text-[11px] text-teal-600 font-medium">
+              Recibidas en {stats.nombreMes}
+            </span>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center border border-teal-100">
-            <IconReceipt className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-teal-50 text-[#0D6E5F] flex items-center justify-center border border-teal-100">
+            <IconCalendar className="w-6 h-6" />
           </div>
         </div>
 
@@ -449,8 +460,6 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
                   const empTrabajadores = trabajadores.filter(t => t.empresaNombre === empName || String(t.id_empresa) === String(emp.id));
                   const isSuspendida = emp.estatus === 'SUSPENDIDA' || emp.estado === 'suspendido';
 
-                  const pendientes = empFacturas.filter(f => f.estatus === 'pendiente_pago' || f.estatus === 'en_revision');
-
                   return (
                     <tr key={emp.id} className="hover:bg-slate-50/70 transition-colors">
                       {/* Empresa */}
@@ -506,17 +515,10 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
                       <td className="px-5 py-4">
                         {empFacturas.length > 0 ? (
                           <div className="space-y-1">
-                            <div className="flex items-center gap-1.5">
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-teal-50 text-[#0D6E5F] border border-teal-200">
-                                <IconReceipt className="w-3 h-3 text-[#0D6E5F]" />
-                                <span>{empFacturas.length} {empFacturas.length === 1 ? 'factura' : 'facturas'}</span>
-                              </span>
-                              {pendientes.length > 0 && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                                  {pendientes.length} pendiente(s)
-                                </span>
-                              )}
-                            </div>
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-teal-50 text-[#0D6E5F] border border-teal-200">
+                              <IconReceipt className="w-3 h-3 text-[#0D6E5F]" />
+                              <span>{empFacturas.length} {empFacturas.length === 1 ? 'factura' : 'facturas'}</span>
+                            </span>
                             <div className="text-[10px] text-slate-400 font-mono">
                               Última: {empFacturas[0].folio}
                             </div>
@@ -536,7 +538,6 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
                             setSelectedEmpresaExpediente(emp);
                             setModalTab('facturas');
                             setFacturasModalSearch('');
-                            setFacturasModalFilterStatus('todas');
                             setFacturasModalPage(1);
                           }}
                           className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0a5a4e] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap ml-auto"
@@ -554,7 +555,7 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
         )}
       </div>
 
-      {/* ─── MODAL DE VISUALIZACIÓN DE FACTURAS (HISTORIAL RECURRENTE) ─── */}
+      {/* ─── MODAL DE VISUALIZACIÓN DE FACTURAS ─── */}
       {selectedEmpresaExpediente && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto">
           <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
@@ -628,91 +629,53 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
 
             {/* Modal Body */}
             <div className="p-6 overflow-y-auto flex-1 space-y-4">
-              {/* ─── TAB: HISTORIAL DE FACTURAS (RECURRENTE) ─── */}
+              {/* ─── TAB: HISTORIAL DE FACTURAS ─── */}
               {modalTab === 'facturas' && (() => {
                 const totalEmpresaMonto = facturasEmpresaActiva.reduce((acc, f) => acc + (Number(f.monto) || 0), 0);
-                const totalEmpresaPagado = facturasEmpresaActiva
-                  .filter(f => f.estatus === 'pagada')
-                  .reduce((acc, f) => acc + (Number(f.monto) || 0), 0);
-                const totalEmpresaPendiente = facturasEmpresaActiva
-                  .filter(f => f.estatus === 'pendiente_pago' || f.estatus === 'en_revision')
-                  .reduce((acc, f) => acc + (Number(f.monto) || 0), 0);
+                const empresaFacturasEsteMes = facturasEmpresaActiva.filter(f => {
+                  const dStr = f.fechaRecepcion || f.fechaEmision;
+                  if (!dStr) return false;
+                  const d = new Date(dStr);
+                  return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+                }).length;
 
                 return (
                   <div className="space-y-4">
-                    {/* Resumen Acumulado de Trabajos de la Empresa */}
+                    {/* Resumen de Facturas de la Empresa */}
                     {facturasEmpresaActiva.length > 0 && (
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200">
                         <div>
-                          <span className="text-[10px] font-bold uppercase text-slate-400 block">Total Facturado Histórico:</span>
-                          <span className="text-sm font-black text-slate-900">{formatMonto(totalEmpresaMonto)}</span>
-                          <span className="text-[10px] text-slate-500 block">{facturasEmpresaActiva.length} facturas acumuladas</span>
+                          <span className="text-[10px] font-bold uppercase text-slate-400 block">Total de Facturas:</span>
+                          <span className="text-base font-black text-slate-900">{facturasEmpresaActiva.length}</span>
+                          <span className="text-[10px] text-slate-500 block">Comprobantes registrados</span>
                         </div>
                         <div>
-                          <span className="text-[10px] font-bold uppercase text-emerald-600 block">Total Liquidado:</span>
-                          <span className="text-sm font-black text-emerald-700">{formatMonto(totalEmpresaPagado)}</span>
-                          <span className="text-[10px] text-emerald-600 block">{facturasEmpresaActiva.filter(f => f.estatus === 'pagada').length} facturas pagadas</span>
+                          <span className="text-[10px] font-bold uppercase text-teal-600 block">Facturas Este Mes:</span>
+                          <span className="text-base font-black text-[#0D6E5F]">{empresaFacturasEsteMes}</span>
+                          <span className="text-[10px] text-teal-600 block">En {stats.nombreMes}</span>
                         </div>
                         <div>
-                          <span className="text-[10px] font-bold uppercase text-amber-600 block">Por Pagar / Revisión:</span>
-                          <span className="text-sm font-black text-amber-700">{formatMonto(totalEmpresaPendiente)}</span>
-                          <span className="text-[10px] text-amber-600 block">{facturasEmpresaActiva.filter(f => f.estatus === 'pendiente_pago' || f.estatus === 'en_revision').length} facturas pendientes</span>
+                          <span className="text-[10px] font-bold uppercase text-slate-400 block">Monto Acumulado:</span>
+                          <span className="text-base font-black text-slate-900">{formatMonto(totalEmpresaMonto)}</span>
+                          <span className="text-[10px] text-slate-500 block">Suma de importes</span>
                         </div>
                       </div>
                     )}
 
-                    {/* Barra de Filtros y Búsqueda interna para empresas con muchas facturas */}
+                    {/* Barra de Búsqueda para filtrar facturas */}
                     {facturasEmpresaActiva.length > 0 && (
-                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                        <div className="relative w-full sm:w-72">
-                          <IconSearch className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
-                          <input
-                            type="text"
-                            value={facturasModalSearch}
-                            onChange={(e) => {
-                              setFacturasModalSearch(e.target.value);
-                              setFacturasModalPage(1);
-                            }}
-                            placeholder="Buscar por folio o trabajo..."
-                            className="w-full rounded-xl pl-9 pr-3 py-1.5 text-xs border border-slate-200 outline-none focus:ring-2 focus:ring-teal-200 font-medium text-slate-800"
-                          />
-                        </div>
-
-                        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-stretch sm:self-auto">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFacturasModalFilterStatus('todas');
-                              setFacturasModalPage(1);
-                            }}
-                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${facturasModalFilterStatus === 'todas' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600'
-                              }`}
-                          >
-                            Todas ({facturasEmpresaActiva.length})
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFacturasModalFilterStatus('pendientes');
-                              setFacturasModalPage(1);
-                            }}
-                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${facturasModalFilterStatus === 'pendientes' ? 'bg-white text-amber-700 shadow-2xs' : 'text-slate-600'
-                              }`}
-                          >
-                            Pendientes ({facturasEmpresaActiva.filter(f => f.estatus === 'pendiente_pago' || f.estatus === 'en_revision').length})
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFacturasModalFilterStatus('pagadas');
-                              setFacturasModalPage(1);
-                            }}
-                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${facturasModalFilterStatus === 'pagadas' ? 'bg-white text-emerald-700 shadow-2xs' : 'text-slate-600'
-                              }`}
-                          >
-                            Pagadas ({facturasEmpresaActiva.filter(f => f.estatus === 'pagada').length})
-                          </button>
-                        </div>
+                      <div className="relative w-full">
+                        <IconSearch className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                        <input
+                          type="text"
+                          value={facturasModalSearch}
+                          onChange={(e) => {
+                            setFacturasModalSearch(e.target.value);
+                            setFacturasModalPage(1);
+                          }}
+                          placeholder="Buscar por folio o concepto de factura..."
+                          className="w-full rounded-xl pl-9 pr-3 py-1.5 text-xs border border-slate-200 outline-none focus:ring-2 focus:ring-teal-200 font-medium text-slate-800"
+                        />
                       </div>
                     )}
 
@@ -733,13 +696,8 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
                                 <div>
                                   <div className="flex items-center gap-2">
                                     <h4 className="text-sm font-black text-slate-900">{fac.folio}</h4>
-                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase ${fac.estatus === 'pagada'
-                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
-                                      : fac.estatus === 'pendiente_pago'
-                                        ? 'bg-amber-50 text-amber-700 border-amber-300'
-                                        : 'bg-blue-50 text-blue-700 border-blue-300'
-                                      }`}>
-                                      {fac.estatus.replace('_', ' ')}
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-[#0D6E5F] border border-teal-200 uppercase">
+                                      {fac.moneda}
                                     </span>
                                   </div>
                                   <p className="text-xs text-slate-700 font-medium mt-0.5">{fac.concepto}</p>
@@ -780,7 +738,7 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
                           </div>
                         ))}
 
-                        {/* Controles de Paginación para cuando la empresa tiene muchas facturas */}
+                        {/* Controles de Paginación */}
                         {totalPagesModal > 1 && (
                           <div className="flex items-center justify-between pt-2 border-t border-slate-200 text-xs text-slate-500">
                             <span>
@@ -816,12 +774,12 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
                           <IconReceipt className="w-6 h-6" />
                         </div>
                         <div className="text-xs font-bold text-slate-800">
-                          {facturasEmpresaActiva.length === 0 ? "No hay facturas registradas" : "No hay facturas con el filtro aplicado"}
+                          {facturasEmpresaActiva.length === 0 ? "No hay facturas registradas" : "No hay facturas con ese criterio de búsqueda"}
                         </div>
                         <p className="text-[11px] text-slate-500 max-w-md mx-auto">
                           {facturasEmpresaActiva.length === 0
-                            ? "A medida que el proveedor realice trabajos y suba sus comprobantes a la plataforma, se irán acumulando en este historial."
-                            : "Prueba modificando el término de búsqueda o cambiando el filtro de estado."}
+                            ? "A medida que el proveedor suba sus facturas a la plataforma, se irán registrando en este expediente."
+                            : "Prueba buscando con otro folio o descripción."}
                         </p>
                       </div>
                     )}
@@ -954,10 +912,6 @@ export const ContabilidadDashboard: React.FC<ContabilidadDashboardProps> = ({
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-white border border-slate-200 text-left text-xs space-y-2 max-w-md mx-auto">
-                  <div className="flex justify-between text-slate-600">
-                    <span>Estatus:</span>
-                    <strong className="uppercase text-[#0D6E5F]">{selectedFacturaPreview.estatus.replace('_', ' ')}</strong>
-                  </div>
                   {selectedFacturaPreview.uuidSat && (
                     <div className="flex justify-between text-slate-600">
                       <span>UUID SAT:</span>

@@ -595,7 +595,4 @@ export const ReglamentoProveedor: React.FC = () => {
     </div>
   );
 };
-
-    </div>
-  );
-};
+export default ReglamentoProveedor;
