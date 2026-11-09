@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
           attributes: ['id_reporte', 'fecha_hora', 'id_infraccion', 'ubicacion_texto', 'descripcion_hechos', 'estatus_revision'],
           include: [
             { model: db.CatalogoInfraccion, as: 'infraccion' },
-            { model: db.Evidencia, as: 'evidencias', attributes: ['id_evidencia', 'descripcion', 'fecha_captura', 'activa'] }
+            { model: db.Evidencia, as: 'evidencias', attributes: ['id_evidencia', 'archivo', 'descripcion', 'fecha_captura', 'activa'] }
           ]
         },
         { model: db.Usuario, as: 'usuario_aprobador', attributes: ['id_usuario', 'nombre'] }
@@ -139,6 +139,7 @@ router.get('/', async (req, res) => {
         montoMulta: nivel * 100,
         medidaDisciplinaria: medidasPorNivel[nivel] || plain.regla?.mensaje_alerta || `Sanción nivel ${nivel}`,
         evidenciaUrl: plain.reporte?.evidencias?.[0]?.archivo || '',
+        evidencias: plain.reporte?.evidencias?.map(e => e.archivo).filter(Boolean) || [],
         apelacion: apelacionObj,
         resolucionOficina: resolucionOficina
       };

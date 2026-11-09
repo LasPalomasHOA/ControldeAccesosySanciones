@@ -544,6 +544,7 @@ interface Vehicle {
 
 interface Sancion {
   id: string;
+  id_reporte?: string | number;
   vehicleId: string;
   empresaNombre: string;
   placas: string;
@@ -554,6 +555,8 @@ interface Sancion {
   medidaDisciplinaria: string;
   status: "Activa" | "En Apelación" | "Aclarada" | "Ratificada" | "Cumplida" | "Levantada" | "Permiso Provisional";
   descripcion: string;
+  evidenciaUrl?: string;
+  evidencias?: string[];
   apelacion?: {
     fecha: string;
     argumentos: string;
@@ -2832,8 +2835,22 @@ export default function App() {
           const tipoInf = s.tipo || s.infraccionDescripcion || s.reporte?.infraccion?.nombre || "Infracción al Reglamento";
           const medidaLimpia = cleanRawText(s.medidaDisciplinaria || s.regla?.mensaje_alerta || `Sanción Nivel ${s.numero_reincidencia || 1}`);
 
+          const rawEvidencias = (Array.isArray(s.evidencias) && s.evidencias.length > 0)
+            ? s.evidencias
+            : (s.reporte?.evidencias?.map((e: any) => e.archivo || e.url || e) || []);
+          const repEvidenciaUrl = s.evidenciaUrl || (rawEvidencias.length > 0 ? rawEvidencias[0] : "") || s.reporte?.evidencias?.[0]?.archivo || "";
+          let cleanEvidencias: string[] = Array.isArray(rawEvidencias) ? rawEvidencias.filter(Boolean) : (repEvidenciaUrl ? [repEvidenciaUrl] : []);
+
+          if (cleanEvidencias.length === 0 && resReportes.status === "fulfilled" && Array.isArray(resReportes.value)) {
+            const foundRep = resReportes.value.find((r: any) => String(r.id_reporte) === String(s.id_reporte) || (r.vehiculo?.placas === (s.placas || s.placa) && r.evidencias?.length > 0));
+            if (foundRep && Array.isArray(foundRep.evidencias)) {
+              cleanEvidencias = foundRep.evidencias.map((e: any) => e.archivo || e.url || e).filter(Boolean);
+            }
+          }
+
           return {
             id: String(s.id_sancion || s.id),
+            id_reporte: s.id_reporte || s.reporte?.id_reporte,
             vehicleId: String(s.id_vehiculo || s.vehicleId || ""),
             empresaNombre: s.empresaNombre || s.empresa?.razon_social || "",
             placas: s.placas || s.placa || s.vehiculo?.placas || "",
@@ -2844,6 +2861,8 @@ export default function App() {
             medidaDisciplinaria: medidaLimpia,
             status: (s.status as any) || (s.estatus === "EN_APELACION" ? "En Apelación" : (s.estatus === "CANCELADA" || s.estatus === "ACLARADA" ? "Levantada" : (s.estatus === "RATIFICADA" ? "Ratificada" : (s.estatus === "VENCIDA" ? "Cumplida" : "Activa")))),
             descripcion: descClean || "Infracción detectada en campo y documentada por seguridad",
+            evidenciaUrl: repEvidenciaUrl || (cleanEvidencias.length > 0 ? cleanEvidencias[0] : undefined),
+            evidencias: cleanEvidencias,
             apelacion: s.apelacion || undefined,
             resolucionOficina: s.resolucionOficina || undefined,
           };
@@ -3255,8 +3274,22 @@ export default function App() {
           const tipoInf = s.tipo || s.infraccionDescripcion || s.reporte?.infraccion?.nombre || "Infracción al Reglamento";
           const medidaLimpia = cleanRawText(s.medidaDisciplinaria || s.regla?.mensaje_alerta || `Sanción Nivel ${s.numero_reincidencia || 1}`);
 
+          const rawEvidencias = (Array.isArray(s.evidencias) && s.evidencias.length > 0)
+            ? s.evidencias
+            : (s.reporte?.evidencias?.map((e: any) => e.archivo || e.url || e) || []);
+          const repEvidenciaUrl = s.evidenciaUrl || (rawEvidencias.length > 0 ? rawEvidencias[0] : "") || s.reporte?.evidencias?.[0]?.archivo || "";
+          let cleanEvidencias: string[] = Array.isArray(rawEvidencias) ? rawEvidencias.filter(Boolean) : (repEvidenciaUrl ? [repEvidenciaUrl] : []);
+
+          if (cleanEvidencias.length === 0 && Array.isArray(infraccionesPendientes)) {
+            const foundRep = infraccionesPendientes.find((r: any) => String(r.id) === String(s.id_reporte) || (r.placas === (s.placas || s.placa) && r.evidencias?.length > 0));
+            if (foundRep && Array.isArray(foundRep.evidencias)) {
+              cleanEvidencias = foundRep.evidencias.filter(Boolean);
+            }
+          }
+
           return {
             id: String(s.id_sancion || s.id),
+            id_reporte: s.id_reporte || s.reporte?.id_reporte,
             vehicleId: String(s.id_vehiculo || s.vehicleId || ""),
             empresaNombre: s.empresaNombre || s.empresa?.razon_social || "",
             placas: s.placas || s.placa || s.vehiculo?.placas || "",
@@ -3267,6 +3300,8 @@ export default function App() {
             medidaDisciplinaria: medidaLimpia,
             status: (s.status as any) || (s.estatus === "EN_APELACION" ? "En Apelación" : (s.estatus === "CANCELADA" || s.estatus === "ACLARADA" ? "Levantada" : (s.estatus === "RATIFICADA" ? "Ratificada" : (s.estatus === "VENCIDA" ? "Cumplida" : "Activa")))),
             descripcion: descClean || "Infracción detectada en campo y documentada por seguridad",
+            evidenciaUrl: repEvidenciaUrl || (cleanEvidencias.length > 0 ? cleanEvidencias[0] : undefined),
+            evidencias: cleanEvidencias,
             apelacion: s.apelacion || undefined,
             resolucionOficina: s.resolucionOficina || undefined,
           };
@@ -11230,9 +11265,21 @@ export default function App() {
                               </p>
                             </div>
                           ) : (
-                            empresaSanciones.map((s) => (
-                              <div
-                                key={s.id}
+                            empresaSanciones.map((s) => {
+                              const cardEvidencias: string[] = (s.evidencias && s.evidencias.length > 0)
+                                ? s.evidencias
+                                : (s.evidenciaUrl ? [s.evidenciaUrl] : []);
+                              const matchedRep = !cardEvidencias.length
+                                ? (infraccionesPendientes || []).find((inf) =>
+                                    (s.id_reporte && String(inf.id) === String(s.id_reporte)) ||
+                                    (inf.placas === s.placas && inf.evidencias && inf.evidencias.length > 0)
+                                  )
+                                : null;
+                              const finalEvidencias: string[] = cardEvidencias.length > 0 ? cardEvidencias : (matchedRep?.evidencias || []);
+
+                              return (
+                                <div
+                                  key={s.id}
                                 className={`rounded-2xl border bg-white shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md ${s.status === "En Apelación"
                                   ? "border-sky-300 ring-1 ring-sky-100"
                                   : s.status === "Ratificada"
@@ -11318,6 +11365,47 @@ export default function App() {
                                       </div>
                                     </div>
                                   </div>
+
+                                  {/* Evidencias Fotográficas de la Sanción */}
+                                  {finalEvidencias.length > 0 && (
+                                    <div className="p-3 sm:p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+                                      <div className="flex items-center justify-between">
+                                        <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                                          <IconCamera className="w-3.5 h-3.5 text-[#0D6E5F]" />
+                                          <span>Evidencias Fotográficas Adjuntas ({finalEvidencias.length})</span>
+                                        </div>
+                                        <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">Clic en cualquier imagen para ampliar</span>
+                                      </div>
+                                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+                                        {finalEvidencias.map((foto, idx) => (
+                                          <div
+                                            key={idx}
+                                            onClick={() => setGenericImagePreview({
+                                              isOpen: true,
+                                              src: foto,
+                                              title: `Evidencia Fotográfica #${idx + 1}`,
+                                              subtitle: `Infracción: ${s.tipo} · Placas: ${s.placas} (${s.empresaNombre})`,
+                                              badge: `Folio #${s.id}`
+                                            })}
+                                            className="cursor-pointer group relative overflow-hidden rounded-xl border border-slate-200 shadow-2xs hover:border-[#0D6E5F] transition-all bg-slate-100 h-24 sm:h-28"
+                                            title="Clic para ver fotografía ampliada"
+                                          >
+                                            <img
+                                              src={foto}
+                                              alt={`Evidencia ${idx + 1}`}
+                                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                            />
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 flex items-center justify-center transition-colors">
+                                              <span className="opacity-0 group-hover:opacity-100 text-[10px] font-bold bg-white/95 text-slate-800 px-2 py-0.5 rounded-md shadow-sm transition-opacity flex items-center gap-1">
+                                                <IconEye className="w-3 h-3 text-[#0D6E5F]" />
+                                                <span>Ampliar</span>
+                                              </span>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
 
                                   {/* Sección de Apelación y Dictamen */}
                                   {s.apelacion && (
@@ -11420,8 +11508,9 @@ export default function App() {
                                   )}
                                 </div>
                               </div>
-                            ))
-                          )}
+                            );
+                          })
+                        )}
                         </div>
                       </>
                     );
@@ -13289,10 +13378,42 @@ export default function App() {
                 <button onClick={() => setSelectedSancionParaApelar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1">
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2">
                 <div><strong>Infracción:</strong> {selectedSancionParaApelar.tipo}</div>
                 <div><strong>Medida Disciplinaria:</strong> <span className="text-red-700 font-bold">{selectedSancionParaApelar.medidaDisciplinaria}</span></div>
                 <div><strong>Descripción oficial:</strong> {selectedSancionParaApelar.descripcion}</div>
+
+                {(() => {
+                  const modalEvidencias = (selectedSancionParaApelar.evidencias && selectedSancionParaApelar.evidencias.length > 0)
+                    ? selectedSancionParaApelar.evidencias
+                    : (selectedSancionParaApelar.evidenciaUrl ? [selectedSancionParaApelar.evidenciaUrl] : []);
+                  if (modalEvidencias.length === 0) return null;
+                  return (
+                    <div className="pt-1.5 border-t border-slate-200/80 space-y-1.5">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                        Evidencias Registradas ({modalEvidencias.length}):
+                      </span>
+                      <div className="flex gap-2 overflow-x-auto pb-1">
+                        {modalEvidencias.map((foto, idx) => (
+                          <div
+                            key={idx}
+                            onClick={() => setGenericImagePreview({
+                              isOpen: true,
+                              src: foto,
+                              title: `Evidencia #${idx + 1}`,
+                              subtitle: `Folio #${selectedSancionParaApelar.id} · Placas: ${selectedSancionParaApelar.placas}`,
+                            })}
+                            className="w-16 h-16 rounded-xl overflow-hidden border border-slate-200 shrink-0 cursor-pointer hover:border-sky-500 transition-all shadow-2xs group relative bg-slate-100"
+                            title="Clic para ampliar"
+                          >
+                            <img src={foto} alt={`Evidencia ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               <form onSubmit={handleEnviarApelacion} className="space-y-4">
