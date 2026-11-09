@@ -35,8 +35,50 @@ router.get('/', async (req, res) => {
 
     const ahora = new Date();
 
-    const resultado = sanciones.map(s => {
-      const plain = s.get({ plain: true });
+    // Calcular el índice cronológico real de reincidencia por vehículo excluyendo apelaciones aprobadas (CANCELADA/ACLARADA) y levantamientos definitivos
+    const isCanceladaOLevantada = (plainRow) => {
+      const est = String(plainRow.estatus || '').trim().toUpperCase();
+      if (est === 'CANCELADA' || est === 'ACLARADA' || est === 'CANCELADO' || est === 'ACLARADO') {
+        return true;
+      }
+      const mot = String(plainRow.motivo || '');
+      if (mot.includes('[RESOLUCION_OFICINA_DATA]') && mot.includes('levantamiento_definitivo')) {
+        return true;
+      }
+      return false;
+    };
+
+    const plainList = sanciones.map(s => s.get({ plain: true }));
+    const nivelRealPorSancionId = new Map();
+    const porVehiculo = new Map();
+
+    for (const p of plainList) {
+      if (!p.id_vehiculo || isCanceladaOLevantada(p)) continue;
+      if (!porVehiculo.has(p.id_vehiculo)) porVehiculo.set(p.id_vehiculo, []);
+      porVehiculo.get(p.id_vehiculo).push(p);
+    }
+
+    for (const [, listaVeh] of porVehiculo.entries()) {
+      listaVeh.sort((a, b) => Number(a.id_sancion || 0) - Number(b.id_sancion || 0));
+      listaVeh.forEach((item, idx) => {
+        const trueNivel = Math.min(idx + 1, 4);
+        nivelRealPorSancionId.set(item.id_sancion, trueNivel);
+        // Auto-sanar en segundo plano si en BD había quedado un nivel inflado tras una apelación previa
+        if (Number(item.numero_reincidencia) !== trueNivel || Number(item.id_regla) !== trueNivel) {
+          const updateFields = { numero_reincidencia: trueNivel, id_regla: trueNivel };
+          if (trueNivel === 2 && !item.fecha_fin && item.fecha_inicio) {
+            updateFields.fecha_fin = new Date(new Date(item.fecha_inicio).getTime() + 24 * 60 * 60 * 1000);
+          } else if (trueNivel === 3 && !item.fecha_fin && item.fecha_inicio) {
+            updateFields.fecha_fin = new Date(new Date(item.fecha_inicio).getTime() + 7 * 24 * 60 * 60 * 1000);
+          } else if ((trueNivel === 1 || trueNivel === 4) && item.fecha_fin) {
+            updateFields.fecha_fin = null;
+          }
+          db.Sancion.update(updateFields, { where: { id_sancion: item.id_sancion } }).catch(() => {});
+        }
+      });
+    }
+
+    const resultado = plainList.map(plain => {
       let motivoLimpio = plain.motivo || '';
       let apelacionObj = null;
 
@@ -77,8 +119,20 @@ router.get('/', async (req, res) => {
         .replace(/\[RESOLUCION_OFICINA_DATA\].*?\[\/RESOLUCION_OFICINA_DATA\]/g, '')
         .trim();
 
+      const nivel = nivelRealPorSancionId.get(plain.id_sancion) || Number(plain.numero_reincidencia || plain.id_regla || 1);
+      let fechaFinEfectiva = plain.fecha_fin;
+      if (!isCanceladaOLevantada(plain)) {
+        if (nivel === 2 && !fechaFinEfectiva && plain.fecha_inicio) {
+          fechaFinEfectiva = new Date(new Date(plain.fecha_inicio).getTime() + 24 * 60 * 60 * 1000);
+        } else if (nivel === 3 && !fechaFinEfectiva && plain.fecha_inicio) {
+          fechaFinEfectiva = new Date(new Date(plain.fecha_inicio).getTime() + 7 * 24 * 60 * 60 * 1000);
+        } else if ((nivel === 1 || nivel === 4) && fechaFinEfectiva) {
+          fechaFinEfectiva = null;
+        }
+      }
+
       // Normalizar status con cálculo dinámico de expiración en memoria
-      const isExpired = plain.fecha_fin && ahora >= new Date(plain.fecha_fin) && (plain.estatus === 'ACTIVA' || plain.estatus === 'RATIFICADA');
+      const isExpired = fechaFinEfectiva && ahora >= new Date(fechaFinEfectiva) && (plain.estatus === 'ACTIVA' || plain.estatus === 'RATIFICADA');
       const estatusEfectivo = isExpired ? 'VENCIDA' : plain.estatus;
 
       let frontendStatus = 'Activa';
@@ -109,7 +163,6 @@ router.get('/', async (req, res) => {
         if (dictamenSupervisor) apelacionObj.dictamenSupervisor = dictamenSupervisor;
       }
 
-      const nivel = Number(plain.numero_reincidencia || plain.id_regla || 1);
       const medidasPorNivel = {
         1: 'Primera Falta: Llamada de atención. Acceso permitido.',
         2: 'Segunda Falta: Suspensión temporal de 24 horas. Acceso denegado.',
@@ -120,6 +173,9 @@ router.get('/', async (req, res) => {
 
       return {
         ...plain,
+        numero_reincidencia: nivel,
+        id_regla: nivel,
+        fecha_fin: fechaFinEfectiva,
         estatus: estatusEfectivo,
         enVigor,
         id: String(plain.id_sancion),
@@ -224,6 +280,49 @@ router.put('/:id', async (req, res) => {
     }
 
     await sancion.save();
+
+    // Si la sanción fue cancelada/aclarada o levantada definitivamente, re-indexar cronológicamente las demás sanciones vigentes del vehículo
+    const finalEst = String(sancion.estatus || '').trim().toUpperCase();
+    const fueRemovida =
+      finalEst === 'CANCELADA' ||
+      finalEst === 'ACLARADA' ||
+      (resolucionOficina && resolucionOficina.tipoResolucion === 'levantamiento_definitivo');
+
+    if (fueRemovida && sancion.id_vehiculo) {
+      try {
+        const restantes = await db.Sancion.findAll({
+          where: {
+            id_vehiculo: sancion.id_vehiculo,
+            estatus: { [Op.notIn]: ['CANCELADA', 'ACLARADA', 'CANCELADO', 'ACLARADO', 'cancelada', 'aclarada'] }
+          },
+          order: [['id_sancion', 'ASC']]
+        });
+        const validas = restantes.filter(r => {
+          const m = String(r.motivo || '');
+          return !(m.includes('[RESOLUCION_OFICINA_DATA]') && m.includes('levantamiento_definitivo'));
+        });
+        for (let i = 0; i < validas.length; i++) {
+          const item = validas[i];
+          const nuevoNivel = Math.min(i + 1, 4);
+          let nuevaFechaFin = item.fecha_fin;
+          if (nuevoNivel === 2 && !nuevaFechaFin && item.fecha_inicio) {
+            nuevaFechaFin = new Date(new Date(item.fecha_inicio).getTime() + 24 * 60 * 60 * 1000);
+          } else if (nuevoNivel === 3 && !nuevaFechaFin && item.fecha_inicio) {
+            nuevaFechaFin = new Date(new Date(item.fecha_inicio).getTime() + 7 * 24 * 60 * 60 * 1000);
+          } else if ((nuevoNivel === 1 || nuevoNivel === 4) && nuevaFechaFin) {
+            nuevaFechaFin = null;
+          }
+          if (Number(item.numero_reincidencia) !== nuevoNivel || Number(item.id_regla) !== nuevoNivel || item.fecha_fin !== nuevaFechaFin) {
+            item.numero_reincidencia = nuevoNivel;
+            item.id_regla = nuevoNivel;
+            item.fecha_fin = nuevaFechaFin;
+            await item.save();
+          }
+        }
+      } catch (recalcErr) {
+        console.warn('Error al re-indexar niveles de reincidencia tras apelación:', recalcErr);
+      }
+    }
 
     // Emitir evento SSE en tiempo real
     try {

@@ -244,13 +244,26 @@ router.post('/:id/revisar', requireAuth, async (req, res) => {
     reporte.estatus_revision = decision === 'APROBADO' ? 'APROBADO' : 'RECHAZADO';
     await reporte.save({ transaction });
 
-    // 7. Contar reincidencias previas del vehículo de forma consistente
-    const conteoSanciones = reporte.id_vehiculo
-      ? await db.Sancion.count({
-          where: { id_vehiculo: reporte.id_vehiculo },
+    // 7. Contar reincidencias previas del vehículo excluyendo sanciones apeladas/canceladas/aclaradas o levantadas definitivamente
+    const sancionesPrevias = reporte.id_vehiculo
+      ? await db.Sancion.findAll({
+          where: {
+            id_vehiculo: reporte.id_vehiculo,
+            estatus: {
+              [Op.notIn]: ['CANCELADA', 'ACLARADA', 'CANCELADO', 'ACLARADO', 'cancelada', 'aclarada']
+            }
+          },
+          attributes: ['id_sancion', 'estatus', 'motivo'],
           transaction
         })
-      : 0;
+      : [];
+    const conteoSanciones = sancionesPrevias.filter(s => {
+      const m = s.motivo || '';
+      if (m.includes('[RESOLUCION_OFICINA_DATA]') && m.includes('levantamiento_definitivo')) {
+        return false;
+      }
+      return true;
+    }).length;
     const nivelReincidencia = Math.min(conteoSanciones + 1, 4);
 
     // 8. Crear dictamen de revisión

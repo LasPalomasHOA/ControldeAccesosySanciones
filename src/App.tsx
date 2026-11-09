@@ -2750,13 +2750,49 @@ export default function App() {
             .trim();
         };
 
+        const medidasPorNivel: Record<number, string> = {
+          1: "Primera Falta: Llamada de atención. Acceso permitido.",
+          2: "Segunda Falta: Suspensión temporal de 24 horas. Acceso denegado.",
+          3: "Tercera Falta: Suspensión temporal de 1 semana. Acceso denegado.",
+          4: "Cuarta Falta: Sanción definitiva (bloqueo permanente).",
+        };
+
+        const isCancelledSancion = (s: any) => {
+          const est = String(s.estatus || s.status || "").trim().toUpperCase();
+          if (est === "CANCELADA" || est === "ACLARADA" || est === "LEVANTADA") return true;
+          if (s.resolucionOficina?.tipoResolucion === "levantamiento_definitivo") return true;
+          const m = String(s.motivo || "");
+          if (m.includes("[RESOLUCION_OFICINA_DATA]") && m.includes("levantamiento_definitivo")) return true;
+          return false;
+        };
+
+        const nivelRealMap = new Map<string, number>();
+        const groupedByVeh = new Map<string, any[]>();
+        for (const s of resSanciones.value) {
+          if (isCancelledSancion(s)) continue;
+          const vKey = String(s.id_vehiculo || s.vehicleId || s.placas || s.placa || s.vehiculo?.placas || "");
+          if (!vKey) continue;
+          if (!groupedByVeh.has(vKey)) groupedByVeh.set(vKey, []);
+          groupedByVeh.get(vKey)!.push(s);
+        }
+        for (const [, list] of groupedByVeh.entries()) {
+          list.sort((a, b) => Number(a.id_sancion || a.id || 0) - Number(b.id_sancion || b.id || 0));
+          list.forEach((item, idx) => {
+            nivelRealMap.set(String(item.id_sancion || item.id), Math.min(idx + 1, 4));
+          });
+        }
+
         const mappedSanciones: Sancion[] = resSanciones.value.map((s: any) => {
+          const sId = String(s.id_sancion || s.id);
           const descClean = cleanRawText(s.descripcion || s.motivo || "");
           const tipoInf = s.tipo || s.infraccionDescripcion || s.reporte?.infraccion?.nombre || "Infracción al Reglamento";
-          const medidaLimpia = cleanRawText(s.medidaDisciplinaria || s.regla?.mensaje_alerta || `Sanción Nivel ${s.numero_reincidencia || 1}`);
+          const trueNivel = nivelRealMap.get(sId);
+          const medidaLimpia = trueNivel
+            ? medidasPorNivel[trueNivel]
+            : cleanRawText(s.medidaDisciplinaria || s.regla?.mensaje_alerta || `Sanción Nivel ${s.numero_reincidencia || 1}`);
 
           return {
-            id: String(s.id_sancion || s.id),
+            id: sId,
             vehicleId: String(s.id_vehiculo || s.vehicleId || ""),
             empresaNombre: s.empresaNombre || s.empresa?.razon_social || "",
             placas: s.placas || s.placa || s.vehiculo?.placas || "",
@@ -3162,13 +3198,49 @@ export default function App() {
             .trim();
         };
 
+        const medidasPorNivel: Record<number, string> = {
+          1: "Primera Falta: Llamada de atención. Acceso permitido.",
+          2: "Segunda Falta: Suspensión temporal de 24 horas. Acceso denegado.",
+          3: "Tercera Falta: Suspensión temporal de 1 semana. Acceso denegado.",
+          4: "Cuarta Falta: Sanción definitiva (bloqueo permanente).",
+        };
+
+        const isCancelledSancion = (s: any) => {
+          const est = String(s.estatus || s.status || "").trim().toUpperCase();
+          if (est === "CANCELADA" || est === "ACLARADA" || est === "LEVANTADA") return true;
+          if (s.resolucionOficina?.tipoResolucion === "levantamiento_definitivo") return true;
+          const m = String(s.motivo || "");
+          if (m.includes("[RESOLUCION_OFICINA_DATA]") && m.includes("levantamiento_definitivo")) return true;
+          return false;
+        };
+
+        const nivelRealMap = new Map<string, number>();
+        const groupedByVeh = new Map<string, any[]>();
+        for (const s of res) {
+          if (isCancelledSancion(s)) continue;
+          const vKey = String(s.id_vehiculo || s.vehicleId || s.placas || s.placa || s.vehiculo?.placas || "");
+          if (!vKey) continue;
+          if (!groupedByVeh.has(vKey)) groupedByVeh.set(vKey, []);
+          groupedByVeh.get(vKey)!.push(s);
+        }
+        for (const [, list] of groupedByVeh.entries()) {
+          list.sort((a, b) => Number(a.id_sancion || a.id || 0) - Number(b.id_sancion || b.id || 0));
+          list.forEach((item, idx) => {
+            nivelRealMap.set(String(item.id_sancion || item.id), Math.min(idx + 1, 4));
+          });
+        }
+
         const mappedSanciones: Sancion[] = res.map((s: any) => {
+          const sId = String(s.id_sancion || s.id);
           const descClean = cleanRawText(s.descripcion || s.motivo || "");
           const tipoInf = s.tipo || s.infraccionDescripcion || s.reporte?.infraccion?.nombre || "Infracción al Reglamento";
-          const medidaLimpia = cleanRawText(s.medidaDisciplinaria || s.regla?.mensaje_alerta || `Sanción Nivel ${s.numero_reincidencia || 1}`);
+          const trueNivel = nivelRealMap.get(sId);
+          const medidaLimpia = trueNivel
+            ? medidasPorNivel[trueNivel]
+            : cleanRawText(s.medidaDisciplinaria || s.regla?.mensaje_alerta || `Sanción Nivel ${s.numero_reincidencia || 1}`);
 
           return {
-            id: String(s.id_sancion || s.id),
+            id: sId,
             vehicleId: String(s.id_vehiculo || s.vehicleId || ""),
             empresaNombre: s.empresaNombre || s.empresa?.razon_social || "",
             placas: s.placas || s.placa || s.vehiculo?.placas || "",

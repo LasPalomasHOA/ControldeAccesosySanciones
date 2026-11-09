@@ -37,7 +37,7 @@ router.get('/', async (req, res) => {
           model: db.Sancion, 
           as: 'sanciones', 
           attributes: ['id_sancion', 'estatus', 'fecha_inicio', 'fecha_fin', 'numero_reincidencia', 'id_regla', 'motivo'],
-          where: { estatus: { [Op.in]: ['ACTIVA', 'RATIFICADA', 'EN_APELACION'] } },
+          where: { estatus: { [Op.notIn]: ['CANCELADA', 'ACLARADA', 'CANCELADO', 'ACLARADO', 'cancelada', 'aclarada'] } },
           required: false
         }
       ],
@@ -61,19 +61,39 @@ router.get('/', async (req, res) => {
       const plain = v.get({ plain: true });
       const corbatinActivo = plain.corbatines?.find(c => c.estatus === 'ACTIVO') || plain.corbatines?.[0];
 
+      // Filtrar sanciones no canceladas ni levantadas definitivamente y ordenarlas cronológicamente (id_sancion ASC) para asignar nivel real
+      const sancionesHistoricasValidas = (plain.sanciones || [])
+        .filter(s => {
+          const est = String(s.estatus || '').trim().toUpperCase();
+          if (est === 'CANCELADA' || est === 'ACLARADA' || est === 'CANCELADO' || est === 'ACLARADO') return false;
+          if (s.motivo && s.motivo.includes('[RESOLUCION_OFICINA_DATA]') && s.motivo.includes('levantamiento_definitivo')) return false;
+          return true;
+        })
+        .sort((a, b) => Number(a.id_sancion || 0) - Number(b.id_sancion || 0))
+        .map((s, idx) => {
+          const trueNivel = Math.min(idx + 1, 4);
+          let fechaFinEfectiva = s.fecha_fin;
+          if (trueNivel === 2 && !fechaFinEfectiva && s.fecha_inicio) {
+            fechaFinEfectiva = new Date(new Date(s.fecha_inicio).getTime() + 24 * 60 * 60 * 1000);
+          } else if (trueNivel === 3 && !fechaFinEfectiva && s.fecha_inicio) {
+            fechaFinEfectiva = new Date(new Date(s.fecha_inicio).getTime() + 7 * 24 * 60 * 60 * 1000);
+          } else if ((trueNivel === 1 || trueNivel === 4) && fechaFinEfectiva) {
+            fechaFinEfectiva = null;
+          }
+          return {
+            ...s,
+            numero_reincidencia: trueNivel,
+            id_regla: trueNivel,
+            fecha_fin: fechaFinEfectiva
+          };
+        });
+
       // Evaluar sanciones vigentes y pases provisionales de oficina
-      const sancionesVigentes = (plain.sanciones || []).filter(s => {
+      const sancionesVigentes = sancionesHistoricasValidas.filter(s => {
+        const est = String(s.estatus || '').trim().toUpperCase();
+        if (est !== 'ACTIVA' && est !== 'RATIFICADA' && est !== 'EN_APELACION') return false;
         if (s.fecha_inicio && ahora < new Date(s.fecha_inicio)) return false;
         if (s.fecha_fin && ahora >= new Date(s.fecha_fin)) return false;
-        if (s.motivo && s.motivo.includes('[RESOLUCION_OFICINA_DATA]')) {
-          try {
-            const rMatch = s.motivo.match(/\[RESOLUCION_OFICINA_DATA\](.*?)\[\/RESOLUCION_OFICINA_DATA\]/);
-            if (rMatch && rMatch[1]) {
-              const resObj = JSON.parse(rMatch[1]);
-              if (resObj.tipoResolucion === 'levantamiento_definitivo') return false;
-            }
-          } catch (e) {}
-        }
         return true;
       });
 
@@ -150,7 +170,7 @@ router.get('/', async (req, res) => {
         qr_token: corbatinActivo?.qr_token || '',
         conductor: '',
         conductorId: null,
-        reincidencias: sancionesVigentes.length,
+        reincidencias: sancionesHistoricasValidas.length,
         estadoAcceso,
         permisoTemporal,
         sancionActiva: sancionBloqueante ? {
