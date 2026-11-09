@@ -27,15 +27,15 @@ router.get('/', async (req, res) => {
       ],
       include: [
         { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social'] },
-        { 
-          model: db.Corbatin, 
-          as: 'corbatines', 
+        {
+          model: db.Corbatin,
+          as: 'corbatines',
           attributes: ['id_corbatin', 'numero', 'estatus', 'fecha_vencimiento', 'qr_token'],
           required: false
         },
-        { 
-          model: db.Sancion, 
-          as: 'sanciones', 
+        {
+          model: db.Sancion,
+          as: 'sanciones',
           attributes: ['id_sancion', 'estatus', 'fecha_inicio', 'fecha_fin', 'numero_reincidencia', 'id_regla', 'motivo'],
           where: { estatus: { [Op.notIn]: ['CANCELADA', 'ACLARADA', 'CANCELADO', 'ACLARADO', 'cancelada', 'aclarada'] } },
           required: false
@@ -124,7 +124,7 @@ router.get('/', async (req, res) => {
                 break;
               }
             }
-          } catch (e) {}
+          } catch (e) { }
         }
       }
 
@@ -139,12 +139,12 @@ router.get('/', async (req, res) => {
         estatusEfectivo = 'SUSPENDIDO';
         // Sincronizar en segundo plano en BD si había quedado como HABILITADO por un pase de ayer
         if (plain.estatus_acceso === 'HABILITADO') {
-          db.Vehiculo.update({ estatus_acceso: 'SUSPENDIDO' }, { where: { id_vehiculo: plain.id_vehiculo } }).catch(() => {});
+          db.Vehiculo.update({ estatus_acceso: 'SUSPENDIDO' }, { where: { id_vehiculo: plain.id_vehiculo } }).catch(() => { });
         }
       } else if (sancionesVigentes.length === 0 && plain.estatus_acceso === 'SUSPENDIDO') {
         // Si la sanción ya cumplió su fecha_fin, liberar automáticamente a HABILITADO
         estatusEfectivo = 'HABILITADO';
-        db.Vehiculo.update({ estatus_acceso: 'HABILITADO' }, { where: { id_vehiculo: plain.id_vehiculo } }).catch(() => {});
+        db.Vehiculo.update({ estatus_acceso: 'HABILITADO' }, { where: { id_vehiculo: plain.id_vehiculo } }).catch(() => { });
       }
 
       let estadoAcceso = 'permitido';
@@ -217,19 +217,19 @@ router.get('/:id', async (req, res) => {
 // POST /api/vehiculos - Registrar vehículo
 router.post('/', async (req, res) => {
   try {
-    const { 
-      id_empresa, 
-      empresaId, 
-      marca, 
-      modelo, 
-      año, 
-      anio, 
-      placas, 
-      placa, 
-      color, 
-      foto_url, 
-      foto, 
-      estatus_acceso 
+    const {
+      id_empresa,
+      empresaId,
+      marca,
+      modelo,
+      año,
+      anio,
+      placas,
+      placa,
+      color,
+      foto_url,
+      foto,
+      estatus_acceso
     } = req.body;
 
     const empId = id_empresa || empresaId;
@@ -370,7 +370,7 @@ router.put('/:id', async (req, res) => {
         id_vehiculo: vehiculo.id_vehiculo,
         estatus_acceso: vehiculo.estatus_acceso
       });
-    } catch (e) {}
+    } catch (e) { }
 
     res.json(vehiculo);
   } catch (error) {
@@ -384,27 +384,27 @@ router.delete('/:id', async (req, res) => {
   try {
     const vehiculo = await db.Vehiculo.findByPk(req.params.id);
     if (!vehiculo) return res.json({ message: 'Vehículo ya no existe o fue eliminado previamente', id_vehiculo: req.params.id });
-    
+
     const idVeh = req.params.id;
 
     // 1. Desvincular corbatín asignado para que quede libre de reasignarse, pero sin borrar historial
     await db.Corbatin.update(
       { id_vehiculo: null, estatus: 'INACTIVO' },
       { where: { id_vehiculo: idVeh } }
-    ).catch(() => {});
+    ).catch(() => { });
 
 
 
     // 3. Marcar el vehículo como eliminado lógicamente (Soft Delete)
     // NOTA: NO se toca ni se borra bitacora_accesos, para que el historial conserve las placas, marca y empresa originales
-    await vehiculo.update({ 
+    await vehiculo.update({
       eliminado: true,
       estatus_acceso: 'RESTRINGIDO'
     });
 
     try {
       events.broadcastEvent('VEHICULO_ELIMINADO', { action: 'delete', id_vehiculo: idVeh });
-    } catch (e) {}
+    } catch (e) { }
 
     res.json({ message: 'Vehículo eliminado correctamente (lógico)', id_vehiculo: idVeh, eliminado: true });
   } catch (error) {
