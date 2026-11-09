@@ -102,9 +102,52 @@ router.get('/', requireAuth, async (req, res) => {
 // POST /api/reportes - Crear reporte de infracción con prevención de duplicados
 router.post('/', requireAuth, async (req, res) => {
   try {
-    const { id_vehiculo, id_corbatin, id_infraccion, id_usuario, ubicacion_texto, descripcion_hechos, evidencia_url } = req.body;
+    const {
+      id_vehiculo,
+      id_corbatin,
+      id_infraccion,
+      id_usuario,
+      ubicacion_texto,
+      descripcion_hechos,
+      evidencia_url,
+      evidencias_urls,
+      evidencias
+    } = req.body;
     if (!id_vehiculo || !id_infraccion || !id_usuario) {
       return res.status(400).json({ error: 'id_vehiculo, id_infraccion e id_usuario son obligatorios' });
+    }
+
+    // Normalizar todas las evidencias recibidas (1, 2, 3...) sin duplicar URLs
+    const rawEvidenciasList = [];
+    const seenUrls = new Set();
+    const pushEvidenciaCandidate = (url, descripcion, fechaHora) => {
+      if (!url || typeof url !== 'string' || !url.trim()) return;
+      const trimmed = url.trim();
+      if (seenUrls.has(trimmed)) return;
+      seenUrls.add(trimmed);
+      rawEvidenciasList.push({
+        url: trimmed,
+        descripcion: descripcion || null,
+        fechaHora: fechaHora ? new Date(fechaHora) : new Date()
+      });
+    };
+
+    if (Array.isArray(evidencias)) {
+      for (const ev of evidencias) {
+        if (typeof ev === 'string') {
+          pushEvidenciaCandidate(ev, null, null);
+        } else if (ev && typeof ev === 'object') {
+          pushEvidenciaCandidate(ev.fotoUrl || ev.archivo || ev.url, ev.descripcion, ev.fechaHora || ev.fecha_captura);
+        }
+      }
+    }
+    if (Array.isArray(evidencias_urls)) {
+      for (const u of evidencias_urls) {
+        pushEvidenciaCandidate(u, null, null);
+      }
+    }
+    if (evidencia_url) {
+      pushEvidenciaCandidate(evidencia_url, null, null);
     }
 
     // Prevención de reporte duplicado idéntico en los últimos 2 minutos
@@ -125,6 +168,7 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(200).json({
         ...reporteExistente.get({ plain: true }),
         duplicatePrevented: true,
+        evidencias_insertadas: reporteExistente.evidencias ? reporteExistente.evidencias.length : 0,
         message: 'Reporte pendiente existente reutilizado para evitar duplicidad.'
       });
     }
@@ -151,17 +195,23 @@ router.post('/', requireAuth, async (req, res) => {
       estatus_revision: 'PENDIENTE'
     });
 
-    if (evidencia_url) {
-      const archivoStorageUrl = await saveBase64Image(evidencia_url, 'evidencia');
-
-      await db.Evidencia.create({
-        id_reporte: nuevoReporte.id_reporte,
-        archivo: archivoStorageUrl,
-        descripcion: 'Evidencia fotográfica adjunta',
-        fecha_captura: new Date(),
-        id_usuario,
-        activa: true
-      });
+    let evidenciasInsertadas = 0;
+    for (let i = 0; i < rawEvidenciasList.length; i++) {
+      const item = rawEvidenciasList[i];
+      const archivoStorageUrl = await saveBase64Image(item.url, 'evidencia');
+      if (archivoStorageUrl) {
+        await db.Evidencia.create({
+          id_reporte: nuevoReporte.id_reporte,
+          archivo: archivoStorageUrl,
+          descripcion:
+            item.descripcion ||
+            `Evidencia fotográfica ${i + 1} de ${rawEvidenciasList.length} adjunta`,
+          fecha_captura: item.fechaHora || new Date(),
+          id_usuario,
+          activa: true
+        });
+        evidenciasInsertadas++;
+      }
     }
 
     // Emitir evento SSE en tiempo real a todos los clientes conectados
@@ -175,7 +225,10 @@ router.post('/', requireAuth, async (req, res) => {
       });
     } catch (e) {}
 
-    res.status(201).json(nuevoReporte);
+    res.status(201).json({
+      ...nuevoReporte.get({ plain: true }),
+      evidencias_insertadas: evidenciasInsertadas
+    });
   } catch (error) {
     console.error('Error al crear reporte:', error);
     res.status(500).json({ error: 'Error al registrar reporte de infracción', details: error.message });
