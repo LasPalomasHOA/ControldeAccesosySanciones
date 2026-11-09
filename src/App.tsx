@@ -10050,9 +10050,61 @@ export default function App() {
                                             onClick={() => setSelectedCorbatinVerdeId(c.id)}
                                             className={`hover:bg-teal-50/50 cursor-pointer transition-colors ${selectedCorbatinVerdeId === c.id ? "bg-teal-50/60" : ""}`}
                                           >
-                                            <td class
-                                                  </button>
+                                              <td className="px-5 py-3 font-mono font-bold text-teal-900">
+                                                <span className="bg-teal-50 text-[#0D6E5F] border border-teal-200 px-2 py-0.5 rounded-md">
+                                                  #{numFmt}
+                                                </span>
+                                              </td>
+                                              <td className="px-5 py-3">
+                                                {isDisp ? (
+                                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                    Disponible
+                                                  </span>
+                                                ) : isVenc ? (
+                                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                                    Vencido
+                                                  </span>
                                                 ) : (
+                                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                                    Asignado
+                                                  </span>
+                                                )}
+                                              </td>
+                                              <td className="px-5 py-3 font-semibold text-slate-800">
+                                                {c.empresaNombre ? (
+                                                  <span>{c.empresaNombre}</span>
+                                                ) : (
+                                                  <span className="text-slate-400 italic font-normal">Libre para asignación</span>
+                                                )}
+                                              </td>
+                                              <td className="px-5 py-3 font-mono text-slate-600 text-xs">
+                                                {c.telefono || "—"}
+                                              </td>
+                                              <td className="px-5 py-3 text-slate-700 text-xs">
+                                                {c.vigenciaTexto || (isDisp ? "Disponible" : "6 Meses")}
+                                              </td>
+                                              <td className="px-5 py-3 font-mono text-slate-600 text-xs">
+                                                {c.fechaVencimiento || "—"}
+                                              </td>
+                                              <td className="px-5 py-3 text-right">
+                                                <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                                  {isDisp ? (
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => handleAbrirModalVincular(c)}
+                                                      className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#095247] transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                                                      title="Vincular corbatín a una empresa"
+                                                    >
+                                                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                                                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                                                      </svg>
+                                                      <span>Vincular</span>
+                                                    </button>
+                                                  ) : (
                                                   <>
                                                     <button
                                                       type="button"
@@ -10074,1547 +10126,1746 @@ export default function App() {
                                                           actionCallback: () => handleDesvincularCorbatinVerde(c.id)
                                                         });
                                                       }}
-                                                    className="p-1.5 px-2 rounded-lg text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-all cursor-pointer"
-                                                    title="Liberar corbatín"
+                                                      className="p-1.5 px-2 rounded-lg text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-all cursor-pointer"
+                                                      title="Liberar corbatín"
                                                     >
-                                                    <span>Liberar</span>
-                                                  </button>
-                                              </>
+                                                      <span>Liberar</span>
+                                                    </button>
+                                                  </>
                                                 )}
 
-                                              <button
-                                                type="button"
-                                                onClick={() => handleDescargarPDFCorbatinVerdeDirecto(c, false)}
-                                                className="px-2 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all cursor-pointer flex items-center gap-1"
-                                                title="Descargar PDF"
-                                              >
-                                                <IconDownload className="w-3.5 h-3.5" />
-                                              </button>
-                                            </div>
-                                          </td>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleDescargarPDFCorbatinVerdeDirecto(c, false)}
+                                                  className="px-2 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all cursor-pointer flex items-center gap-1"
+                                                  title="Descargar PDF"
+                                                >
+                                                  <IconDownload className="w-3.5 h-3.5" />
+                                                </button>
+                                              </div>
+                                            </td>
                                           </tr>
-                                  );
+                                        );
                                       })
                                     )}
-                                </tbody>
-                              </table>
-                            </div>
+                                  </tbody>
+                                </table>
+                              </div>
 
-                              {/* Footer de Paginación Robusto (10 registros por página) */ }
-                          {
-                            filteredTableCorbatines.length > 0 && (
-                              <div className="px-5 py-3.5 border-t bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600" style={{ borderColor: "var(--color-border)" }}>
-                                <div className="flex items-center gap-3">
-                                  <div>
-                                    Mostrando <strong className="text-slate-800">{cvStartIndex + 1}</strong> – <strong className="text-slate-800">{Math.min(cvStartIndex + cvPageSize, filteredTableCorbatines.length)}</strong> de <strong className="text-slate-800">{filteredTableCorbatines.length}</strong> {filteredTableCorbatines.length === 1 ? "corbatín" : "corbatines"}
-                                  </div>
-                                  <div className="hidden md:flex items-center gap-1 text-[11px] text-slate-500">
-                                    <span>•</span>
-                                    <label htmlFor="corbatines-page-size-select" className="text-slate-500">Ver:</label>
-                                    <select
-                                      id="corbatines-page-size-select"
-                                      value={cvPageSize}
-                                      onChange={(e) => {
-                                        setCorbatinVerdePageSize(Number(e.target.value));
-                                        setCorbatinVerdePage(1);
-                                      }}
-                                      className="bg-white border border-slate-300 rounded px-1.5 py-0.5 font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0D6E5F]"
-                                    >
-                                      <option value={10}>10 por pág.</option>
-                                      <option value={20}>20 por pág.</option>
-                                      <option value={50}>50 por pág.</option>
-                                    </select>
-                                  </div>
-                                </div>
-
-                                {totalCVPages > 1 && (
-                                  <div className="flex items-center gap-1.5">
-                                    {/* Primera Página */}
-                                    <button
-                                      type="button"
-                                      onClick={() => setCorbatinVerdePage(1)}
-                                      disabled={safeCVPage <= 1}
-                                      className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors cursor-pointer shadow-2xs"
-                                      title="Primera página"
-                                    >
-                                      <IconChevronsLeft className="w-3.5 h-3.5" />
-                                    </button>
-
-                                    {/* Anterior */}
-                                    <button
-                                      type="button"
-                                      onClick={() => setCorbatinVerdePage((p) => Math.max(1, p - 1))}
-                                      disabled={safeCVPage <= 1}
-                                      className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
-                                      title="Página anterior"
-                                    >
-                                      <IconChevronLeft className="w-3.5 h-3.5" />
-                                      <span className="hidden sm:inline">Anterior</span>
-                                    </button>
-
-                                    {/* Botones de Números de Página */}
-                                    <div className="flex items-center gap-1">
-                                      {Array.from({ length: totalCVPages }, (_, i) => i + 1).map((pageNum) => {
-                                        if (
-                                          totalCVPages > 7 &&
-                                          pageNum !== 1 &&
-                                          pageNum !== totalCVPages &&
-                                          Math.abs(pageNum - safeCVPage) > 1
-                                        ) {
-                                          if (pageNum === 2 || pageNum === totalCVPages - 1) {
-                                            return <span key={pageNum} className="px-1 text-slate-400">...</span>;
-                                          }
-                                          return null;
-                                        }
-
-                                        const isActive = pageNum === safeCVPage;
-                                        return (
-                                          <button
-                                            key={pageNum}
-                                            type="button"
-                                            onClick={() => setCorbatinVerdePage(pageNum)}
-                                            className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${isActive
-                                              ? "bg-[#0D6E5F] text-white shadow-xs"
-                                              : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-100"
-                                              }`}
-                                          >
-                                            {pageNum}
-                                          </button>
-                                        );
-                                      })}
+                              {/* Footer de Paginación Robusto (10 registros por página) */}
+                              {
+                                filteredTableCorbatines.length > 0 && (
+                                  <div className="px-5 py-3.5 border-t bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600" style={{ borderColor: "var(--color-border)" }}>
+                                    <div className="flex items-center gap-3">
+                                      <div>
+                                        Mostrando <strong className="text-slate-800">{cvStartIndex + 1}</strong> – <strong className="text-slate-800">{Math.min(cvStartIndex + cvPageSize, filteredTableCorbatines.length)}</strong> de <strong className="text-slate-800">{filteredTableCorbatines.length}</strong> {filteredTableCorbatines.length === 1 ? "corbatín" : "corbatines"}
+                                      </div>
+                                      <div className="hidden md:flex items-center gap-1 text-[11px] text-slate-500">
+                                        <span>•</span>
+                                        <label htmlFor="corbatines-page-size-select" className="text-slate-500">Ver:</label>
+                                        <select
+                                          id="corbatines-page-size-select"
+                                          value={cvPageSize}
+                                          onChange={(e) => {
+                                            setCorbatinVerdePageSize(Number(e.target.value));
+                                            setCorbatinVerdePage(1);
+                                          }}
+                                          className="bg-white border border-slate-300 rounded px-1.5 py-0.5 font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0D6E5F]"
+                                        >
+                                          <option value={10}>10 por pág.</option>
+                                          <option value={20}>20 por pág.</option>
+                                          <option value={50}>50 por pág.</option>
+                                        </select>
+                                      </div>
                                     </div>
 
-                                    {/* Siguiente */}
-                                    <button
-                                      type="button"
-                                      onClick={() => setCorbatinVerdePage((p) => Math.min(totalCVPages, p + 1))}
-                                      disabled={safeCVPage >= totalCVPages}
-                                      className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
-                                      title="Página siguiente"
-                                    >
-                                      <span className="hidden sm:inline">Siguiente</span>
-                                      <IconChevronRight className="w-3.5 h-3.5" />
-                                    </button>
+                                    {totalCVPages > 1 && (
+                                      <div className="flex items-center gap-1.5">
+                                        {/* Primera Página */}
+                                        <button
+                                          type="button"
+                                          onClick={() => setCorbatinVerdePage(1)}
+                                          disabled={safeCVPage <= 1}
+                                          className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors cursor-pointer shadow-2xs"
+                                          title="Primera página"
+                                        >
+                                          <IconChevronsLeft className="w-3.5 h-3.5" />
+                                        </button>
 
-                                    {/* Última Página */}
-                                    <button
-                                      type="button"
-                                      onClick={() => setCorbatinVerdePage(totalCVPages)}
-                                      disabled={safeCVPage >= totalCVPages}
-                                      className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors cursor-pointer shadow-2xs"
-                                      title="Última página"
-                                    >
-                                      <IconChevronsRight className="w-3.5 h-3.5" />
-                                    </button>
+                                        {/* Anterior */}
+                                        <button
+                                          type="button"
+                                          onClick={() => setCorbatinVerdePage((p) => Math.max(1, p - 1))}
+                                          disabled={safeCVPage <= 1}
+                                          className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
+                                          title="Página anterior"
+                                        >
+                                          <IconChevronLeft className="w-3.5 h-3.5" />
+                                          <span className="hidden sm:inline">Anterior</span>
+                                        </button>
 
-                                    <span className="text-[11px] text-slate-400 font-mono pl-1 hidden lg:inline">
-                                      Pág. {safeCVPage} / {totalCVPages}
-                                    </span>
+                                        {/* Botones de Números de Página */}
+                                        <div className="flex items-center gap-1">
+                                          {Array.from({ length: totalCVPages }, (_, i) => i + 1).map((pageNum) => {
+                                            if (
+                                              totalCVPages > 7 &&
+                                              pageNum !== 1 &&
+                                              pageNum !== totalCVPages &&
+                                              Math.abs(pageNum - safeCVPage) > 1
+                                            ) {
+                                              if (pageNum === 2 || pageNum === totalCVPages - 1) {
+                                                return <span key={pageNum} className="px-1 text-slate-400">...</span>;
+                                              }
+                                              return null;
+                                            }
+
+                                            const isActive = pageNum === safeCVPage;
+                                            return (
+                                              <button
+                                                key={pageNum}
+                                                type="button"
+                                                onClick={() => setCorbatinVerdePage(pageNum)}
+                                                className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${isActive
+                                                  ? "bg-[#0D6E5F] text-white shadow-xs"
+                                                  : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-100"
+                                                  }`}
+                                              >
+                                                {pageNum}
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+
+                                        {/* Siguiente */}
+                                        <button
+                                          type="button"
+                                          onClick={() => setCorbatinVerdePage((p) => Math.min(totalCVPages, p + 1))}
+                                          disabled={safeCVPage >= totalCVPages}
+                                          className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
+                                          title="Página siguiente"
+                                        >
+                                          <span className="hidden sm:inline">Siguiente</span>
+                                          <IconChevronRight className="w-3.5 h-3.5" />
+                                        </button>
+
+                                        {/* Última Página */}
+                                        <button
+                                          type="button"
+                                          onClick={() => setCorbatinVerdePage(totalCVPages)}
+                                          disabled={safeCVPage >= totalCVPages}
+                                          className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors cursor-pointer shadow-2xs"
+                                          title="Última página"
+                                        >
+                                          <IconChevronsRight className="w-3.5 h-3.5" />
+                                        </button>
+
+                                        <span className="text-[11px] text-slate-400 font-mono pl-1 hidden lg:inline">
+                                          Pág. {safeCVPage} / {totalCVPages}
+                                        </span>
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                              </div>
-                            )
-                          }
+                                )
+                              }
                             </div >
                           );
                         })()}
-                </>
-              );
+                      </>
+                    );
                   })()}
-            </div>
+                </div>
               )}
-          </div>
+            </div>
           </main>
         )}
 
-      {/* CONTRATISTA */}
-      {currentUser.role === "contratista" && (
-        <main>
-          {portalScreen === "reglamento" && (
-            <div className="min-h-[85vh]">
-              <PageHero img={IMG_GATE} title="Reglamento de Colaboradores Externos" subtitle="Debes leer el reglamento completo y firmar digitalmente para desbloquear los módulos de alta y corbatines" />
-              <div className="max-w-3xl mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-6">
-                <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
-                  <div className="px-4 sm:px-5 py-3 sm:py-4 border-b bg-slate-50 flex items-center justify-between gap-2" style={{ borderColor: "var(--color-border)" }}>
-                    <span className="text-xs sm:text-sm font-bold text-slate-800">Documento Oficial HOA</span>
-                    <span className="text-[11px] sm:text-xs px-2.5 py-0.5 sm:py-1 rounded-full border text-emerald-700 bg-emerald-50 border-emerald-200 font-semibold shrink-0">
-                      Requisito Obligatorio
-                    </span>
+        {/* CONTRATISTA */}
+        {currentUser.role === "contratista" && (
+          <main>
+            {portalScreen === "reglamento" && (
+              <div className="min-h-[85vh]">
+                <PageHero img={IMG_GATE} title="Reglamento de Colaboradores Externos" subtitle="Debes leer el reglamento completo y firmar digitalmente para desbloquear los módulos de alta y corbatines" />
+                <div className="max-w-3xl mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-6">
+                  <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
+                    <div className="px-4 sm:px-5 py-3 sm:py-4 border-b bg-slate-50 flex items-center justify-between gap-2" style={{ borderColor: "var(--color-border)" }}>
+                      <span className="text-xs sm:text-sm font-bold text-slate-800">Documento Oficial HOA</span>
+                      <span className="text-[11px] sm:text-xs px-2.5 py-0.5 sm:py-1 rounded-full border text-emerald-700 bg-emerald-50 border-emerald-200 font-semibold shrink-0">
+                        Requisito Obligatorio
+                      </span>
+                    </div>
+                    <pre className="text-xs sm:text-sm leading-6 sm:leading-7 whitespace-pre-wrap px-4 sm:px-6 py-4 sm:py-5 text-slate-700 max-h-72 sm:max-h-96 overflow-y-auto font-sans">
+                      {reglamentoTexto}
+                    </pre>
                   </div>
-                  <pre className="text-xs sm:text-sm leading-6 sm:leading-7 whitespace-pre-wrap px-4 sm:px-6 py-4 sm:py-5 text-slate-700 max-h-72 sm:max-h-96 overflow-y-auto font-sans">
-                    {reglamentoTexto}
-                  </pre>
-                </div>
 
-                <div className="rounded-2xl border p-4 sm:p-6 space-y-4 bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
-                  <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-800">Firma Digital del Representante</h2>
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={contratistaAceptoTerminos}
-                      onChange={(e) => setContratistaAceptoTerminos(e.target.checked)}
-                      className="mt-1 w-4 h-4 text-emerald-600 rounded cursor-pointer shrink-0"
-                    />
-                    <span className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                      He leído y acepto en su totalidad el Reglamento de Colaboradores Externos de Las Palomas Rocky Point HOA, comprometiéndome al estricto cumplimiento de sus cláusulas y medidas disciplinarias.
-                    </span>
-                  </label>
-                  <div>
-                    <label className="block text-[11px] sm:text-xs font-semibold mb-1.5 uppercase tracking-wider text-slate-500">
-                      Nombre completo del representante legal o titular
+                  <div className="rounded-2xl border p-4 sm:p-6 space-y-4 bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
+                    <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-800">Firma Digital del Representante</h2>
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={contratistaAceptoTerminos}
+                        onChange={(e) => setContratistaAceptoTerminos(e.target.checked)}
+                        className="mt-1 w-4 h-4 text-emerald-600 rounded cursor-pointer shrink-0"
+                      />
+                      <span className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                        He leído y acepto en su totalidad el Reglamento de Colaboradores Externos de Las Palomas Rocky Point HOA, comprometiéndome al estricto cumplimiento de sus cláusulas y medidas disciplinarias.
+                      </span>
                     </label>
-                    <input
-                      type="text"
-                      value={contratistaFirmaNombre || currentUser?.nombre || ""}
-                      onChange={(e) => setContratistaFirmaNombre(e.target.value)}
-                      placeholder="Ej. Ing. Roberto Garza Leal"
-                      className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 italic bg-white"
-                    />
-                  </div>
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
-                    <span className="text-xs text-slate-500 text-center sm:text-left">
-                      {!contratistaAceptoTerminos ? "Marca la casilla de aceptación para habilitar la firma" : "Listo para registrar tu firma en la base de datos"}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={isSubmittingReglamento || !contratistaAceptoTerminos}
-                      onClick={async () => {
-                        if (isSubmittingReglamentoRef.current) return;
-                        if (!contratistaAceptoTerminos) {
-                          showToast("Debes marcar la casilla de aceptación para continuar.", "warning", "Requisito");
-                          return;
-                        }
-                        isSubmittingReglamentoRef.current = true;
-                        setIsSubmittingReglamento(true);
-                        try {
-                          const finalFirmaNombre = (contratistaFirmaNombre || currentUser?.nombre || "Representante Acreditado").trim();
-                          const currentEmp = empresas.find(e => e.nombre === currentUser?.empresaNombre) || empresas[0];
-                          try {
-                            await api.aceptarReglamento({
-                              id_empresa: currentEmp?.id || 1,
-                              id_usuario: currentUser?.id || 1,
-                              firma_nombre: finalFirmaNombre
-                            });
-                          } catch (err) {
-                            console.warn("Error guardando aceptación de reglamento en BD:", err);
-                          }
-                          if (currentUser) {
-                            localStorage.setItem("hoa_accepted_reglamento_" + currentUser.id, "true");
-                            setUsers(users.map(u => u.id === currentUser.id ? { ...u, hasAcceptedReglamento: true } : u));
-                            const updatedUser = { ...currentUser, hasAcceptedReglamento: true };
-                            try {
-                              sessionStorage.setItem("hoa_session_user", JSON.stringify(updatedUser));
-                            } catch { }
-                            setCurrentUser(updatedUser);
-                          }
-                          setPortalScreen("dashboard");
-                          showToast("Reglamento aceptado y firmado digitalmente con éxito.", "success", "Firma Registrada");
-                        } finally {
-                          isSubmittingReglamentoRef.current = false;
-                          setIsSubmittingReglamento(false);
-                        }
-                      }}
-                      className={`w-full sm:w-auto justify-center px-6 py-3 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white transition-all hover:brightness-110 cursor-pointer flex items-center gap-2 ${(isSubmittingReglamento || !contratistaAceptoTerminos) ? "opacity-60 cursor-not-allowed" : ""
-                        }`}
-                      style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
-                    >
-                      {isSubmittingReglamento ? (
-                        <>
-                          <IconSpinner className="w-4 h-4" />
-                          <span>Firmando Reglamento...</span>
-                        </>
-                      ) : (
-                        <span>Aceptar y Firmar Digitalmente →</span>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {portalScreen === "dashboard" && (
-            <div>
-              <PageHero
-                img={IMG_COAST}
-                title={`Panel de Contratista — ${currentUser.empresaNombre}`}
-                subtitle="Administración de flotilla vehicular, plantilla de trabajadores acreditados y control de accesos"
-              />
-              <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 sm:space-y-8 min-h-[calc(100vh-16rem)]">
-                {/* KPI Statistics */}
-                <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                  {[
-                    { label: "Total Flotilla", value: `${vehicles.filter(v => v.empresaNombre === currentUser.empresaNombre).length} unidades`, color: "var(--color-primary)", bg: "var(--color-primary-light)", icon: <IconCar className="w-5 h-5 text-[#0D6E5F]" /> },
-                    { label: "Vehículos Habilitados", value: `${vehicles.filter(v => v.empresaNombre === currentUser.empresaNombre && v.status === "Habilitado").length} autorizados`, color: "var(--color-success)", bg: "var(--color-success-light)", icon: <IconCheckCircle className="w-5 h-5 text-emerald-600" /> },
-                    { label: "Plantilla Personal", value: `${trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre).length} trabajadores`, color: "#1e40af", bg: "#dbeafe", icon: <IconUsers className="w-5 h-5 text-blue-700" /> },
-                    { label: "Personal Autorizado", value: `${trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre && t.activo).length} activos`, color: "var(--color-success)", bg: "var(--color-success-light)", icon: <IconUserCheck className="w-5 h-5 text-emerald-600" /> },
-                  ].map((s) => (
-                    <div key={s.label} className="rounded-2xl border p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4 bg-white shadow-xs" style={{ borderColor: "var(--color-border)" }}>
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: s.bg }}>
-                        {s.icon}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-lg sm:text-2xl font-bold truncate" style={{ color: s.color, fontFamily: "var(--font-display)" }}>{s.value}</div>
-                        <div className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">{s.label}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Resumen de Trabajadores Widget */}
-                <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b bg-slate-50 gap-3" style={{ borderColor: "var(--color-border)" }}>
                     <div>
-                      <h2 className="font-bold text-sm sm:text-base text-slate-800">Plantilla de Trabajadores y Colaboradores</h2>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleAbrirCrearTrabajador}
-                        className="w-full sm:w-auto justify-center text-xs px-3.5 py-2.5 sm:py-2 rounded-xl font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
-                        style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
-                      >
-                        <IconUserPlus className="w-3.5 h-3.5" />
-                        <span>Agregar Trabajador</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Vista Desktop / Tablet (Tabla) */}
-                  <div className="hidden md:block overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
-                          {["Fotografía", "Nombre Completo", "Teléfono Celular", "Estatus Acceso", "Fecha de Registro"].map((h) => (
-                            <th key={h} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {(() => {
-                          const empTrabajadores = trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre);
-                          if (empTrabajadores.length === 0) {
-                            return (
-                              <tr>
-                                <td colSpan={5} className="py-8 text-center text-slate-400">
-                                  <IconUsers className="w-8 h-8 mx-auto mb-1 opacity-30" />
-                                  <span>No hay trabajadores registrados para {currentUser.empresaNombre}.</span>
-                                </td>
-                              </tr>
-                            );
-                          }
-                          return empTrabajadores.slice(0, 4).map((t) => (
-                            <tr key={t.id_trabajador} className="hover:bg-slate-50 transition-colors">
-                              <td className="px-5 py-3">
-                                <div
-                                  onClick={() => setSelectedFotoTrabajadorPreview(t)}
-                                  className="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform bg-slate-100 flex items-center justify-center shrink-0"
-                                >
-                                  {t.foto_url ? (
-                                    <img src={t.foto_url} alt={`${t.nombre} ${t.apellidos}`} className="w-full h-full object-cover" />
-                                  ) : (
-                                    <IconUsers className="w-5 h-5 text-slate-400" />
-                                  )}
-                                </div>
-                              </td>
-                              <td className="px-5 py-3 font-medium text-slate-900">
-                                <div className="font-bold">{t.nombre} {t.apellidos}</div>
-                                <div className="text-[11px] font-mono text-slate-400">ID: #{t.id_trabajador}</div>
-                              </td>
-                              <td className="px-5 py-3 font-mono text-xs text-slate-600">
-                                <CopyableInlineText text={t.telefono} label="Teléfono" onCopyToast={showToast} />
-                              </td>
-                              <td className="px-5 py-3">
-                                {t.activo ? (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                    Autorizado
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                                    Inactivo
-                                  </span>
-                                )}
-                              </td>
-                              <td className="px-5 py-3 text-xs font-mono text-slate-500">
-                                {formatFechaLegible(t.created_at, false)}
-                              </td>
-                            </tr>
-                          ));
-                        })()}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Vista Móvil (Tarjetas Optimizadas) */}
-                  <div className="block md:hidden divide-y divide-slate-100">
-                    {(() => {
-                      const empTrabajadores = trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre);
-                      if (empTrabajadores.length === 0) {
-                        return (
-                          <div className="p-6 text-center text-slate-400">
-                            <IconUsers className="w-8 h-8 mx-auto mb-1 opacity-30" />
-                            <span className="text-xs">No hay trabajadores registrados para {currentUser.empresaNombre}.</span>
-                          </div>
-                        );
-                      }
-                      return empTrabajadores.slice(0, 4).map((t) => (
-                        <div key={t.id_trabajador} className="p-3.5 flex items-start gap-3 hover:bg-slate-50/70 transition-colors">
-                          <div
-                            onClick={() => setSelectedFotoTrabajadorPreview(t)}
-                            className="w-11 h-11 rounded-xl overflow-hidden border border-slate-200 shadow-2xs cursor-pointer shrink-0 bg-slate-100 flex items-center justify-center active:scale-95"
-                          >
-                            {t.foto_url ? (
-                              <img src={t.foto_url} alt={`${t.nombre} ${t.apellidos}`} className="w-full h-full object-cover" />
-                            ) : (
-                              <IconUsers className="w-5 h-5 text-slate-400" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-1.5">
-                              <div className="min-w-0">
-                                <div className="font-bold text-slate-900 text-xs sm:text-sm truncate">{t.nombre} {t.apellidos}</div>
-                                <div className="text-[10px] font-mono text-slate-400">ID: #{t.id_trabajador}</div>
-                              </div>
-                              {t.activo ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                  Autorizado
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200 shrink-0">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                                  Inactivo
-                                </span>
-                              )}
-                            </div>
-                            <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
-                              <span className="font-mono text-[11px]">
-                                <CopyableInlineText text={t.telefono} label="Teléfono" onCopyToast={showToast} />
-                              </span>
-                              <span className="text-[10px] text-slate-400 font-mono">
-                                {formatFechaLegible(t.created_at, false)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ));
-                    })()}
-                  </div>
-                </div>
-
-                {/* Flotilla Vehicular Widget */}
-                <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b bg-slate-50 gap-2.5" style={{ borderColor: "var(--color-border)" }}>
-                    <h2 className="font-bold text-sm sm:text-base text-slate-800">Unidades Vehiculares de {currentUser.empresaNombre}</h2>
-                    <button onClick={() => setPortalScreen("alta")} className="w-full sm:w-auto justify-center text-xs px-4 py-2.5 sm:py-2 rounded-xl font-semibold text-white transition-all hover:brightness-110 cursor-pointer active:scale-95" style={{ background: "var(--color-primary)" }}>
-                      Agregar Vehículo
-                    </button>
-                  </div>
-
-                  {/* Vista Desktop / Tablet (Tabla) */}
-                  <div className="hidden md:block overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
-                          {["Fotografía", "Vehículo", "Placas", "Color", "Teléfono", "Corbatín", "Estatus"].map((h) => (
-                            <th key={h} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {vehicles.filter(v => v.empresaNombre === currentUser.empresaNombre).map((v) => (
-                          <tr key={v.id} className="hover:bg-slate-50 transition-colors">
-                            <td className="px-5 py-3">
-                              <div
-                                onClick={() => setSelectedFotoVehiculoPreview(v)}
-                                className="w-14 h-10 rounded-lg overflow-hidden border border-slate-200 shadow-2xs cursor-pointer hover:border-[#0D6E5F] hover:scale-105 transition-all relative group bg-slate-100 flex items-center justify-center shrink-0"
-                                title="Clic para ver fotografía ampliada"
-                              >
-                                {v.foto ? (
-                                  <img
-                                    src={normalizeFotoUrl(v.foto)}
-                                    alt={`${v.marca} ${v.modelo}`}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <IconCar className="w-5 h-5 text-slate-400" />
-                                )}
-                                <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                                  <IconEye className="w-3.5 h-3.5" />
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-5 py-3 font-medium text-slate-900">{v.marca} {v.modelo} <span className="text-slate-400 font-normal">({v.anio})</span></td>
-                            <td className="px-5 py-3 font-mono font-bold text-slate-800">{v.placas}</td>
-                            <td className="px-5 py-3 text-slate-500">{v.color}</td>
-                            <td className="px-5 py-3 text-slate-500 font-mono text-xs">
-                              <CopyableInlineText text={v.telefono} label="Teléfono" onCopyToast={showToast} />
-                            </td>
-                            <td className="px-5 py-3 font-mono font-bold" style={{ color: "var(--color-primary)" }}>#{v.corbatinNum}</td>
-                            <td className="px-5 py-3">
-                              {v.status === "Habilitado" ? (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 shadow-sm">
-                                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                  <span>Habilitado</span>
-                                </span>
-                              ) : v.status === "Suspendido" ? (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-300 shadow-sm">
-                                  <span className="w-2 h-2 rounded-full bg-red-500" />
-                                  <span>Suspendido</span>
-                                </span>
-                              ) : v.status === "Restringido" ? (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-300 shadow-sm">
-                                  <span className="w-2 h-2 rounded-full bg-rose-500" />
-                                  <span>Restringido</span>
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-300 shadow-sm">
-                                  <span className="w-2 h-2 rounded-full bg-slate-400" />
-                                  <span>Deshabilitado</span>
-                                </span>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Vista Móvil (Tarjetas de Vehículos) */}
-                  <div className="block md:hidden divide-y divide-slate-100">
-                    {vehicles.filter(v => v.empresaNombre === currentUser.empresaNombre).map((v) => (
-                      <div key={v.id} className="p-3.5 flex items-start gap-3 hover:bg-slate-50/70 transition-colors">
-                        <div
-                          onClick={() => setSelectedFotoVehiculoPreview(v)}
-                          className="w-16 h-12 rounded-xl overflow-hidden border border-slate-200 shadow-2xs cursor-pointer shrink-0 bg-slate-100 flex items-center justify-center relative group active:scale-95"
-                        >
-                          {v.foto ? (
-                            <img src={normalizeFotoUrl(v.foto)} alt={`${v.marca} ${v.modelo}`} className="w-full h-full object-cover" />
-                          ) : (
-                            <IconCar className="w-6 h-6 text-slate-400" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-1.5">
-                            <div className="min-w-0">
-                              <div className="font-bold text-slate-900 text-xs sm:text-sm truncate">{v.marca} {v.modelo} <span className="text-slate-400 font-normal text-[11px]">({v.anio})</span></div>
-                              <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="font-mono font-bold text-[11px] bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded border border-slate-200">
-                                  {v.placas}
-                                </span>
-                                <span className="text-[11px] text-slate-400 truncate">• {v.color}</span>
-                              </div>
-                            </div>
-                            {v.status === "Habilitado" ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 shrink-0">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                Habilitado
-                              </span>
-                            ) : v.status === "Suspendido" ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-300 shrink-0">
-                                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                                Suspendido
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-300 shrink-0">
-                                {v.status}
-                              </span>
-                            )}
-                          </div>
-                          <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
-                            <span className="font-mono font-bold text-xs text-[#0D6E5F]">
-                              Corbatín #{v.corbatinNum}
-                            </span>
-                            <span className="font-mono text-[11px]">
-                              <CopyableInlineText text={v.telefono} label="Tel" onCopyToast={showToast} />
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {portalScreen === "alta" && (
-            <div>
-              <PageHero img={IMG_GATE} title="Registro de Unidades Vehiculares" subtitle="Registra los vehículos autorizados de tu empresa con fotografía y datos oficiales" />
-              <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
-                <div className="rounded-2xl border p-4 sm:p-7 bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
-                  <h2 className="font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider text-slate-800">
-                    Datos del Nuevo Vehículo
-                  </h2>
-
-                  {(() => {
-                    const empUser = empresas.find(e => e.nombre === currentUser?.empresaNombre) || empresas[0];
-                    const empVehiculosList = vehicles.filter(v => v.empresaNombre === currentUser?.empresaNombre || v.empresaId === empUser?.id);
-                    const rInicio = empUser?.corbatin_rango_inicio;
-                    const rFin = empUser?.corbatin_rango_fin;
-                    const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
-                    const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
-                    const cuposOcupados = empVehiculosList.length;
-                    const isQuotaFull = hasRange && totalCupos !== null && cuposOcupados >= totalCupos;
-
-                    return (
-                      <div className="mb-4 sm:mb-5 space-y-3">
-                        {hasRange ? (
-                          <div className={`p-3.5 sm:p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${isQuotaFull
-                            ? "bg-amber-50/90 border-amber-300 text-amber-900"
-                            : "bg-teal-50/90 border-teal-300 text-teal-900"
-                            }`}>
-                            <div className="space-y-0.5">
-                              <div className="text-xs font-bold flex items-center gap-1.5 uppercase tracking-wider">
-                                <span>Rango de Corbatines Asignado</span>
-                              </div>
-                              <p className="text-xs">
-                                Números autorizados: <strong>#{rInicio}</strong> al <strong>#{rFin}</strong>. El sistema asignará el siguiente número disponible automáticamente.
-                              </p>
-                            </div>
-                            <div className="text-left sm:text-right shrink-0">
-                              <div className={`text-base font-black font-mono ${isQuotaFull ? "text-amber-700" : "text-teal-700"}`}>
-                                {cuposOcupados} / {totalCupos} cupos
-                              </div>
-                              <div className="text-[10px] font-semibold opacity-80">
-                                {isQuotaFull ? "Límite Alcanzado" : `${(totalCupos ?? 0) - cuposOcupados} disponibles`}
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 text-xs">
-                            <strong>Nota:</strong> Tu empresa aún no tiene un rango delimitado de corbatines por administración. El sistema asignará un número correlativo libre.
-                          </div>
-                        )}
-
-                        {isQuotaFull && (
-                          <div className="p-3.5 sm:p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2.5">
-                            <IconAlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
-                            <span>
-                              Has alcanzado el límite máximo de corbatines autorizados ({totalCupos} unidades) asignados a tu empresa. Si requieres registrar más unidades, solicita una ampliación de rango a la administración.
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-
-                  <form
-                    onSubmit={handleGuardarNuevoVehiculo}
-                    className="space-y-4 sm:space-y-5"
-                  >
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
-                      <div>
-                        <label className="block text-xs font-semibold mb-1 text-slate-600">Marca *</label>
-                        <input name="marca" required placeholder="Toyota, Ford, Nissan" className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold mb-1 text-slate-600">Modelo *</label>
-                        <input name="modelo" required placeholder="Hilux, Transit, NP300" className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold mb-1 text-slate-600">Año *</label>
-                        <input name="año" required placeholder="2023" className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold mb-1 text-slate-600">Placas *</label>
-                        <input name="placas" required placeholder="MTY-0000-A" className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-mono font-bold" />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <label className="block text-xs font-semibold mb-1 text-slate-600">Color *</label>
-                        <input name="color" required placeholder="Blanco, Gris, Negro" className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200" />
-                      </div>
-                    </div>
-
-                    {/* Fotografía Obligatoria del Vehículo */}
-                    <div className="pt-2 border-t border-slate-100 space-y-3">
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                        Fotografía Oficial del Vehículo *
+                      <label className="block text-[11px] sm:text-xs font-semibold mb-1.5 uppercase tracking-wider text-slate-500">
+                        Nombre completo del representante legal o titular
                       </label>
-
-                      {nuevoVehiculoFotoError && (
-                        <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-                          <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                          <span>{nuevoVehiculoFotoError}</span>
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4 items-center">
-                        <div className="md:col-span-2 space-y-2">
-                          <label className="w-full sm:w-fit justify-center px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center gap-2 cursor-pointer shadow-xs active:scale-95">
-                            <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
-                            <span>Subir Foto desde Dispositivo</span>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={handleFotoVehiculoChange}
-                            />
-                          </label>
-                          <p className="text-[11px] text-slate-400">
-                            Formatos permitidos: JPG, PNG, WEBP.
-                          </p>
-                        </div>
-
-                        <div className="h-36 sm:h-32 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
-                          {nuevoVehiculoFoto ? (
-                            <div
-                              onClick={() => setGenericImagePreview({
-                                isOpen: true,
-                                src: nuevoVehiculoFoto,
-                                title: "Fotografía de la Unidad Vehicular",
-                                subtitle: "Vista previa del vehículo a registrar"
-                              })}
-                              className="relative w-full h-full group cursor-pointer"
-                              title="Clic para ampliar imagen"
-                            >
-                              <img src={nuevoVehiculoFoto} alt="Preview" className="w-full h-full object-cover" />
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
-                                <IconEye className="w-4 h-4" />
-                                <span>Ampliar Foto</span>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="text-center p-3 text-slate-400">
-                              <IconCamera className="w-7 h-7 mx-auto mb-1 opacity-50" />
-                              <span className="text-[11px] block">Vista previa de la unidad</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                      <input
+                        type="text"
+                        value={contratistaFirmaNombre || currentUser?.nombre || ""}
+                        onChange={(e) => setContratistaFirmaNombre(e.target.value)}
+                        placeholder="Ej. Ing. Roberto Garza Leal"
+                        className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 italic bg-white"
+                      />
                     </div>
-
-                    <div className="flex justify-end pt-3">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
+                      <span className="text-xs text-slate-500 text-center sm:text-left">
+                        {!contratistaAceptoTerminos ? "Marca la casilla de aceptación para habilitar la firma" : "Listo para registrar tu firma en la base de datos"}
+                      </span>
                       <button
-                        type="submit"
-                        disabled={isSubmittingVehiculo || (() => {
-                          const empUser = empresas.find(e => e.nombre === currentUser?.empresaNombre) || empresas[0];
-                          const empVehiculosList = vehicles.filter(v => v.empresaNombre === currentUser?.empresaNombre || v.empresaId === empUser?.id);
-                          const rInicio = empUser?.corbatin_rango_inicio;
-                          const rFin = empUser?.corbatin_rango_fin;
-                          const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
-                          const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
-                          return Boolean(hasRange && totalCupos !== null && empVehiculosList.length >= totalCupos);
-                        })()}
-                        className={`w-full sm:w-auto justify-center px-7 py-3 rounded-xl text-xs sm:text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingVehiculo || (() => {
-                          const empUser = empresas.find(e => e.nombre === currentUser?.empresaNombre) || empresas[0];
-                          const empVehiculosList = vehicles.filter(v => v.empresaNombre === currentUser?.empresaNombre || v.empresaId === empUser?.id);
-                          const rInicio = empUser?.corbatin_rango_inicio;
-                          const rFin = empUser?.corbatin_rango_fin;
-                          const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
-                          const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
-                          return Boolean(hasRange && totalCupos !== null && empVehiculosList.length >= totalCupos);
-                        })()
-                          ? "opacity-60 cursor-not-allowed pointer-events-none"
-                          : ""
+                        type="button"
+                        disabled={isSubmittingReglamento || !contratistaAceptoTerminos}
+                        onClick={async () => {
+                          if (isSubmittingReglamentoRef.current) return;
+                          if (!contratistaAceptoTerminos) {
+                            showToast("Debes marcar la casilla de aceptación para continuar.", "warning", "Requisito");
+                            return;
+                          }
+                          isSubmittingReglamentoRef.current = true;
+                          setIsSubmittingReglamento(true);
+                          try {
+                            const finalFirmaNombre = (contratistaFirmaNombre || currentUser?.nombre || "Representante Acreditado").trim();
+                            const currentEmp = empresas.find(e => e.nombre === currentUser?.empresaNombre) || empresas[0];
+                            try {
+                              await api.aceptarReglamento({
+                                id_empresa: currentEmp?.id || 1,
+                                id_usuario: currentUser?.id || 1,
+                                firma_nombre: finalFirmaNombre
+                              });
+                            } catch (err) {
+                              console.warn("Error guardando aceptación de reglamento en BD:", err);
+                            }
+                            if (currentUser) {
+                              localStorage.setItem("hoa_accepted_reglamento_" + currentUser.id, "true");
+                              setUsers(users.map(u => u.id === currentUser.id ? { ...u, hasAcceptedReglamento: true } : u));
+                              const updatedUser = { ...currentUser, hasAcceptedReglamento: true };
+                              try {
+                                sessionStorage.setItem("hoa_session_user", JSON.stringify(updatedUser));
+                              } catch { }
+                              setCurrentUser(updatedUser);
+                            }
+                            setPortalScreen("dashboard");
+                            showToast("Reglamento aceptado y firmado digitalmente con éxito.", "success", "Firma Registrada");
+                          } finally {
+                            isSubmittingReglamentoRef.current = false;
+                            setIsSubmittingReglamento(false);
+                          }
+                        }}
+                        className={`w-full sm:w-auto justify-center px-6 py-3 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white transition-all hover:brightness-110 cursor-pointer flex items-center gap-2 ${(isSubmittingReglamento || !contratistaAceptoTerminos) ? "opacity-60 cursor-not-allowed" : ""
                           }`}
                         style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                       >
-                        {isSubmittingVehiculo ? (
+                        {isSubmittingReglamento ? (
                           <>
                             <IconSpinner className="w-4 h-4" />
-                            <span>Registrando Unidad...</span>
+                            <span>Firmando Reglamento...</span>
                           </>
                         ) : (
-                          <span>Registrar y Generar Corbatín</span>
+                          <span>Aceptar y Firmar Digitalmente →</span>
                         )}
                       </button>
                     </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* SECCIÓN TRABAJADORES (PERFIL CONTRATISTA - DICCIONARIO DE DATOS) */}
-          {portalScreen === "trabajadores" && (
-            <div>
-              <PageHero
-                img={IMG_GATE}
-                title={`Plantilla de Trabajadores — ${currentUser.empresaNombre}`}
-                subtitle="Acreditación, consulta y control de acceso del personal de la empresa"
-              />
-
-              <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-8 min-h-[calc(100vh-16rem)]">
-                {/* KPI Cards for Trabajadores */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                  <div className="rounded-2xl border p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4 bg-white shadow-xs" style={{ borderColor: "var(--color-border)" }}>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--color-primary-light)" }}>
-                      <IconUsers className="w-5 h-5 text-[#0D6E5F]" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-xl sm:text-2xl font-bold truncate" style={{ color: "var(--color-primary)", fontFamily: "var(--font-display)" }}>
-                        {trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre).length}
-                      </div>
-                      <div className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">Total Colaboradores Registrados</div>
-                    </div>
                   </div>
-
-                  <div className="rounded-2xl border p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4 bg-white shadow-xs" style={{ borderColor: "var(--color-border)" }}>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--color-success-light)" }}>
-                      <IconUserCheck className="w-5 h-5 text-emerald-600" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-xl sm:text-2xl font-bold truncate" style={{ color: "var(--color-success)", fontFamily: "var(--font-display)" }}>
-                        {trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre && t.activo).length}
-                      </div>
-                      <div className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">Autorizados (Acceso Activo)</div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4 bg-white shadow-xs" style={{ borderColor: "var(--color-border)" }}>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--color-danger-light)" }}>
-                      <IconUserX className="w-5 h-5 text-red-600" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-xl sm:text-2xl font-bold truncate" style={{ color: "var(--color-danger)", fontFamily: "var(--font-display)" }}>
-                        {trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre && !t.activo).length}
-                      </div>
-                      <div className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">Inactivos / Sin Acceso</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Filter and Search Bar */}
-                <div className="bg-white p-3.5 sm:p-4 rounded-2xl border shadow-sm flex flex-col md:flex-row gap-3 sm:gap-4 items-stretch md:items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
-                  <div className="relative w-full md:w-80">
-                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-                      <IconSearch className="w-4 h-4" />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Buscar por nombre, apellidos o celular..."
-                      value={trabajadorSearchTerm}
-                      onChange={(e) => setTrabajadorSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200 transition-all text-slate-800"
-                    />
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto justify-end">
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                      <span className="text-xs font-bold uppercase tracking-wider text-slate-500 shrink-0">Estatus:</span>
-                      <select
-                        value={trabajadorStatusFilter}
-                        onChange={(e) => setTrabajadorStatusFilter(e.target.value as any)}
-                        className="w-full sm:w-auto bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 py-2.5 sm:py-2 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-                      >
-                        <option value="todos">Todos los estatus</option>
-                        <option value="activos">Solo Autorizados (Activos)</option>
-                        <option value="inactivos">Solo Inactivos</option>
-                      </select>
-                    </div>
-
-                    <button
-                      onClick={handleAbrirCrearTrabajador}
-                      className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer shadow-md active:scale-95"
-                      style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
-                    >
-                      <IconUserPlus className="w-4 h-4" />
-                      <span>Registrar Trabajador</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Workers Table */}
-                <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
-                  <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b bg-slate-50" style={{ borderColor: "var(--color-border)" }}>
-                    <div>
-                      <h2 className="font-bold text-sm sm:text-base text-slate-800">Colaboradores Registrados</h2>
-                    </div>
-                    <span className="text-xs font-mono font-bold text-slate-500">
-                      {trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre).length} registros
-                    </span>
-                  </div>
-
-                  {/* Vista Desktop / Tablet (Tabla) */}
-                  <div className="hidden md:block overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
-                          {["Fotografía", "Nombre Completo", "Teléfono Celular", "Empresa", "Estatus Acceso", "Fecha de Registro"].map((h) => (
-                            <th key={h} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {(() => {
-                          const empTrabajadores = trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre);
-                          const filtered = empTrabajadores.filter(t => {
-                            const matchesSearch =
-                              t.nombre.toLowerCase().includes(trabajadorSearchTerm.toLowerCase()) ||
-                              t.apellidos.toLowerCase().includes(trabajadorSearchTerm.toLowerCase()) ||
-                              (t.telefono || "").toLowerCase().includes(trabajadorSearchTerm.toLowerCase());
-                            const matchesStatus =
-                              trabajadorStatusFilter === "todos" ||
-                              (trabajadorStatusFilter === "activos" && t.activo) ||
-                              (trabajadorStatusFilter === "inactivos" && !t.activo);
-                            return matchesSearch && matchesStatus;
-                          });
-
-                          if (filtered.length === 0) {
-                            return (
-                              <tr>
-                                <td colSpan={6} className="py-12 text-center text-slate-400">
-                                  <IconUsers className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                                  <div className="font-bold text-slate-700">No se encontraron trabajadores</div>
-                                  <p className="text-xs text-slate-400 mt-1">
-                                    {trabajadorSearchTerm ? "Prueba cambiando el término de búsqueda o filtro." : "Aún no has registrado colaboradores para esta empresa."}
-                                  </p>
-                                  <button
-                                    onClick={handleAbrirCrearTrabajador}
-                                    className="mt-3 px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 cursor-pointer"
-                                  >
-                                    Dar de alta primer trabajador
-                                  </button>
-                                </td>
-                              </tr>
-                            );
-                          }
-
-                          return filtered.map((t) => (
-                            <tr key={t.id_trabajador} className="hover:bg-slate-50 transition-colors">
-                              <td className="px-5 py-3.5">
-                                <div
-                                  onClick={() => setSelectedFotoTrabajadorPreview(t)}
-                                  className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform relative group bg-slate-100 flex items-center justify-center shrink-0"
-                                  title="Clic para ampliar fotografía"
-                                >
-                                  {t.foto_url ? (
-                                    <img src={t.foto_url} alt={`${t.nombre} ${t.apellidos}`} className="w-full h-full object-cover" />
-                                  ) : (
-                                    <IconUsers className="w-6 h-6 text-slate-400" />
-                                  )}
-                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                                    <IconEye className="w-4 h-4" />
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-5 py-3.5">
-                                <div className="font-bold text-slate-900 text-sm">{t.nombre} {t.apellidos}</div>
-                                <div className="text-[11px] font-mono text-slate-400 mt-0.5">ID: #{t.id_trabajador}</div>
-                              </td>
-                              <td className="px-5 py-3.5 font-mono text-xs">
-                                {t.telefono ? (
-                                  <CopyableInlineText
-                                    text={t.telefono}
-                                    label="Teléfono"
-                                    icon={<IconPhone className="w-3.5 h-3.5 text-slate-400" />}
-                                    className="text-slate-700 font-semibold"
-                                    onCopyToast={showToast}
-                                  />
-                                ) : (
-                                  <span className="text-slate-400 italic">Sin registrar</span>
-                                )}
-                              </td>
-                              <td className="px-5 py-3.5 text-xs font-semibold text-[#0D6E5F]">
-                                {t.empresaNombre}
-                              </td>
-                              <td className="px-5 py-3.5">
-                                {t.activo ? (
-                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                                    Activo
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
-                                    <span className="w-2 h-2 rounded-full bg-red-400" />
-                                    Inactivo (Sin Acceso)
-                                  </span>
-                                )}
-                              </td>
-                              <td className="px-5 py-3.5 text-xs text-slate-600 font-mono">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-[10px] uppercase font-bold text-slate-400 font-sans">Alta:</span>
-                                  <span className="text-slate-700">{formatFechaLegible(t.created_at)}</span>
-                                </div>
-                                {t.updated_at && (
-                                  <div className="flex items-center gap-1.5 mt-0.5">
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 font-sans">Modif:</span>
-                                    <span className="text-slate-500">{formatFechaLegible(t.updated_at)}</span>
-                                  </div>
-                                )}
-                              </td>
-                            </tr>
-                          ));
-                        })()}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Vista Móvil (Tarjetas Optimizadas) */}
-                  <div className="block md:hidden divide-y divide-slate-100">
-                    {(() => {
-                      const empTrabajadores = trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre);
-                      const filtered = empTrabajadores.filter(t => {
-                        const matchesSearch =
-                          t.nombre.toLowerCase().includes(trabajadorSearchTerm.toLowerCase()) ||
-                          t.apellidos.toLowerCase().includes(trabajadorSearchTerm.toLowerCase()) ||
-                          (t.telefono || "").toLowerCase().includes(trabajadorSearchTerm.toLowerCase());
-                        const matchesStatus =
-                          trabajadorStatusFilter === "todos" ||
-                          (trabajadorStatusFilter === "activos" && t.activo) ||
-                          (trabajadorStatusFilter === "inactivos" && !t.activo);
-                        return matchesSearch && matchesStatus;
-                      });
-
-                      if (filtered.length === 0) {
-                        return (
-                          <div className="py-8 px-4 text-center text-slate-400">
-                            <IconUsers className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                            <div className="font-bold text-slate-700 text-xs sm:text-sm">No se encontraron trabajadores</div>
-                            <p className="text-[11px] text-slate-400 mt-1">
-                              {trabajadorSearchTerm ? "Prueba cambiando el término de búsqueda o filtro." : "Aún no has registrado colaboradores para esta empresa."}
-                            </p>
-                            <button
-                              onClick={handleAbrirCrearTrabajador}
-                              className="mt-3 w-full sm:w-auto justify-center px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 cursor-pointer active:scale-95"
-                            >
-                              Dar de alta primer trabajador
-                            </button>
-                          </div>
-                        );
-                      }
-
-                      return filtered.map((t) => (
-                        <div key={t.id_trabajador} className="p-3.5 flex items-start gap-3 hover:bg-slate-50/70 transition-colors">
-                          <div
-                            onClick={() => setSelectedFotoTrabajadorPreview(t)}
-                            className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 shadow-2xs cursor-pointer shrink-0 bg-slate-100 flex items-center justify-center active:scale-95"
-                          >
-                            {t.foto_url ? (
-                              <img src={t.foto_url} alt={`${t.nombre} ${t.apellidos}`} className="w-full h-full object-cover" />
-                            ) : (
-                              <IconUsers className="w-6 h-6 text-slate-400" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-1.5">
-                              <div className="min-w-0">
-                                <div className="font-bold text-slate-900 text-xs sm:text-sm truncate">{t.nombre} {t.apellidos}</div>
-                                <div className="text-[10px] font-mono text-slate-400">ID: #{t.id_trabajador}</div>
-                              </div>
-                              {t.activo ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                  Activo
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200 shrink-0">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                                  Inactivo
-                                </span>
-                              )}
-                            </div>
-                            <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
-                              <span className="font-mono text-[11px]">
-                                {t.telefono ? (
-                                  <CopyableInlineText
-                                    text={t.telefono}
-                                    label="Tel"
-                                    icon={<IconPhone className="w-3 h-3 text-slate-400" />}
-                                    className="text-slate-700 font-semibold"
-                                    onCopyToast={showToast}
-                                  />
-                                ) : (
-                                  <span className="text-slate-400 italic text-[11px]">Sin teléfono</span>
-                                )}
-                              </span>
-                              <span className="text-[10px] text-slate-400 font-mono">
-                                {formatFechaLegible(t.created_at, false)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ));
-                    })()}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-
-          {/* SANCIONES & APELACIÓN */}
-          {portalScreen === "sanciones" && (
-            <div>
-              <PageHero img={IMG_AERIAL} title="Historial de Sanciones & Módulo de Apelación" subtitle="Consulta de suspensiones vehiculares, interposición de recursos y resoluciones de HOA" />
-              <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6 min-h-[calc(100vh-16rem)]">
-                {(() => {
-                  const empresaSanciones = currentUser.empresaNombre
-                    ? sanciones.filter(s => s.empresaNombre === currentUser.empresaNombre)
-                    : sanciones;
-
-                  return (
-                    <>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                        <div className="rounded-2xl border p-4 sm:p-5 bg-white shadow-xs" style={{ borderColor: "var(--color-border)" }}>
-                          <div className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Total Sanciones</div>
-                          <div className="text-xl sm:text-2xl font-bold text-slate-800">{empresaSanciones.length} registros</div>
-                        </div>
-                        <div className="rounded-2xl border p-4 sm:p-5 bg-red-50 border-red-200 shadow-xs">
-                          <div className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-red-600 mb-1">Suspensiones Activas</div>
-                          <div className="text-xl sm:text-2xl font-bold text-red-600">
-                            {empresaSanciones.filter(s => s.status === "Activa" || s.status === "Ratificada").length} vehículos
-                          </div>
-                        </div>
-                        <div className="rounded-2xl border p-4 sm:p-5 bg-sky-50 border-sky-200 shadow-xs">
-                          <div className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-sky-700 mb-1">En Trámite de Apelación</div>
-                          <div className="text-xl sm:text-2xl font-bold text-sky-700">
-                            {empresaSanciones.filter(s => s.status === "En Apelación").length} en revisión
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3.5 sm:space-y-4">
-                        {empresaSanciones.length === 0 ? (
-                          <div className="rounded-2xl border p-8 sm:p-12 bg-white shadow-sm text-center space-y-3" style={{ borderColor: "var(--color-border)" }}>
-                            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
-                              <IconCheckCircle className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-sm sm:text-base font-bold text-slate-800">Sin Sanciones Registradas</h3>
-                            <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-                              Tu empresa no cuenta con infracciones ni suspensiones registradas en la base de datos de HOA. Toda tu flotilla y personal se encuentran en regla.
-                            </p>
-                          </div>
-                        ) : (
-                          empresaSanciones.map((s) => (
-                            <div
-                              key={s.id}
-                              className={`rounded-2xl border bg-white shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md ${s.status === "En Apelación"
-                                ? "border-sky-300 ring-1 ring-sky-100"
-                                : s.status === "Ratificada"
-                                  ? "border-amber-300 ring-1 ring-amber-100"
-                                  : s.status === "Aclarada"
-                                    ? "border-emerald-300 ring-1 ring-emerald-100"
-                                    : "border-slate-200"
-                                }`}
-                            >
-                              {/* Cabecera de la Sanción */}
-                              <div
-                                className={`px-4 sm:px-5 py-3 sm:py-3.5 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${s.status === "En Apelación"
-                                  ? "bg-sky-50/70"
-                                  : s.status === "Ratificada"
-                                    ? "bg-amber-50/70"
-                                    : s.status === "Aclarada"
-                                      ? "bg-emerald-50/70"
-                                      : s.status === "Activa"
-                                        ? "bg-red-50/50"
-                                        : "bg-slate-50"
-                                  }`}
-                              >
-                                <div className="flex items-start sm:items-center gap-2.5 sm:gap-3">
-                                  <div
-                                    className={`p-2 rounded-xl text-white shrink-0 mt-0.5 sm:mt-0 ${s.status === "En Apelación"
-                                      ? "bg-sky-600"
-                                      : s.status === "Ratificada"
-                                        ? "bg-amber-600"
-                                        : s.status === "Aclarada"
-                                          ? "bg-emerald-600"
-                                          : s.status === "Activa"
-                                            ? "bg-red-600"
-                                            : "bg-slate-600"
-                                      }`}
-                                  >
-                                    <IconAlertTriangle className="w-4 h-4" />
-                                  </div>
-                                  <div className="min-w-0">
-                                    <h3 className="font-bold text-sm sm:text-base text-slate-900 leading-tight">
-                                      {s.tipo}
-                                    </h3>
-                                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1 text-xs text-slate-500">
-                                      <span className="font-mono font-bold text-slate-700 bg-white/90 px-1.5 py-0.5 rounded border border-slate-200 text-[11px]">
-                                        Folio #{s.id}
-                                      </span>
-                                      <span>•</span>
-                                      <span className="font-mono font-semibold text-slate-700 text-[11px] sm:text-xs">
-                                        Placas: <strong className="text-slate-900">{s.placas}</strong>
-                                      </span>
-                                      <span>•</span>
-                                      <span className="text-[11px] sm:text-xs">Fecha: {s.fecha}</span>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="self-start sm:self-auto shrink-0">
-                                  <StatusBadge status={s.status} />
-                                </div>
-                              </div>
-
-                              {/* Cuerpo Estructurado */}
-                              <div className="p-4 sm:p-6 space-y-3.5 sm:space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-3.5">
-                                  {/* Medida Disciplinaria */}
-                                  <div className="p-3 sm:p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
-                                    <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                                      <IconShield className="w-3.5 h-3.5 text-red-500" />
-                                      <span>Medida Disciplinaria / Estatus</span>
-                                    </div>
-                                    <div className="text-xs sm:text-sm font-bold text-red-700 leading-snug">
-                                      {s.medidaDisciplinaria || "Amonestación / Suspensión de acceso"}
-                                    </div>
-                                  </div>
-
-                                  {/* Motivo de la Infracción */}
-                                  <div className="p-3 sm:p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
-                                    <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                                      <IconFileText className="w-3.5 h-3.5 text-slate-600" />
-                                      <span>Descripción de los Hechos</span>
-                                    </div>
-                                    <div className="text-xs font-medium text-slate-700 leading-relaxed">
-                                      {s.descripcion || "Infracción detectada en instalaciones"}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Sección de Apelación y Dictamen */}
-                                {s.apelacion && (
-                                  <div
-                                    className={`rounded-xl border p-3.5 sm:p-4 space-y-3 ${s.status === "Aclarada"
-                                      ? "bg-emerald-50/50 border-emerald-200"
-                                      : s.status === "Ratificada"
-                                        ? "bg-amber-50/50 border-amber-200"
-                                        : "bg-sky-50/60 border-sky-200"
-                                      }`}
-                                  >
-                                    <div
-                                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-2.5"
-                                      style={{ borderColor: "rgba(0,0,0,0.06)" }}
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        <IconMessageSquare className="w-4 h-4 text-sky-700 shrink-0" />
-                                        <span className="font-bold text-xs uppercase tracking-wide text-slate-800">
-                                          Recurso de Apelación
-                                        </span>
-                                        <span className="text-xs text-slate-500 font-mono">({s.apelacion.fecha})</span>
-                                      </div>
-                                      <div className="flex flex-wrap items-center gap-2">
-                                        <span className="text-xs text-slate-500">
-                                          Firmado por: <strong className="text-slate-700">{s.apelacion.representante}</strong>
-                                        </span>
-                                        <span
-                                          className={`text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full ${s.apelacion.estado === "Aprobada"
-                                            ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                                            : s.apelacion.estado === "Rechazada"
-                                              ? "bg-amber-100 text-amber-800 border border-amber-300"
-                                              : "bg-sky-100 text-sky-800 border border-sky-300"
-                                            }`}
-                                        >
-                                          {s.apelacion.estado === "Aprobada"
-                                            ? "Apelación Procedente"
-                                            : s.apelacion.estado === "Rechazada"
-                                              ? "Apelación Rechazada"
-                                              : "Pendiente de Dictamen"}
-                                        </span>
-                                      </div>
-                                    </div>
-
-                                    <div className="space-y-1">
-                                      <div className="text-[10px] sm:text-[11px] font-semibold uppercase text-slate-500">
-                                        Argumentos / Pruebas del Contratista:
-                                      </div>
-                                      <p className="text-xs text-slate-800 bg-white/90 p-3 rounded-lg border border-slate-200/80 leading-relaxed italic">
-                                        "{s.apelacion.argumentos}"
-                                      </p>
-                                    </div>
-
-                                    {s.apelacion.dictamenSupervisor && (
-                                      <div
-                                        className={`p-3.5 rounded-xl border space-y-1 ${s.status === "Aclarada"
-                                          ? "bg-emerald-100/70 border-emerald-300 text-emerald-950"
-                                          : "bg-amber-100/70 border-amber-300 text-amber-950"
-                                          }`}
-                                      >
-                                        <div className="flex items-center gap-1.5 font-bold text-xs uppercase">
-                                          <IconCheckCircle className="w-3.5 h-3.5 shrink-0" />
-                                          <span>
-                                            Dictamen Oficial de Supervisión HOA{" "}
-                                            {s.apelacion.fechaDictamen ? `(${s.apelacion.fechaDictamen})` : ""}:
-                                          </span>
-                                        </div>
-                                        <p className="text-xs font-semibold leading-relaxed">
-                                          {s.apelacion.dictamenSupervisor}
-                                        </p>
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-
-                                {/* Información de vigencia y botón de apelación */}
-                                {s.status === "Activa" && (
-                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2.5 border-t border-slate-100">
-                                    <div className="text-xs text-slate-500 flex items-start sm:items-center gap-1.5 font-medium leading-relaxed">
-                                      <IconClock className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
-                                      <span>
-                                        {s.fecha_inicio && new Date() < new Date(s.fecha_inicio) ? (
-                                          <>Entra en vigor el: <strong className="text-slate-800 font-mono">{new Date(s.fecha_inicio).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })} a las 12:00 AM</strong>{s.fecha_fin ? <> (Hasta: <strong className="text-slate-800 font-mono">{new Date(s.fecha_fin).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })}</strong>)</> : null}</>
-                                        ) : s.fecha_fin ? (
-                                          <>Suspensión temporal vigente hasta: <strong className="text-slate-800 font-mono">{new Date(s.fecha_fin).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })}</strong></>
-                                        ) : (
-                                          "Sanción administrativa activa"
-                                        )}
-                                      </span>
-                                    </div>
-                                    {!s.apelacion && (
-                                      <button
-                                        onClick={() => setSelectedSancionParaApelar(s)}
-                                        className="w-full sm:w-auto justify-center px-4 py-2.5 sm:py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
-                                      >
-                                        <IconMessageSquare className="w-3.5 h-3.5" />
-                                        <span>Interponer Apelación / Aclaración</span>
-                                      </button>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-            </div>
-          )}
-
-          {/* CONSULTA DE REGLAMENTO Y NORMAS */}
-          {portalScreen === "consulta_reglamento" && (
-            <div>
-              <PageHero
-                img={IMG_GATE}
-                title="Reglamento HOA y Normativas de Operación"
-                subtitle="Consulta permanente de términos, normas de banderín y lineamientos de seguridad de Las Palomas"
-              />
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-16rem)]">
-                <ContratistaReglamentoView
-                  reglamentoTexto={reglamentoTexto}
-                  reglamentoSecciones={reglamentoSecciones}
-                />
-              </div>
-            </div>
-          )}
-        </main>
-      )}
-
-      {/* CASETA */}
-      {(currentUser.role === "caseta" || (currentUser.role as string) === "guardia") && (
-        <main>
-          <div className="mx-auto px-4 sm:px-6 lg:px-8 py-3.5 space-y-3 max-w-7xl w-full">
-            {/* ENCABEZADO SUPERIOR DE COMANDO Y ESTADO */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white px-4 py-2.5 sm:px-5 rounded-2xl border border-slate-200 shadow-2xs">
-              <div>
-                <h1 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
-                  <IconShield className="w-4 h-4 text-emerald-700 shrink-0" />
-                  <span>Control de Caseta & Registro de Accesos</span>
-                </h1>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Validación en tiempo real de permisos, suspensiones disciplinarias HOA y tarjetones
-                </p>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => setShowQRScannerModal(true)}
-                  className="px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
-                  title="Abrir cámara para escanear código QR"
-                >
-                  <IconCamera className="w-3.5 h-3.5 text-emerald-100" />
-                  <span>Escanear Código QR</span>
-                </button>
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono text-slate-600 shrink-0">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span className="font-sans font-semibold text-slate-700 text-[11px]">Oficial:</span>
-                  <span className="font-bold text-slate-900 text-xs">{currentUser.nombre}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* BANNER DE ALERTA DE HORARIOS PARA CASETA (DISEÑO ARMONIOSO HOA) */}
-            {contratistasExcedidos.length > 0 && (
-              <div className="bg-white border-2 border-slate-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
-                <div className="flex items-start gap-2.5 sm:gap-3 w-full sm:w-auto min-w-0">
-                  <div className="p-2 sm:p-2.5 rounded-xl bg-red-600 text-white shrink-0 shadow-xs animate-pulse">
-                    <IconClock className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                      <span className="font-extrabold text-slate-900 text-xs sm:text-sm tracking-tight">
-                        Atención: {contratistasExcedidos.length} contratista{contratistasExcedidos.length > 1 ? "s" : ""} fuera de horario
-                      </span>
-                      <span className="bg-slate-100 text-slate-700 font-mono font-bold text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200">
-                        Límite hoy: {contratistasExcedidos[0]?.horaLimite || "18:00"} hrs
-                      </span>
-                    </div>
-                    <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5 break-words">
-                      {contratistasExcedidos.length === 1 ? (
-                        <span>
-                          <strong>{contratistasExcedidos[0].conductor}</strong> ({contratistasExcedidos[0].empresaNombre}) · {contratistasExcedidos[0].esPernocta ? "Ingresó en fecha anterior sin salida registrada" : `Exceso: +${contratistasExcedidos[0].minutosExcedidos} min`}
-                        </span>
-                      ) : (
-                        <span>
-                          Hay personal o unidades externas que continúan dentro del complejo fuera del horario oficial de trabajo.
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsOvertimeModalExpanded(true);
-                      setSelectedOvertimeContractor(contratistasExcedidos[0]);
-                    }}
-                    className="w-full sm:w-auto px-4 py-2 sm:py-2.5 rounded-xl bg-[#0D6E5F] hover:bg-[#095247] active:scale-95 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <IconClock className="w-4 h-4 shrink-0" />
-                    <span>Ver Ficha de Alerta</span>
-                  </button>
                 </div>
               </div>
             )}
 
-            {casetaTab === "registro" && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch w-full">
-                {/* COLUMNA PRINCIPAL: FORMULARIO */}
-                <div className="lg:col-span-7 xl:col-span-8 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs space-y-3 flex flex-col">
-                  {/* SELECTOR DE MODALIDAD Y ENCABEZADO DEL FORMULARIO */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-100 pb-2.5">
-                    <div>
-                      <h2 className="font-bold text-sm sm:text-base text-slate-900">
-                        {casetaModoAcceso === "vehicular" ? "Formulario de Ingreso Vehicular" : "Formulario de Ingreso Peatonal"}
-                      </h2>
-                      <p className="text-[11px] text-slate-400 mt-0.5">
-                        {casetaModoAcceso === "vehicular"
-                          ? "Captura la unidad, valida corbatín y registra el pase de pluma"
-                          : "Autorización de personal a pie / contratistas con vehículo retenido"}
-                      </p>
+            {portalScreen === "dashboard" && (
+              <div>
+                <PageHero
+                  img={IMG_COAST}
+                  title={`Panel de Contratista — ${currentUser.empresaNombre}`}
+                  subtitle="Administración de flotilla vehicular, plantilla de trabajadores acreditados y control de accesos"
+                />
+                <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 sm:space-y-8 min-h-[calc(100vh-16rem)]">
+                  {/* KPI Statistics */}
+                  <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    {[
+                      { label: "Total Flotilla", value: `${vehicles.filter(v => v.empresaNombre === currentUser.empresaNombre).length} unidades`, color: "var(--color-primary)", bg: "var(--color-primary-light)", icon: <IconCar className="w-5 h-5 text-[#0D6E5F]" /> },
+                      { label: "Vehículos Habilitados", value: `${vehicles.filter(v => v.empresaNombre === currentUser.empresaNombre && v.status === "Habilitado").length} autorizados`, color: "var(--color-success)", bg: "var(--color-success-light)", icon: <IconCheckCircle className="w-5 h-5 text-emerald-600" /> },
+                      { label: "Plantilla Personal", value: `${trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre).length} trabajadores`, color: "#1e40af", bg: "#dbeafe", icon: <IconUsers className="w-5 h-5 text-blue-700" /> },
+                      { label: "Personal Autorizado", value: `${trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre && t.activo).length} activos`, color: "var(--color-success)", bg: "var(--color-success-light)", icon: <IconUserCheck className="w-5 h-5 text-emerald-600" /> },
+                    ].map((s) => (
+                      <div key={s.label} className="rounded-2xl border p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4 bg-white shadow-xs" style={{ borderColor: "var(--color-border)" }}>
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: s.bg }}>
+                          {s.icon}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-lg sm:text-2xl font-bold truncate" style={{ color: s.color, fontFamily: "var(--font-display)" }}>{s.value}</div>
+                          <div className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">{s.label}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Resumen de Trabajadores Widget */}
+                  <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b bg-slate-50 gap-3" style={{ borderColor: "var(--color-border)" }}>
+                      <div>
+                        <h2 className="font-bold text-sm sm:text-base text-slate-800">Plantilla de Trabajadores y Colaboradores</h2>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleAbrirCrearTrabajador}
+                          className="w-full sm:w-auto justify-center text-xs px-3.5 py-2.5 sm:py-2 rounded-xl font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+                          style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
+                        >
+                          <IconUserPlus className="w-3.5 h-3.5" />
+                          <span>Agregar Trabajador</span>
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="flex gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => setCasetaModoAcceso("vehicular")}
-                        className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${casetaModoAcceso === "vehicular"
-                          ? "bg-[#0D6E5F] text-white shadow-xs"
-                          : "text-slate-600 hover:text-slate-900"
-                          }`}
-                      >
-                        <IconCar className="w-3.5 h-3.5" />
-                        <span>Acceso Vehicular</span>
+                    {/* Vista Desktop / Tablet (Tabla) */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
+                            {["Fotografía", "Nombre Completo", "Teléfono Celular", "Estatus Acceso", "Fecha de Registro"].map((h) => (
+                              <th key={h} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {(() => {
+                            const empTrabajadores = trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre);
+                            if (empTrabajadores.length === 0) {
+                              return (
+                                <tr>
+                                  <td colSpan={5} className="py-8 text-center text-slate-400">
+                                    <IconUsers className="w-8 h-8 mx-auto mb-1 opacity-30" />
+                                    <span>No hay trabajadores registrados para {currentUser.empresaNombre}.</span>
+                                  </td>
+                                </tr>
+                              );
+                            }
+                            return empTrabajadores.slice(0, 4).map((t) => (
+                              <tr key={t.id_trabajador} className="hover:bg-slate-50 transition-colors">
+                                <td className="px-5 py-3">
+                                  <div
+                                    onClick={() => setSelectedFotoTrabajadorPreview(t)}
+                                    className="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform bg-slate-100 flex items-center justify-center shrink-0"
+                                  >
+                                    {t.foto_url ? (
+                                      <img src={t.foto_url} alt={`${t.nombre} ${t.apellidos}`} className="w-full h-full object-cover" />
+                                    ) : (
+                                      <IconUsers className="w-5 h-5 text-slate-400" />
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-5 py-3 font-medium text-slate-900">
+                                  <div className="font-bold">{t.nombre} {t.apellidos}</div>
+                                  <div className="text-[11px] font-mono text-slate-400">ID: #{t.id_trabajador}</div>
+                                </td>
+                                <td className="px-5 py-3 font-mono text-xs text-slate-600">
+                                  <CopyableInlineText text={t.telefono} label="Teléfono" onCopyToast={showToast} />
+                                </td>
+                                <td className="px-5 py-3">
+                                  {t.activo ? (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                      Autorizado
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                                      Inactivo
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="px-5 py-3 text-xs font-mono text-slate-500">
+                                  {formatFechaLegible(t.created_at, false)}
+                                </td>
+                              </tr>
+                            ));
+                          })()}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Vista Móvil (Tarjetas Optimizadas) */}
+                    <div className="block md:hidden divide-y divide-slate-100">
+                      {(() => {
+                        const empTrabajadores = trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre);
+                        if (empTrabajadores.length === 0) {
+                          return (
+                            <div className="p-6 text-center text-slate-400">
+                              <IconUsers className="w-8 h-8 mx-auto mb-1 opacity-30" />
+                              <span className="text-xs">No hay trabajadores registrados para {currentUser.empresaNombre}.</span>
+                            </div>
+                          );
+                        }
+                        return empTrabajadores.slice(0, 4).map((t) => (
+                          <div key={t.id_trabajador} className="p-3.5 flex items-start gap-3 hover:bg-slate-50/70 transition-colors">
+                            <div
+                              onClick={() => setSelectedFotoTrabajadorPreview(t)}
+                              className="w-11 h-11 rounded-xl overflow-hidden border border-slate-200 shadow-2xs cursor-pointer shrink-0 bg-slate-100 flex items-center justify-center active:scale-95"
+                            >
+                              {t.foto_url ? (
+                                <img src={t.foto_url} alt={`${t.nombre} ${t.apellidos}`} className="w-full h-full object-cover" />
+                              ) : (
+                                <IconUsers className="w-5 h-5 text-slate-400" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-1.5">
+                                <div className="min-w-0">
+                                  <div className="font-bold text-slate-900 text-xs sm:text-sm truncate">{t.nombre} {t.apellidos}</div>
+                                  <div className="text-[10px] font-mono text-slate-400">ID: #{t.id_trabajador}</div>
+                                </div>
+                                {t.activo ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                    Autorizado
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200 shrink-0">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                                    Inactivo
+                                  </span>
+                                )}
+                              </div>
+                              <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
+                                <span className="font-mono text-[11px]">
+                                  <CopyableInlineText text={t.telefono} label="Teléfono" onCopyToast={showToast} />
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-mono">
+                                  {formatFechaLegible(t.created_at, false)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Flotilla Vehicular Widget */}
+                  <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b bg-slate-50 gap-2.5" style={{ borderColor: "var(--color-border)" }}>
+                      <h2 className="font-bold text-sm sm:text-base text-slate-800">Unidades Vehiculares de {currentUser.empresaNombre}</h2>
+                      <button onClick={() => setPortalScreen("alta")} className="w-full sm:w-auto justify-center text-xs px-4 py-2.5 sm:py-2 rounded-xl font-semibold text-white transition-all hover:brightness-110 cursor-pointer active:scale-95" style={{ background: "var(--color-primary)" }}>
+                        Agregar Vehículo
                       </button>
+                    </div>
+
+                    {/* Vista Desktop / Tablet (Tabla) */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
+                            {["Fotografía", "Vehículo", "Placas", "Color", "Teléfono", "Corbatín", "Estatus"].map((h) => (
+                              <th key={h} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {vehicles.filter(v => v.empresaNombre === currentUser.empresaNombre).map((v) => (
+                            <tr key={v.id} className="hover:bg-slate-50 transition-colors">
+                              <td className="px-5 py-3">
+                                <div
+                                  onClick={() => setSelectedFotoVehiculoPreview(v)}
+                                  className="w-14 h-10 rounded-lg overflow-hidden border border-slate-200 shadow-2xs cursor-pointer hover:border-[#0D6E5F] hover:scale-105 transition-all relative group bg-slate-100 flex items-center justify-center shrink-0"
+                                  title="Clic para ver fotografía ampliada"
+                                >
+                                  {v.foto ? (
+                                    <img
+                                      src={normalizeFotoUrl(v.foto)}
+                                      alt={`${v.marca} ${v.modelo}`}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <IconCar className="w-5 h-5 text-slate-400" />
+                                  )}
+                                  <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                    <IconEye className="w-3.5 h-3.5" />
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-5 py-3 font-medium text-slate-900">{v.marca} {v.modelo} <span className="text-slate-400 font-normal">({v.anio})</span></td>
+                              <td className="px-5 py-3 font-mono font-bold text-slate-800">{v.placas}</td>
+                              <td className="px-5 py-3 text-slate-500">{v.color}</td>
+                              <td className="px-5 py-3 text-slate-500 font-mono text-xs">
+                                <CopyableInlineText text={v.telefono} label="Teléfono" onCopyToast={showToast} />
+                              </td>
+                              <td className="px-5 py-3 font-mono font-bold" style={{ color: "var(--color-primary)" }}>#{v.corbatinNum}</td>
+                              <td className="px-5 py-3">
+                                {v.status === "Habilitado" ? (
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 shadow-sm">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                    <span>Habilitado</span>
+                                  </span>
+                                ) : v.status === "Suspendido" ? (
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-300 shadow-sm">
+                                    <span className="w-2 h-2 rounded-full bg-red-500" />
+                                    <span>Suspendido</span>
+                                  </span>
+                                ) : v.status === "Restringido" ? (
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-300 shadow-sm">
+                                    <span className="w-2 h-2 rounded-full bg-rose-500" />
+                                    <span>Restringido</span>
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-300 shadow-sm">
+                                    <span className="w-2 h-2 rounded-full bg-slate-400" />
+                                    <span>Deshabilitado</span>
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Vista Móvil (Tarjetas de Vehículos) */}
+                    <div className="block md:hidden divide-y divide-slate-100">
+                      {vehicles.filter(v => v.empresaNombre === currentUser.empresaNombre).map((v) => (
+                        <div key={v.id} className="p-3.5 flex items-start gap-3 hover:bg-slate-50/70 transition-colors">
+                          <div
+                            onClick={() => setSelectedFotoVehiculoPreview(v)}
+                            className="w-16 h-12 rounded-xl overflow-hidden border border-slate-200 shadow-2xs cursor-pointer shrink-0 bg-slate-100 flex items-center justify-center relative group active:scale-95"
+                          >
+                            {v.foto ? (
+                              <img src={normalizeFotoUrl(v.foto)} alt={`${v.marca} ${v.modelo}`} className="w-full h-full object-cover" />
+                            ) : (
+                              <IconCar className="w-6 h-6 text-slate-400" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-1.5">
+                              <div className="min-w-0">
+                                <div className="font-bold text-slate-900 text-xs sm:text-sm truncate">{v.marca} {v.modelo} <span className="text-slate-400 font-normal text-[11px]">({v.anio})</span></div>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  <span className="font-mono font-bold text-[11px] bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded border border-slate-200">
+                                    {v.placas}
+                                  </span>
+                                  <span className="text-[11px] text-slate-400 truncate">• {v.color}</span>
+                                </div>
+                              </div>
+                              {v.status === "Habilitado" ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 shrink-0">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                  Habilitado
+                                </span>
+                              ) : v.status === "Suspendido" ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-300 shrink-0">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                  Suspendido
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-300 shrink-0">
+                                  {v.status}
+                                </span>
+                              )}
+                            </div>
+                            <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
+                              <span className="font-mono font-bold text-xs text-[#0D6E5F]">
+                                Corbatín #{v.corbatinNum}
+                              </span>
+                              <span className="font-mono text-[11px]">
+                                <CopyableInlineText text={v.telefono} label="Tel" onCopyToast={showToast} />
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {portalScreen === "alta" && (
+              <div>
+                <PageHero img={IMG_GATE} title="Registro de Unidades Vehiculares" subtitle="Registra los vehículos autorizados de tu empresa con fotografía y datos oficiales" />
+                <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
+                  <div className="rounded-2xl border p-4 sm:p-7 bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
+                    <h2 className="font-bold text-xs sm:text-sm mb-3 sm:mb-4 uppercase tracking-wider text-slate-800">
+                      Datos del Nuevo Vehículo
+                    </h2>
+
+                    {(() => {
+                      const empUser = empresas.find(e => e.nombre === currentUser?.empresaNombre) || empresas[0];
+                      const empVehiculosList = vehicles.filter(v => v.empresaNombre === currentUser?.empresaNombre || v.empresaId === empUser?.id);
+                      const rInicio = empUser?.corbatin_rango_inicio;
+                      const rFin = empUser?.corbatin_rango_fin;
+                      const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
+                      const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
+                      const cuposOcupados = empVehiculosList.length;
+                      const isQuotaFull = hasRange && totalCupos !== null && cuposOcupados >= totalCupos;
+
+                      return (
+                        <div className="mb-4 sm:mb-5 space-y-3">
+                          {hasRange ? (
+                            <div className={`p-3.5 sm:p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${isQuotaFull
+                              ? "bg-amber-50/90 border-amber-300 text-amber-900"
+                              : "bg-teal-50/90 border-teal-300 text-teal-900"
+                              }`}>
+                              <div className="space-y-0.5">
+                                <div className="text-xs font-bold flex items-center gap-1.5 uppercase tracking-wider">
+                                  <span>Rango de Corbatines Asignado</span>
+                                </div>
+                                <p className="text-xs">
+                                  Números autorizados: <strong>#{rInicio}</strong> al <strong>#{rFin}</strong>. El sistema asignará el siguiente número disponible automáticamente.
+                                </p>
+                              </div>
+                              <div className="text-left sm:text-right shrink-0">
+                                <div className={`text-base font-black font-mono ${isQuotaFull ? "text-amber-700" : "text-teal-700"}`}>
+                                  {cuposOcupados} / {totalCupos} cupos
+                                </div>
+                                <div className="text-[10px] font-semibold opacity-80">
+                                  {isQuotaFull ? "Límite Alcanzado" : `${(totalCupos ?? 0) - cuposOcupados} disponibles`}
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 text-xs">
+                              <strong>Nota:</strong> Tu empresa aún no tiene un rango delimitado de corbatines por administración. El sistema asignará un número correlativo libre.
+                            </div>
+                          )}
+
+                          {isQuotaFull && (
+                            <div className="p-3.5 sm:p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2.5">
+                              <IconAlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
+                              <span>
+                                Has alcanzado el límite máximo de corbatines autorizados ({totalCupos} unidades) asignados a tu empresa. Si requieres registrar más unidades, solicita una ampliación de rango a la administración.
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    <form
+                      onSubmit={handleGuardarNuevoVehiculo}
+                      className="space-y-4 sm:space-y-5"
+                    >
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold mb-1 text-slate-600">Marca *</label>
+                          <input name="marca" required placeholder="Toyota, Ford, Nissan" className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold mb-1 text-slate-600">Modelo *</label>
+                          <input name="modelo" required placeholder="Hilux, Transit, NP300" className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold mb-1 text-slate-600">Año *</label>
+                          <input name="año" required placeholder="2023" className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold mb-1 text-slate-600">Placas *</label>
+                          <input name="placas" required placeholder="MTY-0000-A" className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-mono font-bold" />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="block text-xs font-semibold mb-1 text-slate-600">Color *</label>
+                          <input name="color" required placeholder="Blanco, Gris, Negro" className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200" />
+                        </div>
+                      </div>
+
+                      {/* Fotografía Obligatoria del Vehículo */}
+                      <div className="pt-2 border-t border-slate-100 space-y-3">
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                          Fotografía Oficial del Vehículo *
+                        </label>
+
+                        {nuevoVehiculoFotoError && (
+                          <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                            <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                            <span>{nuevoVehiculoFotoError}</span>
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4 items-center">
+                          <div className="md:col-span-2 space-y-2">
+                            <label className="w-full sm:w-fit justify-center px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center gap-2 cursor-pointer shadow-xs active:scale-95">
+                              <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
+                              <span>Subir Foto desde Dispositivo</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleFotoVehiculoChange}
+                              />
+                            </label>
+                            <p className="text-[11px] text-slate-400">
+                              Formatos permitidos: JPG, PNG, WEBP.
+                            </p>
+                          </div>
+
+                          <div className="h-36 sm:h-32 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
+                            {nuevoVehiculoFoto ? (
+                              <div
+                                onClick={() => setGenericImagePreview({
+                                  isOpen: true,
+                                  src: nuevoVehiculoFoto,
+                                  title: "Fotografía de la Unidad Vehicular",
+                                  subtitle: "Vista previa del vehículo a registrar"
+                                })}
+                                className="relative w-full h-full group cursor-pointer"
+                                title="Clic para ampliar imagen"
+                              >
+                                <img src={nuevoVehiculoFoto} alt="Preview" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
+                                  <IconEye className="w-4 h-4" />
+                                  <span>Ampliar Foto</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-center p-3 text-slate-400">
+                                <IconCamera className="w-7 h-7 mx-auto mb-1 opacity-50" />
+                                <span className="text-[11px] block">Vista previa de la unidad</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end pt-3">
+                        <button
+                          type="submit"
+                          disabled={isSubmittingVehiculo || (() => {
+                            const empUser = empresas.find(e => e.nombre === currentUser?.empresaNombre) || empresas[0];
+                            const empVehiculosList = vehicles.filter(v => v.empresaNombre === currentUser?.empresaNombre || v.empresaId === empUser?.id);
+                            const rInicio = empUser?.corbatin_rango_inicio;
+                            const rFin = empUser?.corbatin_rango_fin;
+                            const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
+                            const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
+                            return Boolean(hasRange && totalCupos !== null && empVehiculosList.length >= totalCupos);
+                          })()}
+                          className={`w-full sm:w-auto justify-center px-7 py-3 rounded-xl text-xs sm:text-sm font-bold text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingVehiculo || (() => {
+                            const empUser = empresas.find(e => e.nombre === currentUser?.empresaNombre) || empresas[0];
+                            const empVehiculosList = vehicles.filter(v => v.empresaNombre === currentUser?.empresaNombre || v.empresaId === empUser?.id);
+                            const rInicio = empUser?.corbatin_rango_inicio;
+                            const rFin = empUser?.corbatin_rango_fin;
+                            const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
+                            const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
+                            return Boolean(hasRange && totalCupos !== null && empVehiculosList.length >= totalCupos);
+                          })()
+                            ? "opacity-60 cursor-not-allowed pointer-events-none"
+                            : ""
+                            }`}
+                          style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
+                        >
+                          {isSubmittingVehiculo ? (
+                            <>
+                              <IconSpinner className="w-4 h-4" />
+                              <span>Registrando Unidad...</span>
+                            </>
+                          ) : (
+                            <span>Registrar y Generar Corbatín</span>
+                          )}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SECCIÓN TRABAJADORES (PERFIL CONTRATISTA - DICCIONARIO DE DATOS) */}
+            {portalScreen === "trabajadores" && (
+              <div>
+                <PageHero
+                  img={IMG_GATE}
+                  title={`Plantilla de Trabajadores — ${currentUser.empresaNombre}`}
+                  subtitle="Acreditación, consulta y control de acceso del personal de la empresa"
+                />
+
+                <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-8 min-h-[calc(100vh-16rem)]">
+                  {/* KPI Cards for Trabajadores */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                    <div className="rounded-2xl border p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4 bg-white shadow-xs" style={{ borderColor: "var(--color-border)" }}>
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--color-primary-light)" }}>
+                        <IconUsers className="w-5 h-5 text-[#0D6E5F]" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xl sm:text-2xl font-bold truncate" style={{ color: "var(--color-primary)", fontFamily: "var(--font-display)" }}>
+                          {trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre).length}
+                        </div>
+                        <div className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">Total Colaboradores Registrados</div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4 bg-white shadow-xs" style={{ borderColor: "var(--color-border)" }}>
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--color-success-light)" }}>
+                        <IconUserCheck className="w-5 h-5 text-emerald-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xl sm:text-2xl font-bold truncate" style={{ color: "var(--color-success)", fontFamily: "var(--font-display)" }}>
+                          {trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre && t.activo).length}
+                        </div>
+                        <div className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">Autorizados (Acceso Activo)</div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4 bg-white shadow-xs" style={{ borderColor: "var(--color-border)" }}>
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--color-danger-light)" }}>
+                        <IconUserX className="w-5 h-5 text-red-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xl sm:text-2xl font-bold truncate" style={{ color: "var(--color-danger)", fontFamily: "var(--font-display)" }}>
+                          {trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre && !t.activo).length}
+                        </div>
+                        <div className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">Inactivos / Sin Acceso</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Filter and Search Bar */}
+                  <div className="bg-white p-3.5 sm:p-4 rounded-2xl border shadow-sm flex flex-col md:flex-row gap-3 sm:gap-4 items-stretch md:items-center justify-between" style={{ borderColor: "var(--color-border)" }}>
+                    <div className="relative w-full md:w-80">
+                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                        <IconSearch className="w-4 h-4" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Buscar por nombre, apellidos o celular..."
+                        value={trabajadorSearchTerm}
+                        onChange={(e) => setTrabajadorSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200 transition-all text-slate-800"
+                      />
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto justify-end">
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 shrink-0">Estatus:</span>
+                        <select
+                          value={trabajadorStatusFilter}
+                          onChange={(e) => setTrabajadorStatusFilter(e.target.value as any)}
+                          className="w-full sm:w-auto bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 py-2.5 sm:py-2 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                        >
+                          <option value="todos">Todos los estatus</option>
+                          <option value="activos">Solo Autorizados (Activos)</option>
+                          <option value="inactivos">Solo Inactivos</option>
+                        </select>
+                      </div>
 
                       <button
-                        type="button"
-                        onClick={() => {
-                          setCasetaModoAcceso("peatonal");
-                          setHoraActual();
-                        }}
-                        className={`py-1.5 px-3.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${casetaModoAcceso === "peatonal"
-                          ? "bg-sky-700 text-white shadow-xs"
-                          : "text-slate-600 hover:text-slate-900"
-                          }`}
+                        onClick={handleAbrirCrearTrabajador}
+                        className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer shadow-md active:scale-95"
+                        style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                       >
-                        <IconWalk className="w-3.5 h-3.5" />
-                        <span>Acceso Peatonal</span>
+                        <IconUserPlus className="w-4 h-4" />
+                        <span>Registrar Trabajador</span>
                       </button>
                     </div>
                   </div>
 
-                  {casetaSuccessMsg && (
-                    <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-start sm:items-center gap-2">
-                      <IconCheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5 sm:mt-0" />
-                      <span>Ingreso ({casetaModoAcceso === "vehicular" ? "Vehicular" : "Peatonal a pie"}) autorizado y registrado en la bitácora con éxito.</span>
+                  {/* Workers Table */}
+                  <div className="rounded-2xl border overflow-hidden bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
+                    <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b bg-slate-50" style={{ borderColor: "var(--color-border)" }}>
+                      <div>
+                        <h2 className="font-bold text-sm sm:text-base text-slate-800">Colaboradores Registrados</h2>
+                      </div>
+                      <span className="text-xs font-mono font-bold text-slate-500">
+                        {trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre).length} registros
+                      </span>
                     </div>
-                  )}
 
-                  {/* FORMULARIO DE ACCESO VEHICULAR */}
-                  {casetaModoAcceso === "vehicular" && (
-                    <form onSubmit={handleRegistrarEntrada} className="space-y-3">
-                      {/* 1. AUTOCOMPLETADO Y BÚSQUEDA RÁPIDA */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
-                        {/* CAMPO 1: # CORBATÍN O PLACAS CON DROPDOWN */}
-                        <div className="relative" ref={corbatinDropdownRef}>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
-                            <span>1. # Corbatín o Placas</span>
-                            <span className="text-[11px] text-slate-400 font-normal">Escribe o busca</span>
-                          </label>
-                          <div className="relative">
-                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-sm font-bold font-mono text-emerald-700 pointer-events-none">
-                              #
-                            </span>
-                            <input
-                              type="text"
-                              value={casetaCorbatin}
-                              onChange={(e) => handleCorbatinInputChange(e.target.value)}
-                              onKeyDown={handleCorbatinInputKeyDown}
-                              onFocus={() => setIsCorbatinDropdownOpen(true)}
-                              placeholder="Escribe # corbatín o placas..."
-                              className="w-full h-10 rounded-xl pl-8 pr-14 text-sm font-semibold font-mono text-slate-900 bg-white border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-2xs outline-none transition-all placeholder:text-slate-400 placeholder:font-sans placeholder:text-xs"
-                            />
-                            <div className="absolute inset-y-0 right-0 flex items-center pr-1.5 gap-0.5">
-                              {casetaCorbatin && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setCasetaCorbatin("");
-                                    setSelectedVehicleId("");
-                                    setIsCorbatinDropdownOpen(true);
-                                  }}
-                                  title="Limpiar búsqueda"
-                                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                                >
-                                  <IconX className="w-3.5 h-3.5" />
-                                </button>
-                              )}
+                    {/* Vista Desktop / Tablet (Tabla) */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
+                            {["Fotografía", "Nombre Completo", "Teléfono Celular", "Empresa", "Estatus Acceso", "Fecha de Registro"].map((h) => (
+                              <th key={h} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {(() => {
+                            const empTrabajadores = trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre);
+                            const filtered = empTrabajadores.filter(t => {
+                              const matchesSearch =
+                                t.nombre.toLowerCase().includes(trabajadorSearchTerm.toLowerCase()) ||
+                                t.apellidos.toLowerCase().includes(trabajadorSearchTerm.toLowerCase()) ||
+                                (t.telefono || "").toLowerCase().includes(trabajadorSearchTerm.toLowerCase());
+                              const matchesStatus =
+                                trabajadorStatusFilter === "todos" ||
+                                (trabajadorStatusFilter === "activos" && t.activo) ||
+                                (trabajadorStatusFilter === "inactivos" && !t.activo);
+                              return matchesSearch && matchesStatus;
+                            });
+
+                            if (filtered.length === 0) {
+                              return (
+                                <tr>
+                                  <td colSpan={6} className="py-12 text-center text-slate-400">
+                                    <IconUsers className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                                    <div className="font-bold text-slate-700">No se encontraron trabajadores</div>
+                                    <p className="text-xs text-slate-400 mt-1">
+                                      {trabajadorSearchTerm ? "Prueba cambiando el término de búsqueda o filtro." : "Aún no has registrado colaboradores para esta empresa."}
+                                    </p>
+                                    <button
+                                      onClick={handleAbrirCrearTrabajador}
+                                      className="mt-3 px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 cursor-pointer"
+                                    >
+                                      Dar de alta primer trabajador
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            }
+
+                            return filtered.map((t) => (
+                              <tr key={t.id_trabajador} className="hover:bg-slate-50 transition-colors">
+                                <td className="px-5 py-3.5">
+                                  <div
+                                    onClick={() => setSelectedFotoTrabajadorPreview(t)}
+                                    className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 shadow-sm cursor-pointer hover:scale-105 transition-transform relative group bg-slate-100 flex items-center justify-center shrink-0"
+                                    title="Clic para ampliar fotografía"
+                                  >
+                                    {t.foto_url ? (
+                                      <img src={t.foto_url} alt={`${t.nombre} ${t.apellidos}`} className="w-full h-full object-cover" />
+                                    ) : (
+                                      <IconUsers className="w-6 h-6 text-slate-400" />
+                                    )}
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                      <IconEye className="w-4 h-4" />
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-5 py-3.5">
+                                  <div className="font-bold text-slate-900 text-sm">{t.nombre} {t.apellidos}</div>
+                                  <div className="text-[11px] font-mono text-slate-400 mt-0.5">ID: #{t.id_trabajador}</div>
+                                </td>
+                                <td className="px-5 py-3.5 font-mono text-xs">
+                                  {t.telefono ? (
+                                    <CopyableInlineText
+                                      text={t.telefono}
+                                      label="Teléfono"
+                                      icon={<IconPhone className="w-3.5 h-3.5 text-slate-400" />}
+                                      className="text-slate-700 font-semibold"
+                                      onCopyToast={showToast}
+                                    />
+                                  ) : (
+                                    <span className="text-slate-400 italic">Sin registrar</span>
+                                  )}
+                                </td>
+                                <td className="px-5 py-3.5 text-xs font-semibold text-[#0D6E5F]">
+                                  {t.empresaNombre}
+                                </td>
+                                <td className="px-5 py-3.5">
+                                  {t.activo ? (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                      Activo
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
+                                      <span className="w-2 h-2 rounded-full bg-red-400" />
+                                      Inactivo (Sin Acceso)
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="px-5 py-3.5 text-xs text-slate-600 font-mono">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 font-sans">Alta:</span>
+                                    <span className="text-slate-700">{formatFechaLegible(t.created_at)}</span>
+                                  </div>
+                                  {t.updated_at && (
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                      <span className="text-[10px] uppercase font-bold text-slate-400 font-sans">Modif:</span>
+                                      <span className="text-slate-500">{formatFechaLegible(t.updated_at)}</span>
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            ));
+                          })()}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Vista Móvil (Tarjetas Optimizadas) */}
+                    <div className="block md:hidden divide-y divide-slate-100">
+                      {(() => {
+                        const empTrabajadores = trabajadores.filter(t => t.empresaNombre === currentUser.empresaNombre);
+                        const filtered = empTrabajadores.filter(t => {
+                          const matchesSearch =
+                            t.nombre.toLowerCase().includes(trabajadorSearchTerm.toLowerCase()) ||
+                            t.apellidos.toLowerCase().includes(trabajadorSearchTerm.toLowerCase()) ||
+                            (t.telefono || "").toLowerCase().includes(trabajadorSearchTerm.toLowerCase());
+                          const matchesStatus =
+                            trabajadorStatusFilter === "todos" ||
+                            (trabajadorStatusFilter === "activos" && t.activo) ||
+                            (trabajadorStatusFilter === "inactivos" && !t.activo);
+                          return matchesSearch && matchesStatus;
+                        });
+
+                        if (filtered.length === 0) {
+                          return (
+                            <div className="py-8 px-4 text-center text-slate-400">
+                              <IconUsers className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                              <div className="font-bold text-slate-700 text-xs sm:text-sm">No se encontraron trabajadores</div>
+                              <p className="text-[11px] text-slate-400 mt-1">
+                                {trabajadorSearchTerm ? "Prueba cambiando el término de búsqueda o filtro." : "Aún no has registrado colaboradores para esta empresa."}
+                              </p>
                               <button
-                                type="button"
-                                onClick={() => setIsCorbatinDropdownOpen(!isCorbatinDropdownOpen)}
-                                title="Desplegar lista de vehículos"
-                                className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                                onClick={handleAbrirCrearTrabajador}
+                                className="mt-3 w-full sm:w-auto justify-center px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 cursor-pointer active:scale-95"
                               >
-                                {isCorbatinDropdownOpen ? (
-                                  <IconChevronUp className="w-3.5 h-3.5" />
-                                ) : (
-                                  <IconChevronDown className="w-3.5 h-3.5" />
-                                )}
+                                Dar de alta primer trabajador
                               </button>
                             </div>
-                          </div>
+                          );
+                        }
 
-                          {/* MENÚ DESPLEGABLE DE VEHÍCULOS Y CORBATINES VERDES */}
-                          {isCorbatinDropdownOpen && (
-                            <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden max-h-60 sm:max-h-72 overflow-y-auto">
-                              <div className="px-3 py-1.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-[11px] font-semibold text-slate-600 sticky top-0 z-10">
-                                <span>
-                                  {casetaCorbatin.trim()
-                                    ? `${filteredCasetaVehicles.length + filteredCasetaCorbatinesVerdes.length} encontrados`
-                                    : `Vehículos y Corbatines (${vehicles.length + corbatinesVerdes.length})`}
+                        return filtered.map((t) => (
+                          <div key={t.id_trabajador} className="p-3.5 flex items-start gap-3 hover:bg-slate-50/70 transition-colors">
+                            <div
+                              onClick={() => setSelectedFotoTrabajadorPreview(t)}
+                              className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 shadow-2xs cursor-pointer shrink-0 bg-slate-100 flex items-center justify-center active:scale-95"
+                            >
+                              {t.foto_url ? (
+                                <img src={t.foto_url} alt={`${t.nombre} ${t.apellidos}`} className="w-full h-full object-cover" />
+                              ) : (
+                                <IconUsers className="w-6 h-6 text-slate-400" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-1.5">
+                                <div className="min-w-0">
+                                  <div className="font-bold text-slate-900 text-xs sm:text-sm truncate">{t.nombre} {t.apellidos}</div>
+                                  <div className="text-[10px] font-mono text-slate-400">ID: #{t.id_trabajador}</div>
+                                </div>
+                                {t.activo ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                    Activo
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200 shrink-0">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                                    Inactivo
+                                  </span>
+                                )}
+                              </div>
+                              <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
+                                <span className="font-mono text-[11px]">
+                                  {t.telefono ? (
+                                    <CopyableInlineText
+                                      text={t.telefono}
+                                      label="Tel"
+                                      icon={<IconPhone className="w-3 h-3 text-slate-400" />}
+                                      className="text-slate-700 font-semibold"
+                                      onCopyToast={showToast}
+                                    />
+                                  ) : (
+                                    <span className="text-slate-400 italic text-[11px]">Sin teléfono</span>
+                                  )}
                                 </span>
-                                <span className="text-[10px] text-slate-400 hidden sm:inline">
-                                  Usa ↑ ↓ y Enter
+                                <span className="text-[10px] text-slate-400 font-mono">
+                                  {formatFechaLegible(t.created_at, false)}
                                 </span>
                               </div>
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
-                              {/* SECCIÓN 1: VEHÍCULOS REGULARES */}
-                              {filteredCasetaVehicles.length > 0 && (
-                                <div>
-                                  <div className="px-3 py-1 bg-slate-100 border-y border-slate-200 text-[10px] font-extrabold uppercase tracking-wider text-slate-700 flex items-center justify-between">
-                                    <span className="flex items-center gap-1.5">
-                                      <IconCar className="w-3.5 h-3.5 text-slate-600 shrink-0" />
-                                      <span>Vehículos con Corbatín Regular ({filteredCasetaVehicles.length})</span>
-                                    </span>
+
+            {/* SANCIONES & APELACIÓN */}
+            {portalScreen === "sanciones" && (
+              <div>
+                <PageHero img={IMG_AERIAL} title="Historial de Sanciones & Módulo de Apelación" subtitle="Consulta de suspensiones vehiculares, interposición de recursos y resoluciones de HOA" />
+                <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6 min-h-[calc(100vh-16rem)]">
+                  {(() => {
+                    const empresaSanciones = currentUser.empresaNombre
+                      ? sanciones.filter(s => s.empresaNombre === currentUser.empresaNombre)
+                      : sanciones;
+
+                    return (
+                      <>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                          <div className="rounded-2xl border p-4 sm:p-5 bg-white shadow-xs" style={{ borderColor: "var(--color-border)" }}>
+                            <div className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Total Sanciones</div>
+                            <div className="text-xl sm:text-2xl font-bold text-slate-800">{empresaSanciones.length} registros</div>
+                          </div>
+                          <div className="rounded-2xl border p-4 sm:p-5 bg-red-50 border-red-200 shadow-xs">
+                            <div className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-red-600 mb-1">Suspensiones Activas</div>
+                            <div className="text-xl sm:text-2xl font-bold text-red-600">
+                              {empresaSanciones.filter(s => s.status === "Activa" || s.status === "Ratificada").length} vehículos
+                            </div>
+                          </div>
+                          <div className="rounded-2xl border p-4 sm:p-5 bg-sky-50 border-sky-200 shadow-xs">
+                            <div className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-sky-700 mb-1">En Trámite de Apelación</div>
+                            <div className="text-xl sm:text-2xl font-bold text-sky-700">
+                              {empresaSanciones.filter(s => s.status === "En Apelación").length} en revisión
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3.5 sm:space-y-4">
+                          {empresaSanciones.length === 0 ? (
+                            <div className="rounded-2xl border p-8 sm:p-12 bg-white shadow-sm text-center space-y-3" style={{ borderColor: "var(--color-border)" }}>
+                              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+                                <IconCheckCircle className="w-6 h-6" />
+                              </div>
+                              <h3 className="text-sm sm:text-base font-bold text-slate-800">Sin Sanciones Registradas</h3>
+                              <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                                Tu empresa no cuenta con infracciones ni suspensiones registradas en la base de datos de HOA. Toda tu flotilla y personal se encuentran en regla.
+                              </p>
+                            </div>
+                          ) : (
+                            empresaSanciones.map((s) => (
+                              <div
+                                key={s.id}
+                                className={`rounded-2xl border bg-white shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md ${s.status === "En Apelación"
+                                  ? "border-sky-300 ring-1 ring-sky-100"
+                                  : s.status === "Ratificada"
+                                    ? "border-amber-300 ring-1 ring-amber-100"
+                                    : s.status === "Aclarada"
+                                      ? "border-emerald-300 ring-1 ring-emerald-100"
+                                      : "border-slate-200"
+                                  }`}
+                              >
+                                {/* Cabecera de la Sanción */}
+                                <div
+                                  className={`px-4 sm:px-5 py-3 sm:py-3.5 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${s.status === "En Apelación"
+                                    ? "bg-sky-50/70"
+                                    : s.status === "Ratificada"
+                                      ? "bg-amber-50/70"
+                                      : s.status === "Aclarada"
+                                        ? "bg-emerald-50/70"
+                                        : s.status === "Activa"
+                                          ? "bg-red-50/50"
+                                          : "bg-slate-50"
+                                    }`}
+                                >
+                                  <div className="flex items-start sm:items-center gap-2.5 sm:gap-3">
+                                    <div
+                                      className={`p-2 rounded-xl text-white shrink-0 mt-0.5 sm:mt-0 ${s.status === "En Apelación"
+                                        ? "bg-sky-600"
+                                        : s.status === "Ratificada"
+                                          ? "bg-amber-600"
+                                          : s.status === "Aclarada"
+                                            ? "bg-emerald-600"
+                                            : s.status === "Activa"
+                                              ? "bg-red-600"
+                                              : "bg-slate-600"
+                                        }`}
+                                    >
+                                      <IconAlertTriangle className="w-4 h-4" />
+                                    </div>
+                                    <div className="min-w-0">
+                                      <h3 className="font-bold text-sm sm:text-base text-slate-900 leading-tight">
+                                        {s.tipo}
+                                      </h3>
+                                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1 text-xs text-slate-500">
+                                        <span className="font-mono font-bold text-slate-700 bg-white/90 px-1.5 py-0.5 rounded border border-slate-200 text-[11px]">
+                                          Folio #{s.id}
+                                        </span>
+                                        <span>•</span>
+                                        <span className="font-mono font-semibold text-slate-700 text-[11px] sm:text-xs">
+                                          Placas: <strong className="text-slate-900">{s.placas}</strong>
+                                        </span>
+                                        <span>•</span>
+                                        <span className="text-[11px] sm:text-xs">Fecha: {s.fecha}</span>
+                                      </div>
+                                    </div>
                                   </div>
+
+                                  <div className="self-start sm:self-auto shrink-0">
+                                    <StatusBadge status={s.status} />
+                                  </div>
+                                </div>
+
+                                {/* Cuerpo Estructurado */}
+                                <div className="p-4 sm:p-6 space-y-3.5 sm:space-y-4">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-3.5">
+                                    {/* Medida Disciplinaria */}
+                                    <div className="p-3 sm:p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                                      <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                                        <IconShield className="w-3.5 h-3.5 text-red-500" />
+                                        <span>Medida Disciplinaria / Estatus</span>
+                                      </div>
+                                      <div className="text-xs sm:text-sm font-bold text-red-700 leading-snug">
+                                        {s.medidaDisciplinaria || "Amonestación / Suspensión de acceso"}
+                                      </div>
+                                    </div>
+
+                                    {/* Motivo de la Infracción */}
+                                    <div className="p-3 sm:p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                                      <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                                        <IconFileText className="w-3.5 h-3.5 text-slate-600" />
+                                        <span>Descripción de los Hechos</span>
+                                      </div>
+                                      <div className="text-xs font-medium text-slate-700 leading-relaxed">
+                                        {s.descripcion || "Infracción detectada en instalaciones"}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Sección de Apelación y Dictamen */}
+                                  {s.apelacion && (
+                                    <div
+                                      className={`rounded-xl border p-3.5 sm:p-4 space-y-3 ${s.status === "Aclarada"
+                                        ? "bg-emerald-50/50 border-emerald-200"
+                                        : s.status === "Ratificada"
+                                          ? "bg-amber-50/50 border-amber-200"
+                                          : "bg-sky-50/60 border-sky-200"
+                                        }`}
+                                    >
+                                      <div
+                                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-2.5"
+                                        style={{ borderColor: "rgba(0,0,0,0.06)" }}
+                                      >
+                                        <div className="flex items-center gap-2">
+                                          <IconMessageSquare className="w-4 h-4 text-sky-700 shrink-0" />
+                                          <span className="font-bold text-xs uppercase tracking-wide text-slate-800">
+                                            Recurso de Apelación
+                                          </span>
+                                          <span className="text-xs text-slate-500 font-mono">({s.apelacion.fecha})</span>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                          <span className="text-xs text-slate-500">
+                                            Firmado por: <strong className="text-slate-700">{s.apelacion.representante}</strong>
+                                          </span>
+                                          <span
+                                            className={`text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full ${s.apelacion.estado === "Aprobada"
+                                              ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                              : s.apelacion.estado === "Rechazada"
+                                                ? "bg-amber-100 text-amber-800 border border-amber-300"
+                                                : "bg-sky-100 text-sky-800 border border-sky-300"
+                                              }`}
+                                          >
+                                            {s.apelacion.estado === "Aprobada"
+                                              ? "Apelación Procedente"
+                                              : s.apelacion.estado === "Rechazada"
+                                                ? "Apelación Rechazada"
+                                                : "Pendiente de Dictamen"}
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      <div className="space-y-1">
+                                        <div className="text-[10px] sm:text-[11px] font-semibold uppercase text-slate-500">
+                                          Argumentos / Pruebas del Contratista:
+                                        </div>
+                                        <p className="text-xs text-slate-800 bg-white/90 p-3 rounded-lg border border-slate-200/80 leading-relaxed italic">
+                                          "{s.apelacion.argumentos}"
+                                        </p>
+                                      </div>
+
+                                      {s.apelacion.dictamenSupervisor && (
+                                        <div
+                                          className={`p-3.5 rounded-xl border space-y-1 ${s.status === "Aclarada"
+                                            ? "bg-emerald-100/70 border-emerald-300 text-emerald-950"
+                                            : "bg-amber-100/70 border-amber-300 text-amber-950"
+                                            }`}
+                                        >
+                                          <div className="flex items-center gap-1.5 font-bold text-xs uppercase">
+                                            <IconCheckCircle className="w-3.5 h-3.5 shrink-0" />
+                                            <span>
+                                              Dictamen Oficial de Supervisión HOA{" "}
+                                              {s.apelacion.fechaDictamen ? `(${s.apelacion.fechaDictamen})` : ""}:
+                                            </span>
+                                          </div>
+                                          <p className="text-xs font-semibold leading-relaxed">
+                                            {s.apelacion.dictamenSupervisor}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Información de vigencia y botón de apelación */}
+                                  {s.status === "Activa" && (
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2.5 border-t border-slate-100">
+                                      <div className="text-xs text-slate-500 flex items-start sm:items-center gap-1.5 font-medium leading-relaxed">
+                                        <IconClock className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
+                                        <span>
+                                          {s.fecha_inicio && new Date() < new Date(s.fecha_inicio) ? (
+                                            <>Entra en vigor el: <strong className="text-slate-800 font-mono">{new Date(s.fecha_inicio).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })} a las 12:00 AM</strong>{s.fecha_fin ? <> (Hasta: <strong className="text-slate-800 font-mono">{new Date(s.fecha_fin).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })}</strong>)</> : null}</>
+                                          ) : s.fecha_fin ? (
+                                            <>Suspensión temporal vigente hasta: <strong className="text-slate-800 font-mono">{new Date(s.fecha_fin).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })}</strong></>
+                                          ) : (
+                                            "Sanción administrativa activa"
+                                          )}
+                                        </span>
+                                      </div>
+                                      {!s.apelacion && (
+                                        <button
+                                          onClick={() => setSelectedSancionParaApelar(s)}
+                                          className="w-full sm:w-auto justify-center px-4 py-2.5 sm:py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+                                        >
+                                          <IconMessageSquare className="w-3.5 h-3.5" />
+                                          <span>Interponer Apelación / Aclaración</span>
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
+
+            {/* CONSULTA DE REGLAMENTO Y NORMAS */}
+            {portalScreen === "consulta_reglamento" && (
+              <div>
+                <PageHero
+                  img={IMG_GATE}
+                  title="Reglamento HOA y Normativas de Operación"
+                  subtitle="Consulta permanente de términos, normas de banderín y lineamientos de seguridad de Las Palomas"
+                />
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-16rem)]">
+                  <ContratistaReglamentoView
+                    reglamentoTexto={reglamentoTexto}
+                    reglamentoSecciones={reglamentoSecciones}
+                  />
+                </div>
+              </div>
+            )}
+          </main>
+        )}
+
+        {/* CASETA */}
+        {(currentUser.role === "caseta" || (currentUser.role as string) === "guardia") && (
+          <main>
+            <div className="mx-auto px-4 sm:px-6 lg:px-8 py-3.5 space-y-3 max-w-7xl w-full">
+              {/* ENCABEZADO SUPERIOR DE COMANDO Y ESTADO */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white px-4 py-2.5 sm:px-5 rounded-2xl border border-slate-200 shadow-2xs">
+                <div>
+                  <h1 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+                    <IconShield className="w-4 h-4 text-emerald-700 shrink-0" />
+                    <span>Control de Caseta & Registro de Accesos</span>
+                  </h1>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Validación en tiempo real de permisos, suspensiones disciplinarias HOA y tarjetones
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setShowQRScannerModal(true)}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
+                    title="Abrir cámara para escanear código QR"
+                  >
+                    <IconCamera className="w-3.5 h-3.5 text-emerald-100" />
+                    <span>Escanear Código QR</span>
+                  </button>
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono text-slate-600 shrink-0">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span className="font-sans font-semibold text-slate-700 text-[11px]">Oficial:</span>
+                    <span className="font-bold text-slate-900 text-xs">{currentUser.nombre}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* BANNER DE ALERTA DE HORARIOS PARA CASETA (DISEÑO ARMONIOSO HOA) */}
+              {contratistasExcedidos.length > 0 && (
+                <div className="bg-white border-2 border-slate-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                  <div className="flex items-start gap-2.5 sm:gap-3 w-full sm:w-auto min-w-0">
+                    <div className="p-2 sm:p-2.5 rounded-xl bg-red-600 text-white shrink-0 shadow-xs animate-pulse">
+                      <IconClock className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                        <span className="font-extrabold text-slate-900 text-xs sm:text-sm tracking-tight">
+                          Atención: {contratistasExcedidos.length} contratista{contratistasExcedidos.length > 1 ? "s" : ""} fuera de horario
+                        </span>
+                        <span className="bg-slate-100 text-slate-700 font-mono font-bold text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200">
+                          Límite hoy: {contratistasExcedidos[0]?.horaLimite || "18:00"} hrs
+                        </span>
+                      </div>
+                      <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5 break-words">
+                        {contratistasExcedidos.length === 1 ? (
+                          <span>
+                            <strong>{contratistasExcedidos[0].conductor}</strong> ({contratistasExcedidos[0].empresaNombre}) · {contratistasExcedidos[0].esPernocta ? "Ingresó en fecha anterior sin salida registrada" : `Exceso: +${contratistasExcedidos[0].minutosExcedidos} min`}
+                          </span>
+                        ) : (
+                          <span>
+                            Hay personal o unidades externas que continúan dentro del complejo fuera del horario oficial de trabajo.
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsOvertimeModalExpanded(true);
+                        setSelectedOvertimeContractor(contratistasExcedidos[0]);
+                      }}
+                      className="w-full sm:w-auto px-4 py-2 sm:py-2.5 rounded-xl bg-[#0D6E5F] hover:bg-[#095247] active:scale-95 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <IconClock className="w-4 h-4 shrink-0" />
+                      <span>Ver Ficha de Alerta</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {casetaTab === "registro" && (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch w-full">
+                  {/* COLUMNA PRINCIPAL: FORMULARIO */}
+                  <div className="lg:col-span-7 xl:col-span-8 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs space-y-3 flex flex-col">
+                    {/* SELECTOR DE MODALIDAD Y ENCABEZADO DEL FORMULARIO */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-100 pb-2.5">
+                      <div>
+                        <h2 className="font-bold text-sm sm:text-base text-slate-900">
+                          {casetaModoAcceso === "vehicular" ? "Formulario de Ingreso Vehicular" : "Formulario de Ingreso Peatonal"}
+                        </h2>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          {casetaModoAcceso === "vehicular"
+                            ? "Captura la unidad, valida corbatín y registra el pase de pluma"
+                            : "Autorización de personal a pie / contratistas con vehículo retenido"}
+                        </p>
+                      </div>
+
+                      <div className="flex gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setCasetaModoAcceso("vehicular")}
+                          className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${casetaModoAcceso === "vehicular"
+                            ? "bg-[#0D6E5F] text-white shadow-xs"
+                            : "text-slate-600 hover:text-slate-900"
+                            }`}
+                        >
+                          <IconCar className="w-3.5 h-3.5" />
+                          <span>Acceso Vehicular</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCasetaModoAcceso("peatonal");
+                            setHoraActual();
+                          }}
+                          className={`py-1.5 px-3.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${casetaModoAcceso === "peatonal"
+                            ? "bg-sky-700 text-white shadow-xs"
+                            : "text-slate-600 hover:text-slate-900"
+                            }`}
+                        >
+                          <IconWalk className="w-3.5 h-3.5" />
+                          <span>Acceso Peatonal</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {casetaSuccessMsg && (
+                      <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-start sm:items-center gap-2">
+                        <IconCheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5 sm:mt-0" />
+                        <span>Ingreso ({casetaModoAcceso === "vehicular" ? "Vehicular" : "Peatonal a pie"}) autorizado y registrado en la bitácora con éxito.</span>
+                      </div>
+                    )}
+
+                    {/* FORMULARIO DE ACCESO VEHICULAR */}
+                    {casetaModoAcceso === "vehicular" && (
+                      <form onSubmit={handleRegistrarEntrada} className="space-y-3">
+                        {/* 1. AUTOCOMPLETADO Y BÚSQUEDA RÁPIDA */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+                          {/* CAMPO 1: # CORBATÍN O PLACAS CON DROPDOWN */}
+                          <div className="relative" ref={corbatinDropdownRef}>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                              <span>1. # Corbatín o Placas</span>
+                              <span className="text-[11px] text-slate-400 font-normal">Escribe o busca</span>
+                            </label>
+                            <div className="relative">
+                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-sm font-bold font-mono text-emerald-700 pointer-events-none">
+                                #
+                              </span>
+                              <input
+                                type="text"
+                                value={casetaCorbatin}
+                                onChange={(e) => handleCorbatinInputChange(e.target.value)}
+                                onKeyDown={handleCorbatinInputKeyDown}
+                                onFocus={() => setIsCorbatinDropdownOpen(true)}
+                                placeholder="Escribe # corbatín o placas..."
+                                className="w-full h-10 rounded-xl pl-8 pr-14 text-sm font-semibold font-mono text-slate-900 bg-white border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-2xs outline-none transition-all placeholder:text-slate-400 placeholder:font-sans placeholder:text-xs"
+                              />
+                              <div className="absolute inset-y-0 right-0 flex items-center pr-1.5 gap-0.5">
+                                {casetaCorbatin && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setCasetaCorbatin("");
+                                      setSelectedVehicleId("");
+                                      setIsCorbatinDropdownOpen(true);
+                                    }}
+                                    title="Limpiar búsqueda"
+                                    className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                                  >
+                                    <IconX className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => setIsCorbatinDropdownOpen(!isCorbatinDropdownOpen)}
+                                  title="Desplegar lista de vehículos"
+                                  className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                                >
+                                  {isCorbatinDropdownOpen ? (
+                                    <IconChevronUp className="w-3.5 h-3.5" />
+                                  ) : (
+                                    <IconChevronDown className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* MENÚ DESPLEGABLE DE VEHÍCULOS Y CORBATINES VERDES */}
+                            {isCorbatinDropdownOpen && (
+                              <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden max-h-60 sm:max-h-72 overflow-y-auto">
+                                <div className="px-3 py-1.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-[11px] font-semibold text-slate-600 sticky top-0 z-10">
+                                  <span>
+                                    {casetaCorbatin.trim()
+                                      ? `${filteredCasetaVehicles.length + filteredCasetaCorbatinesVerdes.length} encontrados`
+                                      : `Vehículos y Corbatines (${vehicles.length + corbatinesVerdes.length})`}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 hidden sm:inline">
+                                    Usa ↑ ↓ y Enter
+                                  </span>
+                                </div>
+
+                                {/* SECCIÓN 1: VEHÍCULOS REGULARES */}
+                                {filteredCasetaVehicles.length > 0 && (
+                                  <div>
+                                    <div className="px-3 py-1 bg-slate-100 border-y border-slate-200 text-[10px] font-extrabold uppercase tracking-wider text-slate-700 flex items-center justify-between">
+                                      <span className="flex items-center gap-1.5">
+                                        <IconCar className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                                        <span>Vehículos con Corbatín Regular ({filteredCasetaVehicles.length})</span>
+                                      </span>
+                                    </div>
+                                    <div className="divide-y divide-slate-100">
+                                      {filteredCasetaVehicles.map((v, idx) => {
+                                        const isSelected = selectedVehicleId === v.id;
+                                        const isHighlighted = corbatinHighlightedIndex === idx;
+                                        return (
+                                          <div
+                                            key={v.id}
+                                            onClick={() => handleSelectVehicleFromDropdown(v)}
+                                            onMouseEnter={() => setCorbatinHighlightedIndex(idx)}
+                                            className={`p-2.5 cursor-pointer transition-colors border-l-4 active:bg-emerald-100 ${isSelected
+                                              ? "bg-emerald-100/70 border-l-emerald-600"
+                                              : isHighlighted
+                                                ? "bg-emerald-50/80 border-l-emerald-400"
+                                                : "hover:bg-slate-50 border-l-transparent"
+                                              }`}
+                                          >
+                                            <div className="flex items-center justify-between gap-2">
+                                              <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                                                <span className="px-1.5 py-0.5 rounded-md bg-teal-800 text-white font-mono font-bold text-xs shrink-0">
+                                                  #{v.corbatinNum}
+                                                </span>
+                                                <span className="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-900 font-mono font-bold text-xs tracking-wider shrink-0">
+                                                  {v.placas}
+                                                </span>
+                                                <span className="font-bold text-slate-900 text-xs truncate max-w-[140px]">
+                                                  {v.marca} {v.modelo}
+                                                </span>
+                                              </div>
+                                              <span
+                                                className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${v.status === "Habilitado"
+                                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                                  : "bg-rose-50 text-rose-700 border-rose-200"
+                                                  }`}
+                                              >
+                                                {v.status === "Habilitado" ? "✓" : "⛔"}
+                                              </span>
+                                            </div>
+                                            <div className="mt-0.5 text-[11px] text-slate-500 truncate flex items-center gap-1">
+                                              <IconBuilding className="w-3 h-3 text-slate-400 shrink-0" />
+                                              <span className="truncate">{v.empresaNombre}</span>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* SECCIÓN 2: CORBATINES VERDES */}
+                                {filteredCasetaCorbatinesVerdes.length > 0 && (
+                                  <div>
+                                    <div className="px-3 py-1 bg-emerald-100/70 border-y border-emerald-200 text-[10px] font-extrabold uppercase tracking-wider text-emerald-900 flex items-center justify-between">
+                                      <span className="flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
+                                        <span>Corbatines Verdes ({filteredCasetaCorbatinesVerdes.length})</span>
+                                      </span>
+                                    </div>
+                                    <div className="divide-y divide-emerald-50">
+                                      {filteredCasetaCorbatinesVerdes.map((c, idx) => {
+                                        const isSelected = selectedCorbatinVerdeId === c.id;
+                                        const isHighlighted = corbatinHighlightedIndex === (idx + filteredCasetaVehicles.length);
+                                        return (
+                                          <div
+                                            key={`corb-verde-${c.id}`}
+                                            onClick={() => handleSelectCorbatinVerdeFromDropdown(c)}
+                                            onMouseEnter={() => setCorbatinHighlightedIndex(idx + filteredCasetaVehicles.length)}
+                                            className={`p-2.5 cursor-pointer transition-colors border-l-4 active:bg-emerald-100 ${isSelected
+                                              ? "bg-emerald-100/90 border-l-emerald-600"
+                                              : isHighlighted
+                                                ? "bg-emerald-50/80 border-l-emerald-400"
+                                                : "bg-emerald-50/40 hover:bg-emerald-100/60 border-l-emerald-500"
+                                              }`}
+                                          >
+                                            <div className="flex items-center justify-between gap-2">
+                                              <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                                                <span className="px-2 py-0.5 rounded-md bg-emerald-700 text-white font-mono font-extrabold text-xs shadow-2xs shrink-0">
+                                                  VERDE #{formatCorbatinVerdeNum(c.corbatinNum)}
+                                                </span>
+                                                <span className="font-bold text-slate-900 text-xs truncate max-w-[140px]">
+                                                  {c.empresaNombre}
+                                                </span>
+                                              </div>
+                                              <span
+                                                className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${c.activo !== false
+                                                  ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                                  : "bg-rose-50 text-rose-700 border-rose-200"
+                                                  }`}
+                                              >
+                                                {c.activo !== false ? "✓ Activo" : "⛔ Inactivo"}
+                                              </span>
+                                            </div>
+                                            <div className="mt-0.5 text-[11px] text-slate-500 truncate flex items-center justify-between gap-2">
+                                              <span className="truncate">📞 {c.telefono || "Sin teléfono"}</span>
+                                              <span className="text-[10px] text-slate-400 font-mono shrink-0">Vence: {c.fechaVencimiento || "Vigente"}</span>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {filteredCasetaVehicles.length === 0 && filteredCasetaCorbatinesVerdes.length === 0 && (
+                                  <div className="p-3 text-center text-xs text-slate-500 space-y-1">
+                                    <p className="font-bold text-slate-700">No hay registros con "{casetaCorbatin}"</p>
+                                    <p className="text-[11px] text-slate-400">Verifica el número de corbatín o nombre de la empresa.</p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* CAMPO 2: CONDUCTOR / CHOFER CON DROPDOWN */}
+                          <div className="relative" ref={conductorDropdownRef}>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                              <span>Conductor / Chofer</span>
+                              <span className="text-[11px] text-slate-400 font-normal truncate max-w-[150px]">
+                                {currentCasetaCorbatinVerde
+                                  ? "Chofer Proyecto"
+                                  : selectedEmpresaId
+                                    ? `${currentEmpresa?.nombre ? currentEmpresa.nombre.split(" ")[0] : "Empresa"} (${empresaTrabajadores.length})`
+                                    : `Todos (${empresaTrabajadores.length})`}
+                              </span>
+                            </label>
+
+                            <div className="relative">
+                              <span className="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none">
+                                {currentConductorVehicular && (currentConductorVehicular.foto_url || currentConductorVehicular.foto) ? (
+                                  <img
+                                    src={normalizeFotoUrl(currentConductorVehicular.foto_url || currentConductorVehicular.foto)}
+                                    alt="Chofer"
+                                    className="w-5 h-5 rounded-full object-cover border border-emerald-500 shadow-2xs pointer-events-auto cursor-pointer"
+                                    onClick={() => setSelectedFotoTrabajadorPreview(currentConductorVehicular)}
+                                    title="Clic para ver credencial del chofer"
+                                  />
+                                ) : (
+                                  <IconUsers className="w-3.5 h-3.5 text-emerald-600" />
+                                )}
+                              </span>
+                              <input
+                                type="text"
+                                value={casetaConductorQuery}
+                                onChange={(e) => handleConductorInputChange(e.target.value)}
+                                onKeyDown={handleConductorInputKeyDown}
+                                onFocus={() => setIsConductorDropdownOpen(true)}
+                                placeholder={
+                                  currentCasetaCorbatinVerde
+                                    ? "Escribe el nombre del chofer..."
+                                    : selectedEmpresaId
+                                      ? (empresaTrabajadores.length > 0 ? "Escribe o selecciona chofer..." : "Sin colaboradores registrados")
+                                      : "Escribe o busca conductor..."
+                                }
+                                className="w-full h-10 rounded-xl pl-9 pr-14 text-sm font-semibold text-slate-900 bg-white border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-2xs outline-none transition-all placeholder:text-slate-400 placeholder:font-normal placeholder:text-xs"
+                              />
+                              <div className="absolute inset-y-0 right-0 flex items-center pr-1.5 gap-0.5">
+                                {casetaConductorQuery && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setCasetaConductorQuery("");
+                                      setCasetaConductorId("");
+                                      setIsConductorDropdownOpen(true);
+                                    }}
+                                    title="Limpiar chofer"
+                                    className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                                  >
+                                    <IconX className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => setIsConductorDropdownOpen(!isConductorDropdownOpen)}
+                                  title="Desplegar choferes"
+                                  className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                                >
+                                  {isConductorDropdownOpen ? (
+                                    <IconChevronUp className="w-3.5 h-3.5" />
+                                  ) : (
+                                    <IconChevronDown className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* MENÚ DESPLEGABLE DE CONDUCTORES */}
+                            {isConductorDropdownOpen && (
+                              <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden max-h-60 sm:max-h-64 overflow-y-auto">
+                                <div className="px-3 py-1.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-[11px] font-semibold text-slate-600 sticky top-0 z-10">
+                                  <span className="truncate">
+                                    {currentCasetaCorbatinVerde
+                                      ? `Chofer para ${currentCasetaCorbatinVerde.empresaNombre}`
+                                      : `Colaboradores (${filteredEmpresaTrabajadores.length})`}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 hidden sm:inline shrink-0">
+                                    Usa ↑ ↓ y Enter
+                                  </span>
+                                </div>
+
+                                {filteredEmpresaTrabajadores.length > 0 ? (
                                   <div className="divide-y divide-slate-100">
-                                    {filteredCasetaVehicles.map((v, idx) => {
-                                      const isSelected = selectedVehicleId === v.id;
-                                      const isHighlighted = corbatinHighlightedIndex === idx;
+                                    {filteredEmpresaTrabajadores.map((t, idx) => {
+                                      const isSelected = String(casetaConductorId) === String(t.id_trabajador);
+                                      const isHighlighted = conductorHighlightedIndex === idx;
                                       return (
                                         <div
-                                          key={v.id}
-                                          onClick={() => handleSelectVehicleFromDropdown(v)}
-                                          onMouseEnter={() => setCorbatinHighlightedIndex(idx)}
+                                          key={t.id_trabajador}
+                                          onClick={() => handleSelectConductorFromDropdown(t)}
+                                          onMouseEnter={() => setConductorHighlightedIndex(idx)}
                                           className={`p-2.5 cursor-pointer transition-colors border-l-4 active:bg-emerald-100 ${isSelected
                                             ? "bg-emerald-100/70 border-l-emerald-600"
                                             : isHighlighted
@@ -11622,296 +11873,588 @@ export default function App() {
                                               : "hover:bg-slate-50 border-l-transparent"
                                             }`}
                                         >
-                                          <div className="flex items-center justify-between gap-2">
-                                            <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                                              <span className="px-1.5 py-0.5 rounded-md bg-teal-800 text-white font-mono font-bold text-xs shrink-0">
-                                                #{v.corbatinNum}
-                                              </span>
-                                              <span className="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-900 font-mono font-bold text-xs tracking-wider shrink-0">
-                                                {v.placas}
-                                              </span>
-                                              <span className="font-bold text-slate-900 text-xs truncate max-w-[140px]">
-                                                {v.marca} {v.modelo}
-                                              </span>
+                                          <div className="flex items-center justify-between gap-2.5">
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                              <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-slate-200 bg-slate-100 flex items-center justify-center">
+                                                {t.foto_url || t.foto ? (
+                                                  <img
+                                                    src={normalizeFotoUrl(t.foto_url || t.foto)}
+                                                    alt={t.nombre}
+                                                    className="w-full h-full object-cover"
+                                                  />
+                                                ) : (
+                                                  <IconUser className="w-4 h-4 text-slate-400" />
+                                                )}
+                                              </div>
+                                              <div className="min-w-0">
+                                                <span className="font-bold text-slate-900 text-xs sm:text-sm block truncate">
+                                                  {t.nombre} {t.apellidos}
+                                                </span>
+                                                <span className="text-[11px] text-slate-500 font-mono block">
+                                                  📞 {t.telefono || "Sin teléfono"}
+                                                </span>
+                                              </div>
                                             </div>
-                                            <span
-                                              className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${v.status === "Habilitado"
-                                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                                : "bg-rose-50 text-rose-700 border-rose-200"
-                                                }`}
-                                            >
-                                              {v.status === "Habilitado" ? "✓" : "⛔"}
+                                            <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                              Acreditado
                                             </span>
-                                          </div>
-                                          <div className="mt-0.5 text-[11px] text-slate-500 truncate flex items-center gap-1">
-                                            <IconBuilding className="w-3 h-3 text-slate-400 shrink-0" />
-                                            <span className="truncate">{v.empresaNombre}</span>
                                           </div>
                                         </div>
                                       );
                                     })}
                                   </div>
-                                </div>
-                              )}
-
-                              {/* SECCIÓN 2: CORBATINES VERDES */}
-                              {filteredCasetaCorbatinesVerdes.length > 0 && (
-                                <div>
-                                  <div className="px-3 py-1 bg-emerald-100/70 border-y border-emerald-200 text-[10px] font-extrabold uppercase tracking-wider text-emerald-900 flex items-center justify-between">
-                                    <span className="flex items-center gap-1.5">
-                                      <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
-                                      <span>Corbatines Verdes ({filteredCasetaCorbatinesVerdes.length})</span>
-                                    </span>
+                                ) : (
+                                  <div className="p-3 text-center text-xs text-slate-500 space-y-1">
+                                    <p className="font-bold text-slate-700">
+                                      {currentCasetaCorbatinVerde
+                                        ? `Puedes capturar libremente el nombre del chofer arriba.`
+                                        : `No hay colaboradores con "${casetaConductorQuery}"`}
+                                    </p>
+                                    <p className="text-[11px] text-slate-400">
+                                      Puedes escribir el nombre manualmente si cuenta con autorización especial.
+                                    </p>
                                   </div>
-                                  <div className="divide-y divide-emerald-50">
-                                    {filteredCasetaCorbatinesVerdes.map((c, idx) => {
-                                      const isSelected = selectedCorbatinVerdeId === c.id;
-                                      const isHighlighted = corbatinHighlightedIndex === (idx + filteredCasetaVehicles.length);
-                                      return (
-                                        <div
-                                          key={`corb-verde-${c.id}`}
-                                          onClick={() => handleSelectCorbatinVerdeFromDropdown(c)}
-                                          onMouseEnter={() => setCorbatinHighlightedIndex(idx + filteredCasetaVehicles.length)}
-                                          className={`p-2.5 cursor-pointer transition-colors border-l-4 active:bg-emerald-100 ${isSelected
-                                            ? "bg-emerald-100/90 border-l-emerald-600"
-                                            : isHighlighted
-                                              ? "bg-emerald-50/80 border-l-emerald-400"
-                                              : "bg-emerald-50/40 hover:bg-emerald-100/60 border-l-emerald-500"
-                                            }`}
-                                        >
-                                          <div className="flex items-center justify-between gap-2">
-                                            <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                                              <span className="px-2 py-0.5 rounded-md bg-emerald-700 text-white font-mono font-extrabold text-xs shadow-2xs shrink-0">
-                                                VERDE #{formatCorbatinVerdeNum(c.corbatinNum)}
-                                              </span>
-                                              <span className="font-bold text-slate-900 text-xs truncate max-w-[140px]">
-                                                {c.empresaNombre}
-                                              </span>
-                                            </div>
-                                            <span
-                                              className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${c.activo !== false
-                                                ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                                                : "bg-rose-50 text-rose-700 border-rose-200"
-                                                }`}
-                                            >
-                                              {c.activo !== false ? "✓ Activo" : "⛔ Inactivo"}
-                                            </span>
-                                          </div>
-                                          <div className="mt-0.5 text-[11px] text-slate-500 truncate flex items-center justify-between gap-2">
-                                            <span className="truncate">📞 {c.telefono || "Sin teléfono"}</span>
-                                            <span className="text-[10px] text-slate-400 font-mono shrink-0">Vence: {c.fechaVencimiento || "Vigente"}</span>
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              )}
-
-                              {filteredCasetaVehicles.length === 0 && filteredCasetaCorbatinesVerdes.length === 0 && (
-                                <div className="p-3 text-center text-xs text-slate-500 space-y-1">
-                                  <p className="font-bold text-slate-700">No hay registros con "{casetaCorbatin}"</p>
-                                  <p className="text-[11px] text-slate-400">Verifica el número de corbatín o nombre de la empresa.</p>
-                                </div>
-                              )}
-                            </div>
-                          )}
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
 
-                        {/* CAMPO 2: CONDUCTOR / CHOFER CON DROPDOWN */}
-                        <div className="relative" ref={conductorDropdownRef}>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
-                            <span>Conductor / Chofer</span>
-                            <span className="text-[11px] text-slate-400 font-normal truncate max-w-[150px]">
-                              {currentCasetaCorbatinVerde
-                                ? "Chofer Proyecto"
-                                : selectedEmpresaId
-                                  ? `${currentEmpresa?.nombre ? currentEmpresa.nombre.split(" ")[0] : "Empresa"} (${empresaTrabajadores.length})`
-                                  : `Todos (${empresaTrabajadores.length})`}
-                            </span>
-                          </label>
+                        {/* 2. SELECCIÓN DE EMPRESA Y VEHÍCULO / CORBATÍN VERDE */}
+                        {currentCasetaCorbatinVerde ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-emerald-50/70 border border-emerald-200">
+                            <div>
+                              <label className="block text-xs font-semibold text-emerald-950 mb-1">
+                                2. Empresa / Proyecto (Corbatín Verde)
+                              </label>
+                              <div className="h-10 px-3.5 rounded-xl bg-white border border-emerald-300 text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
+                                <IconBuilding className="w-4 h-4 text-emerald-700 shrink-0" />
+                                <span className="truncate">{currentCasetaCorbatinVerde.empresaNombre}</span>
+                              </div>
+                            </div>
 
-                          <div className="relative">
-                            <span className="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none">
-                              {currentConductorVehicular && (currentConductorVehicular.foto_url || currentConductorVehicular.foto) ? (
-                                <img
-                                  src={normalizeFotoUrl(currentConductorVehicular.foto_url || currentConductorVehicular.foto)}
-                                  alt="Chofer"
-                                  className="w-5 h-5 rounded-full object-cover border border-emerald-500 shadow-2xs pointer-events-auto cursor-pointer"
-                                  onClick={() => setSelectedFotoTrabajadorPreview(currentConductorVehicular)}
-                                  title="Clic para ver credencial del chofer"
-                                />
-                              ) : (
-                                <IconUsers className="w-3.5 h-3.5 text-emerald-600" />
-                              )}
-                            </span>
-                            <input
-                              type="text"
-                              value={casetaConductorQuery}
-                              onChange={(e) => handleConductorInputChange(e.target.value)}
-                              onKeyDown={handleConductorInputKeyDown}
-                              onFocus={() => setIsConductorDropdownOpen(true)}
-                              placeholder={
-                                currentCasetaCorbatinVerde
-                                  ? "Escribe el nombre del chofer..."
-                                  : selectedEmpresaId
-                                    ? (empresaTrabajadores.length > 0 ? "Escribe o selecciona chofer..." : "Sin colaboradores registrados")
-                                    : "Escribe o busca conductor..."
-                              }
-                              className="w-full h-10 rounded-xl pl-9 pr-14 text-sm font-semibold text-slate-900 bg-white border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-2xs outline-none transition-all placeholder:text-slate-400 placeholder:font-normal placeholder:text-xs"
-                            />
-                            <div className="absolute inset-y-0 right-0 flex items-center pr-1.5 gap-0.5">
-                              {casetaConductorQuery && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setCasetaConductorQuery("");
+                            <div>
+                              <label className="block text-xs font-semibold text-emerald-950 mb-1">
+                                3. Placas de la Unidad (Opcional / Identificación)
+                              </label>
+                              <input
+                                type="text"
+                                value={casetaPlacasVerde}
+                                onChange={(e) => setCasetaPlacasVerde(e.target.value.toUpperCase())}
+                                placeholder="Ej. ABC-1234 o Camioneta Blanca"
+                                className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-emerald-300 bg-white font-mono font-bold text-slate-900 outline-none focus:ring-2 focus:ring-emerald-400 placeholder:font-sans placeholder:font-normal placeholder:text-slate-400"
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                2. Empresa Contratista
+                              </label>
+                              <select
+                                value={selectedEmpresaId}
+                                onChange={(e) => {
+                                  const newEmpId = e.target.value;
+                                  setSelectedEmpresaId(newEmpId);
+                                  setSelectedVehicleId("");
+                                  setSelectedCorbatinVerdeId("");
+                                  setCasetaCorbatin("");
+                                  setCasetaConductorId("");
+                                  setCasetaConductorQuery("");
+                                }}
+                                className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 bg-white font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                              >
+                                <option value="">-- Seleccionar Empresa Contratista --</option>
+                                {empresas.map((emp) => (
+                                  <option key={emp.id} value={emp.id}>{emp.nombre}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                3. Vehículo Asignado
+                              </label>
+                              <select
+                                value={selectedVehicleId}
+                                onChange={(e) => {
+                                  const newVehId = e.target.value;
+                                  setSelectedVehicleId(newVehId);
+                                  setSelectedCorbatinVerdeId("");
+                                  const foundVeh = vehicles.find((v) => v.id === newVehId);
+                                  if (foundVeh) {
+                                    setCasetaCorbatin(foundVeh.corbatinNum ? `#${foundVeh.corbatinNum}` : (foundVeh.placas || ""));
+                                    if (foundVeh.conductor && foundVeh.conductor !== "N/A" && foundVeh.conductor.trim()) {
+                                      setCasetaConductorQuery(foundVeh.conductor);
+                                      const match = empresaTrabajadores.find((t) => `${t.nombre} ${t.apellidos}`.toLowerCase() === foundVeh.conductor?.toLowerCase());
+                                      setCasetaConductorId(match ? String(match.id_trabajador) : "");
+                                    } else {
+                                      setCasetaConductorId("");
+                                      setCasetaConductorQuery("");
+                                    }
+                                  } else {
+                                    setCasetaCorbatin("");
                                     setCasetaConductorId("");
-                                    setIsConductorDropdownOpen(true);
-                                  }}
-                                  title="Limpiar chofer"
-                                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                                >
-                                  <IconX className="w-3.5 h-3.5" />
-                                </button>
-                              )}
+                                    setCasetaConductorQuery("");
+                                  }
+                                }}
+                                className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 bg-white font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                              >
+                                <option value="">-- Seleccionar Vehículo Asignado --</option>
+                                {empresaVehicles.length === 0 && selectedEmpresaId ? (
+                                  <option value="" disabled>(Sin vehículos habilitados para esta empresa)</option>
+                                ) : (
+                                  empresaVehicles.map((v) => (
+                                    <option key={v.id} value={v.id}>
+                                      {v.marca} {v.modelo} · Placas: {v.placas} · Corbatín #{v.corbatinNum}
+                                    </option>
+                                  ))
+                                )}
+                              </select>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 3. DIAGNÓSTICO DE ACCESO Y FICHA DE LA UNIDAD (ESTRUCTURA CONSTANTE) */}
+                        {currentCasetaCorbatinVerde ? (
+                          <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="px-2 py-0.5 rounded-md bg-emerald-700 text-white font-mono font-bold text-xs shrink-0">
+                                  VERDE #{formatCorbatinVerdeNum(currentCasetaCorbatinVerde.corbatinNum)}
+                                </span>
+                                <span className="font-bold text-slate-900 truncate">
+                                  {currentCasetaCorbatinVerde.empresaNombre || "Empresa de Proyecto"}
+                                </span>
+                              </div>
+                              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 shrink-0">
+                                {currentCasetaCorbatinVerde.activo !== false ? "✓ Vigente" : "⛔ Inactivo"}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white p-2 rounded-lg border border-emerald-200/80 text-[11px]">
+                              <div>
+                                <span className="text-slate-400 block text-[9px] font-bold uppercase">Modalidad:</span>
+                                <span className="font-semibold text-emerald-800">Larga Estancia</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 block text-[9px] font-bold uppercase">Vigencia:</span>
+                                <span className="font-semibold text-slate-800 truncate block">{currentCasetaCorbatinVerde.vigenciaTexto || "6 Meses"}</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 block text-[9px] font-bold uppercase">Conductor:</span>
+                                <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+                                  {currentConductorVehicular && (currentConductorVehicular.foto_url || currentConductorVehicular.foto) && (
+                                    <img
+                                      src={normalizeFotoUrl(currentConductorVehicular.foto_url || currentConductorVehicular.foto)}
+                                      alt="Chofer"
+                                      className="w-4 h-4 rounded-full object-cover border border-emerald-400 shrink-0 cursor-pointer hover:scale-125 transition-transform"
+                                      onClick={() => setSelectedFotoTrabajadorPreview(currentConductorVehicular)}
+                                      title="Clic para ampliar credencial del chofer"
+                                    />
+                                  )}
+                                  <span className="font-semibold text-slate-800 truncate block">
+                                    {currentConductorVehicular
+                                      ? `${currentConductorVehicular.nombre} ${currentConductorVehicular.apellidos}`
+                                      : (casetaConductorQuery || "Chofer Asignado")}
+                                  </span>
+                                </div>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 block text-[9px] font-bold uppercase">Teléfono:</span>
+                                <CopyableInlineText
+                                  text={currentCasetaCorbatinVerde.telefono || ""}
+                                  label="Teléfono"
+                                  className="font-mono text-slate-800 font-semibold block truncate"
+                                  onCopyToast={showToast}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2.5 shadow-2xs">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                              {/* FOTOGRAFÍAS DE CONTROL: VEHÍCULO Y CONDUCTOR */}
+                              <div className="flex items-center gap-2 shrink-0 self-center sm:self-auto">
+                                {/* FOTOGRAFÍA DEL VEHÍCULO O PLACEHOLDER */}
+                                <div className="relative shrink-0 w-24 sm:w-26 sm:h-20 h-24 rounded-xl overflow-hidden bg-slate-900 border border-slate-200 shadow-2xs group">
+                                  {currentCasetaVehicle?.foto ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedFotoVehiculoPreview(currentCasetaVehicle)}
+                                      className="w-full h-full block cursor-pointer group focus:outline-none relative"
+                                      title="Clic para ampliar fotografía del vehículo"
+                                    >
+                                      <img
+                                        src={normalizeFotoUrl(currentCasetaVehicle.foto)}
+                                        alt={`${currentCasetaVehicle.marca} ${currentCasetaVehicle.modelo}`}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                      />
+                                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white gap-1 text-[11px] font-bold backdrop-blur-[1px]">
+                                        <IconEye className="w-3.5 h-3.5" />
+                                        <span>Ampliar</span>
+                                      </div>
+                                      <span className="absolute bottom-1 right-1 bg-black/70 backdrop-blur-xs text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                                        Unidad
+                                      </span>
+                                    </button>
+                                  ) : (
+                                    <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 p-2 text-center">
+                                      <IconCar className="w-6 h-6 text-slate-400" />
+                                      <span className="text-[10px] font-medium text-slate-500 leading-tight">
+                                        {currentCasetaVehicle ? "Sin foto" : "Sin unidad"}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* FOTOGRAFÍA DEL CONDUCTOR / CHOFER */}
+                                <div className="relative shrink-0 w-20 sm:w-20 sm:h-20 h-24 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shadow-2xs group">
+                                  {currentConductorVehicular && (currentConductorVehicular.foto_url || currentConductorVehicular.foto) ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedFotoTrabajadorPreview(currentConductorVehicular)}
+                                      className="w-full h-full block cursor-pointer group focus:outline-none relative"
+                                      title="Clic para ampliar credencial del chofer"
+                                    >
+                                      <img
+                                        src={normalizeFotoUrl(currentConductorVehicular.foto_url || currentConductorVehicular.foto)}
+                                        alt={`${currentConductorVehicular.nombre} ${currentConductorVehicular.apellidos || ""}`}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                      />
+                                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white gap-1 text-[10px] font-bold backdrop-blur-[1px]">
+                                        <IconEye className="w-3 h-3" />
+                                        <span>Ver</span>
+                                      </div>
+                                      <span className="absolute bottom-1 right-1 bg-emerald-900/80 backdrop-blur-xs text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                                        Chofer
+                                      </span>
+                                    </button>
+                                  ) : (
+                                    <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-gradient-to-br from-slate-50 to-slate-100 text-slate-400 p-1 text-center">
+                                      <IconUser className="w-6 h-6 text-slate-400" />
+                                      <span className="text-[9px] font-medium text-slate-500 leading-tight">
+                                        {currentConductorVehicular ? "Sin foto" : "Chofer"}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* INFORMACIÓN DEL VEHÍCULO Y STATUS */}
+                              <div className="flex-1 min-w-0 w-full space-y-1.5">
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span className="px-2 py-0.5 rounded-md bg-teal-800 text-white font-mono font-bold text-xs shrink-0">
+                                      {currentCasetaVehicle?.corbatinNum ? `#${currentCasetaVehicle.corbatinNum}` : "# --"}
+                                    </span>
+                                    <span className="font-bold text-slate-900 text-xs sm:text-sm truncate">
+                                      {currentCasetaVehicle
+                                        ? `${currentCasetaVehicle.marca} ${currentCasetaVehicle.modelo}`
+                                        : "Sin vehículo seleccionado"}
+                                    </span>
+                                  </div>
+                                  <div className="shrink-0">
+                                    {currentCasetaVehicle ? (
+                                      <StatusBadge status={currentCasetaVehicle.status} />
+                                    ) : (
+                                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200 border border-slate-300/70">
+                                        En Espera
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white p-2 rounded-lg border border-slate-200 text-[11px]">
+                                  <div>
+                                    <span className="text-slate-400 block text-[9px] font-bold uppercase">Placas:</span>
+                                    <span className="font-mono font-bold text-slate-800 block truncate">
+                                      {currentCasetaVehicle?.placas || "—"}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-400 block text-[9px] font-bold uppercase">Color:</span>
+                                    <span className="font-semibold text-slate-800 block truncate">
+                                      {currentCasetaVehicle?.color || "—"}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-400 block text-[9px] font-bold uppercase">Conductor:</span>
+                                    <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+                                      {currentConductorVehicular && (currentConductorVehicular.foto_url || currentConductorVehicular.foto) && (
+                                        <img
+                                          src={normalizeFotoUrl(currentConductorVehicular.foto_url || currentConductorVehicular.foto)}
+                                          alt="Chofer"
+                                          className="w-4 h-4 rounded-full object-cover border border-emerald-400 shrink-0 cursor-pointer hover:scale-125 transition-transform"
+                                          onClick={() => setSelectedFotoTrabajadorPreview(currentConductorVehicular)}
+                                          title="Clic para ampliar credencial del chofer"
+                                        />
+                                      )}
+                                      <span className="font-semibold text-slate-800 truncate block">
+                                        {currentConductorVehicular
+                                          ? `${currentConductorVehicular.nombre} ${currentConductorVehicular.apellidos}`
+                                          : (casetaConductorQuery || currentCasetaVehicle?.conductor || "—")}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-400 block text-[9px] font-bold uppercase">Teléfono:</span>
+                                    <CopyableInlineText
+                                      text={currentConductorVehicular?.telefono || currentCasetaVehicle?.telefono || currentEmpresa?.telefono || ""}
+                                      label="Teléfono"
+                                      className="font-mono text-slate-800 font-semibold block truncate"
+                                      onCopyToast={showToast}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* BANNERS DE DIAGNÓSTICO / STATUS */}
+                            {currentCasetaVehicle ? (
+                              <>
+                                {currentVehicleDentro ? (
+                                  <div className="p-2.5 rounded-xl border bg-amber-50 border-amber-300 text-amber-950 space-y-1.5">
+                                    <div className="font-bold text-xs uppercase flex items-center justify-between text-amber-900">
+                                      <div className="flex items-center gap-1.5">
+                                        <IconAlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                        <span>Unidad Actualmente Dentro del Predio</span>
+                                      </div>
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-900 uppercase tracking-wide">
+                                        Pendiente de Salida
+                                      </span>
+                                    </div>
+                                    <p className="text-xs leading-relaxed text-amber-900">
+                                      Este vehículo ya cuenta con una entrada activa registrada a las <strong className="font-mono">{formatHoraLocal(currentVehicleDentro.raw_hora_entrada || currentVehicleDentro.horaEntrada)}</strong> ({currentVehicleDentro.fecha ? (currentVehicleDentro.fecha === new Date().toISOString().split("T")[0] ? "Hoy" : formatFechaLegible(currentVehicleDentro.fecha, false)) : "Hoy"}). Solo se puede registrar una nueva entrada una vez que haya salido.
+                                    </p>
+                                    <div className="pt-1.5 flex flex-wrap items-center justify-between gap-2 border-t border-amber-200/80">
+                                      <span className="text-[11px] text-amber-800 font-medium truncate max-w-[220px]">
+                                        Destino: {currentVehicleDentro.trabajos || "En predio"}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleMarcarSalida(currentVehicleDentro.id)}
+                                        disabled={Boolean(marcandoSalidaIds[currentVehicleDentro.id])}
+                                        className="py-1 px-3 rounded-lg text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 disabled:opacity-50"
+                                      >
+                                        <IconLogOut className="w-3.5 h-3.5" />
+                                        <span>{marcandoSalidaIds[currentVehicleDentro.id] ? "Registrando salida..." : "Registrar Salida de Unidad"}</span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : currentCasetaVehicle.permisoTemporal?.activo && new Date(currentCasetaVehicle.permisoTemporal.fechaExpiracion).getTime() > Date.now() ? (
+                                  <div className="p-3 rounded-xl bg-amber-500/10 border-2 border-amber-400 text-amber-950 space-y-1.5 shadow-2xs">
+                                    <div className="flex items-center justify-between">
+                                      <div className="font-bold text-xs uppercase flex items-center gap-1.5 text-amber-900">
+                                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                                        <span>Pase Provisional Vehicular Autorizado por Oficina HOA</span>
+                                      </div>
+                                      <span className="text-[10px] font-mono font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full">
+                                        Hasta: {new Date(currentCasetaVehicle.permisoTemporal.fechaExpiracion).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })} hrs
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-amber-900 leading-relaxed">
+                                      {currentCasetaVehicle.permisoTemporal.autorizadoPorOficina ? (
+                                        <><strong>Autorizó:</strong> {currentCasetaVehicle.permisoTemporal.autorizadoPorOficina} · </>
+                                      ) : null}
+                                      <strong>Acuerdo:</strong> {currentCasetaVehicle.permisoTemporal.motivoAcuerdo}
+                                      {currentCasetaVehicle.permisoTemporal.notasSupervisor ? (
+                                        <> · <strong>Notas:</strong> {currentCasetaVehicle.permisoTemporal.notasSupervisor}</>
+                                      ) : null}
+                                    </p>
+                                    <div className="text-[11px] font-semibold text-emerald-800 bg-emerald-100/70 p-1.5 rounded-lg border border-emerald-200 flex items-center gap-1.5">
+                                      <IconCheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                      <span>Ingreso vehicular temporal autorizado. Procede a registrar entrada de la unidad.</span>
+                                    </div>
+                                  </div>
+                                ) : currentCasetaVehicle.status !== "Habilitado" && currentCasetaVehicle.sancionActiva ? (
+                                  <div className={`p-2.5 rounded-xl border ${currentCasetaVehicle.status === "Suspendido" ? "bg-red-50 border-red-200 text-red-900" : "bg-amber-50 border-amber-200 text-amber-900"} space-y-1.5`}>
+                                    <div className="font-bold text-xs uppercase flex items-center gap-1.5 text-red-900">
+                                      <IconAlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                                      <span>Alerta de Suspensión Vehicular HOA</span>
+                                    </div>
+                                    <p className="text-xs leading-relaxed">
+                                      <strong>Motivo:</strong> {currentCasetaVehicle.sancionActiva.motivo} (Expira: <span className="font-mono font-bold">{currentCasetaVehicle.sancionActiva.expiracion}</span>)
+                                    </p>
+                                    <div className="pt-1.5 flex flex-wrap items-center justify-between gap-2 border-t border-red-200/80">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleCambiarAIngresoPeatonal(currentCasetaVehicle)}
+                                        className="py-1.5 px-3 rounded-lg text-xs font-bold text-white bg-sky-700 hover:bg-sky-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
+                                      >
+                                        <IconWalk className="w-3.5 h-3.5" />
+                                        <span>🚶 Registrar Entrada Peatonal</span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setCasetaOverrideActive(true)}
+                                        className="text-amber-800 font-bold underline hover:text-amber-950 text-xs cursor-pointer"
+                                      >
+                                        Anulación de Supervisor
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : currentCasetaVehicle.status === "Habilitado" ? (
+                                  <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
+                                    <IconCheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                    <span>Vehículo al corriente y autorizado para ingreso regular a condominio.</span>
+                                  </div>
+                                ) : null}
+                              </>
+                            ) : (
+                              <div className="p-2 rounded-lg bg-slate-100/90 border border-slate-200/90 text-slate-600 text-xs flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <IconShield className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                  <span className="text-[11px] truncate">
+                                    Diagnóstico HOA: Selecciona una unidad para verificar permisos y suspensiones en tiempo real.
+                                  </span>
+                                </div>
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider shrink-0 bg-slate-200/80 px-2 py-0.5 rounded">
+                                  En Espera
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* 4. DATOS DEL INGRESO */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Pasajeros (sin chofer)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              max="50"
+                              value={casetaNumPasajeros}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === "") {
+                                  setCasetaNumPasajeros("");
+                                } else {
+                                  const parsed = parseInt(val, 10);
+                                  setCasetaNumPasajeros(isNaN(parsed) ? "" : Math.max(0, parsed));
+                                }
+                              }}
+                              onFocus={(e) => e.target.select()}
+                              placeholder="0"
+                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 font-mono font-bold text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none bg-white text-center"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Hora de Entrada</label>
+                            <div className="flex gap-1.5">
+                              <input
+                                type="text"
+                                value={casetaHoraEntrada}
+                                onChange={(e) => setCasetaHoraEntrada(e.target.value)}
+                                placeholder="08:30 hrs"
+                                className="w-full h-10 rounded-xl px-3 text-sm border border-slate-300 font-mono text-slate-800 bg-white"
+                              />
                               <button
                                 type="button"
-                                onClick={() => setIsConductorDropdownOpen(!isConductorDropdownOpen)}
-                                title="Desplegar choferes"
-                                className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                                onClick={setHoraActual}
+                                className="px-2.5 h-10 text-xs font-bold rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 shrink-0 cursor-pointer active:scale-95 transition-all"
                               >
-                                {isConductorDropdownOpen ? (
-                                  <IconChevronUp className="w-3.5 h-3.5" />
-                                ) : (
-                                  <IconChevronDown className="w-3.5 h-3.5" />
-                                )}
+                                Ahora
                               </button>
                             </div>
                           </div>
-
-                          {/* MENÚ DESPLEGABLE DE CONDUCTORES */}
-                          {isConductorDropdownOpen && (
-                            <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden max-h-60 sm:max-h-64 overflow-y-auto">
-                              <div className="px-3 py-1.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-[11px] font-semibold text-slate-600 sticky top-0 z-10">
-                                <span className="truncate">
-                                  {currentCasetaCorbatinVerde
-                                    ? `Chofer para ${currentCasetaCorbatinVerde.empresaNombre}`
-                                    : `Colaboradores (${filteredEmpresaTrabajadores.length})`}
-                                </span>
-                                <span className="text-[10px] text-slate-400 hidden sm:inline shrink-0">
-                                  Usa ↑ ↓ y Enter
-                                </span>
-                              </div>
-
-                              {filteredEmpresaTrabajadores.length > 0 ? (
-                                <div className="divide-y divide-slate-100">
-                                  {filteredEmpresaTrabajadores.map((t, idx) => {
-                                    const isSelected = String(casetaConductorId) === String(t.id_trabajador);
-                                    const isHighlighted = conductorHighlightedIndex === idx;
-                                    return (
-                                      <div
-                                        key={t.id_trabajador}
-                                        onClick={() => handleSelectConductorFromDropdown(t)}
-                                        onMouseEnter={() => setConductorHighlightedIndex(idx)}
-                                        className={`p-2.5 cursor-pointer transition-colors border-l-4 active:bg-emerald-100 ${isSelected
-                                          ? "bg-emerald-100/70 border-l-emerald-600"
-                                          : isHighlighted
-                                            ? "bg-emerald-50/80 border-l-emerald-400"
-                                            : "hover:bg-slate-50 border-l-transparent"
-                                          }`}
-                                      >
-                                        <div className="flex items-center justify-between gap-2.5">
-                                          <div className="flex items-center gap-2.5 min-w-0">
-                                            <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-slate-200 bg-slate-100 flex items-center justify-center">
-                                              {t.foto_url || t.foto ? (
-                                                <img
-                                                  src={normalizeFotoUrl(t.foto_url || t.foto)}
-                                                  alt={t.nombre}
-                                                  className="w-full h-full object-cover"
-                                                />
-                                              ) : (
-                                                <IconUser className="w-4 h-4 text-slate-400" />
-                                              )}
-                                            </div>
-                                            <div className="min-w-0">
-                                              <span className="font-bold text-slate-900 text-xs sm:text-sm block truncate">
-                                                {t.nombre} {t.apellidos}
-                                              </span>
-                                              <span className="text-[11px] text-slate-500 font-mono block">
-                                                📞 {t.telefono || "Sin teléfono"}
-                                              </span>
-                                            </div>
-                                          </div>
-                                          <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                            Acreditado
-                                          </span>
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              ) : (
-                                <div className="p-3 text-center text-xs text-slate-500 space-y-1">
-                                  <p className="font-bold text-slate-700">
-                                    {currentCasetaCorbatinVerde
-                                      ? `Puedes capturar libremente el nombre del chofer arriba.`
-                                      : `No hay colaboradores con "${casetaConductorQuery}"`}
-                                  </p>
-                                  <p className="text-[11px] text-slate-400">
-                                    Puedes escribir el nombre manualmente si cuenta con autorización especial.
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* 2. SELECCIÓN DE EMPRESA Y VEHÍCULO / CORBATÍN VERDE */}
-                      {currentCasetaCorbatinVerde ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-emerald-50/70 border border-emerald-200">
                           <div>
-                            <label className="block text-xs font-semibold text-emerald-950 mb-1">
-                              2. Empresa / Proyecto (Corbatín Verde)
-                            </label>
-                            <div className="h-10 px-3.5 rounded-xl bg-white border border-emerald-300 text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
-                              <IconBuilding className="w-4 h-4 text-emerald-700 shrink-0" />
-                              <span className="truncate">{currentCasetaCorbatinVerde.empresaNombre}</span>
-                            </div>
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-semibold text-emerald-950 mb-1">
-                              3. Placas de la Unidad (Opcional / Identificación)
-                            </label>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Hora Estimada Salida</label>
                             <input
                               type="text"
-                              value={casetaPlacasVerde}
-                              onChange={(e) => setCasetaPlacasVerde(e.target.value.toUpperCase())}
-                              placeholder="Ej. ABC-1234 o Camioneta Blanca"
-                              className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-emerald-300 bg-white font-mono font-bold text-slate-900 outline-none focus:ring-2 focus:ring-emerald-400 placeholder:font-sans placeholder:font-normal placeholder:text-slate-400"
+                              value={casetaHoraSalida}
+                              onChange={(e) => setCasetaHoraSalida(e.target.value)}
+                              placeholder="18:00 hrs"
+                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 font-mono text-slate-800 bg-white"
                             />
                           </div>
                         </div>
-                      ) : (
+
+                        {/* 5. TRABAJOS Y DESTINO */}
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Trabajos y Destino en el Complejo *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={casetaTrabajos}
+                            onChange={(e) => setCasetaTrabajos(e.target.value)}
+                            placeholder="Ej. Pintura de fachada exterior Torre 1, Depto 302"
+                            className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none bg-white"
+                          />
+                        </div>
+
+                        {/* 6. BOTÓN DE ENVÍO */}
+                        <div className="pt-1">
+                          {currentVehicleDentro ? (
+                            <button
+                              type="button"
+                              disabled
+                              className="w-full h-11 rounded-xl text-xs sm:text-sm font-bold text-amber-900 bg-amber-100 border border-amber-300 cursor-not-allowed shadow-xs flex items-center justify-center gap-2"
+                            >
+                              <IconAlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                              <span>Entrada Bloqueada — La unidad ya está dentro (requiere registrar salida)</span>
+                            </button>
+                          ) : currentCorbatinVerdeDentro ? (
+                            <button
+                              type="button"
+                              disabled
+                              className="w-full h-11 rounded-xl text-xs sm:text-sm font-bold text-amber-900 bg-amber-100 border border-amber-300 cursor-not-allowed shadow-xs flex items-center justify-center gap-2"
+                            >
+                              <IconAlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                              <span>Entrada Bloqueada — Corbatín Verde con ingreso activo pendiente de salida</span>
+                            </button>
+                          ) : currentCasetaVehicle?.status === "Suspendido" && !casetaOverrideActive ? (
+                            <button
+                              type="button"
+                              disabled
+                              className="w-full h-11 rounded-xl text-xs sm:text-sm font-bold text-white bg-red-500 cursor-not-allowed opacity-80 shadow-xs"
+                            >
+                              Acceso Vehicular Bloqueado — Vehículo con Suspensión Activa
+                            </button>
+                          ) : (
+                            <button
+                              type="submit"
+                              disabled={isSubmittingEntrada}
+                              className={`w-full h-11 rounded-xl text-sm font-bold text-white hover:brightness-105 active:scale-[0.99] transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 ${isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                                }`}
+                              style={{ background: currentCasetaCorbatinVerde ? "linear-gradient(135deg, #0D6E5F, #059669)" : "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
+                            >
+                              {isSubmittingEntrada ? (
+                                <>
+                                  <IconSpinner className="w-4 h-4" />
+                                  <span>Registrando Entrada...</span>
+                                </>
+                              ) : (
+                                <span>
+                                  {currentCasetaCorbatinVerde
+                                    ? (casetaOverrideActive ? "Autorizar Entrada (Corbatín Verde) con Anulación" : "Permitir Entrada (Corbatín Verde) y Registrar")
+                                    : (casetaOverrideActive ? "Autorizar Ingreso Vehicular con Anulación" : "Permitir Entrada Vehicular y Registrar")}
+                                </span>
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </form>
+                    )}
+
+                    {/* FORMULARIO DE ACCESO PEATONAL */}
+                    {casetaModoAcceso === "peatonal" && (
+                      <form onSubmit={handleRegistrarEntrada} className="space-y-3">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
                             <label className="block text-xs font-semibold text-slate-700 mb-1">
-                              2. Empresa Contratista
+                              1. Empresa Contratista
                             </label>
                             <select
                               value={selectedEmpresaId}
                               onChange={(e) => {
-                                const newEmpId = e.target.value;
-                                setSelectedEmpresaId(newEmpId);
-                                setSelectedVehicleId("");
-                                setSelectedCorbatinVerdeId("");
-                                setCasetaCorbatin("");
-                                setCasetaConductorId("");
-                                setCasetaConductorQuery("");
+                                setSelectedEmpresaId(e.target.value);
+                                setCasetaPeatonalTrabajadorId("");
                               }}
-                              className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 bg-white font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                              className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 bg-white font-medium text-slate-800 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
                             >
                               <option value="">-- Seleccionar Empresa Contratista --</option>
                               {empresas.map((emp) => (
@@ -11922,4870 +12465,3928 @@ export default function App() {
 
                           <div>
                             <label className="block text-xs font-semibold text-slate-700 mb-1">
-                              3. Vehículo Asignado
+                              2. Seleccionar de Plantilla (Opcional)
                             </label>
                             <select
-                              value={selectedVehicleId}
-                              onChange={(e) => {
-                                const newVehId = e.target.value;
-                                setSelectedVehicleId(newVehId);
-                                setSelectedCorbatinVerdeId("");
-                                const foundVeh = vehicles.find((v) => v.id === newVehId);
-                                if (foundVeh) {
-                                  setCasetaCorbatin(foundVeh.corbatinNum ? `#${foundVeh.corbatinNum}` : (foundVeh.placas || ""));
-                                  if (foundVeh.conductor && foundVeh.conductor !== "N/A" && foundVeh.conductor.trim()) {
-                                    setCasetaConductorQuery(foundVeh.conductor);
-                                    const match = empresaTrabajadores.find((t) => `${t.nombre} ${t.apellidos}`.toLowerCase() === foundVeh.conductor?.toLowerCase());
-                                    setCasetaConductorId(match ? String(match.id_trabajador) : "");
-                                  } else {
-                                    setCasetaConductorId("");
-                                    setCasetaConductorQuery("");
-                                  }
-                                } else {
-                                  setCasetaCorbatin("");
-                                  setCasetaConductorId("");
-                                  setCasetaConductorQuery("");
-                                }
-                              }}
-                              className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 bg-white font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                              value={casetaPeatonalTrabajadorId}
+                              onChange={(e) => setCasetaPeatonalTrabajadorId(e.target.value)}
+                              className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 bg-white text-slate-800 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
                             >
-                              <option value="">-- Seleccionar Vehículo Asignado --</option>
-                              {empresaVehicles.length === 0 && selectedEmpresaId ? (
-                                <option value="" disabled>(Sin vehículos habilitados para esta empresa)</option>
-                              ) : (
-                                empresaVehicles.map((v) => (
-                                  <option key={v.id} value={v.id}>
-                                    {v.marca} {v.modelo} · Placas: {v.placas} · Corbatín #{v.corbatinNum}
-                                  </option>
-                                ))
-                              )}
+                              <option value="">[+] Capturar colaborador / Nombre libre</option>
+                              {empresaTrabajadores.map((t) => (
+                                <option key={t.id_trabajador} value={String(t.id_trabajador)}>
+                                  {t.nombre} {t.apellidos} {t.activo ? "· Autorizado" : "· (Inactivo)"}
+                                </option>
+                              ))}
                             </select>
                           </div>
                         </div>
-                      )}
 
-                      {/* 3. DIAGNÓSTICO DE ACCESO Y FICHA DE LA UNIDAD (ESTRUCTURA CONSTANTE) */}
-                      {currentCasetaCorbatinVerde ? (
-                        <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs space-y-2">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <span className="px-2 py-0.5 rounded-md bg-emerald-700 text-white font-mono font-bold text-xs shrink-0">
-                                VERDE #{formatCorbatinVerdeNum(currentCasetaCorbatinVerde.corbatinNum)}
-                              </span>
-                              <span className="font-bold text-slate-900 truncate">
-                                {currentCasetaCorbatinVerde.empresaNombre || "Empresa de Proyecto"}
-                              </span>
-                            </div>
-                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 shrink-0">
-                              {currentCasetaCorbatinVerde.activo !== false ? "✓ Vigente" : "⛔ Inactivo"}
-                            </span>
-                          </div>
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white p-2 rounded-lg border border-emerald-200/80 text-[11px]">
-                            <div>
-                              <span className="text-slate-400 block text-[9px] font-bold uppercase">Modalidad:</span>
-                              <span className="font-semibold text-emerald-800">Larga Estancia</span>
-                            </div>
-                            <div>
-                              <span className="text-slate-400 block text-[9px] font-bold uppercase">Vigencia:</span>
-                              <span className="font-semibold text-slate-800 truncate block">{currentCasetaCorbatinVerde.vigenciaTexto || "6 Meses"}</span>
-                            </div>
-                            <div>
-                              <span className="text-slate-400 block text-[9px] font-bold uppercase">Conductor:</span>
-                              <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
-                                {currentConductorVehicular && (currentConductorVehicular.foto_url || currentConductorVehicular.foto) && (
-                                  <img
-                                    src={normalizeFotoUrl(currentConductorVehicular.foto_url || currentConductorVehicular.foto)}
-                                    alt="Chofer"
-                                    className="w-4 h-4 rounded-full object-cover border border-emerald-400 shrink-0 cursor-pointer hover:scale-125 transition-transform"
-                                    onClick={() => setSelectedFotoTrabajadorPreview(currentConductorVehicular)}
-                                    title="Clic para ampliar credencial del chofer"
-                                  />
-                                )}
-                                <span className="font-semibold text-slate-800 truncate block">
-                                  {currentConductorVehicular
-                                    ? `${currentConductorVehicular.nombre} ${currentConductorVehicular.apellidos}`
-                                    : (casetaConductorQuery || "Chofer Asignado")}
-                                </span>
-                              </div>
-                            </div>
-                            <div>
-                              <span className="text-slate-400 block text-[9px] font-bold uppercase">Teléfono:</span>
-                              <CopyableInlineText
-                                text={currentCasetaCorbatinVerde.telefono || ""}
-                                label="Teléfono"
-                                className="font-mono text-slate-800 font-semibold block truncate"
-                                onCopyToast={showToast}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2.5 shadow-2xs">
+                        {/* DIAGNÓSTICO / PROTOCOLO PEATONAL */}
+                        <div className="p-3 rounded-xl bg-sky-50 border border-sky-200 text-xs space-y-2">
                           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                            {/* FOTOGRAFÍAS DE CONTROL: VEHÍCULO Y CONDUCTOR */}
-                            <div className="flex items-center gap-2 shrink-0 self-center sm:self-auto">
-                              {/* FOTOGRAFÍA DEL VEHÍCULO O PLACEHOLDER */}
-                              <div className="relative shrink-0 w-24 sm:w-26 sm:h-20 h-24 rounded-xl overflow-hidden bg-slate-900 border border-slate-200 shadow-2xs group">
-                                {currentCasetaVehicle?.foto ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => setSelectedFotoVehiculoPreview(currentCasetaVehicle)}
-                                    className="w-full h-full block cursor-pointer group focus:outline-none relative"
-                                    title="Clic para ampliar fotografía del vehículo"
-                                  >
-                                    <img
-                                      src={normalizeFotoUrl(currentCasetaVehicle.foto)}
-                                      alt={`${currentCasetaVehicle.marca} ${currentCasetaVehicle.modelo}`}
-                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                    />
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white gap-1 text-[11px] font-bold backdrop-blur-[1px]">
-                                      <IconEye className="w-3.5 h-3.5" />
-                                      <span>Ampliar</span>
-                                    </div>
-                                    <span className="absolute bottom-1 right-1 bg-black/70 backdrop-blur-xs text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
-                                      Unidad
-                                    </span>
-                                  </button>
-                                ) : (
-                                  <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 p-2 text-center">
-                                    <IconCar className="w-6 h-6 text-slate-400" />
-                                    <span className="text-[10px] font-medium text-slate-500 leading-tight">
-                                      {currentCasetaVehicle ? "Sin foto" : "Sin unidad"}
-                                    </span>
-                                  </div>
-                                )}
+                            {currentTrabajadorPeatonal?.foto_url ? (
+                              <button
+                                type="button"
+                                onClick={() => setSelectedFotoTrabajadorPreview(currentTrabajadorPeatonal)}
+                                className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-sky-300 bg-white shadow-2xs group relative cursor-pointer"
+                                title="Clic para ver credencial del trabajador"
+                              >
+                                <img
+                                  src={normalizeFotoUrl(currentTrabajadorPeatonal.foto_url)}
+                                  alt={currentTrabajadorPeatonal.nombre}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                />
+                                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                  <IconEye className="w-3 h-3" />
+                                </div>
+                              </button>
+                            ) : (
+                              <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-800 flex items-center justify-center shrink-0">
+                                <IconWalk className="w-5 h-5" />
                               </div>
-
-                              {/* FOTOGRAFÍA DEL CONDUCTOR / CHOFER */}
-                              <div className="relative shrink-0 w-20 sm:w-20 sm:h-20 h-24 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shadow-2xs group">
-                                {currentConductorVehicular && (currentConductorVehicular.foto_url || currentConductorVehicular.foto) ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => setSelectedFotoTrabajadorPreview(currentConductorVehicular)}
-                                    className="w-full h-full block cursor-pointer group focus:outline-none relative"
-                                    title="Clic para ampliar credencial del chofer"
-                                  >
-                                    <img
-                                      src={normalizeFotoUrl(currentConductorVehicular.foto_url || currentConductorVehicular.foto)}
-                                      alt={`${currentConductorVehicular.nombre} ${currentConductorVehicular.apellidos || ""}`}
-                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                    />
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white gap-1 text-[10px] font-bold backdrop-blur-[1px]">
-                                      <IconEye className="w-3 h-3" />
-                                      <span>Ver</span>
-                                    </div>
-                                    <span className="absolute bottom-1 right-1 bg-emerald-900/80 backdrop-blur-xs text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
-                                      Chofer
-                                    </span>
-                                  </button>
-                                ) : (
-                                  <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-gradient-to-br from-slate-50 to-slate-100 text-slate-400 p-1 text-center">
-                                    <IconUser className="w-6 h-6 text-slate-400" />
-                                    <span className="text-[9px] font-medium text-slate-500 leading-tight">
-                                      {currentConductorVehicular ? "Sin foto" : "Chofer"}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* INFORMACIÓN DEL VEHÍCULO Y STATUS */}
-                            <div className="flex-1 min-w-0 w-full space-y-1.5">
-                              <div className="flex items-center justify-between gap-2">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <span className="px-2 py-0.5 rounded-md bg-teal-800 text-white font-mono font-bold text-xs shrink-0">
-                                    {currentCasetaVehicle?.corbatinNum ? `#${currentCasetaVehicle.corbatinNum}` : "# --"}
-                                  </span>
-                                  <span className="font-bold text-slate-900 text-xs sm:text-sm truncate">
-                                    {currentCasetaVehicle
-                                      ? `${currentCasetaVehicle.marca} ${currentCasetaVehicle.modelo}`
-                                      : "Sin vehículo seleccionado"}
-                                  </span>
-                                </div>
-                                <div className="shrink-0">
-                                  {currentCasetaVehicle ? (
-                                    <StatusBadge status={currentCasetaVehicle.status} />
-                                  ) : (
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200 border border-slate-300/70">
-                                      En Espera
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white p-2 rounded-lg border border-slate-200 text-[11px]">
-                                <div>
-                                  <span className="text-slate-400 block text-[9px] font-bold uppercase">Placas:</span>
-                                  <span className="font-mono font-bold text-slate-800 block truncate">
-                                    {currentCasetaVehicle?.placas || "—"}
-                                  </span>
-                                </div>
-                                <div>
-                                  <span className="text-slate-400 block text-[9px] font-bold uppercase">Color:</span>
-                                  <span className="font-semibold text-slate-800 block truncate">
-                                    {currentCasetaVehicle?.color || "—"}
-                                  </span>
-                                </div>
-                                <div>
-                                  <span className="text-slate-400 block text-[9px] font-bold uppercase">Conductor:</span>
-                                  <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
-                                    {currentConductorVehicular && (currentConductorVehicular.foto_url || currentConductorVehicular.foto) && (
-                                      <img
-                                        src={normalizeFotoUrl(currentConductorVehicular.foto_url || currentConductorVehicular.foto)}
-                                        alt="Chofer"
-                                        className="w-4 h-4 rounded-full object-cover border border-emerald-400 shrink-0 cursor-pointer hover:scale-125 transition-transform"
-                                        onClick={() => setSelectedFotoTrabajadorPreview(currentConductorVehicular)}
-                                        title="Clic para ampliar credencial del chofer"
-                                      />
-                                    )}
-                                    <span className="font-semibold text-slate-800 truncate block">
-                                      {currentConductorVehicular
-                                        ? `${currentConductorVehicular.nombre} ${currentConductorVehicular.apellidos}`
-                                        : (casetaConductorQuery || currentCasetaVehicle?.conductor || "—")}
-                                    </span>
-                                  </div>
-                                </div>
-                                <div>
-                                  <span className="text-slate-400 block text-[9px] font-bold uppercase">Teléfono:</span>
-                                  <CopyableInlineText
-                                    text={currentConductorVehicular?.telefono || currentCasetaVehicle?.telefono || currentEmpresa?.telefono || ""}
-                                    label="Teléfono"
-                                    className="font-mono text-slate-800 font-semibold block truncate"
-                                    onCopyToast={showToast}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* BANNERS DE DIAGNÓSTICO / STATUS */}
-                          {currentCasetaVehicle ? (
-                            <>
-                              {currentVehicleDentro ? (
-                                <div className="p-2.5 rounded-xl border bg-amber-50 border-amber-300 text-amber-950 space-y-1.5">
-                                  <div className="font-bold text-xs uppercase flex items-center justify-between text-amber-900">
-                                    <div className="flex items-center gap-1.5">
-                                      <IconAlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                                      <span>Unidad Actualmente Dentro del Predio</span>
-                                    </div>
-                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-900 uppercase tracking-wide">
-                                      Pendiente de Salida
-                                    </span>
-                                  </div>
-                                  <p className="text-xs leading-relaxed text-amber-900">
-                                    Este vehículo ya cuenta con una entrada activa registrada a las <strong className="font-mono">{formatHoraLocal(currentVehicleDentro.raw_hora_entrada || currentVehicleDentro.horaEntrada)}</strong> ({currentVehicleDentro.fecha ? (currentVehicleDentro.fecha === new Date().toISOString().split("T")[0] ? "Hoy" : formatFechaLegible(currentVehicleDentro.fecha, false)) : "Hoy"}). Solo se puede registrar una nueva entrada una vez que haya salido.
-                                  </p>
-                                  <div className="pt-1.5 flex flex-wrap items-center justify-between gap-2 border-t border-amber-200/80">
-                                    <span className="text-[11px] text-amber-800 font-medium truncate max-w-[220px]">
-                                      Destino: {currentVehicleDentro.trabajos || "En predio"}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleMarcarSalida(currentVehicleDentro.id)}
-                                      disabled={Boolean(marcandoSalidaIds[currentVehicleDentro.id])}
-                                      className="py-1 px-3 rounded-lg text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 disabled:opacity-50"
-                                    >
-                                      <IconLogOut className="w-3.5 h-3.5" />
-                                      <span>{marcandoSalidaIds[currentVehicleDentro.id] ? "Registrando salida..." : "Registrar Salida de Unidad"}</span>
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : currentCasetaVehicle.permisoTemporal?.activo && new Date(currentCasetaVehicle.permisoTemporal.fechaExpiracion).getTime() > Date.now() ? (
-                                <div className="p-3 rounded-xl bg-amber-500/10 border-2 border-amber-400 text-amber-950 space-y-1.5 shadow-2xs">
-                                  <div className="flex items-center justify-between">
-                                    <div className="font-bold text-xs uppercase flex items-center gap-1.5 text-amber-900">
-                                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                                      <span>Pase Provisional Vehicular Autorizado por Oficina HOA</span>
-                                    </div>
-                                    <span className="text-[10px] font-mono font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full">
-                                      Hasta: {new Date(currentCasetaVehicle.permisoTemporal.fechaExpiracion).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })} hrs
-                                    </span>
-                                  </div>
-                                  <p className="text-xs text-amber-900 leading-relaxed">
-                                    {currentCasetaVehicle.permisoTemporal.autorizadoPorOficina ? (
-                                      <><strong>Autorizó:</strong> {currentCasetaVehicle.permisoTemporal.autorizadoPorOficina} · </>
-                                    ) : null}
-                                    <strong>Acuerdo:</strong> {currentCasetaVehicle.permisoTemporal.motivoAcuerdo}
-                                    {currentCasetaVehicle.permisoTemporal.notasSupervisor ? (
-                                      <> · <strong>Notas:</strong> {currentCasetaVehicle.permisoTemporal.notasSupervisor}</>
-                                    ) : null}
-                                  </p>
-                                  <div className="text-[11px] font-semibold text-emerald-800 bg-emerald-100/70 p-1.5 rounded-lg border border-emerald-200 flex items-center gap-1.5">
-                                    <IconCheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                                    <span>Ingreso vehicular temporal autorizado. Procede a registrar entrada de la unidad.</span>
-                                  </div>
-                                </div>
-                              ) : currentCasetaVehicle.status !== "Habilitado" && currentCasetaVehicle.sancionActiva ? (
-                                <div className={`p-2.5 rounded-xl border ${currentCasetaVehicle.status === "Suspendido" ? "bg-red-50 border-red-200 text-red-900" : "bg-amber-50 border-amber-200 text-amber-900"} space-y-1.5`}>
-                                  <div className="font-bold text-xs uppercase flex items-center gap-1.5 text-red-900">
-                                    <IconAlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                                    <span>Alerta de Suspensión Vehicular HOA</span>
-                                  </div>
-                                  <p className="text-xs leading-relaxed">
-                                    <strong>Motivo:</strong> {currentCasetaVehicle.sancionActiva.motivo} (Expira: <span className="font-mono font-bold">{currentCasetaVehicle.sancionActiva.expiracion}</span>)
-                                  </p>
-                                  <div className="pt-1.5 flex flex-wrap items-center justify-between gap-2 border-t border-red-200/80">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleCambiarAIngresoPeatonal(currentCasetaVehicle)}
-                                      className="py-1.5 px-3 rounded-lg text-xs font-bold text-white bg-sky-700 hover:bg-sky-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
-                                    >
-                                      <IconWalk className="w-3.5 h-3.5" />
-                                      <span>🚶 Registrar Entrada Peatonal</span>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => setCasetaOverrideActive(true)}
-                                      className="text-amber-800 font-bold underline hover:text-amber-950 text-xs cursor-pointer"
-                                    >
-                                      Anulación de Supervisor
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : currentCasetaVehicle.status === "Habilitado" ? (
-                                <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
-                                  <IconCheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                                  <span>Vehículo al corriente y autorizado para ingreso regular a condominio.</span>
-                                </div>
-                              ) : null}
-                            </>
-                          ) : (
-                            <div className="p-2 rounded-lg bg-slate-100/90 border border-slate-200/90 text-slate-600 text-xs flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <IconShield className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                <span className="text-[11px] truncate">
-                                  Diagnóstico HOA: Selecciona una unidad para verificar permisos y suspensiones en tiempo real.
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="font-bold text-sky-900 flex items-center justify-between">
+                                <span className="flex items-center gap-1.5 truncate">
+                                  <span>Diagnóstico de Acceso Peatonal {currentTrabajadorPeatonal ? `· ${currentTrabajadorPeatonal.nombre} ${currentTrabajadorPeatonal.apellidos}` : "· Protocolo Activo"}</span>
+                                </span>
+                                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-sky-200 text-sky-900 shrink-0">
+                                  A Pie
                                 </span>
                               </div>
-                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider shrink-0 bg-slate-200/80 px-2 py-0.5 rounded">
-                                En Espera
-                              </span>
+                              <p className="text-sky-800 text-xs mt-0.5">
+                                {currentTrabajadorPeatonal
+                                  ? `Colaborador Acreditado · ID #${currentTrabajadorPeatonal.id_trabajador}. Verifica identificación oficial antes de permitir ingreso.`
+                                  : "Verifica que el colaborador externo porte su identificación oficial y equipo de seguridad antes de autorizar el ingreso."}
+                              </p>
                             </div>
-                          )}
+                          </div>
                         </div>
-                      )}
 
-                      {/* 4. DATOS DEL INGRESO */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">Pasajeros (sin chofer)</label>
-                          <input
-                            type="number"
-                            min="0"
-                            max="50"
-                            value={casetaNumPasajeros}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val === "") {
-                                setCasetaNumPasajeros("");
-                              } else {
-                                const parsed = parseInt(val, 10);
-                                setCasetaNumPasajeros(isNaN(parsed) ? "" : Math.max(0, parsed));
-                              }
-                            }}
-                            onFocus={(e) => e.target.select()}
-                            placeholder="0"
-                            className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 font-mono font-bold text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none bg-white text-center"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">Hora de Entrada</label>
-                          <div className="flex gap-1.5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                              Nombre Completo del Colaborador *
+                            </label>
                             <input
                               type="text"
-                              value={casetaHoraEntrada}
-                              onChange={(e) => setCasetaHoraEntrada(e.target.value)}
-                              placeholder="08:30 hrs"
-                              className="w-full h-10 rounded-xl px-3 text-sm border border-slate-300 font-mono text-slate-800 bg-white"
+                              required
+                              value={casetaPeatonalNombre}
+                              onChange={(e) => setCasetaPeatonalNombre(e.target.value)}
+                              placeholder="Ej. Carlos Ortega Vega"
+                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
                             />
-                            <button
-                              type="button"
-                              onClick={setHoraActual}
-                              className="px-2.5 h-10 text-xs font-bold rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 shrink-0 cursor-pointer active:scale-95 transition-all"
-                            >
-                              Ahora
-                            </button>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                              Teléfono Celular de Contacto
+                            </label>
+                            <input
+                              type="text"
+                              value={casetaPeatonalTelefono}
+                              onChange={(e) => setCasetaPeatonalTelefono(e.target.value)}
+                              placeholder="+52 638 000 0000"
+                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 font-mono text-slate-800 bg-white outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                            />
                           </div>
                         </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">Hora Estimada Salida</label>
-                          <input
-                            type="text"
-                            value={casetaHoraSalida}
-                            onChange={(e) => setCasetaHoraSalida(e.target.value)}
-                            placeholder="18:00 hrs"
-                            className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 font-mono text-slate-800 bg-white"
-                          />
-                        </div>
-                      </div>
 
-                      {/* 5. TRABAJOS Y DESTINO */}
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Trabajos y Destino en el Complejo *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={casetaTrabajos}
-                          onChange={(e) => setCasetaTrabajos(e.target.value)}
-                          placeholder="Ej. Pintura de fachada exterior Torre 1, Depto 302"
-                          className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none bg-white"
-                        />
-                      </div>
-
-                      {/* 6. BOTÓN DE ENVÍO */}
-                      <div className="pt-1">
-                        {currentVehicleDentro ? (
-                          <button
-                            type="button"
-                            disabled
-                            className="w-full h-11 rounded-xl text-xs sm:text-sm font-bold text-amber-900 bg-amber-100 border border-amber-300 cursor-not-allowed shadow-xs flex items-center justify-center gap-2"
-                          >
-                            <IconAlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                            <span>Entrada Bloqueada — La unidad ya está dentro (requiere registrar salida)</span>
-                          </button>
-                        ) : currentCorbatinVerdeDentro ? (
-                          <button
-                            type="button"
-                            disabled
-                            className="w-full h-11 rounded-xl text-xs sm:text-sm font-bold text-amber-900 bg-amber-100 border border-amber-300 cursor-not-allowed shadow-xs flex items-center justify-center gap-2"
-                          >
-                            <IconAlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                            <span>Entrada Bloqueada — Corbatín Verde con ingreso activo pendiente de salida</span>
-                          </button>
-                        ) : currentCasetaVehicle?.status === "Suspendido" && !casetaOverrideActive ? (
-                          <button
-                            type="button"
-                            disabled
-                            className="w-full h-11 rounded-xl text-xs sm:text-sm font-bold text-white bg-red-500 cursor-not-allowed opacity-80 shadow-xs"
-                          >
-                            Acceso Vehicular Bloqueado — Vehículo con Suspensión Activa
-                          </button>
-                        ) : (
-                          <button
-                            type="submit"
-                            disabled={isSubmittingEntrada}
-                            className={`w-full h-11 rounded-xl text-sm font-bold text-white hover:brightness-105 active:scale-[0.99] transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 ${isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                              }`}
-                            style={{ background: currentCasetaCorbatinVerde ? "linear-gradient(135deg, #0D6E5F, #059669)" : "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
-                          >
-                            {isSubmittingEntrada ? (
-                              <>
-                                <IconSpinner className="w-4 h-4" />
-                                <span>Registrando Entrada...</span>
-                              </>
-                            ) : (
-                              <span>
-                                {currentCasetaCorbatinVerde
-                                  ? (casetaOverrideActive ? "Autorizar Entrada (Corbatín Verde) con Anulación" : "Permitir Entrada (Corbatín Verde) y Registrar")
-                                  : (casetaOverrideActive ? "Autorizar Ingreso Vehicular con Anulación" : "Permitir Entrada Vehicular y Registrar")}
-                              </span>
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    </form>
-                  )}
-
-                  {/* FORMULARIO DE ACCESO PEATONAL */}
-                  {casetaModoAcceso === "peatonal" && (
-                    <form onSubmit={handleRegistrarEntrada} className="space-y-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">
-                            1. Empresa Contratista
-                          </label>
-                          <select
-                            value={selectedEmpresaId}
-                            onChange={(e) => {
-                              setSelectedEmpresaId(e.target.value);
-                              setCasetaPeatonalTrabajadorId("");
-                            }}
-                            className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 bg-white font-medium text-slate-800 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
-                          >
-                            <option value="">-- Seleccionar Empresa Contratista --</option>
-                            {empresas.map((emp) => (
-                              <option key={emp.id} value={emp.id}>{emp.nombre}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">
-                            2. Seleccionar de Plantilla (Opcional)
-                          </label>
-                          <select
-                            value={casetaPeatonalTrabajadorId}
-                            onChange={(e) => setCasetaPeatonalTrabajadorId(e.target.value)}
-                            className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 bg-white text-slate-800 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
-                          >
-                            <option value="">[+] Capturar colaborador / Nombre libre</option>
-                            {empresaTrabajadores.map((t) => (
-                              <option key={t.id_trabajador} value={String(t.id_trabajador)}>
-                                {t.nombre} {t.apellidos} {t.activo ? "· Autorizado" : "· (Inactivo)"}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* DIAGNÓSTICO / PROTOCOLO PEATONAL */}
-                      <div className="p-3 rounded-xl bg-sky-50 border border-sky-200 text-xs space-y-2">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                          {currentTrabajadorPeatonal?.foto_url ? (
-                            <button
-                              type="button"
-                              onClick={() => setSelectedFotoTrabajadorPreview(currentTrabajadorPeatonal)}
-                              className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-sky-300 bg-white shadow-2xs group relative cursor-pointer"
-                              title="Clic para ver credencial del trabajador"
-                            >
-                              <img
-                                src={normalizeFotoUrl(currentTrabajadorPeatonal.foto_url)}
-                                alt={currentTrabajadorPeatonal.nombre}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Hora de Entrada *</label>
+                            <div className="flex gap-1.5">
+                              <input
+                                type="text"
+                                required
+                                value={casetaHoraEntrada}
+                                onChange={(e) => setCasetaHoraEntrada(e.target.value)}
+                                placeholder="08:30 hrs"
+                                className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 font-mono text-slate-800 bg-white"
                               />
-                              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                                <IconEye className="w-3 h-3" />
-                              </div>
-                            </button>
-                          ) : (
-                            <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-800 flex items-center justify-center shrink-0">
-                              <IconWalk className="w-5 h-5" />
+                              <button
+                                type="button"
+                                onClick={setHoraActual}
+                                className="px-3 h-10 text-xs font-bold rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 shrink-0 cursor-pointer active:scale-95 transition-all"
+                              >
+                                Ahora
+                              </button>
                             </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="font-bold text-sky-900 flex items-center justify-between">
-                              <span className="flex items-center gap-1.5 truncate">
-                                <span>Diagnóstico de Acceso Peatonal {currentTrabajadorPeatonal ? `· ${currentTrabajadorPeatonal.nombre} ${currentTrabajadorPeatonal.apellidos}` : "· Protocolo Activo"}</span>
-                              </span>
-                              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-sky-200 text-sky-900 shrink-0">
-                                A Pie
-                              </span>
-                            </div>
-                            <p className="text-sky-800 text-xs mt-0.5">
-                              {currentTrabajadorPeatonal
-                                ? `Colaborador Acreditado · ID #${currentTrabajadorPeatonal.id_trabajador}. Verifica identificación oficial antes de permitir ingreso.`
-                                : "Verifica que el colaborador externo porte su identificación oficial y equipo de seguridad antes de autorizar el ingreso."}
-                            </p>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Hora Estimada Salida</label>
+                            <input
+                              type="text"
+                              value={casetaHoraSalida}
+                              onChange={(e) => setCasetaHoraSalida(e.target.value)}
+                              placeholder="18:00 hrs"
+                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 font-mono text-slate-800 bg-white"
+                            />
                           </div>
                         </div>
-                      </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="block text-xs font-semibold text-slate-700 mb-1">
-                            Nombre Completo del Colaborador *
+                            Trabajos y Destino Autorizado *
                           </label>
                           <input
                             type="text"
                             required
-                            value={casetaPeatonalNombre}
-                            onChange={(e) => setCasetaPeatonalNombre(e.target.value)}
-                            placeholder="Ej. Carlos Ortega Vega"
+                            value={casetaTrabajos}
+                            onChange={(e) => setCasetaTrabajos(e.target.value)}
+                            placeholder="Ej. Reparación urgente en Torre 2 con herramienta de mano"
                             className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
                           />
                         </div>
 
                         <div>
                           <label className="block text-xs font-semibold text-slate-700 mb-1">
-                            Teléfono Celular de Contacto
+                            Observaciones / Nota
                           </label>
                           <input
                             type="text"
-                            value={casetaPeatonalTelefono}
-                            onChange={(e) => setCasetaPeatonalTelefono(e.target.value)}
-                            placeholder="+52 638 000 0000"
-                            className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 font-mono text-slate-800 bg-white outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                            value={casetaPeatonalObservaciones}
+                            onChange={(e) => setCasetaPeatonalObservaciones(e.target.value)}
+                            placeholder="Ej. Ingreso a pie autorizado; vehículo retenido afuera."
+                            className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 text-slate-700 bg-slate-50"
                           />
                         </div>
+
+                        <div className="pt-1">
+                          <button
+                            type="submit"
+                            disabled={isSubmittingEntrada}
+                            className={`w-full h-11 rounded-xl text-sm font-bold text-white bg-sky-700 hover:bg-sky-800 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md ${isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                              }`}
+                          >
+                            {isSubmittingEntrada ? (
+                              <>
+                                <IconSpinner className="w-4 h-4" />
+                                <span>Registrando Ingreso Peatonal...</span>
+                              </>
+                            ) : (
+                              <>
+                                <IconWalk className="w-4 h-4" />
+                                <span>Autorizar y Registrar Ingreso Peatonal</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+
+                  {/* COLUMNA LATERAL: ÚLTIMOS INGRESOS EN CASETA (SOLO VISIBLE EN PC / PANTALLAS GRANDES) */}
+                  <div className="hidden lg:flex lg:col-span-5 xl:col-span-4 flex-col h-full min-h-0">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-2xs space-y-2.5 h-full flex flex-col min-h-0">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2 shrink-0">
+                        <div className="flex items-center gap-1.5">
+                          <IconClock className="w-3.5 h-3.5 text-slate-500" />
+                          <h3 className="font-extrabold text-xs uppercase tracking-wider text-slate-800">
+                            Últimos Ingresos Registrados
+                          </h3>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setCasetaTab("bitacora")}
+                          className="text-[11px] text-[#0D6E5F] font-bold hover:underline cursor-pointer flex items-center gap-1"
+                          title="Ver bitácora completa"
+                        >
+                          <IconFileSpreadsheet className="w-3.5 h-3.5" />
+                          <span>Bitácora ({bitacora.length})</span>
+                        </button>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">Hora de Entrada *</label>
-                          <div className="flex gap-1.5">
-                            <input
-                              type="text"
-                              required
-                              value={casetaHoraEntrada}
-                              onChange={(e) => setCasetaHoraEntrada(e.target.value)}
-                              placeholder="08:30 hrs"
-                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 font-mono text-slate-800 bg-white"
-                            />
-                            <button
-                              type="button"
-                              onClick={setHoraActual}
-                              className="px-3 h-10 text-xs font-bold rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 shrink-0 cursor-pointer active:scale-95 transition-all"
-                            >
-                              Ahora
-                            </button>
-                          </div>
+                      {bitacora.length === 0 ? (
+                        <div className="py-8 text-center text-xs text-slate-400 space-y-1 flex-1 flex flex-col items-center justify-center">
+                          <IconShield className="w-6 h-6 text-slate-300 mx-auto" />
+                          <p>Sin ingresos registrados en el turno.</p>
                         </div>
+                      ) : (
+                        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto pr-0.5">
+                          {bitacora.slice(0, 10).map((item) => {
+                            const isDentro = item.estado === "Dentro";
+                            const isMarcando = Boolean(marcandoSalidaIds[item.id]);
 
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">Hora Estimada Salida</label>
+                            return (
+                              <div
+                                key={item.id}
+                                className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-50 transition-all flex items-center justify-between gap-2 text-xs shadow-2xs"
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="font-mono font-bold text-slate-900 truncate text-xs">
+                                      {item.placas || `Folio #${item.id}`}
+                                    </span>
+                                    {item.corbatinNum && (
+                                      <span className="px-1.5 py-0.2 rounded bg-teal-800 text-white font-mono font-bold text-[9px]">
+                                        #{item.corbatinNum}
+                                      </span>
+                                    )}
+                                    <span className="text-[10px] text-slate-400 font-mono">
+                                      · {formatHoraLocal(item.horaEntrada)}
+                                    </span>
+                                  </div>
+                                  <div className="text-[11px] text-slate-600 truncate mt-0.5">
+                                    {item.conductor || item.empresaNombre || "Contratista"}
+                                  </div>
+                                </div>
+
+                                <div className="shrink-0">
+                                  {isDentro ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleMarcarSalida(item.id)}
+                                      disabled={isMarcando}
+                                      title="Registrar salida de este vehículo"
+                                      className="px-2.5 py-1 rounded-lg text-[10px] font-bold text-white bg-red-600 hover:bg-red-700 active:scale-95 transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50 shadow-2xs"
+                                    >
+                                      {isMarcando ? (
+                                        <IconSpinner className="w-3 h-3 animate-spin" />
+                                      ) : (
+                                        <IconLogOut className="w-3 h-3" />
+                                      )}
+                                      <span>Salida</span>
+                                    </button>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-200/80 text-slate-600">
+                                      ✓ Fuera
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ─── TAB BITÁCORA DE CASETA ─── */}
+              {casetaTab === "bitacora" && (() => {
+                const q = casetaBitacoraSearch.trim().toLowerCase();
+                const filteredBitacora = bitacora.filter((b) => {
+                  const matchesSearch = !q || (
+                    String(b.id || "").toLowerCase().includes(q) ||
+                    String(b.empresaNombre || "").toLowerCase().includes(q) ||
+                    String(b.conductor || "").toLowerCase().includes(q) ||
+                    String(b.placas || "").toLowerCase().includes(q) ||
+                    String(b.corbatinNum || "").toLowerCase().includes(q) ||
+                    String(b.trabajos || "").toLowerCase().includes(q) ||
+                    String(b.telefono || "").toLowerCase().includes(q)
+                  );
+                  const matchesStatus = casetaBitacoraStatusFilter === "todos"
+                    ? true
+                    : casetaBitacoraStatusFilter === "dentro"
+                      ? b.estado === "Dentro"
+                      : b.estado !== "Dentro";
+                  return matchesSearch && matchesStatus;
+                });
+
+                const pageSize = casetaBitacoraPageSize || 10;
+                const totalCasetaBitacoraPages = Math.max(1, Math.ceil(filteredBitacora.length / pageSize));
+                const safeCasetaBitacoraPage = Math.min(Math.max(1, casetaBitacoraPage), totalCasetaBitacoraPages);
+                const casetaBitacoraStartIndex = (safeCasetaBitacoraPage - 1) * pageSize;
+                const paginatedCasetaBitacora = filteredBitacora.slice(casetaBitacoraStartIndex, casetaBitacoraStartIndex + pageSize);
+
+                const totalDentro = bitacora.filter(b => b.estado === "Dentro").length;
+                const totalSalida = bitacora.filter(b => b.estado !== "Dentro").length;
+
+                return (
+                  <div className="rounded-2xl border overflow-hidden bg-white shadow-sm space-y-0" style={{ borderColor: "var(--color-border)" }}>
+                    {/* Header y Filtros */}
+                    <div className="px-5 py-4 border-b bg-slate-50 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3" style={{ borderColor: "var(--color-border)" }}>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h2 className="font-bold text-sm sm:text-base text-slate-800">Bitácora Oficial de Accesos en Caseta</h2>
+                        <span className="text-xs text-slate-500 font-mono bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
+                          {filteredBitacora.length === bitacora.length ? `${bitacora.length} registros` : `${filteredBitacora.length} de ${bitacora.length} registros`}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        {/* Buscador Rápido */}
+                        <div className="relative min-w-[220px] flex-1 sm:flex-none">
+                          <IconSearch className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                           <input
                             type="text"
-                            value={casetaHoraSalida}
-                            onChange={(e) => setCasetaHoraSalida(e.target.value)}
-                            placeholder="18:00 hrs"
-                            className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 font-mono text-slate-800 bg-white"
+                            value={casetaBitacoraSearch}
+                            onChange={(e) => {
+                              setCasetaBitacoraSearch(e.target.value);
+                              setCasetaBitacoraPage(1);
+                            }}
+                            placeholder="Buscar folio, placa, conductor..."
+                            className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/30 focus:border-[#0D6E5F] text-slate-700 placeholder:text-slate-400"
                           />
+                          {casetaBitacoraSearch && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCasetaBitacoraSearch("");
+                                setCasetaBitacoraPage(1);
+                              }}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                              title="Limpiar búsqueda"
+                            >
+                              <IconX className="w-3 h-3" />
+                            </button>
+                          )}
                         </div>
-                      </div>
 
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Trabajos y Destino Autorizado *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={casetaTrabajos}
-                          onChange={(e) => setCasetaTrabajos(e.target.value)}
-                          placeholder="Ej. Reparación urgente en Torre 2 con herramienta de mano"
-                          className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
-                        />
-                      </div>
+                        {/* Filtro de Estado */}
+                        <div className="flex items-center rounded-xl border border-slate-300 bg-white p-0.5 text-xs font-semibold">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCasetaBitacoraStatusFilter("todos");
+                              setCasetaBitacoraPage(1);
+                            }}
+                            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${casetaBitacoraStatusFilter === "todos"
+                              ? "bg-slate-800 text-white font-bold shadow-2xs"
+                              : "text-slate-600 hover:text-slate-900"
+                              }`}
+                          >
+                            Todos ({bitacora.length})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCasetaBitacoraStatusFilter("dentro");
+                              setCasetaBitacoraPage(1);
+                            }}
+                            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${casetaBitacoraStatusFilter === "dentro"
+                              ? "bg-amber-500 text-white font-bold shadow-2xs"
+                              : "text-slate-600 hover:text-slate-900"
+                              }`}
+                          >
+                            Dentro ({totalDentro})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCasetaBitacoraStatusFilter("salida");
+                              setCasetaBitacoraPage(1);
+                            }}
+                            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${casetaBitacoraStatusFilter === "salida"
+                              ? "bg-emerald-600 text-white font-bold shadow-2xs"
+                              : "text-slate-600 hover:text-slate-900"
+                              }`}
+                          >
+                            Salidas ({totalSalida})
+                          </button>
+                        </div>
 
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Observaciones / Nota
-                        </label>
-                        <input
-                          type="text"
-                          value={casetaPeatonalObservaciones}
-                          onChange={(e) => setCasetaPeatonalObservaciones(e.target.value)}
-                          placeholder="Ej. Ingreso a pie autorizado; vehículo retenido afuera."
-                          className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 text-slate-700 bg-slate-50"
-                        />
-                      </div>
-
-                      <div className="pt-1">
+                        {/* Botón Único de Exportación a Excel */}
                         <button
-                          type="submit"
-                          disabled={isSubmittingEntrada}
-                          className={`w-full h-11 rounded-xl text-sm font-bold text-white bg-sky-700 hover:bg-sky-800 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md ${isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                            }`}
+                          type="button"
+                          onClick={handleExportarBitacoraExcel}
+                          disabled={isGeneratingBitacoraExcel || bitacora.length === 0}
+                          className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0A5448] shadow-sm hover:shadow flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                          title="Exportar reporte de bitácora formateado en Microsoft Excel (.xlsx)"
                         >
-                          {isSubmittingEntrada ? (
+                          {isGeneratingBitacoraExcel ? (
                             <>
-                              <IconSpinner className="w-4 h-4" />
-                              <span>Registrando Ingreso Peatonal...</span>
+                              <IconSpinner className="w-3.5 h-3.5 text-emerald-200 animate-spin" />
+                              <span>Generando Excel...</span>
                             </>
                           ) : (
                             <>
-                              <IconWalk className="w-4 h-4" />
-                              <span>Autorizar y Registrar Ingreso Peatonal</span>
+                              <IconFileSpreadsheet className="w-3.5 h-3.5 text-emerald-200" />
+                              <span>Exportar a Excel (.xlsx)</span>
                             </>
                           )}
                         </button>
                       </div>
-                    </form>
-                  )}
-                </div>
-
-                {/* COLUMNA LATERAL: ÚLTIMOS INGRESOS EN CASETA (SOLO VISIBLE EN PC / PANTALLAS GRANDES) */}
-                <div className="hidden lg:flex lg:col-span-5 xl:col-span-4 flex-col h-full min-h-0">
-                  <div className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-2xs space-y-2.5 h-full flex flex-col min-h-0">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-2 shrink-0">
-                      <div className="flex items-center gap-1.5">
-                        <IconClock className="w-3.5 h-3.5 text-slate-500" />
-                        <h3 className="font-extrabold text-xs uppercase tracking-wider text-slate-800">
-                          Últimos Ingresos Registrados
-                        </h3>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setCasetaTab("bitacora")}
-                        className="text-[11px] text-[#0D6E5F] font-bold hover:underline cursor-pointer flex items-center gap-1"
-                        title="Ver bitácora completa"
-                      >
-                        <IconFileSpreadsheet className="w-3.5 h-3.5" />
-                        <span>Bitácora ({bitacora.length})</span>
-                      </button>
                     </div>
 
-                    {bitacora.length === 0 ? (
-                      <div className="py-8 text-center text-xs text-slate-400 space-y-1 flex-1 flex flex-col items-center justify-center">
-                        <IconShield className="w-6 h-6 text-slate-300 mx-auto" />
-                        <p>Sin ingresos registrados en el turno.</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2 flex-1 min-h-0 overflow-y-auto pr-0.5">
-                        {bitacora.slice(0, 10).map((item) => {
-                          const isDentro = item.estado === "Dentro";
-                          const isMarcando = Boolean(marcandoSalidaIds[item.id]);
-
-                          return (
-                            <div
-                              key={item.id}
-                              className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-50 transition-all flex items-center justify-between gap-2 text-xs shadow-2xs"
-                            >
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  <span className="font-mono font-bold text-slate-900 truncate text-xs">
-                                    {item.placas || `Folio #${item.id}`}
-                                  </span>
-                                  {item.corbatinNum && (
-                                    <span className="px-1.5 py-0.2 rounded bg-teal-800 text-white font-mono font-bold text-[9px]">
-                                      #{item.corbatinNum}
-                                    </span>
-                                  )}
-                                  <span className="text-[10px] text-slate-400 font-mono">
-                                    · {formatHoraLocal(item.horaEntrada)}
-                                  </span>
-                                </div>
-                                <div className="text-[11px] text-slate-600 truncate mt-0.5">
-                                  {item.conductor || item.empresaNombre || "Contratista"}
-                                </div>
-                              </div>
-
-                              <div className="shrink-0">
-                                {isDentro ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleMarcarSalida(item.id)}
-                                    disabled={isMarcando}
-                                    title="Registrar salida de este vehículo"
-                                    className="px-2.5 py-1 rounded-lg text-[10px] font-bold text-white bg-red-600 hover:bg-red-700 active:scale-95 transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50 shadow-2xs"
-                                  >
-                                    {isMarcando ? (
-                                      <IconSpinner className="w-3 h-3 animate-spin" />
-                                    ) : (
-                                      <IconLogOut className="w-3 h-3" />
-                                    )}
-                                    <span>Salida</span>
-                                  </button>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-200/80 text-slate-600">
-                                    ✓ Fuera
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ─── TAB BITÁCORA DE CASETA ─── */}
-            {casetaTab === "bitacora" && (() => {
-              const q = casetaBitacoraSearch.trim().toLowerCase();
-              const filteredBitacora = bitacora.filter((b) => {
-                const matchesSearch = !q || (
-                  String(b.id || "").toLowerCase().includes(q) ||
-                  String(b.empresaNombre || "").toLowerCase().includes(q) ||
-                  String(b.conductor || "").toLowerCase().includes(q) ||
-                  String(b.placas || "").toLowerCase().includes(q) ||
-                  String(b.corbatinNum || "").toLowerCase().includes(q) ||
-                  String(b.trabajos || "").toLowerCase().includes(q) ||
-                  String(b.telefono || "").toLowerCase().includes(q)
-                );
-                const matchesStatus = casetaBitacoraStatusFilter === "todos"
-                  ? true
-                  : casetaBitacoraStatusFilter === "dentro"
-                    ? b.estado === "Dentro"
-                    : b.estado !== "Dentro";
-                return matchesSearch && matchesStatus;
-              });
-
-              const pageSize = casetaBitacoraPageSize || 10;
-              const totalCasetaBitacoraPages = Math.max(1, Math.ceil(filteredBitacora.length / pageSize));
-              const safeCasetaBitacoraPage = Math.min(Math.max(1, casetaBitacoraPage), totalCasetaBitacoraPages);
-              const casetaBitacoraStartIndex = (safeCasetaBitacoraPage - 1) * pageSize;
-              const paginatedCasetaBitacora = filteredBitacora.slice(casetaBitacoraStartIndex, casetaBitacoraStartIndex + pageSize);
-
-              const totalDentro = bitacora.filter(b => b.estado === "Dentro").length;
-              const totalSalida = bitacora.filter(b => b.estado !== "Dentro").length;
-
-              return (
-                <div className="rounded-2xl border overflow-hidden bg-white shadow-sm space-y-0" style={{ borderColor: "var(--color-border)" }}>
-                  {/* Header y Filtros */}
-                  <div className="px-5 py-4 border-b bg-slate-50 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3" style={{ borderColor: "var(--color-border)" }}>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="font-bold text-sm sm:text-base text-slate-800">Bitácora Oficial de Accesos en Caseta</h2>
-                      <span className="text-xs text-slate-500 font-mono bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
-                        {filteredBitacora.length === bitacora.length ? `${bitacora.length} registros` : `${filteredBitacora.length} de ${bitacora.length} registros`}
-                      </span>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2.5">
-                      {/* Buscador Rápido */}
-                      <div className="relative min-w-[220px] flex-1 sm:flex-none">
-                        <IconSearch className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input
-                          type="text"
-                          value={casetaBitacoraSearch}
-                          onChange={(e) => {
-                            setCasetaBitacoraSearch(e.target.value);
-                            setCasetaBitacoraPage(1);
-                          }}
-                          placeholder="Buscar folio, placa, conductor..."
-                          className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/30 focus:border-[#0D6E5F] text-slate-700 placeholder:text-slate-400"
-                        />
-                        {casetaBitacoraSearch && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setCasetaBitacoraSearch("");
-                              setCasetaBitacoraPage(1);
-                            }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                            title="Limpiar búsqueda"
-                          >
-                            <IconX className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Filtro de Estado */}
-                      <div className="flex items-center rounded-xl border border-slate-300 bg-white p-0.5 text-xs font-semibold">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCasetaBitacoraStatusFilter("todos");
-                            setCasetaBitacoraPage(1);
-                          }}
-                          className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${casetaBitacoraStatusFilter === "todos"
-                            ? "bg-slate-800 text-white font-bold shadow-2xs"
-                            : "text-slate-600 hover:text-slate-900"
-                            }`}
-                        >
-                          Todos ({bitacora.length})
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCasetaBitacoraStatusFilter("dentro");
-                            setCasetaBitacoraPage(1);
-                          }}
-                          className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${casetaBitacoraStatusFilter === "dentro"
-                            ? "bg-amber-500 text-white font-bold shadow-2xs"
-                            : "text-slate-600 hover:text-slate-900"
-                            }`}
-                        >
-                          Dentro ({totalDentro})
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCasetaBitacoraStatusFilter("salida");
-                            setCasetaBitacoraPage(1);
-                          }}
-                          className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${casetaBitacoraStatusFilter === "salida"
-                            ? "bg-emerald-600 text-white font-bold shadow-2xs"
-                            : "text-slate-600 hover:text-slate-900"
-                            }`}
-                        >
-                          Salidas ({totalSalida})
-                        </button>
-                      </div>
-
-                      {/* Botón Único de Exportación a Excel */}
-                      <button
-                        type="button"
-                        onClick={handleExportarBitacoraExcel}
-                        disabled={isGeneratingBitacoraExcel || bitacora.length === 0}
-                        className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0A5448] shadow-sm hover:shadow flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50 whitespace-nowrap"
-                        title="Exportar reporte de bitácora formateado en Microsoft Excel (.xlsx)"
-                      >
-                        {isGeneratingBitacoraExcel ? (
-                          <>
-                            <IconSpinner className="w-3.5 h-3.5 text-emerald-200 animate-spin" />
-                            <span>Generando Excel...</span>
-                          </>
-                        ) : (
-                          <>
-                            <IconFileSpreadsheet className="w-3.5 h-3.5 text-emerald-200" />
-                            <span>Exportar a Excel (.xlsx)</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Tabla de Registros (Exactamente 10 por página) */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full table-fixed text-xs">
-                      <colgroup>
-                        <col className="w-[4%]" />
-                        <col className="w-[8%]" />
-                        <col className="w-[14%]" />
-                        <col className="w-[9%]" />
-                        <col className="w-[13%]" />
-                        <col className="w-[7%]" />
-                        <col className="w-[6%]" />
-                        <col className="w-[7%]" />
-                        <col className="w-[7%]" />
-                        <col className="w-[11%]" />
-                        <col className="w-[7%]" />
-                        <col className="w-[7%]" />
-                      </colgroup>
-                      <thead className="sticky top-0 z-10 bg-slate-50 shadow-xs">
-                        <tr className="border-b bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ borderColor: "var(--color-border)" }}>
-                          <th className="text-center px-1.5 py-3">Folio</th>
-                          <th className="text-center px-1 py-3">Modalidad</th>
-                          <th className="text-left px-2.5 py-3">Empresa</th>
-                          <th className="text-left px-2 py-3">Vehículo / Placas</th>
-                          <th className="text-left px-2.5 py-3">Conductor</th>
-                          <th className="text-center px-1 py-3">Pasajeros</th>
-                          <th className="text-center px-1 py-3">Corbatín</th>
-                          <th className="text-center px-1 py-3">Entrada</th>
-                          <th className="text-center px-1 py-3">Salida</th>
-                          <th className="text-left px-2.5 py-3">Trabajos / Destino</th>
-                          <th className="text-center px-1 py-3">Estatus</th>
-                          <th className="text-center px-1.5 py-3">Acción</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {paginatedCasetaBitacora.length === 0 ? (
-                          <tr>
-                            <td colSpan={12} className="px-5 py-10 text-center text-xs text-slate-500">
-                              <IconShield className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                              {q || casetaBitacoraStatusFilter !== "todos"
-                                ? "No se encontraron registros que coincidan con los filtros aplicados."
-                                : "No hay registros de accesos en la bitácora."}
-                            </td>
+                    {/* Tabla de Registros (Exactamente 10 por página) */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full table-fixed text-xs">
+                        <colgroup>
+                          <col className="w-[4%]" />
+                          <col className="w-[8%]" />
+                          <col className="w-[14%]" />
+                          <col className="w-[9%]" />
+                          <col className="w-[13%]" />
+                          <col className="w-[7%]" />
+                          <col className="w-[6%]" />
+                          <col className="w-[7%]" />
+                          <col className="w-[7%]" />
+                          <col className="w-[11%]" />
+                          <col className="w-[7%]" />
+                          <col className="w-[7%]" />
+                        </colgroup>
+                        <thead className="sticky top-0 z-10 bg-slate-50 shadow-xs">
+                          <tr className="border-b bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ borderColor: "var(--color-border)" }}>
+                            <th className="text-center px-1.5 py-3">Folio</th>
+                            <th className="text-center px-1 py-3">Modalidad</th>
+                            <th className="text-left px-2.5 py-3">Empresa</th>
+                            <th className="text-left px-2 py-3">Vehículo / Placas</th>
+                            <th className="text-left px-2.5 py-3">Conductor</th>
+                            <th className="text-center px-1 py-3">Pasajeros</th>
+                            <th className="text-center px-1 py-3">Corbatín</th>
+                            <th className="text-center px-1 py-3">Entrada</th>
+                            <th className="text-center px-1 py-3">Salida</th>
+                            <th className="text-left px-2.5 py-3">Trabajos / Destino</th>
+                            <th className="text-center px-1 py-3">Estatus</th>
+                            <th className="text-center px-1.5 py-3">Acción</th>
                           </tr>
-                        ) : (
-                          paginatedCasetaBitacora.map((b) => {
-                            const trabajoTexto = (b.trabajos && b.trabajos !== "x") ? b.trabajos : (b.observaciones || "Acceso regular");
-                            const horaEntradaLimpia = formatHoraLocal(b.horaEntrada);
-                            const horaSalidaLimpia = b.horaSalida ? formatHoraLocal(b.horaSalida) : "";
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {paginatedCasetaBitacora.length === 0 ? (
+                            <tr>
+                              <td colSpan={12} className="px-5 py-10 text-center text-xs text-slate-500">
+                                <IconShield className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                                {q || casetaBitacoraStatusFilter !== "todos"
+                                  ? "No se encontraron registros que coincidan con los filtros aplicados."
+                                  : "No hay registros de accesos en la bitácora."}
+                              </td>
+                            </tr>
+                          ) : (
+                            paginatedCasetaBitacora.map((b) => {
+                              const trabajoTexto = (b.trabajos && b.trabajos !== "x") ? b.trabajos : (b.observaciones || "Acceso regular");
+                              const horaEntradaLimpia = formatHoraLocal(b.horaEntrada);
+                              const horaSalidaLimpia = b.horaSalida ? formatHoraLocal(b.horaSalida) : "";
 
-                            return (
-                              <tr key={b.id} className="hover:bg-slate-50 transition-colors">
-                                <td className="px-1.5 py-2.5 font-mono text-xs font-bold text-slate-700 text-center truncate">{b.id}</td>
-                                <td className="px-1 py-2.5 text-center">
-                                  {b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? (
-                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
-                                      <IconWalk className="w-3 h-3 shrink-0" />
-                                      <span>Peatonal</span>
-                                    </span>
-                                  ) : b.tipoCorbatin === "VERDE" || b.tipoAcceso === "Corbatín Verde" ? (
-                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                                      <span>C. Verde</span>
-                                    </span>
-                                  ) : (
-                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                                      <IconCar className="w-3 h-3 shrink-0" />
-                                      <span>Vehicular</span>
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="px-2.5 py-2.5 text-xs font-semibold text-slate-900 truncate" title={b.empresaNombre}>
-                                  {b.empresaNombre}
-                                </td>
-                                <td className="px-2 py-2.5 text-xs font-mono font-bold text-slate-800 truncate" title={b.placas}>
-                                  {b.placas === "PEATONAL (A PIE)" ? (
-                                    <span className="text-sky-700 font-sans font-semibold text-[11px]">A Pie</span>
-                                  ) : (
-                                    b.placas
-                                  )}
-                                </td>
-                                <td className="px-2.5 py-2.5 text-xs text-slate-700 font-medium">
-                                  <div className="truncate font-semibold text-slate-800" title={b.conductor}>{b.conductor}</div>
-                                  {b.telefono && (
-                                    <div className="text-[10px] text-slate-400 font-mono truncate">
-                                      <CopyableInlineText text={b.telefono} label="Teléfono" onCopyToast={showToast} />
-                                    </div>
-                                  )}
-                                </td>
-                                <td className="px-1 py-2.5 text-center">
-                                  {b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? (
-                                    <span className="text-slate-400 text-xs">—</span>
-                                  ) : (
-                                    <span className={`inline-flex items-center justify-center font-semibold px-1.5 py-0.5 rounded text-[10px] ${(b.num_pasajeros || 0) > 0 ? "bg-amber-50 text-amber-800 border border-amber-200" : "text-slate-500 bg-slate-50"
-                                      }`} title={`${b.num_pasajeros || 0} pasajeros adicionales`}>
-                                      {(b.num_pasajeros || 0) > 0 ? `+${b.num_pasajeros} extra` : "0 (Solo)"}
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="px-1 py-2.5 text-center text-xs font-mono font-bold truncate">
-                                  {b.tipoCorbatin === "VERDE" || b.tipoAcceso === "Corbatín Verde" ? (
-                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
-                                      {b.corbatinNum && b.corbatinNum !== "—" ? (b.corbatinNum.startsWith("#") ? b.corbatinNum : `#${b.corbatinNum}`) : "—"}
-                                    </span>
-                                  ) : (
-                                    <span style={{ color: "var(--color-primary)" }}>
-                                      {b.corbatinNum && b.corbatinNum !== "—" ? (b.corbatinNum.startsWith("#") ? b.corbatinNum : `#${b.corbatinNum}`) : "—"}
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="px-1 py-2.5 text-center text-[11px] text-slate-700 font-mono truncate" title={horaEntradaLimpia}>
-                                  {horaEntradaLimpia}
-                                </td>
-                                <td className="px-1 py-2.5 text-center text-[11px] text-slate-500 font-mono truncate" title={horaSalidaLimpia || "Dentro"}>
-                                  {horaSalidaLimpia || "—"}
-                                </td>
-                                <td className="px-2.5 py-2.5 text-xs text-slate-600 truncate" title={trabajoTexto}>
-                                  {trabajoTexto}
-                                </td>
-                                <td className="px-1 py-2.5 text-center">
-                                  <div className="flex flex-col items-center gap-1">
-                                    <StatusBadge status={b.estado} />
-                                    {(() => {
-                                      const exc = contratistasExcedidos.find((c) => c.registroId === String(b.id));
-                                      if (!exc) return null;
-                                      return (
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setIsOvertimeModalExpanded(true);
-                                            setSelectedOvertimeContractor(exc);
-                                          }}
-                                          className="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100 cursor-pointer shadow-2xs whitespace-nowrap"
-                                          title="Clic para abrir la alerta de horario"
-                                        >
-                                          {exc.esPernocta ? "⏰ Sin salida previa" : `⏰ +${exc.minutosExcedidos}m`}
-                                        </button>
-                                      );
-                                    })()}
-                                  </div>
-                                </td>
-                                <td className="px-1.5 py-2.5 text-center">
-                                  {b.estado === "Dentro" ? (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleMarcarSalida(b.id)}
-                                      disabled={Boolean(marcandoSalidaIds[b.id])}
-                                      className={`w-full py-1 text-[11px] font-bold rounded-lg bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 cursor-pointer flex items-center justify-center gap-1 shadow-sm transition-all whitespace-nowrap ${marcandoSalidaIds[b.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                                        }`}
-                                    >
-                                      {marcandoSalidaIds[b.id] ? (
-                                        <>
-                                          <IconSpinner className="w-3 h-3" />
-                                          <span>...</span>
-                                        </>
-                                      ) : (
-                                        <span>Salida</span>
-                                      )}
-                                    </button>
-                                  ) : (
-                                    <span className="text-[11px] text-slate-400 font-medium">Completado</span>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Footer de Paginación Robusto (10 registros por página) */}
-                  {filteredBitacora.length > 0 && (
-                    <div className="px-5 py-3.5 border-t bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600" style={{ borderColor: "var(--color-border)" }}>
-                      <div className="flex items-center gap-3">
-                        <div>
-                          Mostrando <strong className="text-slate-800">{casetaBitacoraStartIndex + 1}</strong> – <strong className="text-slate-800">{Math.min(casetaBitacoraStartIndex + pageSize, filteredBitacora.length)}</strong> de <strong className="text-slate-800">{filteredBitacora.length}</strong> registros
-                        </div>
-                        <div className="hidden md:flex items-center gap-1 text-[11px] text-slate-500">
-                          <span>•</span>
-                          <label htmlFor="caseta-page-size-select" className="text-slate-500">Ver:</label>
-                          <select
-                            id="caseta-page-size-select"
-                            value={pageSize}
-                            onChange={(e) => {
-                              setCasetaBitacoraPageSize(Number(e.target.value));
-                              setCasetaBitacoraPage(1);
-                            }}
-                            className="bg-white border border-slate-300 rounded px-1.5 py-0.5 font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0D6E5F]"
-                          >
-                            <option value={10}>10 por pág.</option>
-                            <option value={20}>20 por pág.</option>
-                            <option value={50}>50 por pág.</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      {totalCasetaBitacoraPages > 1 && (
-                        <div className="flex items-center gap-1.5">
-                          {/* Primera Página */}
-                          <button
-                            type="button"
-                            onClick={() => setCasetaBitacoraPage(1)}
-                            disabled={safeCasetaBitacoraPage <= 1}
-                            className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors cursor-pointer shadow-2xs"
-                            title="Primera página"
-                          >
-                            <IconChevronsLeft className="w-3.5 h-3.5" />
-                          </button>
-
-                          {/* Anterior */}
-                          <button
-                            type="button"
-                            onClick={() => setCasetaBitacoraPage((p) => Math.max(1, p - 1))}
-                            disabled={safeCasetaBitacoraPage <= 1}
-                            className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
-                            title="Página anterior"
-                          >
-                            <IconChevronLeft className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">Anterior</span>
-                          </button>
-
-                          {/* Botones de Números de Página */}
-                          <div className="flex items-center gap-1">
-                            {Array.from({ length: totalCasetaBitacoraPages }, (_, i) => i + 1).map((pageNum) => {
-                              if (
-                                totalCasetaBitacoraPages > 7 &&
-                                pageNum !== 1 &&
-                                pageNum !== totalCasetaBitacoraPages &&
-                                Math.abs(pageNum - safeCasetaBitacoraPage) > 1
-                              ) {
-                                if (pageNum === 2 || pageNum === totalCasetaBitacoraPages - 1) {
-                                  return <span key={pageNum} className="px-1 text-slate-400">...</span>;
-                                }
-                                return null;
-                              }
-
-                              const isActive = pageNum === safeCasetaBitacoraPage;
                               return (
-                                <button
-                                  key={pageNum}
-                                  type="button"
-                                  onClick={() => setCasetaBitacoraPage(pageNum)}
-                                  className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${isActive
-                                    ? "bg-[#0D6E5F] text-white shadow-xs"
-                                    : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-100"
-                                    }`}
-                                >
-                                  {pageNum}
-                                </button>
+                                <tr key={b.id} className="hover:bg-slate-50 transition-colors">
+                                  <td className="px-1.5 py-2.5 font-mono text-xs font-bold text-slate-700 text-center truncate">{b.id}</td>
+                                  <td className="px-1 py-2.5 text-center">
+                                    {b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? (
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                                        <IconWalk className="w-3 h-3 shrink-0" />
+                                        <span>Peatonal</span>
+                                      </span>
+                                    ) : b.tipoCorbatin === "VERDE" || b.tipoAcceso === "Corbatín Verde" ? (
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                                        <span>C. Verde</span>
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                        <IconCar className="w-3 h-3 shrink-0" />
+                                        <span>Vehicular</span>
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="px-2.5 py-2.5 text-xs font-semibold text-slate-900 truncate" title={b.empresaNombre}>
+                                    {b.empresaNombre}
+                                  </td>
+                                  <td className="px-2 py-2.5 text-xs font-mono font-bold text-slate-800 truncate" title={b.placas}>
+                                    {b.placas === "PEATONAL (A PIE)" ? (
+                                      <span className="text-sky-700 font-sans font-semibold text-[11px]">A Pie</span>
+                                    ) : (
+                                      b.placas
+                                    )}
+                                  </td>
+                                  <td className="px-2.5 py-2.5 text-xs text-slate-700 font-medium">
+                                    <div className="truncate font-semibold text-slate-800" title={b.conductor}>{b.conductor}</div>
+                                    {b.telefono && (
+                                      <div className="text-[10px] text-slate-400 font-mono truncate">
+                                        <CopyableInlineText text={b.telefono} label="Teléfono" onCopyToast={showToast} />
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="px-1 py-2.5 text-center">
+                                    {b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? (
+                                      <span className="text-slate-400 text-xs">—</span>
+                                    ) : (
+                                      <span className={`inline-flex items-center justify-center font-semibold px-1.5 py-0.5 rounded text-[10px] ${(b.num_pasajeros || 0) > 0 ? "bg-amber-50 text-amber-800 border border-amber-200" : "text-slate-500 bg-slate-50"
+                                        }`} title={`${b.num_pasajeros || 0} pasajeros adicionales`}>
+                                        {(b.num_pasajeros || 0) > 0 ? `+${b.num_pasajeros} extra` : "0 (Solo)"}
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="px-1 py-2.5 text-center text-xs font-mono font-bold truncate">
+                                    {b.tipoCorbatin === "VERDE" || b.tipoAcceso === "Corbatín Verde" ? (
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                                        {b.corbatinNum && b.corbatinNum !== "—" ? (b.corbatinNum.startsWith("#") ? b.corbatinNum : `#${b.corbatinNum}`) : "—"}
+                                      </span>
+                                    ) : (
+                                      <span style={{ color: "var(--color-primary)" }}>
+                                        {b.corbatinNum && b.corbatinNum !== "—" ? (b.corbatinNum.startsWith("#") ? b.corbatinNum : `#${b.corbatinNum}`) : "—"}
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="px-1 py-2.5 text-center text-[11px] text-slate-700 font-mono truncate" title={horaEntradaLimpia}>
+                                    {horaEntradaLimpia}
+                                  </td>
+                                  <td className="px-1 py-2.5 text-center text-[11px] text-slate-500 font-mono truncate" title={horaSalidaLimpia || "Dentro"}>
+                                    {horaSalidaLimpia || "—"}
+                                  </td>
+                                  <td className="px-2.5 py-2.5 text-xs text-slate-600 truncate" title={trabajoTexto}>
+                                    {trabajoTexto}
+                                  </td>
+                                  <td className="px-1 py-2.5 text-center">
+                                    <div className="flex flex-col items-center gap-1">
+                                      <StatusBadge status={b.estado} />
+                                      {(() => {
+                                        const exc = contratistasExcedidos.find((c) => c.registroId === String(b.id));
+                                        if (!exc) return null;
+                                        return (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setIsOvertimeModalExpanded(true);
+                                              setSelectedOvertimeContractor(exc);
+                                            }}
+                                            className="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100 cursor-pointer shadow-2xs whitespace-nowrap"
+                                            title="Clic para abrir la alerta de horario"
+                                          >
+                                            {exc.esPernocta ? "⏰ Sin salida previa" : `⏰ +${exc.minutosExcedidos}m`}
+                                          </button>
+                                        );
+                                      })()}
+                                    </div>
+                                  </td>
+                                  <td className="px-1.5 py-2.5 text-center">
+                                    {b.estado === "Dentro" ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleMarcarSalida(b.id)}
+                                        disabled={Boolean(marcandoSalidaIds[b.id])}
+                                        className={`w-full py-1 text-[11px] font-bold rounded-lg bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 cursor-pointer flex items-center justify-center gap-1 shadow-sm transition-all whitespace-nowrap ${marcandoSalidaIds[b.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                                          }`}
+                                      >
+                                        {marcandoSalidaIds[b.id] ? (
+                                          <>
+                                            <IconSpinner className="w-3 h-3" />
+                                            <span>...</span>
+                                          </>
+                                        ) : (
+                                          <span>Salida</span>
+                                        )}
+                                      </button>
+                                    ) : (
+                                      <span className="text-[11px] text-slate-400 font-medium">Completado</span>
+                                    )}
+                                  </td>
+                                </tr>
                               );
-                            })}
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Footer de Paginación Robusto (10 registros por página) */}
+                    {filteredBitacora.length > 0 && (
+                      <div className="px-5 py-3.5 border-t bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600" style={{ borderColor: "var(--color-border)" }}>
+                        <div className="flex items-center gap-3">
+                          <div>
+                            Mostrando <strong className="text-slate-800">{casetaBitacoraStartIndex + 1}</strong> – <strong className="text-slate-800">{Math.min(casetaBitacoraStartIndex + pageSize, filteredBitacora.length)}</strong> de <strong className="text-slate-800">{filteredBitacora.length}</strong> registros
                           </div>
-
-                          {/* Siguiente */}
-                          <button
-                            type="button"
-                            onClick={() => setCasetaBitacoraPage((p) => Math.min(totalCasetaBitacoraPages, p + 1))}
-                            disabled={safeCasetaBitacoraPage >= totalCasetaBitacoraPages}
-                            className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
-                            title="Página siguiente"
-                          >
-                            <span className="hidden sm:inline">Siguiente</span>
-                            <IconChevronRight className="w-3.5 h-3.5" />
-                          </button>
-
-                          {/* Última Página */}
-                          <button
-                            type="button"
-                            onClick={() => setCasetaBitacoraPage(totalCasetaBitacoraPages)}
-                            disabled={safeCasetaBitacoraPage >= totalCasetaBitacoraPages}
-                            className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors cursor-pointer shadow-2xs"
-                            title="Última página"
-                          >
-                            <IconChevronsRight className="w-3.5 h-3.5" />
-                          </button>
-
-                          <span className="text-[11px] text-slate-400 font-mono pl-1 hidden lg:inline">
-                            Pág. {safeCasetaBitacoraPage}/{totalCasetaBitacoraPages}
-                          </span>
+                          <div className="hidden md:flex items-center gap-1 text-[11px] text-slate-500">
+                            <span>•</span>
+                            <label htmlFor="caseta-page-size-select" className="text-slate-500">Ver:</label>
+                            <select
+                              id="caseta-page-size-select"
+                              value={pageSize}
+                              onChange={(e) => {
+                                setCasetaBitacoraPageSize(Number(e.target.value));
+                                setCasetaBitacoraPage(1);
+                              }}
+                              className="bg-white border border-slate-300 rounded px-1.5 py-0.5 font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0D6E5F]"
+                            >
+                              <option value={10}>10 por pág.</option>
+                              <option value={20}>20 por pág.</option>
+                              <option value={50}>50 por pág.</option>
+                            </select>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-          </div>
-        </main>
-      )}
 
-      {/* CONTABILIDAD */}
-      {currentUser.role === "contabilidad" && (
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <ContabilidadDashboard
-            empresas={empresas}
-            trabajadores={trabajadores}
-            vehicles={vehicles}
-          />
-        </main>
-      )}
-    </div>
+                        {totalCasetaBitacoraPages > 1 && (
+                          <div className="flex items-center gap-1.5">
+                            {/* Primera Página */}
+                            <button
+                              type="button"
+                              onClick={() => setCasetaBitacoraPage(1)}
+                              disabled={safeCasetaBitacoraPage <= 1}
+                              className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors cursor-pointer shadow-2xs"
+                              title="Primera página"
+                            >
+                              <IconChevronsLeft className="w-3.5 h-3.5" />
+                            </button>
 
-      {/* ─── MODAL TI: MODIFICAR / RESTABLECER CONTRASEÑA ─── */ }
-  {
-    selectedUserParaPassword && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-        <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200">
-          <div className="flex items-center justify-between border-b pb-3.5">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-purple-50 text-purple-700">
-                <IconKey className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 uppercase">Restablecer Contraseña</h3>
-                <p className="text-xs text-slate-500">Gestión de Seguridad TI · Usuario: {selectedUserParaPassword.username}</p>
-              </div>
-            </div>
-            <button onClick={() => setSelectedUserParaPassword(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-          </div>
+                            {/* Anterior */}
+                            <button
+                              type="button"
+                              onClick={() => setCasetaBitacoraPage((p) => Math.max(1, p - 1))}
+                              disabled={safeCasetaBitacoraPage <= 1}
+                              className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
+                              title="Página anterior"
+                            >
+                              <IconChevronLeft className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">Anterior</span>
+                            </button>
 
-          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1">
-            <div><strong>Nombre:</strong> {selectedUserParaPassword.nombre}</div>
-            <div><strong>Rol:</strong> <span className="font-bold uppercase text-[#0D6E5F]">{selectedUserParaPassword.role}</span></div>
-            <div><strong>Correo:</strong> {selectedUserParaPassword.email}</div>
-          </div>
+                            {/* Botones de Números de Página */}
+                            <div className="flex items-center gap-1">
+                              {Array.from({ length: totalCasetaBitacoraPages }, (_, i) => i + 1).map((pageNum) => {
+                                if (
+                                  totalCasetaBitacoraPages > 7 &&
+                                  pageNum !== 1 &&
+                                  pageNum !== totalCasetaBitacoraPages &&
+                                  Math.abs(pageNum - safeCasetaBitacoraPage) > 1
+                                ) {
+                                  if (pageNum === 2 || pageNum === totalCasetaBitacoraPages - 1) {
+                                    return <span key={pageNum} className="px-1 text-slate-400">...</span>;
+                                  }
+                                  return null;
+                                }
 
-          {passwordModalError && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-              <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-              <span>{passwordModalError}</span>
-            </div>
-          )}
+                                const isActive = pageNum === safeCasetaBitacoraPage;
+                                return (
+                                  <button
+                                    key={pageNum}
+                                    type="button"
+                                    onClick={() => setCasetaBitacoraPage(pageNum)}
+                                    className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${isActive
+                                      ? "bg-[#0D6E5F] text-white shadow-xs"
+                                      : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-100"
+                                      }`}
+                                  >
+                                    {pageNum}
+                                  </button>
+                                );
+                              })}
+                            </div>
 
-          <form onSubmit={handleGuardarNuevaPassword} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Nueva Contraseña *
-              </label>
-              <input
-                type="text"
-                required
-                value={nuevaPassword}
-                onChange={(e) => setNuevaPassword(e.target.value)}
-                placeholder="Introduce la nueva clave temporal o definitiva"
-                className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-purple-200 font-mono text-slate-800"
-              />
-            </div>
+                            {/* Siguiente */}
+                            <button
+                              type="button"
+                              onClick={() => setCasetaBitacoraPage((p) => Math.min(totalCasetaBitacoraPages, p + 1))}
+                              disabled={safeCasetaBitacoraPage >= totalCasetaBitacoraPages}
+                              className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
+                              title="Página siguiente"
+                            >
+                              <span className="hidden sm:inline">Siguiente</span>
+                              <IconChevronRight className="w-3.5 h-3.5" />
+                            </button>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Confirmar Contraseña *
-              </label>
-              <input
-                type="text"
-                required
-                value={confirmarPassword}
-                onChange={(e) => setConfirmarPassword(e.target.value)}
-                placeholder="Escribe la contraseña para confirmar"
-                className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-purple-200 font-mono text-slate-800"
-              />
-              <p className="text-[11px] text-slate-400 mt-1">
-                Debes teclear la clave manualmente como medida de verificación.
-              </p>
-            </div>
+                            {/* Última Página */}
+                            <button
+                              type="button"
+                              onClick={() => setCasetaBitacoraPage(totalCasetaBitacoraPages)}
+                              disabled={safeCasetaBitacoraPage >= totalCasetaBitacoraPages}
+                              className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors cursor-pointer shadow-2xs"
+                              title="Última página"
+                            >
+                              <IconChevronsRight className="w-3.5 h-3.5" />
+                            </button>
 
-            <div className="flex justify-between items-center pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  const temp = "LP-" + Math.random().toString(36).substring(2, 7).toUpperCase();
-                  setNuevaPassword(temp);
-                  setConfirmarPassword(""); // Exigir escribir a mano la confirmación
-                }}
-                className="text-xs text-purple-700 font-bold underline hover:text-purple-900 cursor-pointer"
-              >
-                Generar Clave Segura
-              </button>
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedUserParaPassword(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingPassword}
-                  className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isSubmittingPassword ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                    }`}
-                >
-                  {isSubmittingPassword ? (
-                    <>
-                      <IconSpinner className="w-3.5 h-3.5" />
-                      <span>Guardando...</span>
-                    </>
-                  ) : (
-                    <span>Guardar Clave</span>
-                  )}
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL APELACIÓN FORMAL (CONTRATISTA) ─── */ }
-  {
-    selectedSancionParaApelar && (
-      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 backdrop-blur-sm">
-        <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl p-4 sm:p-7 space-y-4 sm:space-y-5 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
-          <div className="flex items-center justify-between border-b pb-3.5">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-sky-50 text-sky-700">
-                <IconMessageSquare className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 uppercase">Recurso de Apelación y Aclaración</h3>
-                <p className="text-xs text-slate-500">Folio de Sanción: {selectedSancionParaApelar.id} · Placas: {selectedSancionParaApelar.placas}</p>
-              </div>
-            </div>
-            <button onClick={() => setSelectedSancionParaApelar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-          </div>
-
-          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1">
-            <div><strong>Infracción:</strong> {selectedSancionParaApelar.tipo}</div>
-            <div><strong>Medida Disciplinaria:</strong> <span className="text-red-700 font-bold">{selectedSancionParaApelar.medidaDisciplinaria}</span></div>
-            <div><strong>Descripción oficial:</strong> {selectedSancionParaApelar.descripcion}</div>
-          </div>
-
-          <form onSubmit={handleEnviarApelacion} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Argumentos de Aclaración / Justificación *
-              </label>
-              <textarea
-                required
-                rows={4}
-                value={apelacionArgumentos}
-                onChange={(e) => setApelacionArgumentos(e.target.value)}
-                placeholder="Describe detalladamente los motivos por los cuales se solicita la reconsideración o levantamiento de la suspensión..."
-                className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-sky-200 text-slate-800 leading-relaxed"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Representante Acreditado que Firma *
-              </label>
-              <input
-                type="text"
-                required
-                defaultValue={currentUser?.nombre || ""}
-                className="w-full rounded-xl px-3.5 sm:px-4 py-2 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-sky-200 font-medium text-slate-800"
-              />
-            </div>
-
-            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 pt-2 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setSelectedSancionParaApelar(null)}
-                className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer active:scale-95"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmittingApelacion}
-                className={`w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 active:scale-95 ${isSubmittingApelacion ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
-              >
-                {isSubmittingApelacion ? (
-                  <>
-                    <IconSpinner className="w-3.5 h-3.5" />
-                    <span>Enviando Recurso...</span>
-                  </>
-                ) : (
-                  <span>Enviar Recurso a Supervisión HOA →</span>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL 1: ADMIN CREATES SUPERVISOR ─── */ }
-  {
-    showCreateSupervisorModal && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-        <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200">
-          <div className="flex items-center justify-between border-b pb-3">
-            <h3 className="text-sm font-bold text-slate-900 uppercase">Crear Cuenta de Supervisor HOA</h3>
-            <button onClick={() => setShowCreateSupervisorModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">✕</button>
-          </div>
-          <form
-            onSubmit={handleGuardarNuevoSupervisor}
-            className="space-y-3"
-          >
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre Completo del Supervisor *</label>
-              <input name="nombre" required placeholder="Ej. Comandante Fernando Ortiz" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico Oficial *</label>
-              <input name="email" type="email" required placeholder="seguridad@laspalomasresort.net" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Contraseña *</label>
-              <input name="password" type="password" required placeholder="Mínimo 6 caracteres" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
-              <p className="text-[10px] text-slate-400 mt-1">Si se deja en blanco, se usará "123456" por defecto.</p>
-            </div>
-            <div className="flex justify-end gap-2 pt-3">
-              <button type="button" onClick={() => setShowCreateSupervisorModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>
-              <button
-                type="submit"
-                disabled={isSubmittingSupervisor}
-                className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${isSubmittingSupervisor ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
-              >
-                {isSubmittingSupervisor ? (
-                  <>
-                    <IconSpinner className="w-3.5 h-3.5" />
-                    <span>Guardando...</span>
-                  </>
-                ) : (
-                  <span>Guardar Supervisor</span>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL ADMIN CREA ADMINISTRADOR TI ─── */ }
-  {
-    showCreateAdminModal && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
-        <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200">
-          <div className="flex items-center justify-between border-b pb-3">
-            <div className="flex items-center gap-2 text-purple-700">
-              <div className="p-2 rounded-xl bg-purple-50">
-                <IconServer className="w-5 h-5" />
-              </div>
-              <h3 className="text-sm font-bold text-slate-900 uppercase">Crear Cuenta de Administrador</h3>
-            </div>
-            <button onClick={() => setShowCreateAdminModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-          </div>
-          <form
-            onSubmit={handleGuardarNuevoAdmin}
-            className="space-y-3"
-          >
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre Completo del Administrador *</label>
-              <input name="nombre" required placeholder="Ej. Ing. Carlos Mendoza (TI)" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico Oficial *</label>
-              <input name="email" type="email" required placeholder="admin@laspalomashoa.com" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Contraseña de Acceso *</label>
-              <input name="password" type="password" required placeholder="Mínimo 6 caracteres" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20" />
-              <p className="text-[10px] text-slate-400 mt-1">Si se deja en blanco, se usará "123456" por defecto.</p>
-            </div>
-            <div className="p-3 rounded-xl bg-purple-50 border border-purple-100 text-purple-900 text-[11px] space-y-1">
-              <div className="font-bold flex items-center gap-1.5">
-                <IconShield className="w-3.5 h-3.5 text-purple-600" />
-                <span>Privilegios Totales de Administrador</span>
-              </div>
-              <p className="text-purple-700">Esta cuenta tendrá acceso completo a la consola de sistemas, auditoría de eventos, cambio de contraseñas y gestión de todo el personal.</p>
-            </div>
-            <div className="flex justify-end gap-2 pt-3">
-              <button type="button" onClick={() => setShowCreateAdminModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer hover:bg-slate-50">Cancelar</button>
-              <button
-                type="submit"
-                disabled={isSubmittingAdmin}
-                className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0b5d50] cursor-pointer flex items-center gap-1.5 shadow-sm ${isSubmittingAdmin ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
-              >
-                {isSubmittingAdmin ? (
-                  <>
-                    <IconSpinner className="w-3.5 h-3.5" />
-                    <span>Guardando...</span>
-                  </>
-                ) : (
-                  <span>Guardar Administrador</span>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL 2: SUPERVISOR CREATES PROVEEDOR EMPRESA ─── */ }
-  {
-    showCreateEmpresaModal && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-        <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-between border-b pb-3">
-            <h3 className="text-sm font-bold text-slate-900 uppercase">Registrar Empresa Proveedora</h3>
-            <button onClick={() => { setShowCreateEmpresaModal(false); setEmpresaCreateError(""); setNuevaEmpresaPassword(""); setShowNuevaEmpresaPassword(false); }} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">✕</button>
-          </div>
-
-          {empresaCreateError && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-              <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-              <span>{empresaCreateError}</span>
-            </div>
-          )}
-
-          <form
-            onSubmit={handleGuardarNuevaEmpresa}
-            className="space-y-3"
-          >
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Razón Social de la Empresa *</label>
-              <input name="nombre" required placeholder="Ej. Climas y Refrigeración Rocky Point" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre del Titular / Contacto *</label>
-              <input name="contacto" required placeholder="Ej. Ing. Daniel Vázquez" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Teléfono Celular *</label>
-                <input name="telefono" required placeholder="+52 638 000 0000" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico *</label>
-                <input name="email" type="email" required placeholder="contacto@empresa.com" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-semibold text-slate-600">
-                  Contraseña de Acceso al Portal *
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const temp = "LP-" + Math.random().toString(36).substring(2, 7).toUpperCase();
-                    setNuevaEmpresaPassword(temp);
-                    setShowNuevaEmpresaPassword(true);
-                    showToast(`Contraseña generada: ${temp}`, "info", "Clave Aleatoria");
-                  }}
-                  className="text-xs text-[#0D6E5F] font-bold hover:underline cursor-pointer flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 transition-all shadow-2xs"
-                  title="Generar contraseña aleatoria como en el módulo de IT"
-                >
-                  <IconKey className="w-3.5 h-3.5 text-[#0D6E5F]" />
-                  <span>Generar Clave Segura</span>
-                </button>
-              </div>
-              <div className="relative">
-                <input
-                  name="password"
-                  type={showNuevaEmpresaPassword ? "text" : "password"}
-                  required
-                  value={nuevaEmpresaPassword}
-                  onChange={(e) => setNuevaEmpresaPassword(e.target.value)}
-                  placeholder="Mínimo 6 caracteres o genera una clave"
-                  className="w-full rounded-xl px-3 py-2 pr-20 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800 font-mono"
-                />
-                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                  {nuevaEmpresaPassword && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(nuevaEmpresaPassword);
-                        showToast("Contraseña copiada al portapapeles", "success");
-                      }}
-                      className="text-slate-400 hover:text-emerald-700 cursor-pointer p-1 rounded-md hover:bg-emerald-50 transition-colors"
-                      title="Copiar contraseña"
-                    >
-                      <IconCopy className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setShowNuevaEmpresaPassword(!showNuevaEmpresaPassword)}
-                    className="text-slate-400 hover:text-slate-700 cursor-pointer p-1 rounded-md hover:bg-slate-100 transition-colors"
-                    title={showNuevaEmpresaPassword ? "Ocultar contraseña" : "Ver contraseña"}
-                  >
-                    {showNuevaEmpresaPassword ? (
-                      <IconEyeOff className="w-4 h-4" />
-                    ) : (
-                      <IconEye className="w-4 h-4" />
+                            <span className="text-[11px] text-slate-400 font-mono pl-1 hidden lg:inline">
+                              Pág. {safeCasetaBitacoraPage}/{totalCasetaBitacoraPages}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     )}
-                  </button>
-                </div>
-              </div>
-              <p className="text-[10px] text-slate-400 mt-1">El contratista usará esta contraseña para ingresar al portal.</p>
-            </div>
-
-            {/* Rango de Corbatines */}
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-slate-800">Rango de Corbatines Asignados</label>
-                <span className="text-[10px] bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded-full">Control de Cupos</span>
-              </div>
-              <p className="text-[11px] text-slate-500">Define los números de corbatines autorizados para esta empresa (ej. del 1 al 5). Al registrar vehículos, se asignarán números dentro de este intervalo.</p>
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">Corbatín Inicial</label>
-                  <input name="corbatin_rango_inicio" type="number" min="1" placeholder="Ej. 1" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono" />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">Corbatín Final</label>
-                  <input name="corbatin_rango_fin" type="number" min="1" placeholder="Ej. 5" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono" />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-3">
-              <button type="button" onClick={() => { setShowCreateEmpresaModal(false); setEmpresaCreateError(""); setNuevaEmpresaPassword(""); setShowNuevaEmpresaPassword(false); }} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>
-              <button
-                type="submit"
-                disabled={isSubmittingEmpresa}
-                className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${isSubmittingEmpresa ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
-              >
-                {isSubmittingEmpresa ? (
-                  <>
-                    <IconSpinner className="w-3.5 h-3.5" />
-                    <span>Creando Proveedor...</span>
-                  </>
-                ) : (
-                  <span>Crear Proveedor</span>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL EDITAR EMPRESA Y RANGO DE CORBATINES ─── */ }
-  {
-    selectedEmpresaParaEditar && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-        <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-between border-b pb-3">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 uppercase">Editar Empresa / Rango de Corbatines</h3>
-              <p className="text-xs text-slate-500">{selectedEmpresaParaEditar.nombre}</p>
-            </div>
-            <button onClick={() => setSelectedEmpresaParaEditar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-          </div>
-
-          {empresaEditError && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-              <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-              <span>{empresaEditError}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleGuardarEditarEmpresa} className="space-y-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Razón Social *</label>
-              <input
-                value={empresaEditNombre}
-                onChange={(e) => setEmpresaEditNombre(e.target.value)}
-                required
-                className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre del Titular / Contacto *</label>
-              <input
-                value={empresaEditContacto}
-                onChange={(e) => setEmpresaEditContacto(e.target.value)}
-                required
-                className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300"
-              />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Teléfono</label>
-                <input
-                  value={empresaEditTelefono}
-                  onChange={(e) => setEmpresaEditTelefono(e.target.value)}
-                  className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico</label>
-                <input
-                  type="email"
-                  value={empresaEditEmail}
-                  onChange={(e) => setEmpresaEditEmail(e.target.value)}
-                  className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300"
-                />
-              </div>
-            </div>
-
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-slate-800">Rango de Corbatines Asignados</label>
-                <span className="text-[10px] bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded-full">Control de Cupo</span>
-              </div>
-              <p className="text-[11px] text-slate-500">Define los números de corbatín autorizados para esta empresa. El sistema asignará automáticamente números dentro de este intervalo al registrar vehículos.</p>
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">Corbatín Inicial</label>
-                  <input
-                    type="number"
-                    min="1"
-                    placeholder="Ej. 1"
-                    value={empresaEditRangoInicio}
-                    onChange={(e) => setEmpresaEditRangoInicio(e.target.value)}
-                    className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">Corbatín Final</label>
-                  <input
-                    type="number"
-                    min="1"
-                    placeholder="Ej. 5"
-                    value={empresaEditRangoFin}
-                    onChange={(e) => setEmpresaEditRangoFin(e.target.value)}
-                    className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono"
-                  />
-                </div>
-              </div>
-              {empresaEditRangoInicio && empresaEditRangoFin && parseInt(empresaEditRangoFin, 10) >= parseInt(empresaEditRangoInicio, 10) && (
-                <p className="text-[11px] font-bold text-teal-700 mt-1">
-                  ✓ Capacidad total: {parseInt(empresaEditRangoFin, 10) - parseInt(empresaEditRangoInicio, 10) + 1} vehículos autorizados
-                </p>
-              )}
-            </div>
-
-            <div className="flex justify-end gap-2 pt-3">
-              <button
-                type="button"
-                onClick={() => setSelectedEmpresaParaEditar(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer hover:bg-slate-50"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmittingEmpresaEdit}
-                className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${isSubmittingEmpresaEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
-              >
-                {isSubmittingEmpresaEdit ? (
-                  <>
-                    <IconSpinner className="w-3.5 h-3.5" />
-                    <span>Guardando Cambios...</span>
-                  </>
-                ) : (
-                  <span>Guardar Cambios</span>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL 3: SUPERVISOR CREATES GUARDIA DE CASETA ─── */ }
-  {
-    showCreateGuardiaModal && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-        <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-between border-b pb-3">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
-                <IconShield className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 uppercase">Crear Cuenta de Guardia de Caseta</h3>
-                <p className="text-xs text-slate-500">Asigna credenciales y fotografía oficial para el operador de caseta</p>
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                setShowCreateGuardiaModal(false);
-                setNuevoGuardiaFoto("");
-                setNuevoGuardiaFotoError("");
-                setNuevoGuardiaPassword("");
-                setShowNuevoGuardiaPassword(false);
-              }}
-              className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1"
-            >
-              ✕
-            </button>
-          </div>
-
-          {nuevoGuardiaFotoError && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-              <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-              <span>{nuevoGuardiaFotoError}</span>
-            </div>
-          )}
-
-          <form
-            onSubmit={handleGuardarNuevoGuardia}
-            className="space-y-4"
-          >
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre Completo del Oficial *</label>
-              <input name="nombre" required placeholder="Ej. Oficial Ramón Beltrán" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Correo Electrónico Oficial *</label>
-              <input name="email" type="email" required placeholder="caseta.sur@laspalomasresort.net" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800" />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Contraseña de Inicio de Sesión *
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const temp = "LP-" + Math.random().toString(36).substring(2, 7).toUpperCase();
-                    setNuevoGuardiaPassword(temp);
-                    setShowNuevoGuardiaPassword(true);
-                  }}
-                  className="text-xs text-[#0D6E5F] font-bold hover:underline cursor-pointer flex items-center gap-1"
-                  title="Generar contraseña aleatoria como en el módulo de IT"
-                >
-                  <span>⚡ Generar Clave Segura</span>
-                </button>
-              </div>
-              <div className="relative">
-                <input
-                  name="password"
-                  type={showNuevoGuardiaPassword ? "text" : "password"}
-                  required
-                  value={nuevoGuardiaPassword}
-                  onChange={(e) => setNuevoGuardiaPassword(e.target.value)}
-                  placeholder="Mínimo 6 caracteres"
-                  className="w-full rounded-xl px-4 py-2.5 pr-10 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800 font-mono"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNuevoGuardiaPassword(!showNuevoGuardiaPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1"
-                  title={showNuevoGuardiaPassword ? "Ocultar contraseña" : "Ver contraseña"}
-                >
-                  {showNuevoGuardiaPassword ? (
-                    <IconEyeOff className="w-4 h-4" />
-                  ) : (
-                    <IconEye className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-1">El oficial usará esta contraseña para iniciar sesión en el sistema.</p>
-            </div>
-
-            {/* FOTOGRAFÍA OBLIGATORIA DEL GUARDIA */}
-            <div className="space-y-2 pt-2 border-t border-slate-100">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Fotografía Oficial del Oficial *
-                </label>
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                  Obligatoria
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
-                <div className="sm:col-span-2 space-y-2">
-                  <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
-                    <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
-                    <span>{nuevoGuardiaFoto ? "Cambiar Fotografía" : "Subir Foto desde Dispositivo"}</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleFotoGuardiaChange}
-                    />
-                  </label>
-                  <p className="text-[11px] text-slate-400">
-                    Fotografía frontal y nítida del rostro del oficial para control de caseta (JPG o PNG, máx 5MB).
-                  </p>
-                  {nuevoGuardiaFoto && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setNuevoGuardiaFoto("");
-                        setNuevoGuardiaFotoError("");
-                      }}
-                      className="text-xs text-red-600 hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      <IconTrash className="w-3.5 h-3.5" />
-                      <span>Remover fotografía</span>
-                    </button>
-                  )}
-                </div>
-
-                <div className={`h-32 rounded-2xl border-2 ${nuevoGuardiaFoto ? 'border-emerald-400 bg-emerald-50/20' : 'border-dashed border-slate-300 bg-slate-50'} flex items-center justify-center overflow-hidden relative shadow-inner`}>
-                  {nuevoGuardiaFoto ? (
-                    <div className="relative w-full h-full group">
-                      <img src={nuevoGuardiaFoto} alt="Preview Guardia" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
-                        Foto Asignada ✓
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center p-2 text-slate-400">
-                      <IconUsers className="w-7 h-7 mx-auto mb-1 opacity-50" />
-                      <span className="text-[10px] block font-semibold text-amber-600">Foto Requerida *</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowCreateGuardiaModal(false);
-                  setNuevoGuardiaFoto("");
-                  setNuevoGuardiaFotoError("");
-                }}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmittingGuardia}
-                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isSubmittingGuardia ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
-              >
-                {isSubmittingGuardia ? (
-                  <>
-                    <IconSpinner className="w-3.5 h-3.5" />
-                    <span>Guardando Oficial...</span>
-                  </>
-                ) : (
-                  <span>Guardar Oficial →</span>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL EDITAR OFICIAL DE CASETA ─── */ }
-  {
-    selectedGuardiaParaEditar && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
-        <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-between border-b pb-3">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
-                <IconShield className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 uppercase">Editar Oficial de Caseta</h3>
-                <p className="text-xs text-slate-500">Actualiza los datos y fotografía oficial para el operador de caseta</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedGuardiaParaEditar(null);
-                setEditGuardiaFotoError("");
-              }}
-              className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1"
-            >
-              ✕
-            </button>
-          </div>
-
-          {editGuardiaFotoError && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-              <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-              <span>{editGuardiaFotoError}</span>
-            </div>
-          )}
-
-          <form
-            onSubmit={handleGuardarEditarGuardia}
-            className="space-y-4"
-          >
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre Completo del Oficial *</label>
-              <input
-                type="text"
-                name="nombre"
-                required
-                value={editGuardiaNombre}
-                onChange={(e) => setEditGuardiaNombre(e.target.value)}
-                placeholder="Ej. Oficial Ramón Beltrán"
-                className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Correo Electrónico Oficial *</label>
-              <input
-                type="email"
-                name="email"
-                required
-                value={editGuardiaEmail}
-                onChange={(e) => setEditGuardiaEmail(e.target.value)}
-                placeholder="caseta.sur@laspalomasresort.net"
-                className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800"
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Contraseña *
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const temp = "LP-" + Math.random().toString(36).substring(2, 7).toUpperCase();
-                    setEditGuardiaPassword(temp);
-                    setShowEditGuardiaPassword(true);
-                  }}
-                  className="text-xs text-[#0D6E5F] font-bold hover:underline cursor-pointer flex items-center gap-1"
-                  title="Generar contraseña aleatoria como en el módulo de IT"
-                >
-                  <span>⚡ Generar Clave Segura</span>
-                </button>
-              </div>
-              <div className="relative">
-                <input
-                  type={showEditGuardiaPassword ? "text" : "password"}
-                  name="password"
-                  value={editGuardiaPassword}
-                  onChange={(e) => setEditGuardiaPassword(e.target.value)}
-                  placeholder="Mínimo 6 caracteres (o en blanco para conservar la actual)"
-                  className="w-full rounded-xl px-4 py-2.5 pr-10 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800 font-mono"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowEditGuardiaPassword(!showEditGuardiaPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1"
-                  title={showEditGuardiaPassword ? "Ocultar contraseña" : "Ver contraseña"}
-                >
-                  {showEditGuardiaPassword ? (
-                    <IconEyeOff className="w-4 h-4" />
-                  ) : (
-                    <IconEye className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* FOTOGRAFÍA OBLIGATORIA DEL GUARDIA */}
-            <div className="space-y-2 pt-2 border-t border-slate-100">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Fotografía Oficial del Oficial *
-                </label>
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                  Obligatoria
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
-                <div className="sm:col-span-2 space-y-2">
-                  <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
-                    <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
-                    <span>{editGuardiaFoto ? "Cambiar Fotografía" : "Subir Foto desde Dispositivo"}</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleFotoGuardiaEditChange}
-                    />
-                  </label>
-                  <p className="text-[11px] text-slate-400">
-                    Fotografía frontal y nítida del rostro del oficial para control de caseta (JPG o PNG, máx 5MB).
-                  </p>
-                  {editGuardiaFoto && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditGuardiaFoto("");
-                        setEditGuardiaFotoError("");
-                      }}
-                      className="text-xs text-red-600 hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      <IconTrash className="w-3.5 h-3.5" />
-                      <span>Remover fotografía</span>
-                    </button>
-                  )}
-                </div>
-
-                <div className={`h-32 rounded-2xl border-2 ${editGuardiaFoto ? 'border-emerald-400 bg-emerald-50/20' : 'border-dashed border-slate-300 bg-slate-50'} flex items-center justify-center overflow-hidden relative shadow-inner`}>
-                  {editGuardiaFoto ? (
-                    <div className="relative w-full h-full group">
-                      <img src={editGuardiaFoto} alt="Preview Guardia" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
-                        Foto Asignada ✓
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center p-2 text-slate-400">
-                      <IconUsers className="w-7 h-7 mx-auto mb-1 opacity-50" />
-                      <span className="text-[10px] block font-semibold text-amber-600">Foto Requerida *</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedGuardiaParaEditar(null);
-                  setEditGuardiaFotoError("");
-                }}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmittingGuardiaEdit}
-                className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isSubmittingGuardiaEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
-              >
-                {isSubmittingGuardiaEdit ? (
-                  <>
-                    <IconSpinner className="w-3.5 h-3.5" />
-                    <span>Guardando Oficial...</span>
-                  </>
-                ) : (
-                  <span>Guardar Cambios →</span>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL ALTA TRABAJADOR (SUPERVISOR / CONTRATISTA) ─── */ }
-  {
-    showCreateTrabajadorModal && (
-      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 backdrop-blur-sm">
-        <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl p-4 sm:p-7 space-y-4 sm:space-y-5 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
-          <div className="flex items-center justify-between border-b pb-3.5">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
-                <IconUserPlus className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 uppercase">Alta de Nuevo Trabajador</h3>
-                <p className="text-xs text-slate-500">
-                  Empresa: <strong className="text-slate-800">{targetEmpresaParaNuevoTrabajador?.nombre || currentUser?.empresaNombre || "Empresa Contratista"}</strong>
-                </p>
-              </div>
-            </div>
-            <button onClick={() => setShowCreateTrabajadorModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-          </div>
-
-          {trabajadorFormError && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-              <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-              <span>{trabajadorFormError}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleGuardarNuevoTrabajador} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Nombre(s) * <span className="text-slate-400 font-normal">(máx 80)</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  maxLength={80}
-                  value={trabajadorNombre}
-                  onChange={(e) => setTrabajadorNombre(e.target.value)}
-                  placeholder="Ej. Juan Carlos"
-                  className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Apellidos Completos * <span className="text-slate-400 font-normal">(máx 150)</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  maxLength={150}
-                  value={trabajadorApellidos}
-                  onChange={(e) => setTrabajadorApellidos(e.target.value)}
-                  placeholder="Ej. Pérez Hernández"
-                  className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Teléfono Celular <span className="text-slate-400 font-normal">(opcional, máx 20)</span>
-              </label>
-              <input
-                type="text"
-                maxLength={20}
-                value={trabajadorTelefono}
-                onChange={(e) => setTrabajadorTelefono(e.target.value)}
-                placeholder="Ej. +52 81 1234 5678"
-                className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-mono text-slate-800"
-              />
-            </div>
-
-            {/* Fotografía de Credencial */}
-            <div className="space-y-2 pt-1 border-t border-slate-100">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Fotografía de Credencial / Identificación (URL o Archivo)
-              </label>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
-                <div className="sm:col-span-2 space-y-2">
-                  <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
-                    <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
-                    <span>Subir Foto desde Dispositivo</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleFotoTrabajadorUpload}
-                    />
-                  </label>
-                  <p className="text-[11px] text-slate-400">
-                    Fotografía nítida tipo credencial del colaborador (JPG o PNG · Supabase Storage).
-                  </p>
-                </div>
-
-                <div className="h-28 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
-                  {trabajadorFotoUrl ? (
-                    <div
-                      onClick={() => setGenericImagePreview({
-                        isOpen: true,
-                        src: trabajadorFotoUrl,
-                        title: "Fotografía de Credencial",
-                        subtitle: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Nuevo Trabajador",
-                      })}
-                      className="relative w-full h-full group cursor-pointer"
-                      title="Clic para ampliar imagen"
-                    >
-                      <img src={trabajadorFotoUrl} alt="Preview" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold gap-1">
-                        <IconEye className="w-3.5 h-3.5" />
-                        <span>Ampliar</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center p-2 text-slate-400">
-                      <IconUsers className="w-6 h-6 mx-auto mb-1 opacity-50" />
-                      <span className="text-[10px] block">Sin fotografía</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* 1. Comprobante de Seguro Social (IMSS, ISSSTE, etc.) */}
-            <div className="space-y-2 pt-2 border-t border-slate-100">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <IconShield className="w-3.5 h-3.5 text-[#0D6E5F]" />
-                  <span>Comprobante de Seguro (IMSS, etc.)</span>
-                </label>
-                {trabajadorSeguroUrl && (
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                    Documento Listo ✓
-                  </span>
-                )}
-              </div>
-
-              <div className="border-2 border-dashed border-slate-300 hover:border-[#0D6E5F] rounded-2xl p-4 bg-slate-50/70 hover:bg-teal-50/20 transition-all text-center relative group">
-                <input
-                  type="file"
-                  accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
-                  onChange={handleSeguroTrabajadorUpload}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                />
-                {trabajadorSeguroUrl ? (
-                  <div className="flex items-center justify-between gap-3 p-1">
-                    <div className="flex items-center gap-2.5 min-w-0 text-left">
-                      <div className="w-9 h-9 rounded-xl bg-teal-100 text-[#0D6E5F] flex items-center justify-center shrink-0 shadow-2xs">
-                        <IconShield className="w-5 h-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
-                          {trabajadorSeguroFileName || "Comprobante de Seguro Adjunto"}
-                        </div>
-                        <div className="text-[10px] text-teal-700 font-semibold">
-                          {trabajadorSeguroUrl.startsWith("data:application/pdf") || trabajadorSeguroUrl.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 relative z-20">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedDocTrabajadorPreview({
-                            isOpen: true,
-                            url: trabajadorSeguroUrl,
-                            title: "Comprobante de Seguro Social (IMSS)",
-                            workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Nuevo Trabajador",
-                            type: "seguro"
-                          });
-                        }}
-                        className="px-2.5 py-1 text-xs font-bold text-teal-800 bg-white border border-teal-300 rounded-lg hover:bg-teal-50 cursor-pointer shadow-2xs flex items-center gap-1"
-                        title="Visualizar documento"
-                      >
-                        <IconEye className="w-3.5 h-3.5" />
-                        <span>Ver</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setTrabajadorSeguroUrl("");
-                          setTrabajadorSeguroFileName("");
-                        }}
-                        className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
-                        title="Quitar archivo"
-                      >
-                        <IconTrash className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
                   </div>
-                ) : (
-                  <div className="py-2 flex flex-col items-center gap-1">
-                    <IconShield className="w-6 h-6 text-slate-400 group-hover:text-[#0D6E5F] transition-colors" />
-                    <span className="text-xs font-bold text-slate-700">Subir Comprobante de Seguro (IMSS, ISSSTE, etc.)</span>
-                    <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
-                  </div>
-                )}
-              </div>
+                );
+              })()}
             </div>
-
-            {/* 2. Constancia de Competencias Laborales DC-3 */}
-            <div className="space-y-2 pt-2 border-t border-slate-100">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <IconFileText className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Constancia de Competencias DC-3</span>
-                </label>
-                {trabajadorDC3Url && (
-                  <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                    Documento Listo ✓
-                  </span>
-                )}
-              </div>
-
-              <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-4 bg-slate-50/70 hover:bg-blue-50/20 transition-all text-center relative group">
-                <input
-                  type="file"
-                  accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
-                  onChange={handleDC3TrabajadorUpload}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                />
-                {trabajadorDC3Url ? (
-                  <div className="flex items-center justify-between gap-3 p-1">
-                    <div className="flex items-center gap-2.5 min-w-0 text-left">
-                      <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 shadow-2xs">
-                        <IconFileText className="w-5 h-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
-                          {trabajadorDC3FileName || "Constancia DC-3 Adjunta"}
-                        </div>
-                        <div className="text-[10px] text-blue-700 font-semibold">
-                          {trabajadorDC3Url.startsWith("data:application/pdf") || trabajadorDC3Url.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 relative z-20">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedDocTrabajadorPreview({
-                            isOpen: true,
-                            url: trabajadorDC3Url,
-                            title: "Constancia de Competencias Laborales DC-3",
-                            workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Nuevo Trabajador",
-                            type: "dc3"
-                          });
-                        }}
-                        className="px-2.5 py-1 text-xs font-bold text-blue-800 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 cursor-pointer shadow-2xs flex items-center gap-1"
-                        title="Visualizar documento"
-                      >
-                        <IconEye className="w-3.5 h-3.5" />
-                        <span>Ver</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setTrabajadorDC3Url("");
-                          setTrabajadorDC3FileName("");
-                        }}
-                        className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
-                        title="Quitar archivo"
-                      >
-                        <IconTrash className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="py-2 flex flex-col items-center gap-1">
-                    <IconFileText className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
-                    <span className="text-xs font-bold text-slate-700">Subir Constancia DC-3</span>
-                    <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-
-            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 pt-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setShowCreateTrabajadorModal(false)}
-                className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer active:scale-95"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmittingTrabajador}
-                className={`w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 active:scale-95 ${isSubmittingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
-                style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
-              >
-                {isSubmittingTrabajador ? (
-                  <>
-                    <IconSpinner className="w-3.5 h-3.5" />
-                    <span>Guardando Trabajador...</span>
-                  </>
-                ) : (
-                  <span>Guardar Trabajador →</span>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL MODIFICAR TRABAJADOR (CONTRATISTA) ─── */ }
-  {
-    selectedTrabajadorParaEditar && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-        <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-between border-b pb-3.5">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-blue-50 text-blue-700">
-                <IconEdit className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 uppercase">Modificar Trabajador</h3>
-                <p className="text-xs text-slate-500">ID: #{selectedTrabajadorParaEditar.id_trabajador} · {selectedTrabajadorParaEditar.empresaNombre}</p>
-              </div>
-            </div>
-            <button onClick={() => setSelectedTrabajadorParaEditar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-          </div>
-
-          {trabajadorFormError && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-              <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-              <span>{trabajadorFormError}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleGuardarEdicionTrabajador} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Nombre(s) * <span className="text-slate-400 font-normal">(máx 80)</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  maxLength={80}
-                  value={trabajadorNombre}
-                  onChange={(e) => setTrabajadorNombre(e.target.value)}
-                  className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Apellidos Completos * <span className="text-slate-400 font-normal">(máx 150)</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  maxLength={150}
-                  value={trabajadorApellidos}
-                  onChange={(e) => setTrabajadorApellidos(e.target.value)}
-                  className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Teléfono Celular <span className="text-slate-400 font-normal">(opcional, máx 20)</span>
-              </label>
-              <input
-                type="text"
-                maxLength={20}
-                value={trabajadorTelefono}
-                onChange={(e) => setTrabajadorTelefono(e.target.value)}
-                placeholder="Ej. +52 81 1234 5678"
-                className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-mono text-slate-800"
-              />
-            </div>
-
-            {/* Fotografía de Credencial */}
-            <div className="space-y-2 pt-1 border-t border-slate-100">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Actualizar Fotografía de Credencial
-              </label>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
-                <div className="sm:col-span-2 space-y-2">
-                  <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
-                    <IconCamera className="w-4 h-4 text-blue-600" />
-                    <span>Cambiar Foto desde Dispositivo</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleFotoTrabajadorUpload}
-                    />
-                  </label>
-                  <p className="text-[11px] text-slate-400">
-                    Fotografía nítida tipo credencial del colaborador (JPG o PNG · Supabase Storage).
-                  </p>
-                </div>
-
-                <div className="h-28 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
-                  {trabajadorFotoUrl ? (
-                    <div
-                      onClick={() => setGenericImagePreview({
-                        isOpen: true,
-                        src: trabajadorFotoUrl,
-                        title: "Fotografía de Credencial",
-                        subtitle: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Trabajador",
-                      })}
-                      className="relative w-full h-full group cursor-pointer"
-                      title="Clic para ampliar imagen"
-                    >
-                      <img src={trabajadorFotoUrl} alt="Preview" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold gap-1">
-                        <IconEye className="w-3.5 h-3.5" />
-                        <span>Ampliar</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center p-2 text-slate-400">
-                      <IconUsers className="w-6 h-6 mx-auto mb-1 opacity-50" />
-                      <span className="text-[10px] block">Sin fotografía</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* 1. Comprobante de Seguro Social (IMSS, ISSSTE, etc.) */}
-            <div className="space-y-2 pt-2 border-t border-slate-100">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <IconShield className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Comprobante de Seguro Social (IMSS, etc.)</span>
-                </label>
-                {trabajadorSeguroUrl && (
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                    Documento Listo ✓
-                  </span>
-                )}
-              </div>
-
-              <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-4 bg-slate-50/70 hover:bg-blue-50/20 transition-all text-center relative group">
-                <input
-                  type="file"
-                  accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
-                  onChange={handleSeguroTrabajadorUpload}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                />
-                {trabajadorSeguroUrl ? (
-                  <div className="flex items-center justify-between gap-3 p-1">
-                    <div className="flex items-center gap-2.5 min-w-0 text-left">
-                      <div className="w-9 h-9 rounded-xl bg-teal-100 text-[#0D6E5F] flex items-center justify-center shrink-0 shadow-2xs">
-                        <IconShield className="w-5 h-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
-                          {trabajadorSeguroFileName || "Comprobante de Seguro Adjunto"}
-                        </div>
-                        <div className="text-[10px] text-teal-700 font-semibold">
-                          {trabajadorSeguroUrl.startsWith("data:application/pdf") || trabajadorSeguroUrl.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 relative z-20">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedDocTrabajadorPreview({
-                            isOpen: true,
-                            url: trabajadorSeguroUrl,
-                            title: "Comprobante de Seguro Social (IMSS)",
-                            workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Trabajador",
-                            type: "seguro"
-                          });
-                        }}
-                        className="px-2.5 py-1 text-xs font-bold text-teal-800 bg-white border border-teal-300 rounded-lg hover:bg-teal-50 cursor-pointer shadow-2xs flex items-center gap-1"
-                        title="Visualizar documento"
-                      >
-                        <IconEye className="w-3.5 h-3.5" />
-                        <span>Ver</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setTrabajadorSeguroUrl("");
-                          setTrabajadorSeguroFileName("");
-                        }}
-                        className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
-                        title="Quitar archivo"
-                      >
-                        <IconTrash className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="py-2 flex flex-col items-center gap-1">
-                    <IconShield className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
-                    <span className="text-xs font-bold text-slate-700">Actualizar / Reemplazar Comprobante de Seguro</span>
-                    <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* 2. Constancia de Competencias Laborales DC-3 */}
-            <div className="space-y-2 pt-2 border-t border-slate-100">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <IconFileText className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Constancia de Competencias DC-3</span>
-                </label>
-                {trabajadorDC3Url && (
-                  <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                    Documento Listo ✓
-                  </span>
-                )}
-              </div>
-
-              <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-4 bg-slate-50/70 hover:bg-blue-50/20 transition-all text-center relative group">
-                <input
-                  type="file"
-                  accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
-                  onChange={handleDC3TrabajadorUpload}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                />
-                {trabajadorDC3Url ? (
-                  <div className="flex items-center justify-between gap-3 p-1">
-                    <div className="flex items-center gap-2.5 min-w-0 text-left">
-                      <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 shadow-2xs">
-                        <IconFileText className="w-5 h-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
-                          {trabajadorDC3FileName || "Constancia DC-3 Adjunta"}
-                        </div>
-                        <div className="text-[10px] text-blue-700 font-semibold">
-                          {trabajadorDC3Url.startsWith("data:application/pdf") || trabajadorDC3Url.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 relative z-20">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedDocTrabajadorPreview({
-                            isOpen: true,
-                            url: trabajadorDC3Url,
-                            title: "Constancia de Competencias Laborales DC-3",
-                            workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Trabajador",
-                            type: "dc3"
-                          });
-                        }}
-                        className="px-2.5 py-1 text-xs font-bold text-blue-800 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 cursor-pointer shadow-2xs flex items-center gap-1"
-                        title="Visualizar documento"
-                      >
-                        <IconEye className="w-3.5 h-3.5" />
-                        <span>Ver</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setTrabajadorDC3Url("");
-                          setTrabajadorDC3FileName("");
-                        }}
-                        className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
-                        title="Quitar archivo"
-                      >
-                        <IconTrash className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="py-2 flex flex-col items-center gap-1">
-                    <IconFileText className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
-                    <span className="text-xs font-bold text-slate-700">Actualizar / Reemplazar Constancia DC-3</span>
-                    <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Estatus Activo */}
-            <div className="pt-2 border-t border-slate-100">
-              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <input
-                  type="checkbox"
-                  checked={trabajadorActivo}
-                  onChange={(e) => setTrabajadorActivo(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded cursor-pointer"
-                />
-                <div>
-                  <div className="text-xs font-bold text-slate-800">Estatus de Autorización: {trabajadorActivo ? "Activo (Autorizado)" : "Inactivo (Sin Acceso)"}</div>
-                  <div className="text-[11px] text-slate-500">Determina si el colaborador puede ingresar por caseta.</div>
-                </div>
-              </label>
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 font-mono flex flex-col sm:flex-row justify-between gap-1">
-              <span>Fecha de Alta: {formatFechaLegible(selectedTrabajadorParaEditar.created_at)}</span>
-              <span>Última modif: {formatFechaLegible(selectedTrabajadorParaEditar.updated_at)}</span>
-            </div>
-
-            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setSelectedTrabajadorParaEditar(null)}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmittingTrabajadorEdit}
-                className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingTrabajadorEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
-              >
-                {isSubmittingTrabajadorEdit ? (
-                  <>
-                    <IconSpinner className="w-3.5 h-3.5" />
-                    <span>Guardando Cambios...</span>
-                  </>
-                ) : (
-                  <span>Guardar Cambios →</span>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL ELIMINAR TRABAJADOR ─── */ }
-  {
-    selectedTrabajadorParaEliminar && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-        <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
-          <div className="flex items-center justify-between border-b pb-3">
-            <div className="flex items-center gap-2 text-red-600">
-              <div className="p-2 rounded-xl bg-red-50">
-                <IconTrash className="w-5 h-5" />
-              </div>
-              <h3 className="text-sm font-bold uppercase">Eliminar Trabajador</h3>
-            </div>
-            <button onClick={() => setSelectedTrabajadorParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
-            <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este colaborador?</p>
-            <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
-              <div><strong>Nombre:</strong> {selectedTrabajadorParaEliminar.nombre} {selectedTrabajadorParaEliminar.apellidos}</div>
-              <div><strong>ID:</strong> <span className="font-mono">#{selectedTrabajadorParaEliminar.id_trabajador}</span></div>
-              <div><strong>Empresa:</strong> {selectedTrabajadorParaEliminar.empresaNombre}</div>
-              <div><strong>Teléfono:</strong> {selectedTrabajadorParaEliminar.telefono || "N/A"}</div>
-            </div>
-            <p className="text-[11px] text-red-700">Esta acción no se puede deshacer y revocará su credencial de acceso.</p>
-          </div>
-
-          <div className="flex justify-end gap-2.5 pt-2">
-            <button
-              type="button"
-              onClick={() => setSelectedTrabajadorParaEliminar(null)}
-              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={handleConfirmarEliminarTrabajador}
-              disabled={isDeletingTrabajador}
-              className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                }`}
-            >
-              {isDeletingTrabajador ? (
-                <>
-                  <IconSpinner className="w-4 h-4" />
-                  <span>Eliminando...</span>
-                </>
-              ) : (
-                <>
-                  <IconTrash className="w-4 h-4" />
-                  <span>Eliminar Definitivamente</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL ELIMINAR SUPERVISOR HOA ─── */ }
-  {
-    selectedSupervisorParaEliminar && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-        <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
-          <div className="flex items-center justify-between border-b pb-3">
-            <div className="flex items-center gap-2 text-red-600">
-              <div className="p-2 rounded-xl bg-red-50">
-                <IconTrash className="w-5 h-5" />
-              </div>
-              <h3 className="text-sm font-bold uppercase">Eliminar Supervisor HOA</h3>
-            </div>
-            <button onClick={() => setSelectedSupervisorParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
-            <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este Supervisor HOA del sistema?</p>
-            <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
-              <div><strong>Nombre:</strong> {selectedSupervisorParaEliminar.nombre}</div>
-              <div><strong>ID:</strong> <span className="font-mono">#{selectedSupervisorParaEliminar.id}</span></div>
-              <div><strong>Usuario / Correo:</strong> {selectedSupervisorParaEliminar.username}</div>
-              <div><strong>Rol:</strong> <span className="font-semibold uppercase text-blue-700">Supervisor de Seguridad HOA</span></div>
-            </div>
-            <p className="text-[11px] text-red-700">Esta acción no se puede deshacer y revocará inmediatamente su acceso al portal de administración y a la aplicación móvil.</p>
-          </div>
-
-          <div className="flex justify-end gap-2.5 pt-2">
-            <button
-              type="button"
-              onClick={() => setSelectedSupervisorParaEliminar(null)}
-              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={handleConfirmarEliminarSupervisor}
-              disabled={isDeletingSupervisor}
-              className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingSupervisor ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                }`}
-            >
-              {isDeletingSupervisor ? (
-                <>
-                  <IconSpinner className="w-4 h-4" />
-                  <span>Eliminando...</span>
-                </>
-              ) : (
-                <>
-                  <IconTrash className="w-4 h-4" />
-                  <span>Eliminar Definitivamente</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL ELIMINAR GUARDIA / OFICIAL DE CASETA ─── */ }
-  {
-    selectedGuardiaParaEliminar && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
-        <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
-          <div className="flex items-center justify-between border-b pb-3">
-            <div className="flex items-center gap-2 text-red-600">
-              <div className="p-2 rounded-xl bg-red-50">
-                <IconTrash className="w-5 h-5" />
-              </div>
-              <h3 className="text-sm font-bold uppercase">Eliminar Oficial de Caseta</h3>
-            </div>
-            <button onClick={() => setSelectedGuardiaParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
-            <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este Oficial de Caseta del sistema?</p>
-            <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
-              <div><strong>Nombre:</strong> {selectedGuardiaParaEliminar.nombre}</div>
-              <div><strong>ID:</strong> <span className="font-mono">#{selectedGuardiaParaEliminar.id}</span></div>
-              <div><strong>Usuario / Correo:</strong> {selectedGuardiaParaEliminar.username}</div>
-              <div><strong>Rol:</strong> <span className="font-semibold uppercase text-emerald-700">Oficial de Caseta</span></div>
-            </div>
-            <p className="text-[11px] text-red-700">Esta acción eliminará permanentemente la cuenta del oficial. Para suspender temporalmente su acceso sin borrarlo, utiliza el botón de estatus (En Servicio / Inactivo).</p>
-          </div>
-
-          <div className="flex justify-end gap-2.5 pt-2">
-            <button
-              type="button"
-              onClick={() => setSelectedGuardiaParaEliminar(null)}
-              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={handleConfirmarEliminarGuardia}
-              disabled={isDeletingGuardia}
-              className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingGuardia ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                }`}
-            >
-              {isDeletingGuardia ? (
-                <>
-                  <IconSpinner className="w-4 h-4" />
-                  <span>Eliminando...</span>
-                </>
-              ) : (
-                <>
-                  <IconTrash className="w-4 h-4" />
-                  <span>Eliminar Definitivamente</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL ELIMINAR ADMINISTRADOR TI ─── */ }
-  {
-    selectedAdminParaEliminar && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
-        <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
-          <div className="flex items-center justify-between border-b pb-3">
-            <div className="flex items-center gap-2 text-red-600">
-              <div className="p-2 rounded-xl bg-red-50">
-                <IconTrash className="w-5 h-5" />
-              </div>
-              <h3 className="text-sm font-bold uppercase">Eliminar Administrador TI</h3>
-            </div>
-            <button onClick={() => setSelectedAdminParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
-            <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este Administrador TI del sistema?</p>
-            <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
-              <div><strong>Nombre:</strong> {selectedAdminParaEliminar.nombre}</div>
-              <div><strong>ID:</strong> <span className="font-mono">#{selectedAdminParaEliminar.id}</span></div>
-              <div><strong>Usuario / Correo:</strong> {selectedAdminParaEliminar.username}</div>
-              <div><strong>Rol:</strong> <span className="font-semibold uppercase text-indigo-700">Administrador TI</span></div>
-            </div>
-            <p className="text-[11px] text-red-700">Esta acción eliminará de forma irreversible el acceso administrativo de esta cuenta.</p>
-          </div>
-
-          <div className="flex justify-end gap-2.5 pt-2">
-            <button
-              type="button"
-              onClick={() => setSelectedAdminParaEliminar(null)}
-              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={handleConfirmarEliminarAdmin}
-              disabled={isDeletingAdmin}
-              className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingAdmin ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                }`}
-            >
-              {isDeletingAdmin ? (
-                <>
-                  <IconSpinner className="w-4 h-4" />
-                  <span>Eliminando...</span>
-                </>
-              ) : (
-                <>
-                  <IconTrash className="w-4 h-4" />
-                  <span>Eliminar Definitivamente</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL VISTA PREVIA DE FOTOGRAFÍA DE CREDENCIAL ─── */ }
-  {
-    selectedFotoTrabajadorPreview && (
-      <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoTrabajadorPreview(null)}>
-        <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div>
-              <h4 className="font-bold text-base text-slate-900">{selectedFotoTrabajadorPreview.nombre} {selectedFotoTrabajadorPreview.apellidos}</h4>
-              <p className="text-xs text-slate-500 font-mono">Fotografía de Credencial · ID: #{selectedFotoTrabajadorPreview.id_trabajador}</p>
-            </div>
-            <button onClick={() => setSelectedFotoTrabajadorPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
-          </div>
-
-          <div className="w-full h-[260px] xs:h-[320px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2">
-            {selectedFotoTrabajadorPreview.foto_url || selectedFotoTrabajadorPreview.foto ? (
-              <img
-                src={normalizeFotoUrl(selectedFotoTrabajadorPreview.foto_url || selectedFotoTrabajadorPreview.foto)}
-                alt="Credencial"
-                className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
-              />
-            ) : (
-              <IconUsers className="w-20 h-20 text-slate-600" />
-            )}
-          </div>
-
-          <div className="flex justify-between items-center text-xs pt-1">
-            <span className="font-semibold text-slate-700">{selectedFotoTrabajadorPreview.empresaNombre}</span>
-            <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoTrabajadorPreview.activo ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
-              {selectedFotoTrabajadorPreview.activo ? "Autorizado" : "Inactivo"}
-            </span>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL VISTA PREVIA DE DOCUMENTOS DE TRABAJADOR (SEGURO IMSS / CONSTANCIA DC-3) ─── */ }
-  {
-    selectedDocTrabajadorPreview && selectedDocTrabajadorPreview.isOpen && (
-      <div
-        className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-3 sm:p-5 backdrop-blur-md animate-in fade-in duration-150"
-        onClick={() => setSelectedDocTrabajadorPreview(null)}
-      >
-        <div
-          className="w-full max-w-4xl bg-white rounded-3xl overflow-hidden shadow-2xl border border-slate-200 flex flex-col max-h-[92vh]"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="px-6 py-4 border-b bg-slate-50 flex items-center justify-between gap-4" style={{ borderColor: "var(--color-border)" }}>
-            <div className="flex items-center gap-3 min-w-0">
-              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold shrink-0 border ${selectedDocTrabajadorPreview.type === "seguro"
-                ? "bg-teal-50 text-[#0D6E5F] border-teal-200"
-                : "bg-indigo-50 text-indigo-700 border-indigo-200"
-                }`}>
-                {selectedDocTrabajadorPreview.type === "seguro" ? (
-                  <IconShield className="w-5 h-5" />
-                ) : (
-                  <IconFileText className="w-5 h-5" />
-                )}
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-slate-900 truncate">
-                    {selectedDocTrabajadorPreview.title}
-                  </h3>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 shrink-0">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    <span>Documento Oficial ✓</span>
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 mt-0.5 truncate">
-                  Colaborador: <strong className="text-slate-800">{selectedDocTrabajadorPreview.workerName}</strong>
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setSelectedDocTrabajadorPreview(null)}
-              className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors"
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* Document Viewer Body */}
-          <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-100/50 flex flex-col items-center justify-center">
-            <div className="w-full rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm flex items-center justify-center min-h-[420px]">
-              {selectedDocTrabajadorPreview.url ? (
-                (selectedDocTrabajadorPreview.url.startsWith("data:application/pdf") || selectedDocTrabajadorPreview.url.toLowerCase().includes(".pdf")) ? (
-                  <div className="w-full flex flex-col items-center">
-                    <iframe
-                      src={selectedDocTrabajadorPreview.url}
-                      className="w-full h-[540px] border-none"
-                      title={selectedDocTrabajadorPreview.title}
-                    />
-                  </div>
-                ) : (
-                  <div className="p-4 flex items-center justify-center max-h-[540px]">
-                    <img
-                      src={selectedDocTrabajadorPreview.url}
-                      alt={selectedDocTrabajadorPreview.title}
-                      className="max-h-[500px] w-auto object-contain rounded-xl shadow-xs"
-                    />
-                  </div>
-                )
-              ) : (
-                <div className="p-8 text-center text-slate-400 text-xs">
-                  No se encontró documento adjunto disponible.
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="px-6 py-3.5 border-t bg-slate-50 flex items-center justify-between gap-3" style={{ borderColor: "var(--color-border)" }}>
-            <button
-              type="button"
-              onClick={() => setSelectedDocTrabajadorPreview(null)}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200 bg-slate-100 transition-colors cursor-pointer"
-            >
-              Cerrar
-            </button>
-
-            {selectedDocTrabajadorPreview.url && (
-              <div className="flex items-center gap-2">
-                {selectedDocTrabajadorPreview.url.startsWith("http") && (
-                  <a
-                    href={selectedDocTrabajadorPreview.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3.5 py-2 rounded-xl text-xs font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                  >
-                    <IconEye className="w-3.5 h-3.5" />
-                    <span>Abrir en Nueva Pestaña</span>
-                  </a>
-                )}
-                <a
-                  href={selectedDocTrabajadorPreview.url}
-                  download={`${selectedDocTrabajadorPreview.type === "seguro" ? "comprobante_seguro" : "constancia_dc3"}_${selectedDocTrabajadorPreview.workerName.toLowerCase().replace(/\s+/g, "_")}.${(selectedDocTrabajadorPreview.url.startsWith("data:application/pdf") || selectedDocTrabajadorPreview.url.toLowerCase().includes(".pdf")) ? "pdf" : "png"}`}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#094E43] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <IconDownload className="w-3.5 h-3.5" />
-                  <span>Descargar Archivo</span>
-                </a>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL VISTA PREVIA DE FOTOGRAFÍA DE OFICIAL DE CASETA ─── */ }
-  {
-    selectedFotoGuardiaPreview && (
-      <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoGuardiaPreview(null)}>
-        <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
-                <IconShield className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="font-bold text-base text-slate-900">{selectedFotoGuardiaPreview.nombre}</h4>
-                <p className="text-xs text-slate-500 font-mono">Oficial de Caseta · ID: #{selectedFotoGuardiaPreview.id}</p>
-              </div>
-            </div>
-            <button onClick={() => setSelectedFotoGuardiaPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
-          </div>
-
-          <div className="w-full h-[380px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 relative">
-            {selectedFotoGuardiaPreview.foto_url ? (
-              <>
-                <img
-                  src={selectedFotoGuardiaPreview.foto_url}
-                  alt={selectedFotoGuardiaPreview.nombre}
-                  className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                    const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                    if (fallback) fallback.style.display = "flex";
-                  }}
-                />
-                <div className="hidden flex-col items-center justify-center p-6 text-center text-slate-400">
-                  <IconUsers className="w-20 h-20 mb-2 text-slate-600" />
-                  <span className="text-xs font-medium">Fotografía no disponible</span>
-                </div>
-              </>
-            ) : (
-              <IconUsers className="w-20 h-20 text-slate-600" />
-            )}
-          </div>
-
-          <div className="flex justify-between items-center text-xs">
-            <span className="font-mono text-slate-600 font-semibold">{selectedFotoGuardiaPreview.username}</span>
-            <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoGuardiaPreview.activo !== false ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
-              {selectedFotoGuardiaPreview.activo !== false ? "En Servicio" : "Inactivo"}
-            </span>
-          </div>
-
-          {/* Acción para cambiar o subir fotografía a la Base de Datos */}
-          <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
-            <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-[#0D6E5F] border border-slate-200 hover:border-emerald-300 font-bold text-xs cursor-pointer shadow-sm transition-all hover:scale-[1.01]">
-              <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
-              <span>{selectedFotoGuardiaPreview.foto_url ? "Cambiar Fotografía del Oficial" : "Subir Fotografía del Oficial"}</span>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => handleUpdateGuardiaFoto(selectedFotoGuardiaPreview.id, e)}
-              />
-            </label>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL EDITAR VEHÍCULO (SUPERVISOR / ADMIN) ─── */ }
-  {
-    selectedVehiculoParaEditar && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-        <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-between border-b pb-3.5">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-blue-50 text-blue-700">
-                <IconEdit className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 uppercase">Modificar Unidad Vehicular</h3>
-                <p className="text-xs text-slate-500">ID: #{selectedVehiculoParaEditar.id} · {selectedVehiculoParaEditar.empresaNombre}</p>
-              </div>
-            </div>
-            <button onClick={() => setSelectedVehiculoParaEditar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-          </div>
-
-          {vehiculoEditError && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-              <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-              <span>{vehiculoEditError}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleGuardarEdicionVehiculo} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Marca *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={vehiculoEditMarca}
-                  onChange={(e) => setVehiculoEditMarca(e.target.value)}
-                  placeholder="Ej. Toyota, Nissan, Ford"
-                  className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Modelo *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={vehiculoEditModelo}
-                  onChange={(e) => setVehiculoEditModelo(e.target.value)}
-                  placeholder="Ej. Hilux, NP300, Transit"
-                  className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Año
-                </label>
-                <input
-                  type="text"
-                  value={vehiculoEditAnio}
-                  onChange={(e) => setVehiculoEditAnio(e.target.value)}
-                  placeholder="Ej. 2024"
-                  className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Placas Oficiales *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={vehiculoEditPlacas}
-                  onChange={(e) => setVehiculoEditPlacas(e.target.value.toUpperCase())}
-                  placeholder="Ej. MTY-1234"
-                  className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-mono font-bold text-slate-800"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Color
-                </label>
-                <input
-                  type="text"
-                  value={vehiculoEditColor}
-                  onChange={(e) => setVehiculoEditColor(e.target.value)}
-                  placeholder="Ej. Blanco, Gris"
-                  className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
-                />
-              </div>
-            </div>
-
-            {/* Control de Estatus de Acceso Exclusivo para Supervisor / Administrador */}
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-              <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
-                Estatus de Acceso en Casetas (Supervisor / Admin) *
-              </label>
-              <select
-                value={vehiculoEditEstatus}
-                onChange={(e) => setVehiculoEditEstatus(e.target.value as any)}
-                className="w-full rounded-xl px-4 py-2.5 text-xs font-bold border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-blue-200 text-slate-800 cursor-pointer"
-              >
-                <option value="HABILITADO">HABILITADO — Acceso vehicular autorizado en casetas</option>
-                <option value="DESHABILITADO">DESHABILITADO — Inactivo o en mantenimiento</option>
-                <option value="SUSPENDIDO">SUSPENDIDO — Suspensión por sanción disciplinaria</option>
-                <option value="RESTRINGIDO">RESTRINGIDO — Bloqueo definitivo de acceso</option>
-              </select>
-              <p className="text-[11px] text-slate-500">
-                Como supervisor o administrador, el cambio de estatus se refleja de forma instantánea en todas las casetas de control.
-              </p>
-            </div>
-
-            {/* Actualizar Fotografía del Vehículo */}
-            <div className="space-y-2 pt-1 border-t border-slate-100">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Fotografía de la Unidad Vehicular
-              </label>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
-                <div className="sm:col-span-2 space-y-2">
-                  <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
-                    <IconCamera className="w-4 h-4 text-blue-600" />
-                    <span>Cambiar Fotografía</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => handleFotoVehiculoUpload(e, true)}
-                    />
-                  </label>
-                  <p className="text-[11px] text-slate-400">
-                    Fotografía clara donde se aprecien las placas y características del vehículo.
-                  </p>
-                </div>
-
-                <div className="h-24 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
-                  {vehiculoEditFoto ? (
-                    <div className="relative w-full h-full group">
-                      <img src={normalizeFotoUrl(vehiculoEditFoto)} alt="Preview" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
-                        Foto Cargada ✓
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center p-2 text-slate-400">
-                      <IconCar className="w-6 h-6 mx-auto mb-1 opacity-50" />
-                      <span className="text-[10px] block">Sin foto</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setSelectedVehiculoParaEditar(null)}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmittingVehiculoEdit}
-                className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingVehiculoEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                  }`}
-                style={{ background: "linear-gradient(135deg, #2563EB, #1D4ED8)" }}
-              >
-                {isSubmittingVehiculoEdit ? (
-                  <>
-                    <IconSpinner className="w-3.5 h-3.5" />
-                    <span>Guardando Cambios...</span>
-                  </>
-                ) : (
-                  <span>Guardar Cambios →</span>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL ALTA DE VEHÍCULO POR SUPERVISOR / ADMIN ─── */ }
-  {
-    showCreateVehiculoModalAdmin && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-        <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-between border-b pb-3.5">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
-                <IconCar className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 uppercase">Alta de Vehículo Autorizado</h3>
-                <p className="text-xs text-slate-500">
-                  Empresa: {targetEmpresaParaNuevoVehiculo?.nombre || "Seleccionar Empresa"}
-                </p>
-              </div>
-            </div>
-            <button onClick={() => { setShowCreateVehiculoModalAdmin(false); setTargetEmpresaParaNuevoVehiculo(null); }} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-          </div>
-
-          {targetEmpresaParaNuevoVehiculo && (() => {
-            const currentEmp = targetEmpresaParaNuevoVehiculo;
-            const empVehs = vehicles.filter(v => v.empresaId === currentEmp.id);
-            const rInicio = currentEmp.corbatin_rango_inicio;
-            const rFin = currentEmp.corbatin_rango_fin;
-            const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
-            const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
-            const cuposOcupados = empVehs.length;
-            const isQuotaFull = hasRange && totalCupos !== null && cuposOcupados >= totalCupos;
-
-            return (
-              <div className={`p-3.5 rounded-2xl border text-xs space-y-1 ${isQuotaFull ? "bg-amber-50/90 border-amber-300 text-amber-900" : "bg-slate-50 border-slate-200 text-slate-700"
-                }`}>
-                <div className="flex items-center justify-between font-bold">
-                  <span>Control de Corbatines de la Empresa:</span>
-                  {hasRange ? (
-                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${isQuotaFull ? "bg-amber-200 text-amber-900" : "bg-teal-100 text-teal-800"}`}>
-                      {cuposOcupados} / {totalCupos} cupos ocupados
-                    </span>
-                  ) : (
-                    <span className="text-slate-500 font-normal">Sin rango asignado</span>
-                  )}
-                </div>
-                {hasRange && (
-                  <p className="text-[11px] text-slate-500">
-                    Rango asignado: <strong>#{rInicio} al #{rFin}</strong>. El sistema asignará automáticamente el primer corbatín disponible.
-                  </p>
-                )}
-                {isQuotaFull && (
-                  <p className="text-[11px] font-bold text-red-600 pt-1">
-                    Atención: La empresa ha completado el total de cupos asignados ({totalCupos} corbatines). Puedes ampliar el rango en "Editar Rango / Empresa".
-                  </p>
-                )}
-              </div>
-            );
-          })()}
-
-          {nuevoVehiculoFotoError && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-              <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-              <span>{nuevoVehiculoFotoError}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleGuardarNuevoVehiculoPorSupervisor} className="space-y-4">
-            {!targetEmpresaParaNuevoVehiculo && (
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Empresa Proveedora *
-                </label>
-                <select
-                  name="empresaId"
-                  required
-                  className="w-full rounded-xl px-4 py-2.5 text-xs font-bold border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800"
-                >
-                  {empresas.map(e => (
-                    <option key={e.id} value={e.id}>{e.nombre}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Marca *</label>
-                <input name="marca" required placeholder="Ej. Toyota, Nissan" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Modelo *</label>
-                <input name="modelo" required placeholder="Ej. Hilux, NP300" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Año</label>
-                <input name="año" placeholder="Ej. 2024" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Placas *</label>
-                <input name="placas" required placeholder="Ej. MTY-0001" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-mono font-bold text-slate-800" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Color *</label>
-                <input name="color" required placeholder="Ej. Blanco" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Estatus Inicial
-              </label>
-              <select
-                name="estatus_acceso"
-                defaultValue="HABILITADO"
-                className="w-full rounded-xl px-4 py-2.5 text-xs font-bold border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800"
-              >
-                <option value="HABILITADO">HABILITADO - Acceso vehicular autorizado</option>
-                <option value="DESHABILITADO">DESHABILITADO - Inactivo o en mantenimiento</option>
-                <option value="SUSPENDIDO">SUSPENDIDO - Suspensión preventiva</option>
-              </select>
-            </div>
-
-            {/* Fotografía Obligatoria del Vehículo */}
-            <div className="space-y-2 pt-1 border-t border-slate-100">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Fotografía Oficial del Vehículo *
-              </label>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
-                <div className="sm:col-span-2 space-y-2">
-                  <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
-                    <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
-                    <span>Subir Foto desde Dispositivo</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => handleFotoVehiculoUpload(e, false)}
-                    />
-                  </label>
-                  <p className="text-[11px] text-slate-400">
-                    Fotografía nítida del vehículo para verificación en caseta.
-                  </p>
-                </div>
-
-                <div className="h-24 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
-                  {nuevoVehiculoFoto ? (
-                    <div className="relative w-full h-full group">
-                      <img src={nuevoVehiculoFoto} alt="Preview" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
-                        Foto Cargada ✓
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center p-2 text-slate-400">
-                      <IconCar className="w-6 h-6 mx-auto mb-1 opacity-50" />
-                      <span className="text-[10px] block">Sin foto</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => { setShowCreateVehiculoModalAdmin(false); setTargetEmpresaParaNuevoVehiculo(null); }}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmittingVehiculo || (() => {
-                  if (!targetEmpresaParaNuevoVehiculo) return false;
-                  const empVehs = vehicles.filter(v => v.empresaId === targetEmpresaParaNuevoVehiculo.id);
-                  const rInicio = targetEmpresaParaNuevoVehiculo.corbatin_rango_inicio;
-                  const rFin = targetEmpresaParaNuevoVehiculo.corbatin_rango_fin;
-                  const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
-                  const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
-                  return Boolean(hasRange && totalCupos !== null && empVehs.length >= totalCupos);
-                })()}
-                className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingVehiculo || (() => {
-                  if (!targetEmpresaParaNuevoVehiculo) return false;
-                  const empVehs = vehicles.filter(v => v.empresaId === targetEmpresaParaNuevoVehiculo.id);
-                  const rInicio = targetEmpresaParaNuevoVehiculo.corbatin_rango_inicio;
-                  const rFin = targetEmpresaParaNuevoVehiculo.corbatin_rango_fin;
-                  const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
-                  const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
-                  return Boolean(hasRange && totalCupos !== null && empVehs.length >= totalCupos);
-                })()
-                  ? "opacity-60 cursor-not-allowed pointer-events-none"
-                  : ""
-                  }`}
-                style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
-              >
-                {isSubmittingVehiculo ? (
-                  <>
-                    <IconSpinner className="w-3.5 h-3.5" />
-                    <span>Registrando Unidad...</span>
-                  </>
-                ) : (
-                  <span>Registrar Vehículo →</span>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL ELIMINAR EMPRESA PROVEEDORA ─── */ }
-  {
-    selectedEmpresaParaEliminar && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-        <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
-          <div className="flex items-center justify-between border-b pb-3">
-            <div className="flex items-center gap-2 text-red-600">
-              <div className="p-2 rounded-xl bg-red-50">
-                <IconTrash className="w-5 h-5" />
-              </div>
-              <h3 className="text-sm font-bold uppercase">Eliminar Empresa Proveedora</h3>
-            </div>
-            <button onClick={() => setSelectedEmpresaParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
-            <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente esta empresa proveedora?</p>
-            <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
-              <div><strong>Empresa:</strong> {selectedEmpresaParaEliminar.nombre}</div>
-              <div><strong>Contacto:</strong> {selectedEmpresaParaEliminar.contacto}</div>
-              <div><strong>Teléfono:</strong> {selectedEmpresaParaEliminar.telefono || "S/N"}</div>
-              {selectedEmpresaParaEliminar.corbatin_rango_inicio && selectedEmpresaParaEliminar.corbatin_rango_fin && (
-                <div><strong>Rango Corbatines:</strong> #{selectedEmpresaParaEliminar.corbatin_rango_inicio} - #{selectedEmpresaParaEliminar.corbatin_rango_fin}</div>
-              )}
-            </div>
-            <p className="text-[11px] text-red-700">Esta acción eliminará permanentemente la empresa, su cuenta de acceso al portal y todos sus vehículos y trabajadores vinculados.</p>
-          </div>
-
-          <div className="flex justify-end gap-2.5 pt-2">
-            <button
-              type="button"
-              onClick={() => setSelectedEmpresaParaEliminar(null)}
-              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={handleConfirmarEliminarEmpresa}
-              disabled={isDeletingEmpresa}
-              className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingEmpresa ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                }`}
-            >
-              {isDeletingEmpresa ? (
-                <>
-                  <IconSpinner className="w-4 h-4" />
-                  <span>Eliminando...</span>
-                </>
-              ) : (
-                <>
-                  <IconTrash className="w-4 h-4" />
-                  <span>Eliminar Empresa</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL ELIMINAR VEHÍCULO ─── */ }
-  {
-    selectedVehiculoParaEliminar && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-        <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
-          <div className="flex items-center justify-between border-b pb-3">
-            <div className="flex items-center gap-2 text-red-600">
-              <div className="p-2 rounded-xl bg-red-50">
-                <IconTrash className="w-5 h-5" />
-              </div>
-              <h3 className="text-sm font-bold uppercase">Eliminar Vehículo</h3>
-            </div>
-            <button onClick={() => setSelectedVehiculoParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
-            <p className="font-semibold">¿Estás seguro de que deseas dar de baja y eliminar esta unidad vehicular?</p>
-            <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
-              <div><strong>Vehículo:</strong> {selectedVehiculoParaEliminar.marca} {selectedVehiculoParaEliminar.modelo} ({selectedVehiculoParaEliminar.anio || selectedVehiculoParaEliminar.año || "N/A"})</div>
-              <div><strong>Placas:</strong> <span className="font-mono font-bold text-slate-900">{selectedVehiculoParaEliminar.placas}</span></div>
-              <div><strong>Corbatín:</strong> #{selectedVehiculoParaEliminar.corbatinNum}</div>
-              <div><strong>Empresa:</strong> {selectedVehiculoParaEliminar.empresaNombre}</div>
-            </div>
-            <p className="text-[11px] text-red-700">Esta acción eliminará permanentemente la unidad y desvinculará el corbatín QR asociado.</p>
-          </div>
-
-          <div className="flex justify-end gap-2.5 pt-2">
-            <button
-              type="button"
-              onClick={() => setSelectedVehiculoParaEliminar(null)}
-              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={handleConfirmarEliminarVehiculo}
-              disabled={isDeletingVehiculo}
-              className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingVehiculo ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                }`}
-            >
-              {isDeletingVehiculo ? (
-                <>
-                  <IconSpinner className="w-4 h-4" />
-                  <span>Eliminando...</span>
-                </>
-              ) : (
-                <>
-                  <IconTrash className="w-4 h-4" />
-                  <span>Eliminar Vehículo</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL VISTA PREVIA DE FOTOGRAFÍA DE VEHÍCULO ─── */ }
-  {
-    selectedFotoVehiculoPreview && (
-      <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoVehiculoPreview(null)}>
-        <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
-                <IconCar className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="font-bold text-base text-slate-900">{selectedFotoVehiculoPreview.marca} {selectedFotoVehiculoPreview.modelo}</h4>
-                <p className="text-xs text-slate-500 font-mono">Placas: {selectedFotoVehiculoPreview.placas} · Corbatín #{selectedFotoVehiculoPreview.corbatinNum}</p>
-              </div>
-            </div>
-            <button onClick={() => setSelectedFotoVehiculoPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
-          </div>
-
-          <div className="w-full h-[260px] xs:h-[320px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 relative">
-            {selectedFotoVehiculoPreview.foto ? (
-              <img
-                src={normalizeFotoUrl(selectedFotoVehiculoPreview.foto)}
-                alt={`${selectedFotoVehiculoPreview.marca} ${selectedFotoVehiculoPreview.modelo}`}
-                className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
-              />
-            ) : (
-              <IconCar className="w-20 h-20 text-slate-600" />
-            )}
-          </div>
-
-          <div className="flex justify-between items-center text-xs pt-1">
-            <span className="font-semibold text-slate-700">{selectedFotoVehiculoPreview.empresaNombre}</span>
-            <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoVehiculoPreview.status === "Habilitado"
-              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-              : selectedFotoVehiculoPreview.status === "Suspendido"
-                ? "bg-red-50 text-red-700 border border-red-200"
-                : "bg-slate-100 text-slate-600 border border-slate-200"
-              }`}>
-              {selectedFotoVehiculoPreview.status}
-            </span>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL VISOR GENERAL DE IMÁGENES Y EVIDENCIAS (LIGHTBOX) ─── */ }
-  {
-    genericImagePreview && genericImagePreview.isOpen && (
-      <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setGenericImagePreview(null)}>
-        <div className="max-w-3xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div>
-              <h4 className="font-bold text-base text-slate-900">{genericImagePreview.title || "Fotografía de Evidencia"}</h4>
-              {genericImagePreview.subtitle && (
-                <p className="text-xs text-slate-500 mt-0.5">{genericImagePreview.subtitle}</p>
-              )}
-            </div>
-            <button onClick={() => setGenericImagePreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
-          </div>
-
-          <div className="w-full h-[400px] sm:h-[500px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 relative">
-            <img
-              src={genericImagePreview.src}
-              alt="Vista Ampliada"
-              className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
+          </main>
+        )}
+
+        {/* CONTABILIDAD */}
+        {currentUser.role === "contabilidad" && (
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <ContabilidadDashboard
+              empresas={empresas}
+              trabajadores={trabajadores}
+              vehicles={vehicles}
             />
-          </div>
-
-          <div className="flex justify-between items-center text-xs pt-1">
-            <span className="text-slate-400 font-mono text-[11px]">Alta Resolución</span>
-            {genericImagePreview.badge && (
-              <span className="px-3 py-1 rounded-full font-bold bg-[#0D6E5F]/10 text-[#0D6E5F] border border-[#0D6E5F]/20 font-mono">
-                {genericImagePreview.badge}
-              </span>
-            )}
-          </div>
-        </div>
+          </main>
+        )}
       </div>
-    )
-  }
 
-  <footer className="mt-16 border-t py-6 px-6 text-center bg-white no-print" style={{ borderColor: "var(--color-border)" }}>
-
-    <p className="text-xs text-slate-500">
-      © 2026 Las Palomas Rocky Point HOA, A.C. · Sistema de Control y Seguridad Vehicular
-    </p>
-  </footer>
-
-  {/* ─── VENTANA FLOTANTE DE ALERTA DE INFRACCIÓN/SANCIÓN PARA PROVEEDOR ─── */ }
-  {
-    currentUser?.role === "contratista" && sancionesAlertaParaProveedor.length > 0 && (() => {
-      const safeIdx = Math.min(activeSancionAlertIndex, sancionesAlertaParaProveedor.length - 1);
-      const alertItem = sancionesAlertaParaProveedor[safeIdx] || sancionesAlertaParaProveedor[0];
-      if (!alertItem) return null;
-
-      return (
-        <div
-          key={alertItem.id}
-          className="fixed bottom-3 sm:bottom-6 left-3 right-3 sm:left-auto sm:right-6 z-[9990] w-auto sm:w-[26rem] max-w-full bg-white/98 text-slate-800 backdrop-blur-xl border border-rose-200 shadow-2xl rounded-2xl sm:rounded-3xl p-4 sm:p-5 ring-1 ring-black/5 animate-in fade-in slide-in-from-bottom-5 duration-300 transition-all font-sans"
-          style={{ boxShadow: "0 20px 45px -10px rgba(225, 29, 72, 0.18), 0 8px 20px -6px rgba(0, 0, 0, 0.08)" }}
-        >
-          {/* Header */}
-          <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
-            <div className="flex items-center gap-2.5">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-600"></span>
-              </span>
-              <div>
-                <h4 className="text-xs font-black uppercase tracking-wider text-rose-700 flex items-center gap-1.5">
-                  <span>Infracción Aprobada</span>
-                  {sancionesAlertaParaProveedor.length > 1 && (
-                    <span className="bg-rose-100 text-rose-800 border border-rose-200 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                      {safeIdx + 1} de {sancionesAlertaParaProveedor.length}
-                    </span>
-                  )}
-                </h4>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Notificación oficial de resolución de Supervisión HOA
-                </p>
-              </div>
-            </div>
-
-            {/* Botón cerrar / descartar individual */}
-            <button
-              type="button"
-              onClick={() => handleDismissSancionAlert(alertItem.id)}
-              className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer text-xs"
-              title="Quitar notificación"
-              aria-label="Cerrar notificación"
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* Contenido de la sanción */}
-          <div className="mt-3.5 space-y-2.5 text-xs">
-            <div className="bg-rose-50/40 rounded-2xl p-3.5 border border-rose-100 space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-mono font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-md text-[11px]">
-                  Placas: {alertItem.placas || "N/A"}
-                </span>
-                <span className="text-[10px] text-slate-400 font-mono">
-                  Folio: #{alertItem.id}
-                </span>
-              </div>
-
-              <div>
-                <p className="text-slate-900 font-bold text-xs leading-snug">
-                  {alertItem.tipo}
-                </p>
-                {alertItem.descripcion && alertItem.descripcion !== alertItem.tipo && (
-                  <p className="text-[11px] text-slate-600 mt-1 line-clamp-2">
-                    {alertItem.descripcion}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2 pt-1 border-t border-rose-100/80">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Medida:</span>
-                <span className="text-xs font-bold text-rose-800 bg-rose-100/90 border border-rose-200 px-2.5 py-0.5 rounded-md">
-                  {alertItem.medidaDisciplinaria || "Amonestación / Suspensión"}
-                </span>
-              </div>
-            </div>
-
-            {/* Controles de paginación si hay múltiples */}
-            {sancionesAlertaParaProveedor.length > 1 && (
-              <div className="flex items-center justify-between text-[11px] text-slate-500 px-1 pt-1">
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    disabled={safeIdx === 0}
-                    onClick={() => setActiveSancionAlertIndex(Math.max(0, safeIdx - 1))}
-                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-40 font-medium cursor-pointer disabled:cursor-not-allowed text-[11px]"
-                  >
-                    ← Anterior
-                  </button>
-                  <button
-                    type="button"
-                    disabled={safeIdx >= sancionesAlertaParaProveedor.length - 1}
-                    onClick={() => setActiveSancionAlertIndex(Math.min(sancionesAlertaParaProveedor.length - 1, safeIdx + 1))}
-                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-40 font-medium cursor-pointer disabled:cursor-not-allowed text-[11px]"
-                  >
-                    Siguiente →
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleDismissAllSancionAlerts(sancionesAlertaParaProveedor.map((s) => s.id))}
-                  className="text-[11px] text-slate-500 hover:text-slate-800 underline cursor-pointer"
-                >
-                  Quitar todas ({sancionesAlertaParaProveedor.length})
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Acciones principales */}
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedSancionParaApelar(alertItem);
-                setPortalScreen("sanciones");
-                handleDismissSancionAlert(alertItem.id);
-              }}
-              className="flex-1 py-2.5 px-3.5 rounded-xl bg-[#0D6E5F] hover:bg-[#0a574b] text-white font-bold text-xs shadow-md shadow-emerald-900/10 flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-[0.98]"
-            >
-              <IconMessageSquare className="w-3.5 h-3.5" />
-              <span>Interponer Apelación</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleDismissSancionAlert(alertItem.id)}
-              className="py-2.5 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 font-semibold text-xs border border-slate-200 transition-colors cursor-pointer"
-            >
-              Entendido
-            </button>
-          </div>
-        </div>
-      );
-    })()
-  }
-
-  {/* ─── MODAL ELEGANTE DE CONFIRMACIÓN (LIBERAR / ELIMINAR CORBATÍN) ─── */ }
-  {
-    actionConfirmModal && actionConfirmModal.isOpen && (
-      <div
-        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150"
-        onClick={() => setActionConfirmModal(null)}
-      >
-        <div
-          className="relative bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 my-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Cabecera con Icono y Botón Cerrar */}
-          <div className="flex items-start justify-between gap-3 pt-1">
-            <div className="flex items-center gap-3">
-              <div
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${actionConfirmModal.type === "eliminar"
-                    ? "bg-rose-50 border-rose-200 text-rose-600 shadow-sm shadow-rose-100"
-                    : "bg-amber-50 border-amber-200 text-amber-600 shadow-sm shadow-amber-100"
-                  }`}
-              >
-                {actionConfirmModal.type === "eliminar" ? (
-                  <IconTrash className="w-6 h-6" />
-                ) : (
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="1 4 1 10 7 10" />
-                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-                  </svg>
-                )}
-              </div>
-
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-mono font-bold text-xs text-[#0D6E5F] bg-teal-50 border border-teal-200 px-2.5 py-0.5 rounded-lg">
-                    #{actionConfirmModal.corbatinNum}
-                  </span>
-                  <span
-                    className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${actionConfirmModal.type === "eliminar"
-                        ? "bg-rose-50 text-rose-700 border-rose-200"
-                        : "bg-amber-50 text-amber-800 border-amber-200"
-                      }`}
-                  >
-                    {actionConfirmModal.type === "eliminar" ? "Eliminar del Pool" : "Liberar de Empresa"}
-                  </span>
-                </div>
-                <h3 className="font-black text-lg text-slate-900 mt-1">
-                  {actionConfirmModal.type === "eliminar"
-                    ? `¿Eliminar Corbatín #${actionConfirmModal.corbatinNum}?`
-                    : `¿Liberar Corbatín #${actionConfirmModal.corbatinNum}?`}
-                </h3>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setActionConfirmModal(null)}
-              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-              title="Cerrar modal"
-            >
-              <IconX className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Tarjeta de Información Detallada */}
-          <div className="my-5 space-y-3">
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 text-xs space-y-2.5">
-              {actionConfirmModal.empresaNombre && (
-                <div className="flex items-center justify-between pb-2 border-b border-slate-200/70">
-                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Empresa Actual</span>
-                  <span className="font-bold text-slate-800 text-xs text-right max-w-[220px] truncate">
-                    {actionConfirmModal.empresaNombre}
-                  </span>
-                </div>
-              )}
-
-              <div className="text-slate-600 leading-relaxed font-medium">
-                {actionConfirmModal.type === "eliminar" ? (
-                  <span>
-                    Esta acción removerá permanentemente la unidad <strong>#{actionConfirmModal.corbatinNum}</strong> del pool de inventario físico. Su acreditación y código QR quedarán anulados.
-                  </span>
-                ) : (
-                  <span>
-                    El corbatín se desvinculará de <strong>&quot;{actionConfirmModal.empresaNombre || "la empresa"}&quot;</strong> y volverá de inmediato al catálogo general como unidad <strong className="text-emerald-700">Disponible</strong> para ser reasignada.
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Puntos informativos / Consecuencias */}
-            <div className="space-y-1.5 px-1 text-[11px] text-slate-500 font-medium">
-              {actionConfirmModal.type === "eliminar" ? (
-                <>
-                  <div className="flex items-center gap-2 text-rose-600">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
-                    <span>Esta acción es irreversible y no se puede deshacer.</span>
+      {/* ─── MODAL TI: MODIFICAR / RESTABLECER CONTRASEÑA ─── */}
+      {
+        selectedUserParaPassword && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200">
+              <div className="flex items-center justify-between border-b pb-3.5">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-purple-50 text-purple-700">
+                    <IconKey className="w-5 h-5" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
-                    <span>El registro previo permanecerá respaldado en la bitácora general.</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center gap-2 text-emerald-700">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                    <span>El tarjetón físico queda libre para asignarse a otro contratista cuando sea requerido.</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
-                    <span>Los permisos de acceso vehicular activos en caseta para esta unidad se suspenderán.</span>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Botones de Acción */}
-          <div className="pt-3 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5">
-            <button
-              type="button"
-              onClick={() => setActionConfirmModal(null)}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer text-center"
-            >
-              Cancelar
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                const cb = actionConfirmModal.actionCallback;
-                setActionConfirmModal(null);
-                cb();
-              }}
-              className={`w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2 ${actionConfirmModal.type === "eliminar"
-                  ? "bg-rose-600 hover:bg-rose-700 active:scale-95 shadow-rose-600/20"
-                  : "bg-amber-600 hover:bg-amber-700 active:scale-95 shadow-amber-600/20"
-                }`}
-            >
-              {actionConfirmModal.type === "eliminar" ? (
-                <>
-                  <IconTrash className="w-4 h-4" />
-                  <span>Sí, Eliminar del Pool</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <polyline points="1 4 1 10 7 10" />
-                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-                  </svg>
-                  <span>Sí, Liberar Corbatín</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL: VINCULAR CORBATÍN VERDE TEMPORALMENTE A EMPRESA ─── */ }
-  {
-    showVincularCorbatinModal && corbatinParaVincular && (
-      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-        <div className="relative bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-100 my-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-          {/* Header del Modal */}
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0D6E5F] shadow-2xs font-mono font-black text-sm">
-                #{formatCorbatinVerdeNum(corbatinParaVincular.corbatinNum)}
-              </div>
-              <div>
-                <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                  <span>Vincular Corbatín #{formatCorbatinVerdeNum(corbatinParaVincular.corbatinNum)}</span>
-                  <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-extrabold uppercase">
-                    Inventario Físico
-                  </span>
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Asigna temporalmente este tarjetón físico a una empresa o contratista por un tiempo determinado.
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                setShowVincularCorbatinModal(false);
-                setVincularError("");
-              }}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-              title="Cerrar modal"
-            >
-              <IconX className="w-5 h-5" />
-            </button>
-          </div>
-
-          <form onSubmit={handleConfirmarVinculacion} className="mt-5 space-y-4">
-            {/* Error Banner */}
-            {vincularError && (
-              <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2.5 text-xs text-red-700 font-medium">
-                <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                <span>{vincularError}</span>
-              </div>
-            )}
-
-            {/* Empresa / Contratista */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Empresa / Contratista Asignado <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  required
-                  list="empresas-list-vincular"
-                  value={vincularEmpresaNombre}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setVincularEmpresaNombre(val);
-                    const found = empresas.find(emp => emp.nombre.toLowerCase() === val.toLowerCase());
-                    if (found) {
-                      setVincularEmpresaId(found.id);
-                      if (found.telefono && !vincularTelefono) setVincularTelefono(found.telefono);
-                      if (found.email && !vincularEmail) setVincularEmail(found.email);
-                    } else {
-                      setVincularEmpresaId("");
-                    }
-                  }}
-                  placeholder="Escribe o selecciona la empresa..."
-                  className="w-full text-xs font-semibold pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                />
-                <IconBuilding className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <datalist id="empresas-list-vincular">
-                  {empresas.map((emp) => (
-                    <option key={emp.id} value={emp.nombre} />
-                  ))}
-                </datalist>
-              </div>
-            </div>
-
-            {/* Teléfono y Correo */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Teléfono de Contacto
-                </label>
-                <div className="relative">
-                  <input
-                    type="tel"
-                    value={vincularTelefono}
-                    onChange={(e) => setVincularTelefono(e.target.value)}
-                    placeholder="Ej. 638 123 4567"
-                    className="w-full text-xs font-semibold pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F] font-mono"
-                  />
-                  <IconPhone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Correo Electrónico
-                </label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    value={vincularEmail}
-                    onChange={(e) => setVincularEmail(e.target.value)}
-                    placeholder="contacto@empresa.com"
-                    className="w-full text-xs font-semibold pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                  />
-                  <IconMail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                </div>
-              </div>
-            </div>
-
-            {/* Vigencia y Fecha de Vencimiento */}
-            <div className="p-4 rounded-2xl bg-teal-50/70 border border-teal-200 space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-teal-900 uppercase tracking-wider">
-                  Periodo de Vigencia Temporal
-                </label>
-                <span className="text-[11px] font-bold text-[#0D6E5F]">
-                  {vincularFechaFin ? `Vence: ${vincularFechaFin}` : "Calculando..."}
-                </span>
-              </div>
-
-              {/* Presets rápidos */}
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-                {["1 Día", "1 Semana", "15 Días", "1 Mes", "3 Meses", "6 Meses"].map((preset) => {
-                  const isSel = vincularVigencia === preset;
-                  return (
-                    <button
-                      key={preset}
-                      type="button"
-                      onClick={() => {
-                        setVincularVigencia(preset);
-                        const today = new Date();
-                        let days = 30;
-                        if (preset === "1 Día") days = 1;
-                        else if (preset === "1 Semana") days = 7;
-                        else if (preset === "15 Días") days = 15;
-                        else if (preset === "1 Mes") days = 30;
-                        else if (preset === "3 Meses") days = 90;
-                        else if (preset === "6 Meses") days = 180;
-                        const venc = new Date(today);
-                        venc.setDate(venc.getDate() + days);
-                        setVincularFechaFin(venc.toISOString().split("T")[0]);
-                      }}
-                      className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${isSel
-                        ? "bg-[#0D6E5F] text-white shadow-2xs"
-                        : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
-                        }`}
-                    >
-                      {preset}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                    Etiqueta de Vigencia:
-                  </label>
-                  <select
-                    value={vincularVigencia}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setVincularVigencia(val);
-                      const today = new Date();
-                      let days = 30;
-                      if (val === "1 Día") days = 1;
-                      else if (val === "1 Semana") days = 7;
-                      else if (val === "15 Días") days = 15;
-                      else if (val === "1 Mes") days = 30;
-                      else if (val === "3 Meses") days = 90;
-                      else if (val === "6 Meses") days = 180;
-                      else if (val === "1 Año") days = 365;
-                      else if (val === "Permanente") days = 730;
-                      const venc = new Date(today);
-                      venc.setDate(venc.getDate() + days);
-                      setVincularFechaFin(venc.toISOString().split("T")[0]);
-                    }}
-                    className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                  >
-                    <option value="1 Día">1 Día (Pase Rápido)</option>
-                    <option value="1 Semana">1 Semana</option>
-                    <option value="15 Días">15 Días (Quincenal)</option>
-                    <option value="1 Mes">1 Mes (Estándar)</option>
-                    <option value="3 Meses">3 Meses (Trimestral)</option>
-                    <option value="6 Meses">6 Meses (Semestral)</option>
-                    <option value="1 Año">1 Año Completo</option>
-                    <option value="Permanente">Permanente / Indefinido</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                    Fecha Límite Exacta:
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={vincularFechaFin}
-                    onChange={(e) => setVincularFechaFin(e.target.value)}
-                    className="w-full text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Datos Opcionales: Chofer, Placas y Notas */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Placas del Vehículo (Opcional)
-                </label>
-                <input
-                  type="text"
-                  value={vincularPlacas}
-                  onChange={(e) => setVincularPlacas(e.target.value.toUpperCase())}
-                  placeholder="Ej. ABC-1234"
-                  className="w-full text-xs font-bold font-mono px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Nombre del Conductor (Opcional)
-                </label>
-                <input
-                  type="text"
-                  value={vincularConductor}
-                  onChange={(e) => setVincularConductor(e.target.value)}
-                  placeholder="Ej. Juan Pérez"
-                  className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Notas / Observaciones del Proyecto (Opcional)
-              </label>
-              <input
-                type="text"
-                value={vincularNotas}
-                onChange={(e) => setVincularNotas(e.target.value)}
-                placeholder="Ej. Mantenimiento albercas Fase 2 Torre B"
-                className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-              />
-            </div>
-
-            {/* Modal Footer */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowVincularCorbatinModal(false);
-                  setVincularError("");
-                }}
-                className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
-              >
-                Cancelar
-              </button>
-
-              <button
-                type="submit"
-                disabled={isSubmittingVinculacion}
-                style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-xs active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                </svg>
-                <span>{isSubmittingVinculacion ? "Guardando..." : `Vincular Corbatín #${formatCorbatinVerdeNum(corbatinParaVincular.corbatinNum)}`}</span>
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL: EMITIR CORBATÍN(ES) VERDE(S) (EMPRESA + CORRELATIVO) ─── */ }
-  {
-    showCreateCorbatinVerdeModal && (
-      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-        <div className="relative bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-100 my-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-          {/* Header decorativo */}
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0D6E5F] shadow-2xs">
-                <IconCheckCircle className="w-6 h-6 text-[#0D6E5F]" />
-              </div>
-              <div>
-                <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                  <span>Emitir Corbatín(es) Verde(s)</span>
-                  <span className="px-2 py-0.5 rounded-md bg-teal-50 text-[#0D6E5F] border border-teal-200 text-[10px] font-extrabold uppercase">
-                    LARGA ESTANCIA
-                  </span>
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Para empresas con estadía continua sin registro vehicular previo.
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                setShowCreateCorbatinVerdeModal(false);
-                setNuevoCVError("");
-              }}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-              title="Cerrar modal"
-            >
-              <IconX className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Selector de Modo: Individual vs Lote */}
-          <div className="mt-5 p-1 bg-slate-100 rounded-2xl flex items-center gap-1 border border-slate-200/80">
-            <button
-              type="button"
-              onClick={() => {
-                setNuevoCVModo("individual");
-                setNuevoCVError("");
-                const primerDisp = formatCorbatinVerdeNum(getPrimerCorbatinVerdeDisponible(corbatinesVerdes));
-                if (!nuevoCVNumeroIndividual) setNuevoCVNumeroIndividual(primerDisp);
-              }}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${nuevoCVModo === "individual"
-                ? "bg-white text-[#0D6E5F] shadow-xs border border-slate-200"
-                : "text-slate-600 hover:text-slate-900"
-                }`}
-            >
-              Emisión Individual (1 Corbatín)
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setNuevoCVModo("lote");
-                setNuevoCVError("");
-                const sigNuevo = formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes));
-                setNuevoCVRangoInicio(sigNuevo);
-                setNuevoCVRangoFin(sigNuevo);
-              }}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${nuevoCVModo === "lote"
-                ? "bg-white text-[#0D6E5F] shadow-xs border border-slate-200"
-                : "text-slate-600 hover:text-slate-900"
-                }`}
-            >
-              Emisión en Lote / Rango Consecutivo
-            </button>
-          </div>
-
-          <form onSubmit={handleGuardarNuevoCorbatinVerde} className="mt-5 space-y-4">
-            {/* Error Banner */}
-            {nuevoCVError && (
-              <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2.5 text-xs text-red-700 font-medium">
-                <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                <span>{nuevoCVError}</span>
-              </div>
-            )}
-
-            {/* Nombre de la Empresa / Contratista */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Nombre de la Empresa / Contratista <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  required
-                  list="empresas-list-nuevo-cv"
-                  value={nuevoCVEmpresaNombre}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setNuevoCVEmpresaNombre(val);
-                    const found = empresas.find(emp => emp.nombre.toLowerCase() === val.toLowerCase());
-                    if (found) {
-                      if (found.telefono && !nuevoCVTelefono) setNuevoCVTelefono(found.telefono);
-                      if (found.email && !nuevoCVEmail) setNuevoCVEmail(found.email);
-                    }
-                  }}
-                  placeholder="Ej. Albercas del Desierto S.A."
-                  className="w-full text-xs font-semibold pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                />
-                <IconBuilding className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <datalist id="empresas-list-nuevo-cv">
-                  {empresas.map((emp) => (
-                    <option key={emp.id} value={emp.nombre} />
-                  ))}
-                </datalist>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-1">
-                Puedes seleccionar una empresa existente del padrón o escribir un nuevo proveedor.
-              </p>
-            </div>
-
-            {/* Teléfono de Contacto y Correo Electrónico */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Teléfono de Contacto <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="tel"
-                    required
-                    value={nuevoCVTelefono}
-                    onChange={(e) => setNuevoCVTelefono(e.target.value)}
-                    placeholder="Ej. 638 123 4567"
-                    className="w-full text-xs font-semibold pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F] font-mono"
-                  />
-                  <IconPhone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Correo Electrónico <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    required
-                    value={nuevoCVEmail}
-                    onChange={(e) => setNuevoCVEmail(e.target.value)}
-                    placeholder="contacto@empresa.com"
-                    className="w-full text-xs font-semibold pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                  />
-                  <IconMail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                </div>
-              </div>
-            </div>
-
-            {/* Modo Individual: Selección o captura de Correlativo */}
-            {nuevoCVModo === "individual" ? (
-              <div className="p-4 rounded-2xl bg-teal-50/70 border border-teal-200 space-y-3">
-                <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-[11px] font-extrabold text-[#0D6E5F] uppercase tracking-wider">
-                      Número de Corbatín a Emitir
-                    </div>
-                    <div className="text-xs text-teal-800 mt-0.5">
-                      Usa un correlativo desocupado para reutilizar o genera uno consecutivo nuevo.
-                    </div>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase">Restablecer Contraseña</h3>
+                    <p className="text-xs text-slate-500">Gestión de Seguridad TI · Usuario: {selectedUserParaPassword.username}</p>
                   </div>
-                  <span className="font-mono font-black text-xl px-3 py-1 rounded-xl bg-white text-[#0D6E5F] border border-teal-200 shadow-2xs">
-                    #{formatCorbatinVerdeNum(nuevoCVNumeroIndividual || getPrimerCorbatinVerdeDisponible(corbatinesVerdes))}
-                  </span>
                 </div>
+                <button onClick={() => setSelectedUserParaPassword(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+              </div>
 
-                {/* Input para el correlativo individual */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1">
+                <div><strong>Nombre:</strong> {selectedUserParaPassword.nombre}</div>
+                <div><strong>Rol:</strong> <span className="font-bold uppercase text-[#0D6E5F]">{selectedUserParaPassword.role}</span></div>
+                <div><strong>Correo:</strong> {selectedUserParaPassword.email}</div>
+              </div>
+
+              {passwordModalError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{passwordModalError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleGuardarNuevaPassword} className="space-y-4">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Correlativo #:
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Nueva Contraseña *
                   </label>
                   <input
                     type="text"
                     required
-                    value={nuevoCVNumeroIndividual}
-                    onChange={(e) => setNuevoCVNumeroIndividual(e.target.value)}
-                    placeholder={formatCorbatinVerdeNum(getPrimerCorbatinVerdeDisponible(corbatinesVerdes))}
-                    className="w-full text-xs font-bold font-mono px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                    value={nuevaPassword}
+                    onChange={(e) => setNuevaPassword(e.target.value)}
+                    placeholder="Introduce la nueva clave temporal o definitiva"
+                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-purple-200 font-mono text-slate-800"
                   />
                 </div>
 
-                {/* Opciones rápidas de selección: Huecos desocupados vs Consecutivo nuevo */}
-                <div className="space-y-1.5 pt-1">
-                  <div className="text-[11px] font-semibold text-slate-600 flex items-center justify-between">
-                    <span>Sugerencias rápidas:</span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {getCorbatinesVerdesDesocupados(corbatinesVerdes).slice(0, 4).map((c) => {
-                      const numFmt = formatCorbatinVerdeNum(c.numero || c.corbatinNum);
-                      const isSelected = formatCorbatinVerdeNum(nuevoCVNumeroIndividual) === numFmt;
-                      return (
-                        <button
-                          key={c.id}
-                          type="button"
-                          onClick={() => setNuevoCVNumeroIndividual(numFmt)}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border ${
-                            isSelected
-                              ? "bg-emerald-600 text-white border-emerald-700 shadow-2xs"
-                              : "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
-                          }`}
-                          title="Corbatín libre en inventario listo para reutilizarse"
-                        >
-                          #{numFmt} (Desocupado)
-                        </button>
-                      );
-                    })}
-                    {(() => {
-                      const sigNuevo = getSiguienteConsecutivoNuevo(corbatinesVerdes);
-                      const sigNuevoFmt = formatCorbatinVerdeNum(sigNuevo);
-                      const isSelected = formatCorbatinVerdeNum(nuevoCVNumeroIndividual) === sigNuevoFmt;
-                      return (
-                        <button
-                          type="button"
-                          onClick={() => setNuevoCVNumeroIndividual(sigNuevoFmt)}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border ${
-                            isSelected
-                              ? "bg-teal-700 text-white border-teal-800 shadow-2xs"
-                              : "bg-white text-teal-800 border-teal-300 hover:bg-teal-50"
-                          }`}
-                          title="Siguiente número consecutivo nuevo tras el último asignado"
-                        >
-                          #{sigNuevoFmt} (Nuevo tras #{getMaxCorbatinVerdeOcupado(corbatinesVerdes)})
-                        </button>
-                      );
-                    })()}
-                  </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Confirmar Contraseña *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={confirmarPassword}
+                    onChange={(e) => setConfirmarPassword(e.target.value)}
+                    placeholder="Escribe la contraseña para confirmar"
+                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-purple-200 font-mono text-slate-800"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Debes teclear la clave manualmente como medida de verificación.
+                  </p>
                 </div>
 
-                {/* Validación en tiempo real del número individual */}
-                {(() => {
-                  const numParsed = parseInt(String(nuevoCVNumeroIndividual).replace(/[^0-9]/g, ""), 10);
-                  if (isNaN(numParsed) || numParsed <= 0) return null;
-                  const numFmt = formatCorbatinVerdeNum(numParsed);
-                  const enUso = corbatinesVerdes.find(c => {
-                    const cNum = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
-                    return cNum === numParsed && c.activo !== false && c.empresaNombre && c.empresaNombre.trim() && c.estatus_inventario === "ASIGNADO";
-                  });
+                <div className="flex justify-between items-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const temp = "LP-" + Math.random().toString(36).substring(2, 7).toUpperCase();
+                      setNuevaPassword(temp);
+                      setConfirmarPassword(""); // Exigir escribir a mano la confirmación
+                    }}
+                    className="text-xs text-purple-700 font-bold underline hover:text-purple-900 cursor-pointer"
+                  >
+                    Generar Clave Segura
+                  </button>
 
-                  if (enUso) {
-                    return (
-                      <div className="p-2.5 rounded-xl bg-red-50 border border-red-300 text-xs text-red-800 font-semibold flex items-center gap-2">
-                        <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                        <span>
-                          ⛔ Corbatín #{numFmt} ya está asignado a "{enUso.empresaNombre}". No puede ser re-emitido.
-                        </span>
-                      </div>
-                    );
-                  }
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedUserParaPassword(null)}
+                      className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingPassword}
+                      className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isSubmittingPassword ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                        }`}
+                    >
+                      {isSubmittingPassword ? (
+                        <>
+                          <IconSpinner className="w-3.5 h-3.5" />
+                          <span>Guardando...</span>
+                        </>
+                      ) : (
+                        <span>Guardar Clave</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
 
-                  const desocupado = corbatinesVerdes.find(c => {
-                    const cNum = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
-                    return cNum === numParsed && (!c.empresaNombre || c.estatus_inventario === "DISPONIBLE");
-                  });
-
-                  if (desocupado) {
-                    return (
-                      <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-xs text-emerald-800 font-semibold flex items-center gap-2">
-                        <IconCheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span>
-                          ✓ Corbatín #{numFmt} está desocupado en inventario y listo para asignarse.
-                        </span>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div className="p-2.5 rounded-xl bg-teal-50 border border-teal-300 text-xs text-teal-800 font-semibold flex items-center gap-2">
-                      <IconCheckCircle className="w-4 h-4 text-teal-600 shrink-0" />
-                      <span>
-                        ✓ Corbatín #{numFmt} es un nuevo correlativo consecutivo disponible.
-                      </span>
-                    </div>
-                  );
-                })()}
+      {/* ─── MODAL APELACIÓN FORMAL (CONTRATISTA) ─── */}
+      {
+        selectedSancionParaApelar && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl p-4 sm:p-7 space-y-4 sm:space-y-5 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b pb-3.5">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-sky-50 text-sky-700">
+                    <IconMessageSquare className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase">Recurso de Apelación y Aclaración</h3>
+                    <p className="text-xs text-slate-500">Folio de Sanción: {selectedSancionParaApelar.id} · Placas: {selectedSancionParaApelar.placas}</p>
+                  </div>
+                </div>
+                <button onClick={() => setSelectedSancionParaApelar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
               </div>
-            ) : (
-              /* Modo Lote: Rango Consecutivo */
-              <div className="p-4 rounded-2xl bg-[#f0fdfa] border border-[#99f6e4] space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-extrabold text-[#0D6E5F] uppercase tracking-wider">
-                    RANGO DE CORBATINES VERDES
-                  </span>
-                  <span className="text-[11px] font-bold text-[#0D6E5F] bg-white px-2.5 py-0.5 rounded-lg border border-teal-200 font-mono">
-                    Consecutivo sugerido: #{formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes))}
-                  </span>
+
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1">
+                <div><strong>Infracción:</strong> {selectedSancionParaApelar.tipo}</div>
+                <div><strong>Medida Disciplinaria:</strong> <span className="text-red-700 font-bold">{selectedSancionParaApelar.medidaDisciplinaria}</span></div>
+                <div><strong>Descripción oficial:</strong> {selectedSancionParaApelar.descripcion}</div>
+              </div>
+
+              <form onSubmit={handleEnviarApelacion} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Argumentos de Aclaración / Justificación *
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={apelacionArgumentos}
+                    onChange={(e) => setApelacionArgumentos(e.target.value)}
+                    placeholder="Describe detalladamente los motivos por los cuales se solicita la reconsideración o levantamiento de la suspensión..."
+                    className="w-full rounded-xl px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-sky-200 text-slate-800 leading-relaxed"
+                  />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Representante Acreditado que Firma *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    defaultValue={currentUser?.nombre || ""}
+                    className="w-full rounded-xl px-3.5 sm:px-4 py-2 text-xs sm:text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-sky-200 font-medium text-slate-800"
+                  />
+                </div>
+
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSancionParaApelar(null)}
+                    className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer active:scale-95"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingApelacion}
+                    className={`w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 active:scale-95 ${isSubmittingApelacion ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
+                  >
+                    {isSubmittingApelacion ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Enviando Recurso...</span>
+                      </>
+                    ) : (
+                      <span>Enviar Recurso a Supervisión HOA →</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL 1: ADMIN CREATES SUPERVISOR ─── */}
+      {
+        showCreateSupervisorModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200">
+              <div className="flex items-center justify-between border-b pb-3">
+                <h3 className="text-sm font-bold text-slate-900 uppercase">Crear Cuenta de Supervisor HOA</h3>
+                <button onClick={() => setShowCreateSupervisorModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">✕</button>
+              </div>
+              <form
+                onSubmit={handleGuardarNuevoSupervisor}
+                className="space-y-3"
+              >
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre Completo del Supervisor *</label>
+                  <input name="nombre" required placeholder="Ej. Comandante Fernando Ortiz" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico Oficial *</label>
+                  <input name="email" type="email" required placeholder="seguridad@laspalomasresort.net" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Contraseña *</label>
+                  <input name="password" type="password" required placeholder="Mínimo 6 caracteres" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+                  <p className="text-[10px] text-slate-400 mt-1">Si se deja en blanco, se usará "123456" por defecto.</p>
+                </div>
+                <div className="flex justify-end gap-2 pt-3">
+                  <button type="button" onClick={() => setShowCreateSupervisorModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingSupervisor}
+                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${isSubmittingSupervisor ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
+                  >
+                    {isSubmittingSupervisor ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Guardando...</span>
+                      </>
+                    ) : (
+                      <span>Guardar Supervisor</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL ADMIN CREA ADMINISTRADOR TI ─── */}
+      {
+        showCreateAdminModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2 text-purple-700">
+                  <div className="p-2 rounded-xl bg-purple-50">
+                    <IconServer className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-900 uppercase">Crear Cuenta de Administrador</h3>
+                </div>
+                <button onClick={() => setShowCreateAdminModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+              </div>
+              <form
+                onSubmit={handleGuardarNuevoAdmin}
+                className="space-y-3"
+              >
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre Completo del Administrador *</label>
+                  <input name="nombre" required placeholder="Ej. Ing. Carlos Mendoza (TI)" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico Oficial *</label>
+                  <input name="email" type="email" required placeholder="admin@laspalomashoa.com" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Contraseña de Acceso *</label>
+                  <input name="password" type="password" required placeholder="Mínimo 6 caracteres" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20" />
+                  <p className="text-[10px] text-slate-400 mt-1">Si se deja en blanco, se usará "123456" por defecto.</p>
+                </div>
+                <div className="p-3 rounded-xl bg-purple-50 border border-purple-100 text-purple-900 text-[11px] space-y-1">
+                  <div className="font-bold flex items-center gap-1.5">
+                    <IconShield className="w-3.5 h-3.5 text-purple-600" />
+                    <span>Privilegios Totales de Administrador</span>
+                  </div>
+                  <p className="text-purple-700">Esta cuenta tendrá acceso completo a la consola de sistemas, auditoría de eventos, cambio de contraseñas y gestión de todo el personal.</p>
+                </div>
+                <div className="flex justify-end gap-2 pt-3">
+                  <button type="button" onClick={() => setShowCreateAdminModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer hover:bg-slate-50">Cancelar</button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingAdmin}
+                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0b5d50] cursor-pointer flex items-center gap-1.5 shadow-sm ${isSubmittingAdmin ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
+                  >
+                    {isSubmittingAdmin ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Guardando...</span>
+                      </>
+                    ) : (
+                      <span>Guardar Administrador</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL 2: SUPERVISOR CREATES PROVEEDOR EMPRESA ─── */}
+      {
+        showCreateEmpresaModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b pb-3">
+                <h3 className="text-sm font-bold text-slate-900 uppercase">Registrar Empresa Proveedora</h3>
+                <button onClick={() => { setShowCreateEmpresaModal(false); setEmpresaCreateError(""); setNuevaEmpresaPassword(""); setShowNuevaEmpresaPassword(false); }} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">✕</button>
+              </div>
+
+              {empresaCreateError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{empresaCreateError}</span>
+                </div>
+              )}
+
+              <form
+                onSubmit={handleGuardarNuevaEmpresa}
+                className="space-y-3"
+              >
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Razón Social de la Empresa *</label>
+                  <input name="nombre" required placeholder="Ej. Climas y Refrigeración Rocky Point" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre del Titular / Contacto *</label>
+                  <input name="contacto" required placeholder="Ej. Ing. Daniel Vázquez" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                      Desde Correlativo #:
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Teléfono Celular *</label>
+                    <input name="telefono" required placeholder="+52 638 000 0000" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico *</label>
+                    <input name="email" type="email" required placeholder="contacto@empresa.com" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-600">
+                      Contraseña de Acceso al Portal *
                     </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const temp = "LP-" + Math.random().toString(36).substring(2, 7).toUpperCase();
+                        setNuevaEmpresaPassword(temp);
+                        setShowNuevaEmpresaPassword(true);
+                        showToast(`Contraseña generada: ${temp}`, "info", "Clave Aleatoria");
+                      }}
+                      className="text-xs text-[#0D6E5F] font-bold hover:underline cursor-pointer flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 transition-all shadow-2xs"
+                      title="Generar contraseña aleatoria como en el módulo de IT"
+                    >
+                      <IconKey className="w-3.5 h-3.5 text-[#0D6E5F]" />
+                      <span>Generar Clave Segura</span>
+                    </button>
+                  </div>
+                  <div className="relative">
                     <input
-                      type="text"
+                      name="password"
+                      type={showNuevaEmpresaPassword ? "text" : "password"}
                       required
-                      value={nuevoCVRangoInicio}
-                      onChange={(e) => setNuevoCVRangoInicio(e.target.value)}
-                      placeholder={formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes))}
-                      className="w-full text-xs font-bold font-mono px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                      value={nuevaEmpresaPassword}
+                      onChange={(e) => setNuevaEmpresaPassword(e.target.value)}
+                      placeholder="Mínimo 6 caracteres o genera una clave"
+                      className="w-full rounded-xl px-3 py-2 pr-20 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800 font-mono"
+                    />
+                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                      {nuevaEmpresaPassword && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(nuevaEmpresaPassword);
+                            showToast("Contraseña copiada al portapapeles", "success");
+                          }}
+                          className="text-slate-400 hover:text-emerald-700 cursor-pointer p-1 rounded-md hover:bg-emerald-50 transition-colors"
+                          title="Copiar contraseña"
+                        >
+                          <IconCopy className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setShowNuevaEmpresaPassword(!showNuevaEmpresaPassword)}
+                        className="text-slate-400 hover:text-slate-700 cursor-pointer p-1 rounded-md hover:bg-slate-100 transition-colors"
+                        title={showNuevaEmpresaPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                      >
+                        {showNuevaEmpresaPassword ? (
+                          <IconEyeOff className="w-4 h-4" />
+                        ) : (
+                          <IconEye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">El contratista usará esta contraseña para ingresar al portal.</p>
+                </div>
+
+                {/* Rango de Corbatines */}
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800">Rango de Corbatines Asignados</label>
+                    <span className="text-[10px] bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded-full">Control de Cupos</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500">Define los números de corbatines autorizados para esta empresa (ej. del 1 al 5). Al registrar vehículos, se asignarán números dentro de este intervalo.</p>
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Corbatín Inicial</label>
+                      <input name="corbatin_rango_inicio" type="number" min="1" placeholder="Ej. 1" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono" />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Corbatín Final</label>
+                      <input name="corbatin_rango_fin" type="number" min="1" placeholder="Ej. 5" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-3">
+                  <button type="button" onClick={() => { setShowCreateEmpresaModal(false); setEmpresaCreateError(""); setNuevaEmpresaPassword(""); setShowNuevaEmpresaPassword(false); }} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingEmpresa}
+                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${isSubmittingEmpresa ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
+                  >
+                    {isSubmittingEmpresa ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Creando Proveedor...</span>
+                      </>
+                    ) : (
+                      <span>Crear Proveedor</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL EDITAR EMPRESA Y RANGO DE CORBATINES ─── */}
+      {
+        selectedEmpresaParaEditar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 uppercase">Editar Empresa / Rango de Corbatines</h3>
+                  <p className="text-xs text-slate-500">{selectedEmpresaParaEditar.nombre}</p>
+                </div>
+                <button onClick={() => setSelectedEmpresaParaEditar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+              </div>
+
+              {empresaEditError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{empresaEditError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleGuardarEditarEmpresa} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Razón Social *</label>
+                  <input
+                    value={empresaEditNombre}
+                    onChange={(e) => setEmpresaEditNombre(e.target.value)}
+                    required
+                    className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre del Titular / Contacto *</label>
+                  <input
+                    value={empresaEditContacto}
+                    onChange={(e) => setEmpresaEditContacto(e.target.value)}
+                    required
+                    className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300"
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Teléfono</label>
+                    <input
+                      value={empresaEditTelefono}
+                      onChange={(e) => setEmpresaEditTelefono(e.target.value)}
+                      className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono"
                     />
                   </div>
-
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                      Hasta Correlativo #:
-                    </label>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico</label>
                     <input
-                      type="text"
-                      required
-                      value={nuevoCVRangoFin}
-                      onChange={(e) => setNuevoCVRangoFin(e.target.value)}
-                      placeholder={formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes))}
-                      className="w-full text-xs font-bold font-mono px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                      type="email"
+                      value={empresaEditEmail}
+                      onChange={(e) => setEmpresaEditEmail(e.target.value)}
+                      className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300"
                     />
                   </div>
                 </div>
 
-                {/* Validación y cálculo en tiempo real del rango en Lote */}
-                {(() => {
-                  const s = parseInt(String(nuevoCVRangoInicio).replace(/[^0-9]/g, ""), 10);
-                  const e = parseInt(String(nuevoCVRangoFin).replace(/[^0-9]/g, ""), 10);
-                  const isValidRange = (!isNaN(s) && !isNaN(e) && s > 0 && e >= s);
-                  const count = isValidRange ? (e - s + 1) : 0;
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800">Rango de Corbatines Asignados</label>
+                    <span className="text-[10px] bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded-full">Control de Cupo</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500">Define los números de corbatín autorizados para esta empresa. El sistema asignará automáticamente números dentro de este intervalo al registrar vehículos.</p>
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Corbatín Inicial</label>
+                      <input
+                        type="number"
+                        min="1"
+                        placeholder="Ej. 1"
+                        value={empresaEditRangoInicio}
+                        onChange={(e) => setEmpresaEditRangoInicio(e.target.value)}
+                        className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Corbatín Final</label>
+                      <input
+                        type="number"
+                        min="1"
+                        placeholder="Ej. 5"
+                        value={empresaEditRangoFin}
+                        onChange={(e) => setEmpresaEditRangoFin(e.target.value)}
+                        className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 font-mono"
+                      />
+                    </div>
+                  </div>
+                  {empresaEditRangoInicio && empresaEditRangoFin && parseInt(empresaEditRangoFin, 10) >= parseInt(empresaEditRangoInicio, 10) && (
+                    <p className="text-[11px] font-bold text-teal-700 mt-1">
+                      ✓ Capacidad total: {parseInt(empresaEditRangoFin, 10) - parseInt(empresaEditRangoInicio, 10) + 1} vehículos autorizados
+                    </p>
+                  )}
+                </div>
 
-                  // Buscar corbatines asignados dentro del rango solicitado
-                  const colisiones = isValidRange
-                    ? corbatinesVerdes.filter(c => {
-                        const num = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
-                        return num >= s && num <= e && c.activo !== false && c.empresaNombre && c.empresaNombre.trim() && c.estatus_inventario === "ASIGNADO";
-                      })
-                    : [];
+                <div className="flex justify-end gap-2 pt-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedEmpresaParaEditar(null)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer hover:bg-slate-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingEmpresaEdit}
+                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${isSubmittingEmpresaEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
+                  >
+                    {isSubmittingEmpresaEdit ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Guardando Cambios...</span>
+                      </>
+                    ) : (
+                      <span>Guardar Cambios</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
 
-                  return (
-                    <div className="space-y-2">
-                      <div className="text-xs text-teal-900 font-semibold bg-white p-2.5 rounded-xl border border-teal-200 flex items-center justify-between">
-                        <span>Total de corbatines a generar:</span>
-                        <span className="font-mono font-bold text-[#0D6E5F] px-2.5 py-0.5 rounded bg-teal-50 border border-teal-200">
-                          {count} {count === 1 ? "corbatín" : "corbatines"}
-                        </span>
-                      </div>
+      {/* ─── MODAL 3: SUPERVISOR CREATES GUARDIA DE CASETA ─── */}
+      {
+        showCreateGuardiaModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
+                    <IconShield className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase">Crear Cuenta de Guardia de Caseta</h3>
+                    <p className="text-xs text-slate-500">Asigna credenciales y fotografía oficial para el operador de caseta</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowCreateGuardiaModal(false);
+                    setNuevoGuardiaFoto("");
+                    setNuevoGuardiaFotoError("");
+                    setNuevoGuardiaPassword("");
+                    setShowNuevoGuardiaPassword(false);
+                  }}
+                  className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1"
+                >
+                  ✕
+                </button>
+              </div>
 
-                      {colisiones.length > 0 && (
-                        <div className="p-3 rounded-xl bg-red-50 border border-red-300 text-xs text-red-800 space-y-1 font-semibold">
-                          <div className="flex items-center gap-1.5 text-red-700 font-bold">
-                            <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                            <span>⛔ El rango incluye {colisiones.length} corbatines que ya están en uso:</span>
+              {nuevoGuardiaFotoError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{nuevoGuardiaFotoError}</span>
+                </div>
+              )}
+
+              <form
+                onSubmit={handleGuardarNuevoGuardia}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre Completo del Oficial *</label>
+                  <input name="nombre" required placeholder="Ej. Oficial Ramón Beltrán" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Correo Electrónico Oficial *</label>
+                  <input name="email" type="email" required placeholder="caseta.sur@laspalomasresort.net" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800" />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Contraseña de Inicio de Sesión *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const temp = "LP-" + Math.random().toString(36).substring(2, 7).toUpperCase();
+                        setNuevoGuardiaPassword(temp);
+                        setShowNuevoGuardiaPassword(true);
+                      }}
+                      className="text-xs text-[#0D6E5F] font-bold hover:underline cursor-pointer flex items-center gap-1"
+                      title="Generar contraseña aleatoria como en el módulo de IT"
+                    >
+                      <span>⚡ Generar Clave Segura</span>
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      name="password"
+                      type={showNuevoGuardiaPassword ? "text" : "password"}
+                      required
+                      value={nuevoGuardiaPassword}
+                      onChange={(e) => setNuevoGuardiaPassword(e.target.value)}
+                      placeholder="Mínimo 6 caracteres"
+                      className="w-full rounded-xl px-4 py-2.5 pr-10 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800 font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNuevoGuardiaPassword(!showNuevoGuardiaPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1"
+                      title={showNuevoGuardiaPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                    >
+                      {showNuevoGuardiaPassword ? (
+                        <IconEyeOff className="w-4 h-4" />
+                      ) : (
+                        <IconEye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1">El oficial usará esta contraseña para iniciar sesión en el sistema.</p>
+                </div>
+
+                {/* FOTOGRAFÍA OBLIGATORIA DEL GUARDIA */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Fotografía Oficial del Oficial *
+                    </label>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                      Obligatoria
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                    <div className="sm:col-span-2 space-y-2">
+                      <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                        <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
+                        <span>{nuevoGuardiaFoto ? "Cambiar Fotografía" : "Subir Foto desde Dispositivo"}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleFotoGuardiaChange}
+                        />
+                      </label>
+                      <p className="text-[11px] text-slate-400">
+                        Fotografía frontal y nítida del rostro del oficial para control de caseta (JPG o PNG, máx 5MB).
+                      </p>
+                      {nuevoGuardiaFoto && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNuevoGuardiaFoto("");
+                            setNuevoGuardiaFotoError("");
+                          }}
+                          className="text-xs text-red-600 hover:underline flex items-center gap-1 cursor-pointer"
+                        >
+                          <IconTrash className="w-3.5 h-3.5" />
+                          <span>Remover fotografía</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className={`h-32 rounded-2xl border-2 ${nuevoGuardiaFoto ? 'border-emerald-400 bg-emerald-50/20' : 'border-dashed border-slate-300 bg-slate-50'} flex items-center justify-center overflow-hidden relative shadow-inner`}>
+                      {nuevoGuardiaFoto ? (
+                        <div className="relative w-full h-full group">
+                          <img src={nuevoGuardiaFoto} alt="Preview Guardia" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
+                            Foto Asignada ✓
                           </div>
-                          <div className="text-[11px] text-red-700 pl-5 font-mono">
-                            {colisiones.slice(0, 5).map(c => `#${formatCorbatinVerdeNum(c.numero || c.corbatinNum)} (${c.empresaNombre})`).join(", ")}
-                            {colisiones.length > 5 ? ` y ${colisiones.length - 5} más...` : ""}
-                          </div>
-                          <p className="text-[11px] text-red-600 pl-5 pt-0.5">
-                            Por favor selecciona un rango a partir del #{formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes))} para evitar sobreescribir unidades asignadas.
-                          </p>
+                        </div>
+                      ) : (
+                        <div className="text-center p-2 text-slate-400">
+                          <IconUsers className="w-7 h-7 mx-auto mb-1 opacity-50" />
+                          <span className="text-[10px] block font-semibold text-amber-600">Foto Requerida *</span>
                         </div>
                       )}
                     </div>
-                  );
-                })()}
-              </div>
-            )}
+                  </div>
+                </div>
 
-            {/* Periodo de Vigencia y Notas */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Periodo de Vigencia
-                </label>
-                <select
-                  value={nuevoCVVigencia}
-                  onChange={(e) => setNuevoCVVigencia(e.target.value)}
-                  className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCreateGuardiaModal(false);
+                      setNuevoGuardiaFoto("");
+                      setNuevoGuardiaFotoError("");
+                    }}
+                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingGuardia}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isSubmittingGuardia ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
+                  >
+                    {isSubmittingGuardia ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Guardando Oficial...</span>
+                      </>
+                    ) : (
+                      <span>Guardar Oficial →</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL EDITAR OFICIAL DE CASETA ─── */}
+      {
+        selectedGuardiaParaEditar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+            <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
+                    <IconShield className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase">Editar Oficial de Caseta</h3>
+                    <p className="text-xs text-slate-500">Actualiza los datos y fotografía oficial para el operador de caseta</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedGuardiaParaEditar(null);
+                    setEditGuardiaFotoError("");
+                  }}
+                  className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1"
                 >
-                  <option value="1 Semana">1 Semana</option>
-                  <option value="15 Días">15 Días</option>
-                  <option value="1 Mes">1 Mes</option>
-                  <option value="3 Meses">3 Meses</option>
-                  <option value="6 Meses (Recomendado)">6 Meses (Recomendado)</option>
-                  <option value="1 Año">1 Año</option>
-                  <option value="Permanente">Permanente / Indefinido</option>
-                </select>
+                  ✕
+                </button>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Notas u Observaciones (Opcional)
-                </label>
-                <input
-                  type="text"
-                  value={nuevoCVNotas}
-                  onChange={(e) => setNuevoCVNotas(e.target.value)}
-                  placeholder="Ej. Proyecto Fase 2 Torre A"
-                  className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                />
+              {editGuardiaFotoError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{editGuardiaFotoError}</span>
+                </div>
+              )}
+
+              <form
+                onSubmit={handleGuardarEditarGuardia}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre Completo del Oficial *</label>
+                  <input
+                    type="text"
+                    name="nombre"
+                    required
+                    value={editGuardiaNombre}
+                    onChange={(e) => setEditGuardiaNombre(e.target.value)}
+                    placeholder="Ej. Oficial Ramón Beltrán"
+                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Correo Electrónico Oficial *</label>
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    value={editGuardiaEmail}
+                    onChange={(e) => setEditGuardiaEmail(e.target.value)}
+                    placeholder="caseta.sur@laspalomasresort.net"
+                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Contraseña *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const temp = "LP-" + Math.random().toString(36).substring(2, 7).toUpperCase();
+                        setEditGuardiaPassword(temp);
+                        setShowEditGuardiaPassword(true);
+                      }}
+                      className="text-xs text-[#0D6E5F] font-bold hover:underline cursor-pointer flex items-center gap-1"
+                      title="Generar contraseña aleatoria como en el módulo de IT"
+                    >
+                      <span>⚡ Generar Clave Segura</span>
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showEditGuardiaPassword ? "text" : "password"}
+                      name="password"
+                      value={editGuardiaPassword}
+                      onChange={(e) => setEditGuardiaPassword(e.target.value)}
+                      placeholder="Mínimo 6 caracteres (o en blanco para conservar la actual)"
+                      className="w-full rounded-xl px-4 py-2.5 pr-10 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800 font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowEditGuardiaPassword(!showEditGuardiaPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1"
+                      title={showEditGuardiaPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                    >
+                      {showEditGuardiaPassword ? (
+                        <IconEyeOff className="w-4 h-4" />
+                      ) : (
+                        <IconEye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* FOTOGRAFÍA OBLIGATORIA DEL GUARDIA */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Fotografía Oficial del Oficial *
+                    </label>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                      Obligatoria
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                    <div className="sm:col-span-2 space-y-2">
+                      <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                        <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
+                        <span>{editGuardiaFoto ? "Cambiar Fotografía" : "Subir Foto desde Dispositivo"}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleFotoGuardiaEditChange}
+                        />
+                      </label>
+                      <p className="text-[11px] text-slate-400">
+                        Fotografía frontal y nítida del rostro del oficial para control de caseta (JPG o PNG, máx 5MB).
+                      </p>
+                      {editGuardiaFoto && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditGuardiaFoto("");
+                            setEditGuardiaFotoError("");
+                          }}
+                          className="text-xs text-red-600 hover:underline flex items-center gap-1 cursor-pointer"
+                        >
+                          <IconTrash className="w-3.5 h-3.5" />
+                          <span>Remover fotografía</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className={`h-32 rounded-2xl border-2 ${editGuardiaFoto ? 'border-emerald-400 bg-emerald-50/20' : 'border-dashed border-slate-300 bg-slate-50'} flex items-center justify-center overflow-hidden relative shadow-inner`}>
+                      {editGuardiaFoto ? (
+                        <div className="relative w-full h-full group">
+                          <img src={editGuardiaFoto} alt="Preview Guardia" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
+                            Foto Asignada ✓
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center p-2 text-slate-400">
+                          <IconUsers className="w-7 h-7 mx-auto mb-1 opacity-50" />
+                          <span className="text-[10px] block font-semibold text-amber-600">Foto Requerida *</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedGuardiaParaEditar(null);
+                      setEditGuardiaFotoError("");
+                    }}
+                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingGuardiaEdit}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isSubmittingGuardiaEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
+                  >
+                    {isSubmittingGuardiaEdit ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Guardando Oficial...</span>
+                      </>
+                    ) : (
+                      <span>Guardar Cambios →</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL ALTA TRABAJADOR (SUPERVISOR / CONTRATISTA) ─── */}
+      {
+        showCreateTrabajadorModal && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl p-4 sm:p-7 space-y-4 sm:space-y-5 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b pb-3.5">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
+                    <IconUserPlus className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase">Alta de Nuevo Trabajador</h3>
+                    <p className="text-xs text-slate-500">
+                      Empresa: <strong className="text-slate-800">{targetEmpresaParaNuevoTrabajador?.nombre || currentUser?.empresaNombre || "Empresa Contratista"}</strong>
+                    </p>
+                  </div>
+                </div>
+                <button onClick={() => setShowCreateTrabajadorModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+              </div>
+
+              {trabajadorFormError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{trabajadorFormError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleGuardarNuevoTrabajador} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Nombre(s) * <span className="text-slate-400 font-normal">(máx 80)</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      maxLength={80}
+                      value={trabajadorNombre}
+                      onChange={(e) => setTrabajadorNombre(e.target.value)}
+                      placeholder="Ej. Juan Carlos"
+                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Apellidos Completos * <span className="text-slate-400 font-normal">(máx 150)</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      maxLength={150}
+                      value={trabajadorApellidos}
+                      onChange={(e) => setTrabajadorApellidos(e.target.value)}
+                      placeholder="Ej. Pérez Hernández"
+                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Teléfono Celular <span className="text-slate-400 font-normal">(opcional, máx 20)</span>
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={20}
+                    value={trabajadorTelefono}
+                    onChange={(e) => setTrabajadorTelefono(e.target.value)}
+                    placeholder="Ej. +52 81 1234 5678"
+                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-mono text-slate-800"
+                  />
+                </div>
+
+                {/* Fotografía de Credencial */}
+                <div className="space-y-2 pt-1 border-t border-slate-100">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Fotografía de Credencial / Identificación (URL o Archivo)
+                  </label>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                    <div className="sm:col-span-2 space-y-2">
+                      <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                        <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
+                        <span>Subir Foto desde Dispositivo</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleFotoTrabajadorUpload}
+                        />
+                      </label>
+                      <p className="text-[11px] text-slate-400">
+                        Fotografía nítida tipo credencial del colaborador (JPG o PNG · Supabase Storage).
+                      </p>
+                    </div>
+
+                    <div className="h-28 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
+                      {trabajadorFotoUrl ? (
+                        <div
+                          onClick={() => setGenericImagePreview({
+                            isOpen: true,
+                            src: trabajadorFotoUrl,
+                            title: "Fotografía de Credencial",
+                            subtitle: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Nuevo Trabajador",
+                          })}
+                          className="relative w-full h-full group cursor-pointer"
+                          title="Clic para ampliar imagen"
+                        >
+                          <img src={trabajadorFotoUrl} alt="Preview" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold gap-1">
+                            <IconEye className="w-3.5 h-3.5" />
+                            <span>Ampliar</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center p-2 text-slate-400">
+                          <IconUsers className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                          <span className="text-[10px] block">Sin fotografía</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 1. Comprobante de Seguro Social (IMSS, ISSSTE, etc.) */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                      <IconShield className="w-3.5 h-3.5 text-[#0D6E5F]" />
+                      <span>Comprobante de Seguro (IMSS, etc.)</span>
+                    </label>
+                    {trabajadorSeguroUrl && (
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        Documento Listo ✓
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="border-2 border-dashed border-slate-300 hover:border-[#0D6E5F] rounded-2xl p-4 bg-slate-50/70 hover:bg-teal-50/20 transition-all text-center relative group">
+                    <input
+                      type="file"
+                      accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
+                      onChange={handleSeguroTrabajadorUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    {trabajadorSeguroUrl ? (
+                      <div className="flex items-center justify-between gap-3 p-1">
+                        <div className="flex items-center gap-2.5 min-w-0 text-left">
+                          <div className="w-9 h-9 rounded-xl bg-teal-100 text-[#0D6E5F] flex items-center justify-center shrink-0 shadow-2xs">
+                            <IconShield className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
+                              {trabajadorSeguroFileName || "Comprobante de Seguro Adjunto"}
+                            </div>
+                            <div className="text-[10px] text-teal-700 font-semibold">
+                              {trabajadorSeguroUrl.startsWith("data:application/pdf") || trabajadorSeguroUrl.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 relative z-20">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedDocTrabajadorPreview({
+                                isOpen: true,
+                                url: trabajadorSeguroUrl,
+                                title: "Comprobante de Seguro Social (IMSS)",
+                                workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Nuevo Trabajador",
+                                type: "seguro"
+                              });
+                            }}
+                            className="px-2.5 py-1 text-xs font-bold text-teal-800 bg-white border border-teal-300 rounded-lg hover:bg-teal-50 cursor-pointer shadow-2xs flex items-center gap-1"
+                            title="Visualizar documento"
+                          >
+                            <IconEye className="w-3.5 h-3.5" />
+                            <span>Ver</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setTrabajadorSeguroUrl("");
+                              setTrabajadorSeguroFileName("");
+                            }}
+                            className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
+                            title="Quitar archivo"
+                          >
+                            <IconTrash className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="py-2 flex flex-col items-center gap-1">
+                        <IconShield className="w-6 h-6 text-slate-400 group-hover:text-[#0D6E5F] transition-colors" />
+                        <span className="text-xs font-bold text-slate-700">Subir Comprobante de Seguro (IMSS, ISSSTE, etc.)</span>
+                        <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 2. Constancia de Competencias Laborales DC-3 */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                      <IconFileText className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Constancia de Competencias DC-3</span>
+                    </label>
+                    {trabajadorDC3Url && (
+                      <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                        Documento Listo ✓
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-4 bg-slate-50/70 hover:bg-blue-50/20 transition-all text-center relative group">
+                    <input
+                      type="file"
+                      accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
+                      onChange={handleDC3TrabajadorUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    {trabajadorDC3Url ? (
+                      <div className="flex items-center justify-between gap-3 p-1">
+                        <div className="flex items-center gap-2.5 min-w-0 text-left">
+                          <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 shadow-2xs">
+                            <IconFileText className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
+                              {trabajadorDC3FileName || "Constancia DC-3 Adjunta"}
+                            </div>
+                            <div className="text-[10px] text-blue-700 font-semibold">
+                              {trabajadorDC3Url.startsWith("data:application/pdf") || trabajadorDC3Url.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 relative z-20">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedDocTrabajadorPreview({
+                                isOpen: true,
+                                url: trabajadorDC3Url,
+                                title: "Constancia de Competencias Laborales DC-3",
+                                workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Nuevo Trabajador",
+                                type: "dc3"
+                              });
+                            }}
+                            className="px-2.5 py-1 text-xs font-bold text-blue-800 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 cursor-pointer shadow-2xs flex items-center gap-1"
+                            title="Visualizar documento"
+                          >
+                            <IconEye className="w-3.5 h-3.5" />
+                            <span>Ver</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setTrabajadorDC3Url("");
+                              setTrabajadorDC3FileName("");
+                            }}
+                            className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
+                            title="Quitar archivo"
+                          >
+                            <IconTrash className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="py-2 flex flex-col items-center gap-1">
+                        <IconFileText className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                        <span className="text-xs font-bold text-slate-700">Subir Constancia DC-3</span>
+                        <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateTrabajadorModal(false)}
+                    className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer active:scale-95"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingTrabajador}
+                    className={`w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 active:scale-95 ${isSubmittingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
+                    style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
+                  >
+                    {isSubmittingTrabajador ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Guardando Trabajador...</span>
+                      </>
+                    ) : (
+                      <span>Guardar Trabajador →</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL MODIFICAR TRABAJADOR (CONTRATISTA) ─── */}
+      {
+        selectedTrabajadorParaEditar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b pb-3.5">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-700">
+                    <IconEdit className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase">Modificar Trabajador</h3>
+                    <p className="text-xs text-slate-500">ID: #{selectedTrabajadorParaEditar.id_trabajador} · {selectedTrabajadorParaEditar.empresaNombre}</p>
+                  </div>
+                </div>
+                <button onClick={() => setSelectedTrabajadorParaEditar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+              </div>
+
+              {trabajadorFormError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{trabajadorFormError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleGuardarEdicionTrabajador} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Nombre(s) * <span className="text-slate-400 font-normal">(máx 80)</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      maxLength={80}
+                      value={trabajadorNombre}
+                      onChange={(e) => setTrabajadorNombre(e.target.value)}
+                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Apellidos Completos * <span className="text-slate-400 font-normal">(máx 150)</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      maxLength={150}
+                      value={trabajadorApellidos}
+                      onChange={(e) => setTrabajadorApellidos(e.target.value)}
+                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Teléfono Celular <span className="text-slate-400 font-normal">(opcional, máx 20)</span>
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={20}
+                    value={trabajadorTelefono}
+                    onChange={(e) => setTrabajadorTelefono(e.target.value)}
+                    placeholder="Ej. +52 81 1234 5678"
+                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-mono text-slate-800"
+                  />
+                </div>
+
+                {/* Fotografía de Credencial */}
+                <div className="space-y-2 pt-1 border-t border-slate-100">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Actualizar Fotografía de Credencial
+                  </label>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                    <div className="sm:col-span-2 space-y-2">
+                      <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                        <IconCamera className="w-4 h-4 text-blue-600" />
+                        <span>Cambiar Foto desde Dispositivo</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleFotoTrabajadorUpload}
+                        />
+                      </label>
+                      <p className="text-[11px] text-slate-400">
+                        Fotografía nítida tipo credencial del colaborador (JPG o PNG · Supabase Storage).
+                      </p>
+                    </div>
+
+                    <div className="h-28 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
+                      {trabajadorFotoUrl ? (
+                        <div
+                          onClick={() => setGenericImagePreview({
+                            isOpen: true,
+                            src: trabajadorFotoUrl,
+                            title: "Fotografía de Credencial",
+                            subtitle: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Trabajador",
+                          })}
+                          className="relative w-full h-full group cursor-pointer"
+                          title="Clic para ampliar imagen"
+                        >
+                          <img src={trabajadorFotoUrl} alt="Preview" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold gap-1">
+                            <IconEye className="w-3.5 h-3.5" />
+                            <span>Ampliar</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center p-2 text-slate-400">
+                          <IconUsers className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                          <span className="text-[10px] block">Sin fotografía</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 1. Comprobante de Seguro Social (IMSS, ISSSTE, etc.) */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                      <IconShield className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Comprobante de Seguro Social (IMSS, etc.)</span>
+                    </label>
+                    {trabajadorSeguroUrl && (
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        Documento Listo ✓
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-4 bg-slate-50/70 hover:bg-blue-50/20 transition-all text-center relative group">
+                    <input
+                      type="file"
+                      accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
+                      onChange={handleSeguroTrabajadorUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    {trabajadorSeguroUrl ? (
+                      <div className="flex items-center justify-between gap-3 p-1">
+                        <div className="flex items-center gap-2.5 min-w-0 text-left">
+                          <div className="w-9 h-9 rounded-xl bg-teal-100 text-[#0D6E5F] flex items-center justify-center shrink-0 shadow-2xs">
+                            <IconShield className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
+                              {trabajadorSeguroFileName || "Comprobante de Seguro Adjunto"}
+                            </div>
+                            <div className="text-[10px] text-teal-700 font-semibold">
+                              {trabajadorSeguroUrl.startsWith("data:application/pdf") || trabajadorSeguroUrl.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 relative z-20">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedDocTrabajadorPreview({
+                                isOpen: true,
+                                url: trabajadorSeguroUrl,
+                                title: "Comprobante de Seguro Social (IMSS)",
+                                workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Trabajador",
+                                type: "seguro"
+                              });
+                            }}
+                            className="px-2.5 py-1 text-xs font-bold text-teal-800 bg-white border border-teal-300 rounded-lg hover:bg-teal-50 cursor-pointer shadow-2xs flex items-center gap-1"
+                            title="Visualizar documento"
+                          >
+                            <IconEye className="w-3.5 h-3.5" />
+                            <span>Ver</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setTrabajadorSeguroUrl("");
+                              setTrabajadorSeguroFileName("");
+                            }}
+                            className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
+                            title="Quitar archivo"
+                          >
+                            <IconTrash className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="py-2 flex flex-col items-center gap-1">
+                        <IconShield className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                        <span className="text-xs font-bold text-slate-700">Actualizar / Reemplazar Comprobante de Seguro</span>
+                        <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 2. Constancia de Competencias Laborales DC-3 */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                      <IconFileText className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Constancia de Competencias DC-3</span>
+                    </label>
+                    {trabajadorDC3Url && (
+                      <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                        Documento Listo ✓
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-4 bg-slate-50/70 hover:bg-blue-50/20 transition-all text-center relative group">
+                    <input
+                      type="file"
+                      accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
+                      onChange={handleDC3TrabajadorUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    {trabajadorDC3Url ? (
+                      <div className="flex items-center justify-between gap-3 p-1">
+                        <div className="flex items-center gap-2.5 min-w-0 text-left">
+                          <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 shadow-2xs">
+                            <IconFileText className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
+                              {trabajadorDC3FileName || "Constancia DC-3 Adjunta"}
+                            </div>
+                            <div className="text-[10px] text-blue-700 font-semibold">
+                              {trabajadorDC3Url.startsWith("data:application/pdf") || trabajadorDC3Url.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 relative z-20">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedDocTrabajadorPreview({
+                                isOpen: true,
+                                url: trabajadorDC3Url,
+                                title: "Constancia de Competencias Laborales DC-3",
+                                workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Trabajador",
+                                type: "dc3"
+                              });
+                            }}
+                            className="px-2.5 py-1 text-xs font-bold text-blue-800 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 cursor-pointer shadow-2xs flex items-center gap-1"
+                            title="Visualizar documento"
+                          >
+                            <IconEye className="w-3.5 h-3.5" />
+                            <span>Ver</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setTrabajadorDC3Url("");
+                              setTrabajadorDC3FileName("");
+                            }}
+                            className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
+                            title="Quitar archivo"
+                          >
+                            <IconTrash className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="py-2 flex flex-col items-center gap-1">
+                        <IconFileText className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                        <span className="text-xs font-bold text-slate-700">Actualizar / Reemplazar Constancia DC-3</span>
+                        <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Estatus Activo */}
+                <div className="pt-2 border-t border-slate-100">
+                  <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl bg-slate-50 border border-slate-200">
+                    <input
+                      type="checkbox"
+                      checked={trabajadorActivo}
+                      onChange={(e) => setTrabajadorActivo(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 rounded cursor-pointer"
+                    />
+                    <div>
+                      <div className="text-xs font-bold text-slate-800">Estatus de Autorización: {trabajadorActivo ? "Activo (Autorizado)" : "Inactivo (Sin Acceso)"}</div>
+                      <div className="text-[11px] text-slate-500">Determina si el colaborador puede ingresar por caseta.</div>
+                    </div>
+                  </label>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 font-mono flex flex-col sm:flex-row justify-between gap-1">
+                  <span>Fecha de Alta: {formatFechaLegible(selectedTrabajadorParaEditar.created_at)}</span>
+                  <span>Última modif: {formatFechaLegible(selectedTrabajadorParaEditar.updated_at)}</span>
+                </div>
+
+                <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTrabajadorParaEditar(null)}
+                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingTrabajadorEdit}
+                    className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingTrabajadorEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
+                  >
+                    {isSubmittingTrabajadorEdit ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Guardando Cambios...</span>
+                      </>
+                    ) : (
+                      <span>Guardar Cambios →</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL ELIMINAR TRABAJADOR ─── */}
+      {
+        selectedTrabajadorParaEliminar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2 text-red-600">
+                  <div className="p-2 rounded-xl bg-red-50">
+                    <IconTrash className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-sm font-bold uppercase">Eliminar Trabajador</h3>
+                </div>
+                <button onClick={() => setSelectedTrabajadorParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
+                <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este colaborador?</p>
+                <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
+                  <div><strong>Nombre:</strong> {selectedTrabajadorParaEliminar.nombre} {selectedTrabajadorParaEliminar.apellidos}</div>
+                  <div><strong>ID:</strong> <span className="font-mono">#{selectedTrabajadorParaEliminar.id_trabajador}</span></div>
+                  <div><strong>Empresa:</strong> {selectedTrabajadorParaEliminar.empresaNombre}</div>
+                  <div><strong>Teléfono:</strong> {selectedTrabajadorParaEliminar.telefono || "N/A"}</div>
+                </div>
+                <p className="text-[11px] text-red-700">Esta acción no se puede deshacer y revocará su credencial de acceso.</p>
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedTrabajadorParaEliminar(null)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmarEliminarTrabajador}
+                  disabled={isDeletingTrabajador}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
+                >
+                  {isDeletingTrabajador ? (
+                    <>
+                      <IconSpinner className="w-4 h-4" />
+                      <span>Eliminando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <IconTrash className="w-4 h-4" />
+                      <span>Eliminar Definitivamente</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
+          </div>
+        )
+      }
 
-            {/* Modal Footer Buttons */}
-            {(() => {
-              const numIndividual = parseInt(String(nuevoCVNumeroIndividual || getPrimerCorbatinVerdeDisponible(corbatinesVerdes)).replace(/[^0-9]/g, ""), 10);
-              const isIndividualOcupado = !isNaN(numIndividual) && corbatinesVerdes.some(c => {
-                const num = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
-                return num === numIndividual && c.activo !== false && c.empresaNombre && c.empresaNombre.trim() && c.estatus_inventario === "ASIGNADO";
-              });
+      {/* ─── MODAL ELIMINAR SUPERVISOR HOA ─── */}
+      {
+        selectedSupervisorParaEliminar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2 text-red-600">
+                  <div className="p-2 rounded-xl bg-red-50">
+                    <IconTrash className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-sm font-bold uppercase">Eliminar Supervisor HOA</h3>
+                </div>
+                <button onClick={() => setSelectedSupervisorParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+              </div>
 
-              const sLote = parseInt(String(nuevoCVRangoInicio).replace(/[^0-9]/g, ""), 10);
-              const eLote = parseInt(String(nuevoCVRangoFin).replace(/[^0-9]/g, ""), 10);
-              const isLoteInvalido = isNaN(sLote) || isNaN(eLote) || sLote <= 0 || eLote < sLote;
-              const isLoteOcupado = (!isLoteInvalido) && corbatinesVerdes.some(c => {
-                const num = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
-                return num >= sLote && num <= eLote && c.activo !== false && c.empresaNombre && c.empresaNombre.trim() && c.estatus_inventario === "ASIGNADO";
-              });
+              <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
+                <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este Supervisor HOA del sistema?</p>
+                <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
+                  <div><strong>Nombre:</strong> {selectedSupervisorParaEliminar.nombre}</div>
+                  <div><strong>ID:</strong> <span className="font-mono">#{selectedSupervisorParaEliminar.id}</span></div>
+                  <div><strong>Usuario / Correo:</strong> {selectedSupervisorParaEliminar.username}</div>
+                  <div><strong>Rol:</strong> <span className="font-semibold uppercase text-blue-700">Supervisor de Seguridad HOA</span></div>
+                </div>
+                <p className="text-[11px] text-red-700">Esta acción no se puede deshacer y revocará inmediatamente su acceso al portal de administración y a la aplicación móvil.</p>
+              </div>
 
-              const isBlocked = nuevoCVModo === "individual" ? isIndividualOcupado : (isLoteInvalido || isLoteOcupado);
+              <div className="flex justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedSupervisorParaEliminar(null)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmarEliminarSupervisor}
+                  disabled={isDeletingSupervisor}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingSupervisor ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
+                >
+                  {isDeletingSupervisor ? (
+                    <>
+                      <IconSpinner className="w-4 h-4" />
+                      <span>Eliminando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <IconTrash className="w-4 h-4" />
+                      <span>Eliminar Definitivamente</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
 
-              return (
+      {/* ─── MODAL ELIMINAR GUARDIA / OFICIAL DE CASETA ─── */}
+      {
+        selectedGuardiaParaEliminar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2 text-red-600">
+                  <div className="p-2 rounded-xl bg-red-50">
+                    <IconTrash className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-sm font-bold uppercase">Eliminar Oficial de Caseta</h3>
+                </div>
+                <button onClick={() => setSelectedGuardiaParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
+                <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este Oficial de Caseta del sistema?</p>
+                <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
+                  <div><strong>Nombre:</strong> {selectedGuardiaParaEliminar.nombre}</div>
+                  <div><strong>ID:</strong> <span className="font-mono">#{selectedGuardiaParaEliminar.id}</span></div>
+                  <div><strong>Usuario / Correo:</strong> {selectedGuardiaParaEliminar.username}</div>
+                  <div><strong>Rol:</strong> <span className="font-semibold uppercase text-emerald-700">Oficial de Caseta</span></div>
+                </div>
+                <p className="text-[11px] text-red-700">Esta acción eliminará permanentemente la cuenta del oficial. Para suspender temporalmente su acceso sin borrarlo, utiliza el botón de estatus (En Servicio / Inactivo).</p>
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedGuardiaParaEliminar(null)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmarEliminarGuardia}
+                  disabled={isDeletingGuardia}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingGuardia ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
+                >
+                  {isDeletingGuardia ? (
+                    <>
+                      <IconSpinner className="w-4 h-4" />
+                      <span>Eliminando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <IconTrash className="w-4 h-4" />
+                      <span>Eliminar Definitivamente</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL ELIMINAR ADMINISTRADOR TI ─── */}
+      {
+        selectedAdminParaEliminar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2 text-red-600">
+                  <div className="p-2 rounded-xl bg-red-50">
+                    <IconTrash className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-sm font-bold uppercase">Eliminar Administrador TI</h3>
+                </div>
+                <button onClick={() => setSelectedAdminParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
+                <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este Administrador TI del sistema?</p>
+                <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
+                  <div><strong>Nombre:</strong> {selectedAdminParaEliminar.nombre}</div>
+                  <div><strong>ID:</strong> <span className="font-mono">#{selectedAdminParaEliminar.id}</span></div>
+                  <div><strong>Usuario / Correo:</strong> {selectedAdminParaEliminar.username}</div>
+                  <div><strong>Rol:</strong> <span className="font-semibold uppercase text-indigo-700">Administrador TI</span></div>
+                </div>
+                <p className="text-[11px] text-red-700">Esta acción eliminará de forma irreversible el acceso administrativo de esta cuenta.</p>
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedAdminParaEliminar(null)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmarEliminarAdmin}
+                  disabled={isDeletingAdmin}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingAdmin ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
+                >
+                  {isDeletingAdmin ? (
+                    <>
+                      <IconSpinner className="w-4 h-4" />
+                      <span>Eliminando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <IconTrash className="w-4 h-4" />
+                      <span>Eliminar Definitivamente</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL VISTA PREVIA DE FOTOGRAFÍA DE CREDENCIAL ─── */}
+      {
+        selectedFotoTrabajadorPreview && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoTrabajadorPreview(null)}>
+            <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                  <h4 className="font-bold text-base text-slate-900">{selectedFotoTrabajadorPreview.nombre} {selectedFotoTrabajadorPreview.apellidos}</h4>
+                  <p className="text-xs text-slate-500 font-mono">Fotografía de Credencial · ID: #{selectedFotoTrabajadorPreview.id_trabajador}</p>
+                </div>
+                <button onClick={() => setSelectedFotoTrabajadorPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
+              </div>
+
+              <div className="w-full h-[260px] xs:h-[320px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2">
+                {selectedFotoTrabajadorPreview.foto_url || selectedFotoTrabajadorPreview.foto ? (
+                  <img
+                    src={normalizeFotoUrl(selectedFotoTrabajadorPreview.foto_url || selectedFotoTrabajadorPreview.foto)}
+                    alt="Credencial"
+                    className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
+                  />
+                ) : (
+                  <IconUsers className="w-20 h-20 text-slate-600" />
+                )}
+              </div>
+
+              <div className="flex justify-between items-center text-xs pt-1">
+                <span className="font-semibold text-slate-700">{selectedFotoTrabajadorPreview.empresaNombre}</span>
+                <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoTrabajadorPreview.activo ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+                  {selectedFotoTrabajadorPreview.activo ? "Autorizado" : "Inactivo"}
+                </span>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL VISTA PREVIA DE DOCUMENTOS DE TRABAJADOR (SEGURO IMSS / CONSTANCIA DC-3) ─── */}
+      {
+        selectedDocTrabajadorPreview && selectedDocTrabajadorPreview.isOpen && (
+          <div
+            className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-3 sm:p-5 backdrop-blur-md animate-in fade-in duration-150"
+            onClick={() => setSelectedDocTrabajadorPreview(null)}
+          >
+            <div
+              className="w-full max-w-4xl bg-white rounded-3xl overflow-hidden shadow-2xl border border-slate-200 flex flex-col max-h-[92vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="px-6 py-4 border-b bg-slate-50 flex items-center justify-between gap-4" style={{ borderColor: "var(--color-border)" }}>
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold shrink-0 border ${selectedDocTrabajadorPreview.type === "seguro"
+                    ? "bg-teal-50 text-[#0D6E5F] border-teal-200"
+                    : "bg-indigo-50 text-indigo-700 border-indigo-200"
+                    }`}>
+                    {selectedDocTrabajadorPreview.type === "seguro" ? (
+                      <IconShield className="w-5 h-5" />
+                    ) : (
+                      <IconFileText className="w-5 h-5" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-slate-900 truncate">
+                        {selectedDocTrabajadorPreview.title}
+                      </h3>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 shrink-0">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        <span>Documento Oficial ✓</span>
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5 truncate">
+                      Colaborador: <strong className="text-slate-800">{selectedDocTrabajadorPreview.workerName}</strong>
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedDocTrabajadorPreview(null)}
+                  className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Document Viewer Body */}
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-100/50 flex flex-col items-center justify-center">
+                <div className="w-full rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm flex items-center justify-center min-h-[420px]">
+                  {selectedDocTrabajadorPreview.url ? (
+                    (selectedDocTrabajadorPreview.url.startsWith("data:application/pdf") || selectedDocTrabajadorPreview.url.toLowerCase().includes(".pdf")) ? (
+                      <div className="w-full flex flex-col items-center">
+                        <iframe
+                          src={selectedDocTrabajadorPreview.url}
+                          className="w-full h-[540px] border-none"
+                          title={selectedDocTrabajadorPreview.title}
+                        />
+                      </div>
+                    ) : (
+                      <div className="p-4 flex items-center justify-center max-h-[540px]">
+                        <img
+                          src={selectedDocTrabajadorPreview.url}
+                          alt={selectedDocTrabajadorPreview.title}
+                          className="max-h-[500px] w-auto object-contain rounded-xl shadow-xs"
+                        />
+                      </div>
+                    )
+                  ) : (
+                    <div className="p-8 text-center text-slate-400 text-xs">
+                      No se encontró documento adjunto disponible.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 py-3.5 border-t bg-slate-50 flex items-center justify-between gap-3" style={{ borderColor: "var(--color-border)" }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDocTrabajadorPreview(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200 bg-slate-100 transition-colors cursor-pointer"
+                >
+                  Cerrar
+                </button>
+
+                {selectedDocTrabajadorPreview.url && (
+                  <div className="flex items-center gap-2">
+                    {selectedDocTrabajadorPreview.url.startsWith("http") && (
+                      <a
+                        href={selectedDocTrabajadorPreview.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3.5 py-2 rounded-xl text-xs font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                      >
+                        <IconEye className="w-3.5 h-3.5" />
+                        <span>Abrir en Nueva Pestaña</span>
+                      </a>
+                    )}
+                    <a
+                      href={selectedDocTrabajadorPreview.url}
+                      download={`${selectedDocTrabajadorPreview.type === "seguro" ? "comprobante_seguro" : "constancia_dc3"}_${selectedDocTrabajadorPreview.workerName.toLowerCase().replace(/\s+/g, "_")}.${(selectedDocTrabajadorPreview.url.startsWith("data:application/pdf") || selectedDocTrabajadorPreview.url.toLowerCase().includes(".pdf")) ? "pdf" : "png"}`}
+                      className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#094E43] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <IconDownload className="w-3.5 h-3.5" />
+                      <span>Descargar Archivo</span>
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL VISTA PREVIA DE FOTOGRAFÍA DE OFICIAL DE CASETA ─── */}
+      {
+        selectedFotoGuardiaPreview && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoGuardiaPreview(null)}>
+            <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
+                    <IconShield className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-base text-slate-900">{selectedFotoGuardiaPreview.nombre}</h4>
+                    <p className="text-xs text-slate-500 font-mono">Oficial de Caseta · ID: #{selectedFotoGuardiaPreview.id}</p>
+                  </div>
+                </div>
+                <button onClick={() => setSelectedFotoGuardiaPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
+              </div>
+
+              <div className="w-full h-[380px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 relative">
+                {selectedFotoGuardiaPreview.foto_url ? (
+                  <>
+                    <img
+                      src={selectedFotoGuardiaPreview.foto_url}
+                      alt={selectedFotoGuardiaPreview.nombre}
+                      className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                        if (fallback) fallback.style.display = "flex";
+                      }}
+                    />
+                    <div className="hidden flex-col items-center justify-center p-6 text-center text-slate-400">
+                      <IconUsers className="w-20 h-20 mb-2 text-slate-600" />
+                      <span className="text-xs font-medium">Fotografía no disponible</span>
+                    </div>
+                  </>
+                ) : (
+                  <IconUsers className="w-20 h-20 text-slate-600" />
+                )}
+              </div>
+
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-mono text-slate-600 font-semibold">{selectedFotoGuardiaPreview.username}</span>
+                <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoGuardiaPreview.activo !== false ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+                  {selectedFotoGuardiaPreview.activo !== false ? "En Servicio" : "Inactivo"}
+                </span>
+              </div>
+
+              {/* Acción para cambiar o subir fotografía a la Base de Datos */}
+              <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+                <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-[#0D6E5F] border border-slate-200 hover:border-emerald-300 font-bold text-xs cursor-pointer shadow-sm transition-all hover:scale-[1.01]">
+                  <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
+                  <span>{selectedFotoGuardiaPreview.foto_url ? "Cambiar Fotografía del Oficial" : "Subir Fotografía del Oficial"}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleUpdateGuardiaFoto(selectedFotoGuardiaPreview.id, e)}
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL EDITAR VEHÍCULO (SUPERVISOR / ADMIN) ─── */}
+      {
+        selectedVehiculoParaEditar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b pb-3.5">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-700">
+                    <IconEdit className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase">Modificar Unidad Vehicular</h3>
+                    <p className="text-xs text-slate-500">ID: #{selectedVehiculoParaEditar.id} · {selectedVehiculoParaEditar.empresaNombre}</p>
+                  </div>
+                </div>
+                <button onClick={() => setSelectedVehiculoParaEditar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+              </div>
+
+              {vehiculoEditError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{vehiculoEditError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleGuardarEdicionVehiculo} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Marca *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={vehiculoEditMarca}
+                      onChange={(e) => setVehiculoEditMarca(e.target.value)}
+                      placeholder="Ej. Toyota, Nissan, Ford"
+                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Modelo *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={vehiculoEditModelo}
+                      onChange={(e) => setVehiculoEditModelo(e.target.value)}
+                      placeholder="Ej. Hilux, NP300, Transit"
+                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Año
+                    </label>
+                    <input
+                      type="text"
+                      value={vehiculoEditAnio}
+                      onChange={(e) => setVehiculoEditAnio(e.target.value)}
+                      placeholder="Ej. 2024"
+                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Placas Oficiales *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={vehiculoEditPlacas}
+                      onChange={(e) => setVehiculoEditPlacas(e.target.value.toUpperCase())}
+                      placeholder="Ej. MTY-1234"
+                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-mono font-bold text-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Color
+                    </label>
+                    <input
+                      type="text"
+                      value={vehiculoEditColor}
+                      onChange={(e) => setVehiculoEditColor(e.target.value)}
+                      placeholder="Ej. Blanco, Gris"
+                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
+                    />
+                  </div>
+                </div>
+
+                {/* Control de Estatus de Acceso Exclusivo para Supervisor / Administrador */}
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                  <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    Estatus de Acceso en Casetas (Supervisor / Admin) *
+                  </label>
+                  <select
+                    value={vehiculoEditEstatus}
+                    onChange={(e) => setVehiculoEditEstatus(e.target.value as any)}
+                    className="w-full rounded-xl px-4 py-2.5 text-xs font-bold border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-blue-200 text-slate-800 cursor-pointer"
+                  >
+                    <option value="HABILITADO">HABILITADO — Acceso vehicular autorizado en casetas</option>
+                    <option value="DESHABILITADO">DESHABILITADO — Inactivo o en mantenimiento</option>
+                    <option value="SUSPENDIDO">SUSPENDIDO — Suspensión por sanción disciplinaria</option>
+                    <option value="RESTRINGIDO">RESTRINGIDO — Bloqueo definitivo de acceso</option>
+                  </select>
+                  <p className="text-[11px] text-slate-500">
+                    Como supervisor o administrador, el cambio de estatus se refleja de forma instantánea en todas las casetas de control.
+                  </p>
+                </div>
+
+                {/* Actualizar Fotografía del Vehículo */}
+                <div className="space-y-2 pt-1 border-t border-slate-100">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Fotografía de la Unidad Vehicular
+                  </label>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                    <div className="sm:col-span-2 space-y-2">
+                      <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                        <IconCamera className="w-4 h-4 text-blue-600" />
+                        <span>Cambiar Fotografía</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleFotoVehiculoUpload(e, true)}
+                        />
+                      </label>
+                      <p className="text-[11px] text-slate-400">
+                        Fotografía clara donde se aprecien las placas y características del vehículo.
+                      </p>
+                    </div>
+
+                    <div className="h-24 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
+                      {vehiculoEditFoto ? (
+                        <div className="relative w-full h-full group">
+                          <img src={normalizeFotoUrl(vehiculoEditFoto)} alt="Preview" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
+                            Foto Cargada ✓
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center p-2 text-slate-400">
+                          <IconCar className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                          <span className="text-[10px] block">Sin foto</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedVehiculoParaEditar(null)}
+                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingVehiculoEdit}
+                    className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingVehiculoEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                      }`}
+                    style={{ background: "linear-gradient(135deg, #2563EB, #1D4ED8)" }}
+                  >
+                    {isSubmittingVehiculoEdit ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Guardando Cambios...</span>
+                      </>
+                    ) : (
+                      <span>Guardar Cambios →</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL ALTA DE VEHÍCULO POR SUPERVISOR / ADMIN ─── */}
+      {
+        showCreateVehiculoModalAdmin && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b pb-3.5">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
+                    <IconCar className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase">Alta de Vehículo Autorizado</h3>
+                    <p className="text-xs text-slate-500">
+                      Empresa: {targetEmpresaParaNuevoVehiculo?.nombre || "Seleccionar Empresa"}
+                    </p>
+                  </div>
+                </div>
+                <button onClick={() => { setShowCreateVehiculoModalAdmin(false); setTargetEmpresaParaNuevoVehiculo(null); }} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+              </div>
+
+              {targetEmpresaParaNuevoVehiculo && (() => {
+                const currentEmp = targetEmpresaParaNuevoVehiculo;
+                const empVehs = vehicles.filter(v => v.empresaId === currentEmp.id);
+                const rInicio = currentEmp.corbatin_rango_inicio;
+                const rFin = currentEmp.corbatin_rango_fin;
+                const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
+                const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
+                const cuposOcupados = empVehs.length;
+                const isQuotaFull = hasRange && totalCupos !== null && cuposOcupados >= totalCupos;
+
+                return (
+                  <div className={`p-3.5 rounded-2xl border text-xs space-y-1 ${isQuotaFull ? "bg-amber-50/90 border-amber-300 text-amber-900" : "bg-slate-50 border-slate-200 text-slate-700"
+                    }`}>
+                    <div className="flex items-center justify-between font-bold">
+                      <span>Control de Corbatines de la Empresa:</span>
+                      {hasRange ? (
+                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${isQuotaFull ? "bg-amber-200 text-amber-900" : "bg-teal-100 text-teal-800"}`}>
+                          {cuposOcupados} / {totalCupos} cupos ocupados
+                        </span>
+                      ) : (
+                        <span className="text-slate-500 font-normal">Sin rango asignado</span>
+                      )}
+                    </div>
+                    {hasRange && (
+                      <p className="text-[11px] text-slate-500">
+                        Rango asignado: <strong>#{rInicio} al #{rFin}</strong>. El sistema asignará automáticamente el primer corbatín disponible.
+                      </p>
+                    )}
+                    {isQuotaFull && (
+                      <p className="text-[11px] font-bold text-red-600 pt-1">
+                        Atención: La empresa ha completado el total de cupos asignados ({totalCupos} corbatines). Puedes ampliar el rango en "Editar Rango / Empresa".
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {nuevoVehiculoFotoError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{nuevoVehiculoFotoError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleGuardarNuevoVehiculoPorSupervisor} className="space-y-4">
+                {!targetEmpresaParaNuevoVehiculo && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Empresa Proveedora *
+                    </label>
+                    <select
+                      name="empresaId"
+                      required
+                      className="w-full rounded-xl px-4 py-2.5 text-xs font-bold border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800"
+                    >
+                      {empresas.map(e => (
+                        <option key={e.id} value={e.id}>{e.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Marca *</label>
+                    <input name="marca" required placeholder="Ej. Toyota, Nissan" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Modelo *</label>
+                    <input name="modelo" required placeholder="Ej. Hilux, NP300" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Año</label>
+                    <input name="año" placeholder="Ej. 2024" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Placas *</label>
+                    <input name="placas" required placeholder="Ej. MTY-0001" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-mono font-bold text-slate-800" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Color *</label>
+                    <input name="color" required placeholder="Ej. Blanco" className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Estatus Inicial
+                  </label>
+                  <select
+                    name="estatus_acceso"
+                    defaultValue="HABILITADO"
+                    className="w-full rounded-xl px-4 py-2.5 text-xs font-bold border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800"
+                  >
+                    <option value="HABILITADO">HABILITADO - Acceso vehicular autorizado</option>
+                    <option value="DESHABILITADO">DESHABILITADO - Inactivo o en mantenimiento</option>
+                    <option value="SUSPENDIDO">SUSPENDIDO - Suspensión preventiva</option>
+                  </select>
+                </div>
+
+                {/* Fotografía Obligatoria del Vehículo */}
+                <div className="space-y-2 pt-1 border-t border-slate-100">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Fotografía Oficial del Vehículo *
+                  </label>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                    <div className="sm:col-span-2 space-y-2">
+                      <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                        <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
+                        <span>Subir Foto desde Dispositivo</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleFotoVehiculoUpload(e, false)}
+                        />
+                      </label>
+                      <p className="text-[11px] text-slate-400">
+                        Fotografía nítida del vehículo para verificación en caseta.
+                      </p>
+                    </div>
+
+                    <div className="h-24 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
+                      {nuevoVehiculoFoto ? (
+                        <div className="relative w-full h-full group">
+                          <img src={nuevoVehiculoFoto} alt="Preview" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
+                            Foto Cargada ✓
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center p-2 text-slate-400">
+                          <IconCar className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                          <span className="text-[10px] block">Sin foto</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => { setShowCreateVehiculoModalAdmin(false); setTargetEmpresaParaNuevoVehiculo(null); }}
+                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingVehiculo || (() => {
+                      if (!targetEmpresaParaNuevoVehiculo) return false;
+                      const empVehs = vehicles.filter(v => v.empresaId === targetEmpresaParaNuevoVehiculo.id);
+                      const rInicio = targetEmpresaParaNuevoVehiculo.corbatin_rango_inicio;
+                      const rFin = targetEmpresaParaNuevoVehiculo.corbatin_rango_fin;
+                      const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
+                      const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
+                      return Boolean(hasRange && totalCupos !== null && empVehs.length >= totalCupos);
+                    })()}
+                    className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingVehiculo || (() => {
+                      if (!targetEmpresaParaNuevoVehiculo) return false;
+                      const empVehs = vehicles.filter(v => v.empresaId === targetEmpresaParaNuevoVehiculo.id);
+                      const rInicio = targetEmpresaParaNuevoVehiculo.corbatin_rango_inicio;
+                      const rFin = targetEmpresaParaNuevoVehiculo.corbatin_rango_fin;
+                      const hasRange = rInicio !== null && rInicio !== undefined && rFin !== null && rFin !== undefined;
+                      const totalCupos = hasRange ? (rFin - rInicio + 1) : null;
+                      return Boolean(hasRange && totalCupos !== null && empVehs.length >= totalCupos);
+                    })()
+                      ? "opacity-60 cursor-not-allowed pointer-events-none"
+                      : ""
+                      }`}
+                    style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
+                  >
+                    {isSubmittingVehiculo ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5" />
+                        <span>Registrando Unidad...</span>
+                      </>
+                    ) : (
+                      <span>Registrar Vehículo →</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL ELIMINAR EMPRESA PROVEEDORA ─── */}
+      {
+        selectedEmpresaParaEliminar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2 text-red-600">
+                  <div className="p-2 rounded-xl bg-red-50">
+                    <IconTrash className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-sm font-bold uppercase">Eliminar Empresa Proveedora</h3>
+                </div>
+                <button onClick={() => setSelectedEmpresaParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
+                <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente esta empresa proveedora?</p>
+                <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
+                  <div><strong>Empresa:</strong> {selectedEmpresaParaEliminar.nombre}</div>
+                  <div><strong>Contacto:</strong> {selectedEmpresaParaEliminar.contacto}</div>
+                  <div><strong>Teléfono:</strong> {selectedEmpresaParaEliminar.telefono || "S/N"}</div>
+                  {selectedEmpresaParaEliminar.corbatin_rango_inicio && selectedEmpresaParaEliminar.corbatin_rango_fin && (
+                    <div><strong>Rango Corbatines:</strong> #{selectedEmpresaParaEliminar.corbatin_rango_inicio} - #{selectedEmpresaParaEliminar.corbatin_rango_fin}</div>
+                  )}
+                </div>
+                <p className="text-[11px] text-red-700">Esta acción eliminará permanentemente la empresa, su cuenta de acceso al portal y todos sus vehículos y trabajadores vinculados.</p>
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedEmpresaParaEliminar(null)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmarEliminarEmpresa}
+                  disabled={isDeletingEmpresa}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingEmpresa ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
+                >
+                  {isDeletingEmpresa ? (
+                    <>
+                      <IconSpinner className="w-4 h-4" />
+                      <span>Eliminando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <IconTrash className="w-4 h-4" />
+                      <span>Eliminar Empresa</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL ELIMINAR VEHÍCULO ─── */}
+      {
+        selectedVehiculoParaEliminar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2 text-red-600">
+                  <div className="p-2 rounded-xl bg-red-50">
+                    <IconTrash className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-sm font-bold uppercase">Eliminar Vehículo</h3>
+                </div>
+                <button onClick={() => setSelectedVehiculoParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
+                <p className="font-semibold">¿Estás seguro de que deseas dar de baja y eliminar esta unidad vehicular?</p>
+                <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
+                  <div><strong>Vehículo:</strong> {selectedVehiculoParaEliminar.marca} {selectedVehiculoParaEliminar.modelo} ({selectedVehiculoParaEliminar.anio || selectedVehiculoParaEliminar.año || "N/A"})</div>
+                  <div><strong>Placas:</strong> <span className="font-mono font-bold text-slate-900">{selectedVehiculoParaEliminar.placas}</span></div>
+                  <div><strong>Corbatín:</strong> #{selectedVehiculoParaEliminar.corbatinNum}</div>
+                  <div><strong>Empresa:</strong> {selectedVehiculoParaEliminar.empresaNombre}</div>
+                </div>
+                <p className="text-[11px] text-red-700">Esta acción eliminará permanentemente la unidad y desvinculará el corbatín QR asociado.</p>
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedVehiculoParaEliminar(null)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmarEliminarVehiculo}
+                  disabled={isDeletingVehiculo}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingVehiculo ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                    }`}
+                >
+                  {isDeletingVehiculo ? (
+                    <>
+                      <IconSpinner className="w-4 h-4" />
+                      <span>Eliminando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <IconTrash className="w-4 h-4" />
+                      <span>Eliminar Vehículo</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL VISTA PREVIA DE FOTOGRAFÍA DE VEHÍCULO ─── */}
+      {
+        selectedFotoVehiculoPreview && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoVehiculoPreview(null)}>
+            <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
+                    <IconCar className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-base text-slate-900">{selectedFotoVehiculoPreview.marca} {selectedFotoVehiculoPreview.modelo}</h4>
+                    <p className="text-xs text-slate-500 font-mono">Placas: {selectedFotoVehiculoPreview.placas} · Corbatín #{selectedFotoVehiculoPreview.corbatinNum}</p>
+                  </div>
+                </div>
+                <button onClick={() => setSelectedFotoVehiculoPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
+              </div>
+
+              <div className="w-full h-[260px] xs:h-[320px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 relative">
+                {selectedFotoVehiculoPreview.foto ? (
+                  <img
+                    src={normalizeFotoUrl(selectedFotoVehiculoPreview.foto)}
+                    alt={`${selectedFotoVehiculoPreview.marca} ${selectedFotoVehiculoPreview.modelo}`}
+                    className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
+                  />
+                ) : (
+                  <IconCar className="w-20 h-20 text-slate-600" />
+                )}
+              </div>
+
+              <div className="flex justify-between items-center text-xs pt-1">
+                <span className="font-semibold text-slate-700">{selectedFotoVehiculoPreview.empresaNombre}</span>
+                <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoVehiculoPreview.status === "Habilitado"
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  : selectedFotoVehiculoPreview.status === "Suspendido"
+                    ? "bg-red-50 text-red-700 border border-red-200"
+                    : "bg-slate-100 text-slate-600 border border-slate-200"
+                  }`}>
+                  {selectedFotoVehiculoPreview.status}
+                </span>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL VISOR GENERAL DE IMÁGENES Y EVIDENCIAS (LIGHTBOX) ─── */}
+      {
+        genericImagePreview && genericImagePreview.isOpen && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setGenericImagePreview(null)}>
+            <div className="max-w-3xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                  <h4 className="font-bold text-base text-slate-900">{genericImagePreview.title || "Fotografía de Evidencia"}</h4>
+                  {genericImagePreview.subtitle && (
+                    <p className="text-xs text-slate-500 mt-0.5">{genericImagePreview.subtitle}</p>
+                  )}
+                </div>
+                <button onClick={() => setGenericImagePreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
+              </div>
+
+              <div className="w-full h-[400px] sm:h-[500px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 relative">
+                <img
+                  src={genericImagePreview.src}
+                  alt="Vista Ampliada"
+                  className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
+                />
+              </div>
+
+              <div className="flex justify-between items-center text-xs pt-1">
+                <span className="text-slate-400 font-mono text-[11px]">Alta Resolución</span>
+                {genericImagePreview.badge && (
+                  <span className="px-3 py-1 rounded-full font-bold bg-[#0D6E5F]/10 text-[#0D6E5F] border border-[#0D6E5F]/20 font-mono">
+                    {genericImagePreview.badge}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      <footer className="mt-16 border-t py-6 px-6 text-center bg-white no-print" style={{ borderColor: "var(--color-border)" }}>
+
+        <p className="text-xs text-slate-500">
+          © 2026 Las Palomas Rocky Point HOA, A.C. · Sistema de Control y Seguridad Vehicular
+        </p>
+      </footer>
+
+      {/* ─── VENTANA FLOTANTE DE ALERTA DE INFRACCIÓN/SANCIÓN PARA PROVEEDOR ─── */}
+      {
+        currentUser?.role === "contratista" && sancionesAlertaParaProveedor.length > 0 && (() => {
+          const safeIdx = Math.min(activeSancionAlertIndex, sancionesAlertaParaProveedor.length - 1);
+          const alertItem = sancionesAlertaParaProveedor[safeIdx] || sancionesAlertaParaProveedor[0];
+          if (!alertItem) return null;
+
+          return (
+            <div
+              key={alertItem.id}
+              className="fixed bottom-3 sm:bottom-6 left-3 right-3 sm:left-auto sm:right-6 z-[9990] w-auto sm:w-[26rem] max-w-full bg-white/98 text-slate-800 backdrop-blur-xl border border-rose-200 shadow-2xl rounded-2xl sm:rounded-3xl p-4 sm:p-5 ring-1 ring-black/5 animate-in fade-in slide-in-from-bottom-5 duration-300 transition-all font-sans"
+              style={{ boxShadow: "0 20px 45px -10px rgba(225, 29, 72, 0.18), 0 8px 20px -6px rgba(0, 0, 0, 0.08)" }}
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-600"></span>
+                  </span>
+                  <div>
+                    <h4 className="text-xs font-black uppercase tracking-wider text-rose-700 flex items-center gap-1.5">
+                      <span>Infracción Aprobada</span>
+                      {sancionesAlertaParaProveedor.length > 1 && (
+                        <span className="bg-rose-100 text-rose-800 border border-rose-200 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          {safeIdx + 1} de {sancionesAlertaParaProveedor.length}
+                        </span>
+                      )}
+                    </h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Notificación oficial de resolución de Supervisión HOA
+                    </p>
+                  </div>
+                </div>
+
+                {/* Botón cerrar / descartar individual */}
+                <button
+                  type="button"
+                  onClick={() => handleDismissSancionAlert(alertItem.id)}
+                  className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer text-xs"
+                  title="Quitar notificación"
+                  aria-label="Cerrar notificación"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Contenido de la sanción */}
+              <div className="mt-3.5 space-y-2.5 text-xs">
+                <div className="bg-rose-50/40 rounded-2xl p-3.5 border border-rose-100 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-md text-[11px]">
+                      Placas: {alertItem.placas || "N/A"}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      Folio: #{alertItem.id}
+                    </span>
+                  </div>
+
+                  <div>
+                    <p className="text-slate-900 font-bold text-xs leading-snug">
+                      {alertItem.tipo}
+                    </p>
+                    {alertItem.descripcion && alertItem.descripcion !== alertItem.tipo && (
+                      <p className="text-[11px] text-slate-600 mt-1 line-clamp-2">
+                        {alertItem.descripcion}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1 border-t border-rose-100/80">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Medida:</span>
+                    <span className="text-xs font-bold text-rose-800 bg-rose-100/90 border border-rose-200 px-2.5 py-0.5 rounded-md">
+                      {alertItem.medidaDisciplinaria || "Amonestación / Suspensión"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Controles de paginación si hay múltiples */}
+                {sancionesAlertaParaProveedor.length > 1 && (
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 px-1 pt-1">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        disabled={safeIdx === 0}
+                        onClick={() => setActiveSancionAlertIndex(Math.max(0, safeIdx - 1))}
+                        className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-40 font-medium cursor-pointer disabled:cursor-not-allowed text-[11px]"
+                      >
+                        ← Anterior
+                      </button>
+                      <button
+                        type="button"
+                        disabled={safeIdx >= sancionesAlertaParaProveedor.length - 1}
+                        onClick={() => setActiveSancionAlertIndex(Math.min(sancionesAlertaParaProveedor.length - 1, safeIdx + 1))}
+                        className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-40 font-medium cursor-pointer disabled:cursor-not-allowed text-[11px]"
+                      >
+                        Siguiente →
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDismissAllSancionAlerts(sancionesAlertaParaProveedor.map((s) => s.id))}
+                      className="text-[11px] text-slate-500 hover:text-slate-800 underline cursor-pointer"
+                    >
+                      Quitar todas ({sancionesAlertaParaProveedor.length})
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Acciones principales */}
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedSancionParaApelar(alertItem);
+                    setPortalScreen("sanciones");
+                    handleDismissSancionAlert(alertItem.id);
+                  }}
+                  className="flex-1 py-2.5 px-3.5 rounded-xl bg-[#0D6E5F] hover:bg-[#0a574b] text-white font-bold text-xs shadow-md shadow-emerald-900/10 flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-[0.98]"
+                >
+                  <IconMessageSquare className="w-3.5 h-3.5" />
+                  <span>Interponer Apelación</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDismissSancionAlert(alertItem.id)}
+                  className="py-2.5 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 font-semibold text-xs border border-slate-200 transition-colors cursor-pointer"
+                >
+                  Entendido
+                </button>
+              </div>
+            </div>
+          );
+        })()
+      }
+
+      {/* ─── MODAL ELEGANTE DE CONFIRMACIÓN (LIBERAR / ELIMINAR CORBATÍN) ─── */}
+      {
+        actionConfirmModal && actionConfirmModal.isOpen && (
+          <div
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150"
+            onClick={() => setActionConfirmModal(null)}
+          >
+            <div
+              className="relative bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 my-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Cabecera con Icono y Botón Cerrar */}
+              <div className="flex items-start justify-between gap-3 pt-1">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${actionConfirmModal.type === "eliminar"
+                      ? "bg-rose-50 border-rose-200 text-rose-600 shadow-sm shadow-rose-100"
+                      : "bg-amber-50 border-amber-200 text-amber-600 shadow-sm shadow-amber-100"
+                      }`}
+                  >
+                    {actionConfirmModal.type === "eliminar" ? (
+                      <IconTrash className="w-6 h-6" />
+                    ) : (
+                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="1 4 1 10 7 10" />
+                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                      </svg>
+                    )}
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono font-bold text-xs text-[#0D6E5F] bg-teal-50 border border-teal-200 px-2.5 py-0.5 rounded-lg">
+                        #{actionConfirmModal.corbatinNum}
+                      </span>
+                      <span
+                        className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${actionConfirmModal.type === "eliminar"
+                          ? "bg-rose-50 text-rose-700 border-rose-200"
+                          : "bg-amber-50 text-amber-800 border-amber-200"
+                          }`}
+                      >
+                        {actionConfirmModal.type === "eliminar" ? "Eliminar del Pool" : "Liberar de Empresa"}
+                      </span>
+                    </div>
+                    <h3 className="font-black text-lg text-slate-900 mt-1">
+                      {actionConfirmModal.type === "eliminar"
+                        ? `¿Eliminar Corbatín #${actionConfirmModal.corbatinNum}?`
+                        : `¿Liberar Corbatín #${actionConfirmModal.corbatinNum}?`}
+                    </h3>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setActionConfirmModal(null)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                  title="Cerrar modal"
+                >
+                  <IconX className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Tarjeta de Información Detallada */}
+              <div className="my-5 space-y-3">
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 text-xs space-y-2.5">
+                  {actionConfirmModal.empresaNombre && (
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-200/70">
+                      <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Empresa Actual</span>
+                      <span className="font-bold text-slate-800 text-xs text-right max-w-[220px] truncate">
+                        {actionConfirmModal.empresaNombre}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="text-slate-600 leading-relaxed font-medium">
+                    {actionConfirmModal.type === "eliminar" ? (
+                      <span>
+                        Esta acción removerá permanentemente la unidad <strong>#{actionConfirmModal.corbatinNum}</strong> del pool de inventario físico. Su acreditación y código QR quedarán anulados.
+                      </span>
+                    ) : (
+                      <span>
+                        El corbatín se desvinculará de <strong>&quot;{actionConfirmModal.empresaNombre || "la empresa"}&quot;</strong> y volverá de inmediato al catálogo general como unidad <strong className="text-emerald-700">Disponible</strong> para ser reasignada.
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Puntos informativos / Consecuencias */}
+                <div className="space-y-1.5 px-1 text-[11px] text-slate-500 font-medium">
+                  {actionConfirmModal.type === "eliminar" ? (
+                    <>
+                      <div className="flex items-center gap-2 text-rose-600">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                        <span>Esta acción es irreversible y no se puede deshacer.</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
+                        <span>El registro previo permanecerá respaldado en la bitácora general.</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2 text-emerald-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                        <span>El tarjetón físico queda libre para asignarse a otro contratista cuando sea requerido.</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
+                        <span>Los permisos de acceso vehicular activos en caseta para esta unidad se suspenderán.</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Botones de Acción */}
+              <div className="pt-3 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setActionConfirmModal(null)}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer text-center"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const cb = actionConfirmModal.actionCallback;
+                    setActionConfirmModal(null);
+                    cb();
+                  }}
+                  className={`w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2 ${actionConfirmModal.type === "eliminar"
+                    ? "bg-rose-600 hover:bg-rose-700 active:scale-95 shadow-rose-600/20"
+                    : "bg-amber-600 hover:bg-amber-700 active:scale-95 shadow-amber-600/20"
+                    }`}
+                >
+                  {actionConfirmModal.type === "eliminar" ? (
+                    <>
+                      <IconTrash className="w-4 h-4" />
+                      <span>Sí, Eliminar del Pool</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="1 4 1 10 7 10" />
+                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                      </svg>
+                      <span>Sí, Liberar Corbatín</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ─── MODAL: VINCULAR CORBATÍN VERDE TEMPORALMENTE A EMPRESA ─── */}
+      {
+        showVincularCorbatinModal && corbatinParaVincular && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+            <div className="relative bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-100 my-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              {/* Header del Modal */}
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0D6E5F] shadow-2xs font-mono font-black text-sm">
+                    #{formatCorbatinVerdeNum(corbatinParaVincular.corbatinNum)}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+                      <span>Vincular Corbatín #{formatCorbatinVerdeNum(corbatinParaVincular.corbatinNum)}</span>
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-extrabold uppercase">
+                        Inventario Físico
+                      </span>
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Asigna temporalmente este tarjetón físico a una empresa o contratista por un tiempo determinado.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowVincularCorbatinModal(false);
+                    setVincularError("");
+                  }}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                  title="Cerrar modal"
+                >
+                  <IconX className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleConfirmarVinculacion} className="mt-5 space-y-4">
+                {/* Error Banner */}
+                {vincularError && (
+                  <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2.5 text-xs text-red-700 font-medium">
+                    <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                    <span>{vincularError}</span>
+                  </div>
+                )}
+
+                {/* Empresa / Contratista */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Empresa / Contratista Asignado <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      list="empresas-list-vincular"
+                      value={vincularEmpresaNombre}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setVincularEmpresaNombre(val);
+                        const found = empresas.find(emp => emp.nombre.toLowerCase() === val.toLowerCase());
+                        if (found) {
+                          setVincularEmpresaId(found.id);
+                          if (found.telefono && !vincularTelefono) setVincularTelefono(found.telefono);
+                          if (found.email && !vincularEmail) setVincularEmail(found.email);
+                        } else {
+                          setVincularEmpresaId("");
+                        }
+                      }}
+                      placeholder="Escribe o selecciona la empresa..."
+                      className="w-full text-xs font-semibold pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                    />
+                    <IconBuilding className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <datalist id="empresas-list-vincular">
+                      {empresas.map((emp) => (
+                        <option key={emp.id} value={emp.nombre} />
+                      ))}
+                    </datalist>
+                  </div>
+                </div>
+
+                {/* Teléfono y Correo */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Teléfono de Contacto
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="tel"
+                        value={vincularTelefono}
+                        onChange={(e) => setVincularTelefono(e.target.value)}
+                        placeholder="Ej. 638 123 4567"
+                        className="w-full text-xs font-semibold pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F] font-mono"
+                      />
+                      <IconPhone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Correo Electrónico
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        value={vincularEmail}
+                        onChange={(e) => setVincularEmail(e.target.value)}
+                        placeholder="contacto@empresa.com"
+                        className="w-full text-xs font-semibold pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                      />
+                      <IconMail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Vigencia y Fecha de Vencimiento */}
+                <div className="p-4 rounded-2xl bg-teal-50/70 border border-teal-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-teal-900 uppercase tracking-wider">
+                      Periodo de Vigencia Temporal
+                    </label>
+                    <span className="text-[11px] font-bold text-[#0D6E5F]">
+                      {vincularFechaFin ? `Vence: ${vincularFechaFin}` : "Calculando..."}
+                    </span>
+                  </div>
+
+                  {/* Presets rápidos */}
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                    {["1 Día", "1 Semana", "15 Días", "1 Mes", "3 Meses", "6 Meses"].map((preset) => {
+                      const isSel = vincularVigencia === preset;
+                      return (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => {
+                            setVincularVigencia(preset);
+                            const today = new Date();
+                            let days = 30;
+                            if (preset === "1 Día") days = 1;
+                            else if (preset === "1 Semana") days = 7;
+                            else if (preset === "15 Días") days = 15;
+                            else if (preset === "1 Mes") days = 30;
+                            else if (preset === "3 Meses") days = 90;
+                            else if (preset === "6 Meses") days = 180;
+                            const venc = new Date(today);
+                            venc.setDate(venc.getDate() + days);
+                            setVincularFechaFin(venc.toISOString().split("T")[0]);
+                          }}
+                          className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${isSel
+                            ? "bg-[#0D6E5F] text-white shadow-2xs"
+                            : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+                            }`}
+                        >
+                          {preset}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                        Etiqueta de Vigencia:
+                      </label>
+                      <select
+                        value={vincularVigencia}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setVincularVigencia(val);
+                          const today = new Date();
+                          let days = 30;
+                          if (val === "1 Día") days = 1;
+                          else if (val === "1 Semana") days = 7;
+                          else if (val === "15 Días") days = 15;
+                          else if (val === "1 Mes") days = 30;
+                          else if (val === "3 Meses") days = 90;
+                          else if (val === "6 Meses") days = 180;
+                          else if (val === "1 Año") days = 365;
+                          else if (val === "Permanente") days = 730;
+                          const venc = new Date(today);
+                          venc.setDate(venc.getDate() + days);
+                          setVincularFechaFin(venc.toISOString().split("T")[0]);
+                        }}
+                        className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                      >
+                        <option value="1 Día">1 Día (Pase Rápido)</option>
+                        <option value="1 Semana">1 Semana</option>
+                        <option value="15 Días">15 Días (Quincenal)</option>
+                        <option value="1 Mes">1 Mes (Estándar)</option>
+                        <option value="3 Meses">3 Meses (Trimestral)</option>
+                        <option value="6 Meses">6 Meses (Semestral)</option>
+                        <option value="1 Año">1 Año Completo</option>
+                        <option value="Permanente">Permanente / Indefinido</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                        Fecha Límite Exacta:
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={vincularFechaFin}
+                        onChange={(e) => setVincularFechaFin(e.target.value)}
+                        className="w-full text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Datos Opcionales: Chofer, Placas y Notas */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Placas del Vehículo (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={vincularPlacas}
+                      onChange={(e) => setVincularPlacas(e.target.value.toUpperCase())}
+                      placeholder="Ej. ABC-1234"
+                      className="w-full text-xs font-bold font-mono px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Nombre del Conductor (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={vincularConductor}
+                      onChange={(e) => setVincularConductor(e.target.value)}
+                      placeholder="Ej. Juan Pérez"
+                      className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Notas / Observaciones del Proyecto (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={vincularNotas}
+                    onChange={(e) => setVincularNotas(e.target.value)}
+                    placeholder="Ej. Mantenimiento albercas Fase 2 Torre B"
+                    className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                  />
+                </div>
+
+                {/* Modal Footer */}
                 <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                   <button
                     type="button"
                     onClick={() => {
-                      setShowCreateCorbatinVerdeModal(false);
-                      setNuevoCVError("");
+                      setShowVincularCorbatinModal(false);
+                      setVincularError("");
                     }}
                     className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
                   >
@@ -16794,317 +16395,766 @@ export default function App() {
 
                   <button
                     type="submit"
-                    disabled={isSubmittingNuevoCV || isBlocked}
+                    disabled={isSubmittingVinculacion}
                     style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
-                    className="px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-xs active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-xs active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                   >
-                    <IconCheckCircle className="w-4 h-4" />
-                    <span>
-                      {isSubmittingNuevoCV ? "Guardando..." : (
-                        nuevoCVModo === "individual"
-                          ? `Emitir Corbatín #${formatCorbatinVerdeNum(nuevoCVNumeroIndividual || getPrimerCorbatinVerdeDisponible(corbatinesVerdes))}`
-                          : "Emitir Lote de Corbatines"
-                      )}
-                    </span>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    </svg>
+                    <span>{isSubmittingVinculacion ? "Guardando..." : `Vincular Corbatín #${formatCorbatinVerdeNum(corbatinParaVincular.corbatinNum)}`}</span>
                   </button>
                 </div>
-              );
-            })()}
-          </form>
-        </div>
-      </div>
-    )
-  }
-
-
-
-  {/* ─── MODAL OFICIAL PARA LEVANTAMIENTO DE CASTIGO O PASE PROVISIONAL (OFICINA) ─── */ }
-  {
-    selectedVehiculoParaGestionarCastigo && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-        <div className="bg-white rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col border border-slate-200 shadow-2xl overflow-hidden">
-          {/* Modal Header (Fijo en el tope) */}
-          <div className="px-5 py-3.5 bg-gradient-to-r from-amber-500/10 via-teal-500/10 to-transparent border-b border-slate-200 flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="p-2 rounded-2xl bg-amber-500 text-white shadow-sm shrink-0">
-                <IconShield className="w-5 h-5" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">
-                  Resolución de Oficina: Castigo de Vehículo
-                </h3>
-                <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">
-                  {selectedVehiculoParaGestionarCastigo.marca} {selectedVehiculoParaGestionarCastigo.modelo} · Placas <span className="font-mono font-bold text-slate-800">{selectedVehiculoParaGestionarCastigo.placas}</span> · {selectedVehiculoParaGestionarCastigo.empresaNombre}
-                </p>
-              </div>
+              </form>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedVehiculoParaGestionarCastigo(null);
-                setSelectedSancionParaGestionarCastigo(null);
-                setResolucionError("");
-              }}
-              className="p-1.5 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer shrink-0 ml-2"
-              title="Cerrar ventana"
-            >
-              <IconX className="w-5 h-5" />
-            </button>
           </div>
+        )
+      }
 
-          {/* Formulario con Scroll Interno fluido si la pantalla es corta */}
-          <form onSubmit={handleGuardarResolucionCastigo} className="flex flex-col flex-1 min-h-0 overflow-hidden">
-            <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
-              {/* Banner si ya cuenta con Permiso Provisional */}
-              {selectedVehiculoParaGestionarCastigo.permisoTemporal?.activo && (
-                <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 flex items-start justify-between gap-3 text-xs">
-                  <div className="space-y-0.5">
-                    <span className="font-bold text-amber-900 block flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                      Pase Provisional Actualmente Activo
-                    </span>
-                    <span className="text-amber-800 text-[11px] block">
-                      Vigente hasta: <strong>{new Date(selectedVehiculoParaGestionarCastigo.permisoTemporal.fechaExpiracion).toLocaleString("es-MX", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</strong>
-                      {selectedVehiculoParaGestionarCastigo.permisoTemporal.autorizadoPorOficina ? ` (Autorizado: ${selectedVehiculoParaGestionarCastigo.permisoTemporal.autorizadoPorOficina})` : ""}
-                      {selectedVehiculoParaGestionarCastigo.permisoTemporal.notasSupervisor ? ` · Notas: ${selectedVehiculoParaGestionarCastigo.permisoTemporal.notasSupervisor}` : ""}
-                    </span>
+      {/* ─── MODAL: EMITIR CORBATÍN(ES) VERDE(S) (EMPRESA + CORRELATIVO) ─── */}
+      {
+        showCreateCorbatinVerdeModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+            <div className="relative bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-100 my-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              {/* Header decorativo */}
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0D6E5F] shadow-2xs">
+                    <IconCheckCircle className="w-6 h-6 text-[#0D6E5F]" />
                   </div>
+                  <div>
+                    <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+                      <span>Emitir Corbatín(es) Verde(s)</span>
+                      <span className="px-2 py-0.5 rounded-md bg-teal-50 text-[#0D6E5F] border border-teal-200 text-[10px] font-extrabold uppercase">
+                        LARGA ESTANCIA
+                      </span>
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Para empresas con estadía continua sin registro vehicular previo.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateCorbatinVerdeModal(false);
+                    setNuevoCVError("");
+                  }}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                  title="Cerrar modal"
+                >
+                  <IconX className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Selector de Modo: Individual vs Lote */}
+              <div className="mt-5 p-1 bg-slate-100 rounded-2xl flex items-center gap-1 border border-slate-200/80">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNuevoCVModo("individual");
+                    setNuevoCVError("");
+                    const primerDisp = formatCorbatinVerdeNum(getPrimerCorbatinVerdeDisponible(corbatinesVerdes));
+                    if (!nuevoCVNumeroIndividual) setNuevoCVNumeroIndividual(primerDisp);
+                  }}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${nuevoCVModo === "individual"
+                    ? "bg-white text-[#0D6E5F] shadow-xs border border-slate-200"
+                    : "text-slate-600 hover:text-slate-900"
+                    }`}
+                >
+                  Emisión Individual (1 Corbatín)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNuevoCVModo("lote");
+                    setNuevoCVError("");
+                    const sigNuevo = formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes));
+                    setNuevoCVRangoInicio(sigNuevo);
+                    setNuevoCVRangoFin(sigNuevo);
+                  }}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${nuevoCVModo === "lote"
+                    ? "bg-white text-[#0D6E5F] shadow-xs border border-slate-200"
+                    : "text-slate-600 hover:text-slate-900"
+                    }`}
+                >
+                  Emisión en Lote / Rango Consecutivo
+                </button>
+              </div>
+
+              <form onSubmit={handleGuardarNuevoCorbatinVerde} className="mt-5 space-y-4">
+                {/* Error Banner */}
+                {nuevoCVError && (
+                  <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2.5 text-xs text-red-700 font-medium">
+                    <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                    <span>{nuevoCVError}</span>
+                  </div>
+                )}
+
+                {/* Nombre de la Empresa / Contratista */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Nombre de la Empresa / Contratista <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      list="empresas-list-nuevo-cv"
+                      value={nuevoCVEmpresaNombre}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNuevoCVEmpresaNombre(val);
+                        const found = empresas.find(emp => emp.nombre.toLowerCase() === val.toLowerCase());
+                        if (found) {
+                          if (found.telefono && !nuevoCVTelefono) setNuevoCVTelefono(found.telefono);
+                          if (found.email && !nuevoCVEmail) setNuevoCVEmail(found.email);
+                        }
+                      }}
+                      placeholder="Ej. Albercas del Desierto S.A."
+                      className="w-full text-xs font-semibold pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                    />
+                    <IconBuilding className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <datalist id="empresas-list-nuevo-cv">
+                      {empresas.map((emp) => (
+                        <option key={emp.id} value={emp.nombre} />
+                      ))}
+                    </datalist>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Puedes seleccionar una empresa existente del padrón o escribir un nuevo proveedor.
+                  </p>
+                </div>
+
+                {/* Teléfono de Contacto y Correo Electrónico */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Teléfono de Contacto <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="tel"
+                        required
+                        value={nuevoCVTelefono}
+                        onChange={(e) => setNuevoCVTelefono(e.target.value)}
+                        placeholder="Ej. 638 123 4567"
+                        className="w-full text-xs font-semibold pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F] font-mono"
+                      />
+                      <IconPhone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Correo Electrónico <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        required
+                        value={nuevoCVEmail}
+                        onChange={(e) => setNuevoCVEmail(e.target.value)}
+                        placeholder="contacto@empresa.com"
+                        className="w-full text-xs font-semibold pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                      />
+                      <IconMail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Modo Individual: Selección o captura de Correlativo */}
+                {nuevoCVModo === "individual" ? (
+                  <div className="p-4 rounded-2xl bg-teal-50/70 border border-teal-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-[11px] font-extrabold text-[#0D6E5F] uppercase tracking-wider">
+                          Número de Corbatín a Emitir
+                        </div>
+                        <div className="text-xs text-teal-800 mt-0.5">
+                          Usa un correlativo desocupado para reutilizar o genera uno consecutivo nuevo.
+                        </div>
+                      </div>
+                      <span className="font-mono font-black text-xl px-3 py-1 rounded-xl bg-white text-[#0D6E5F] border border-teal-200 shadow-2xs">
+                        #{formatCorbatinVerdeNum(nuevoCVNumeroIndividual || getPrimerCorbatinVerdeDisponible(corbatinesVerdes))}
+                      </span>
+                    </div>
+
+                    {/* Input para el correlativo individual */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Correlativo #:
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={nuevoCVNumeroIndividual}
+                        onChange={(e) => setNuevoCVNumeroIndividual(e.target.value)}
+                        placeholder={formatCorbatinVerdeNum(getPrimerCorbatinVerdeDisponible(corbatinesVerdes))}
+                        className="w-full text-xs font-bold font-mono px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                      />
+                    </div>
+
+                    {/* Opciones rápidas de selección: Huecos desocupados vs Consecutivo nuevo */}
+                    <div className="space-y-1.5 pt-1">
+                      <div className="text-[11px] font-semibold text-slate-600 flex items-center justify-between">
+                        <span>Sugerencias rápidas:</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {getCorbatinesVerdesDesocupados(corbatinesVerdes).slice(0, 4).map((c) => {
+                          const numFmt = formatCorbatinVerdeNum(c.numero || c.corbatinNum);
+                          const isSelected = formatCorbatinVerdeNum(nuevoCVNumeroIndividual) === numFmt;
+                          return (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => setNuevoCVNumeroIndividual(numFmt)}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border ${isSelected
+                                  ? "bg-emerald-600 text-white border-emerald-700 shadow-2xs"
+                                  : "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
+                                }`}
+                              title="Corbatín libre en inventario listo para reutilizarse"
+                            >
+                              #{numFmt} (Desocupado)
+                            </button>
+                          );
+                        })}
+                        {(() => {
+                          const sigNuevo = getSiguienteConsecutivoNuevo(corbatinesVerdes);
+                          const sigNuevoFmt = formatCorbatinVerdeNum(sigNuevo);
+                          const isSelected = formatCorbatinVerdeNum(nuevoCVNumeroIndividual) === sigNuevoFmt;
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => setNuevoCVNumeroIndividual(sigNuevoFmt)}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border ${isSelected
+                                  ? "bg-teal-700 text-white border-teal-800 shadow-2xs"
+                                  : "bg-white text-teal-800 border-teal-300 hover:bg-teal-50"
+                                }`}
+                              title="Siguiente número consecutivo nuevo tras el último asignado"
+                            >
+                              #{sigNuevoFmt} (Nuevo tras #{getMaxCorbatinVerdeOcupado(corbatinesVerdes)})
+                            </button>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Validación en tiempo real del número individual */}
+                    {(() => {
+                      const numParsed = parseInt(String(nuevoCVNumeroIndividual).replace(/[^0-9]/g, ""), 10);
+                      if (isNaN(numParsed) || numParsed <= 0) return null;
+                      const numFmt = formatCorbatinVerdeNum(numParsed);
+                      const enUso = corbatinesVerdes.find(c => {
+                        const cNum = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
+                        return cNum === numParsed && c.activo !== false && c.empresaNombre && c.empresaNombre.trim() && c.estatus_inventario === "ASIGNADO";
+                      });
+
+                      if (enUso) {
+                        return (
+                          <div className="p-2.5 rounded-xl bg-red-50 border border-red-300 text-xs text-red-800 font-semibold flex items-center gap-2">
+                            <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                            <span>
+                              ⛔ Corbatín #{numFmt} ya está asignado a "{enUso.empresaNombre}". No puede ser re-emitido.
+                            </span>
+                          </div>
+                        );
+                      }
+
+                      const desocupado = corbatinesVerdes.find(c => {
+                        const cNum = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
+                        return cNum === numParsed && (!c.empresaNombre || c.estatus_inventario === "DISPONIBLE");
+                      });
+
+                      if (desocupado) {
+                        return (
+                          <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-xs text-emerald-800 font-semibold flex items-center gap-2">
+                            <IconCheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <span>
+                              ✓ Corbatín #{numFmt} está desocupado en inventario y listo para asignarse.
+                            </span>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="p-2.5 rounded-xl bg-teal-50 border border-teal-300 text-xs text-teal-800 font-semibold flex items-center gap-2">
+                          <IconCheckCircle className="w-4 h-4 text-teal-600 shrink-0" />
+                          <span>
+                            ✓ Corbatín #{numFmt} es un nuevo correlativo consecutivo disponible.
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                ) : (
+                  /* Modo Lote: Rango Consecutivo */
+                  <div className="p-4 rounded-2xl bg-[#f0fdfa] border border-[#99f6e4] space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-extrabold text-[#0D6E5F] uppercase tracking-wider">
+                        RANGO DE CORBATINES VERDES
+                      </span>
+                      <span className="text-[11px] font-bold text-[#0D6E5F] bg-white px-2.5 py-0.5 rounded-lg border border-teal-200 font-mono">
+                        Consecutivo sugerido: #{formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes))}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          Desde Correlativo #:
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={nuevoCVRangoInicio}
+                          onChange={(e) => setNuevoCVRangoInicio(e.target.value)}
+                          placeholder={formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes))}
+                          className="w-full text-xs font-bold font-mono px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          Hasta Correlativo #:
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={nuevoCVRangoFin}
+                          onChange={(e) => setNuevoCVRangoFin(e.target.value)}
+                          placeholder={formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes))}
+                          className="w-full text-xs font-bold font-mono px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Validación y cálculo en tiempo real del rango en Lote */}
+                    {(() => {
+                      const s = parseInt(String(nuevoCVRangoInicio).replace(/[^0-9]/g, ""), 10);
+                      const e = parseInt(String(nuevoCVRangoFin).replace(/[^0-9]/g, ""), 10);
+                      const isValidRange = (!isNaN(s) && !isNaN(e) && s > 0 && e >= s);
+                      const count = isValidRange ? (e - s + 1) : 0;
+
+                      // Buscar corbatines asignados dentro del rango solicitado
+                      const colisiones = isValidRange
+                        ? corbatinesVerdes.filter(c => {
+                          const num = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
+                          return num >= s && num <= e && c.activo !== false && c.empresaNombre && c.empresaNombre.trim() && c.estatus_inventario === "ASIGNADO";
+                        })
+                        : [];
+
+                      return (
+                        <div className="space-y-2">
+                          <div className="text-xs text-teal-900 font-semibold bg-white p-2.5 rounded-xl border border-teal-200 flex items-center justify-between">
+                            <span>Total de corbatines a generar:</span>
+                            <span className="font-mono font-bold text-[#0D6E5F] px-2.5 py-0.5 rounded bg-teal-50 border border-teal-200">
+                              {count} {count === 1 ? "corbatín" : "corbatines"}
+                            </span>
+                          </div>
+
+                          {colisiones.length > 0 && (
+                            <div className="p-3 rounded-xl bg-red-50 border border-red-300 text-xs text-red-800 space-y-1 font-semibold">
+                              <div className="flex items-center gap-1.5 text-red-700 font-bold">
+                                <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                                <span>⛔ El rango incluye {colisiones.length} corbatines que ya están en uso:</span>
+                              </div>
+                              <div className="text-[11px] text-red-700 pl-5 font-mono">
+                                {colisiones.slice(0, 5).map(c => `#${formatCorbatinVerdeNum(c.numero || c.corbatinNum)} (${c.empresaNombre})`).join(", ")}
+                                {colisiones.length > 5 ? ` y ${colisiones.length - 5} más...` : ""}
+                              </div>
+                              <p className="text-[11px] text-red-600 pl-5 pt-0.5">
+                                Por favor selecciona un rango a partir del #{formatCorbatinVerdeNum(getSiguienteConsecutivoNuevo(corbatinesVerdes))} para evitar sobreescribir unidades asignadas.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {/* Periodo de Vigencia y Notas */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Periodo de Vigencia
+                    </label>
+                    <select
+                      value={nuevoCVVigencia}
+                      onChange={(e) => setNuevoCVVigencia(e.target.value)}
+                      className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                    >
+                      <option value="1 Semana">1 Semana</option>
+                      <option value="15 Días">15 Días</option>
+                      <option value="1 Mes">1 Mes</option>
+                      <option value="3 Meses">3 Meses</option>
+                      <option value="6 Meses (Recomendado)">6 Meses (Recomendado)</option>
+                      <option value="1 Año">1 Año</option>
+                      <option value="Permanente">Permanente / Indefinido</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Notas u Observaciones (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={nuevoCVNotas}
+                      onChange={(e) => setNuevoCVNotas(e.target.value)}
+                      placeholder="Ej. Proyecto Fase 2 Torre A"
+                      className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                    />
+                  </div>
+                </div>
+
+                {/* Modal Footer Buttons */}
+                {(() => {
+                  const numIndividual = parseInt(String(nuevoCVNumeroIndividual || getPrimerCorbatinVerdeDisponible(corbatinesVerdes)).replace(/[^0-9]/g, ""), 10);
+                  const isIndividualOcupado = !isNaN(numIndividual) && corbatinesVerdes.some(c => {
+                    const num = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
+                    return num === numIndividual && c.activo !== false && c.empresaNombre && c.empresaNombre.trim() && c.estatus_inventario === "ASIGNADO";
+                  });
+
+                  const sLote = parseInt(String(nuevoCVRangoInicio).replace(/[^0-9]/g, ""), 10);
+                  const eLote = parseInt(String(nuevoCVRangoFin).replace(/[^0-9]/g, ""), 10);
+                  const isLoteInvalido = isNaN(sLote) || isNaN(eLote) || sLote <= 0 || eLote < sLote;
+                  const isLoteOcupado = (!isLoteInvalido) && corbatinesVerdes.some(c => {
+                    const num = parseInt(String(c.numero || c.corbatinNum).replace(/[^0-9]/g, ""), 10);
+                    return num >= sLote && num <= eLote && c.activo !== false && c.empresaNombre && c.empresaNombre.trim() && c.estatus_inventario === "ASIGNADO";
+                  });
+
+                  const isBlocked = nuevoCVModo === "individual" ? isIndividualOcupado : (isLoteInvalido || isLoteOcupado);
+
+                  return (
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCreateCorbatinVerdeModal(false);
+                          setNuevoCVError("");
+                        }}
+                        className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+                      >
+                        Cancelar
+                      </button>
+
+                      <button
+                        type="submit"
+                        disabled={isSubmittingNuevoCV || isBlocked}
+                        style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
+                        className="px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-xs active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <IconCheckCircle className="w-4 h-4" />
+                        <span>
+                          {isSubmittingNuevoCV ? "Guardando..." : (
+                            nuevoCVModo === "individual"
+                              ? `Emitir Corbatín #${formatCorbatinVerdeNum(nuevoCVNumeroIndividual || getPrimerCorbatinVerdeDisponible(corbatinesVerdes))}`
+                              : "Emitir Lote de Corbatines"
+                          )}
+                        </span>
+                      </button>
+                    </div>
+                  );
+                })()}
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+
+
+      {/* ─── MODAL OFICIAL PARA LEVANTAMIENTO DE CASTIGO O PASE PROVISIONAL (OFICINA) ─── */}
+      {
+        selectedVehiculoParaGestionarCastigo && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+            <div className="bg-white rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col border border-slate-200 shadow-2xl overflow-hidden">
+              {/* Modal Header (Fijo en el tope) */}
+              <div className="px-5 py-3.5 bg-gradient-to-r from-amber-500/10 via-teal-500/10 to-transparent border-b border-slate-200 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2 rounded-2xl bg-amber-500 text-white shadow-sm shrink-0">
+                    <IconShield className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                      Resolución de Oficina: Castigo de Vehículo
+                    </h3>
+                    <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">
+                      {selectedVehiculoParaGestionarCastigo.marca} {selectedVehiculoParaGestionarCastigo.modelo} · Placas <span className="font-mono font-bold text-slate-800">{selectedVehiculoParaGestionarCastigo.placas}</span> · {selectedVehiculoParaGestionarCastigo.empresaNombre}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedVehiculoParaGestionarCastigo(null);
+                    setSelectedSancionParaGestionarCastigo(null);
+                    setResolucionError("");
+                  }}
+                  className="p-1.5 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer shrink-0 ml-2"
+                  title="Cerrar ventana"
+                >
+                  <IconX className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Formulario con Scroll Interno fluido si la pantalla es corta */}
+              <form onSubmit={handleGuardarResolucionCastigo} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
+                  {/* Banner si ya cuenta con Permiso Provisional */}
+                  {selectedVehiculoParaGestionarCastigo.permisoTemporal?.activo && (
+                    <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 flex items-start justify-between gap-3 text-xs">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-amber-900 block flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                          Pase Provisional Actualmente Activo
+                        </span>
+                        <span className="text-amber-800 text-[11px] block">
+                          Vigente hasta: <strong>{new Date(selectedVehiculoParaGestionarCastigo.permisoTemporal.fechaExpiracion).toLocaleString("es-MX", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</strong>
+                          {selectedVehiculoParaGestionarCastigo.permisoTemporal.autorizadoPorOficina ? ` (Autorizado: ${selectedVehiculoParaGestionarCastigo.permisoTemporal.autorizadoPorOficina})` : ""}
+                          {selectedVehiculoParaGestionarCastigo.permisoTemporal.notasSupervisor ? ` · Notas: ${selectedVehiculoParaGestionarCastigo.permisoTemporal.notasSupervisor}` : ""}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setResolucionTipo("levantamiento_definitivo");
+                          setResolucionMotivo("Cancelación / levantamiento definitivo de sanción acordada con oficina");
+                        }}
+                        className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition-colors cursor-pointer shrink-0"
+                      >
+                        Hacer Definitivo
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Error Banner */}
+                  {resolucionError && (
+                    <div className="p-3 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2.5 text-xs text-red-700 font-medium">
+                      <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                      <span>{resolucionError}</span>
+                    </div>
+                  )}
+
+                  {/* Selector de Modalidad */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Tipo de Resolución Acordada con la Oficina HOA <span className="text-red-500">*</span>
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => setResolucionTipo("permiso_temporal")}
+                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 ${resolucionTipo === "permiso_temporal"
+                          ? "bg-amber-50/70 border-amber-400 ring-2 ring-amber-400/20"
+                          : "bg-white border-slate-200 hover:border-slate-300"
+                          }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                            <IconClock className="w-4 h-4 text-amber-600" />
+                            Pase Provisional Temporal
+                          </span>
+                          <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${resolucionTipo === "permiso_temporal" ? "border-amber-600 bg-amber-600" : "border-slate-300"}`}>
+                            {resolucionTipo === "permiso_temporal" && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 leading-normal">
+                          Permiso especial por hoy o lapso determinado (colado, entrega urgente). Mantiene el registro de la sanción.
+                        </p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setResolucionTipo("levantamiento_definitivo")}
+                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 ${resolucionTipo === "levantamiento_definitivo"
+                          ? "bg-emerald-50/70 border-emerald-500 ring-2 ring-emerald-500/20"
+                          : "bg-white border-slate-200 hover:border-slate-300"
+                          }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                            <IconCheckCircle className="w-4 h-4 text-emerald-600" />
+                            Levantamiento Definitivo
+                          </span>
+                          <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${resolucionTipo === "levantamiento_definitivo" ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`}>
+                            {resolucionTipo === "levantamiento_definitivo" && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 leading-normal">
+                          La oficina acordó exonerar o dar por concluido el castigo restante. El vehículo queda habilitado permanentemente.
+                        </p>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Opciones de Vigencia si es Permiso Temporal */}
+                  {resolucionTipo === "permiso_temporal" && (
+                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+                      <label className="block text-xs font-bold text-slate-700">
+                        Vigencia del Permiso Provisional Vehicular
+                      </label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { id: "solo_hoy", label: "Solo por Hoy", sub: "Hasta 19:00 hrs" },
+                          { id: "24_horas", label: "24 Horas", sub: "1 día completo" },
+                          { id: "fecha_limite", label: "Fecha Límite", sub: "Fecha y hora exacta" },
+                        ].map((opt) => (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => setResolucionVigenciaTipo(opt.id as any)}
+                            className={`p-2 rounded-xl border text-center transition-all cursor-pointer ${resolucionVigenciaTipo === opt.id
+                              ? "bg-[#0D6E5F] text-white border-[#0D6E5F] shadow-2xs"
+                              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                              }`}
+                          >
+                            <div className="text-xs font-bold">{opt.label}</div>
+                            <div className={`text-[10px] ${resolucionVigenciaTipo === opt.id ? "text-teal-100" : "text-slate-400"}`}>{opt.sub}</div>
+                          </button>
+                        ))}
+                      </div>
+
+                      {resolucionVigenciaTipo === "fecha_limite" && (
+                        <div className="pt-1">
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Selecciona Fecha y Hora de Expiración del Permiso:
+                          </label>
+                          <input
+                            type="datetime-local"
+                            required
+                            value={resolucionFechaLimite}
+                            onChange={(e) => setResolucionFechaLimite(e.target.value)}
+                            className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Motivo del Acuerdo / Justificación (Campo de texto libre) */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Motivo del Acuerdo o Causa de Levantamiento <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      rows={2}
+                      required
+                      value={resolucionMotivo}
+                      onChange={(e) => setResolucionMotivo(e.target.value)}
+                      placeholder="Ej. El contratista dialogó con la administración HOA y se acordó permitir el ingreso del vehículo para descarga urgente de material y colado estructural en Villa 14..."
+                      className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F] leading-relaxed"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Campo de texto libre para detallar los términos acordados con la administración.
+                    </p>
+                  </div>
+
+                  {/* Observaciones Internas / Quién autorizó (Opcional) */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Notas u Observaciones del Supervisor (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={resolucionNotas}
+                      onChange={(e) => setResolucionNotas(e.target.value)}
+                      placeholder="Ej. Autorizó Lic. Roberto Gómez en administración. Notificado a caseta vía radio"
+                      className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Puedes registrar aquí quién autorizó en oficina o cualquier apunte para los oficiales de caseta.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Footer Fijo en la Base */}
+                <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3 shrink-0">
                   <button
                     type="button"
                     onClick={() => {
-                      setResolucionTipo("levantamiento_definitivo");
-                      setResolucionMotivo("Cancelación / levantamiento definitivo de sanción acordada con oficina");
+                      setSelectedVehiculoParaGestionarCastigo(null);
+                      setSelectedSancionParaGestionarCastigo(null);
+                      setResolucionError("");
                     }}
-                    className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition-colors cursor-pointer shrink-0"
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-200 border border-slate-300 transition-colors cursor-pointer"
                   >
-                    Hacer Definitivo
-                  </button>
-                </div>
-              )}
-
-              {/* Error Banner */}
-              {resolucionError && (
-                <div className="p-3 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2.5 text-xs text-red-700 font-medium">
-                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                  <span>{resolucionError}</span>
-                </div>
-              )}
-
-              {/* Selector de Modalidad */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Tipo de Resolución Acordada con la Oficina HOA <span className="text-red-500">*</span>
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setResolucionTipo("permiso_temporal")}
-                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 ${resolucionTipo === "permiso_temporal"
-                      ? "bg-amber-50/70 border-amber-400 ring-2 ring-amber-400/20"
-                      : "bg-white border-slate-200 hover:border-slate-300"
-                      }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-                        <IconClock className="w-4 h-4 text-amber-600" />
-                        Pase Provisional Temporal
-                      </span>
-                      <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${resolucionTipo === "permiso_temporal" ? "border-amber-600 bg-amber-600" : "border-slate-300"}`}>
-                        {resolucionTipo === "permiso_temporal" && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 leading-normal">
-                      Permiso especial por hoy o lapso determinado (colado, entrega urgente). Mantiene el registro de la sanción.
-                    </p>
+                    Cancelar
                   </button>
 
                   <button
-                    type="button"
-                    onClick={() => setResolucionTipo("levantamiento_definitivo")}
-                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 ${resolucionTipo === "levantamiento_definitivo"
-                      ? "bg-emerald-50/70 border-emerald-500 ring-2 ring-emerald-500/20"
-                      : "bg-white border-slate-200 hover:border-slate-300"
-                      }`}
+                    type="submit"
+                    disabled={isSubmittingResolucionOficina}
+                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white transition-all flex items-center gap-2 cursor-pointer shadow-sm ${resolucionTipo === "levantamiento_definitivo"
+                      ? "bg-emerald-600 hover:bg-emerald-700"
+                      : "bg-[#0D6E5F] hover:bg-[#0A574B]"
+                      } ${isSubmittingResolucionOficina ? "opacity-60 cursor-not-allowed" : ""}`}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-                        <IconCheckCircle className="w-4 h-4 text-emerald-600" />
-                        Levantamiento Definitivo
-                      </span>
-                      <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${resolucionTipo === "levantamiento_definitivo" ? "border-emerald-600 bg-emerald-600" : "border-slate-300"}`}>
-                        {resolucionTipo === "levantamiento_definitivo" && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 leading-normal">
-                      La oficina acordó exonerar o dar por concluido el castigo restante. El vehículo queda habilitado permanentemente.
-                    </p>
+                    {isSubmittingResolucionOficina ? (
+                      <>
+                        <IconClock className="w-4 h-4 animate-spin" />
+                        <span>Guardando Resolución...</span>
+                      </>
+                    ) : (
+                      <>
+                        <IconCheckCircle className="w-4 h-4" />
+                        <span>
+                          {resolucionTipo === "levantamiento_definitivo"
+                            ? "Levantar Castigo Definitivamente"
+                            : "Emitir Pase Provisional Vehicular"}
+                        </span>
+                      </>
+                    )}
                   </button>
                 </div>
-              </div>
-
-              {/* Opciones de Vigencia si es Permiso Temporal */}
-              {resolucionTipo === "permiso_temporal" && (
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
-                  <label className="block text-xs font-bold text-slate-700">
-                    Vigencia del Permiso Provisional Vehicular
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { id: "solo_hoy", label: "Solo por Hoy", sub: "Hasta 19:00 hrs" },
-                      { id: "24_horas", label: "24 Horas", sub: "1 día completo" },
-                      { id: "fecha_limite", label: "Fecha Límite", sub: "Fecha y hora exacta" },
-                    ].map((opt) => (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => setResolucionVigenciaTipo(opt.id as any)}
-                        className={`p-2 rounded-xl border text-center transition-all cursor-pointer ${resolucionVigenciaTipo === opt.id
-                          ? "bg-[#0D6E5F] text-white border-[#0D6E5F] shadow-2xs"
-                          : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
-                          }`}
-                      >
-                        <div className="text-xs font-bold">{opt.label}</div>
-                        <div className={`text-[10px] ${resolucionVigenciaTipo === opt.id ? "text-teal-100" : "text-slate-400"}`}>{opt.sub}</div>
-                      </button>
-                    ))}
-                  </div>
-
-                  {resolucionVigenciaTipo === "fecha_limite" && (
-                    <div className="pt-1">
-                      <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                        Selecciona Fecha y Hora de Expiración del Permiso:
-                      </label>
-                      <input
-                        type="datetime-local"
-                        required
-                        value={resolucionFechaLimite}
-                        onChange={(e) => setResolucionFechaLimite(e.target.value)}
-                        className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Motivo del Acuerdo / Justificación (Campo de texto libre) */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Motivo del Acuerdo o Causa de Levantamiento <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  rows={2}
-                  required
-                  value={resolucionMotivo}
-                  onChange={(e) => setResolucionMotivo(e.target.value)}
-                  placeholder="Ej. El contratista dialogó con la administración HOA y se acordó permitir el ingreso del vehículo para descarga urgente de material y colado estructural en Villa 14..."
-                  className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F] leading-relaxed"
-                />
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Campo de texto libre para detallar los términos acordados con la administración.
-                </p>
-              </div>
-
-              {/* Observaciones Internas / Quién autorizó (Opcional) */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Notas u Observaciones del Supervisor (Opcional)
-                </label>
-                <input
-                  type="text"
-                  value={resolucionNotas}
-                  onChange={(e) => setResolucionNotas(e.target.value)}
-                  placeholder="Ej. Autorizó Lic. Roberto Gómez en administración. Notificado a caseta vía radio"
-                  className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
-                />
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Puedes registrar aquí quién autorizó en oficina o cualquier apunte para los oficiales de caseta.
-                </p>
-              </div>
+              </form>
             </div>
-
-            {/* Footer Fijo en la Base */}
-            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3 shrink-0">
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedVehiculoParaGestionarCastigo(null);
-                  setSelectedSancionParaGestionarCastigo(null);
-                  setResolucionError("");
-                }}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-200 border border-slate-300 transition-colors cursor-pointer"
-              >
-                Cancelar
-              </button>
-
-              <button
-                type="submit"
-                disabled={isSubmittingResolucionOficina}
-                className={`px-5 py-2 rounded-xl text-xs font-bold text-white transition-all flex items-center gap-2 cursor-pointer shadow-sm ${resolucionTipo === "levantamiento_definitivo"
-                  ? "bg-emerald-600 hover:bg-emerald-700"
-                  : "bg-[#0D6E5F] hover:bg-[#0A574B]"
-                  } ${isSubmittingResolucionOficina ? "opacity-60 cursor-not-allowed" : ""}`}
-              >
-                {isSubmittingResolucionOficina ? (
-                  <>
-                    <IconClock className="w-4 h-4 animate-spin" />
-                    <span>Guardando Resolución...</span>
-                  </>
-                ) : (
-                  <>
-                    <IconCheckCircle className="w-4 h-4" />
-                    <span>
-                      {resolucionTipo === "levantamiento_definitivo"
-                        ? "Levantar Castigo Definitivamente"
-                        : "Emitir Pase Provisional Vehicular"}
-                    </span>
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )
-  }
-
-  {/* ─── MODAL DE ESCANEO QR PARA CASETA ─── */ }
-  <QRScannerModal
-    isOpen={showQRScannerModal}
-    onClose={() => setShowQRScannerModal(false)}
-    onScanSuccess={handleQRScanData}
-    title="Escanear Código QR de Corbatín"
-    subtitle="Apunta la cámara al código QR impreso en el corbatín o sube una imagen / foto del QR"
-  />
-
-  {/* ─── MODAL OFICIAL DE REPORTES DE BITÁCORA ─── */ }
-  <ReporteBitacoraModal
-    isOpen={showReporteBitacoraModal}
-    onClose={() => setShowReporteBitacoraModal(false)}
-    bitacora={bitacora}
-    empresas={empresas}
-    currentUserRole={currentUser?.role}
-    currentUserName={currentUser?.nombre}
-    onNotify={showToast}
-  />
-
-  {/* ─── MODAL DE ALERTA DE HORARIO VENCIDO PARA CASETA ─── */ }
-  <AlertaHorarioVencidoModal
-    isOpen={Boolean(selectedOvertimeContractor)}
-    onClose={() => {
-      if (selectedOvertimeContractor) {
-        setDismissedOvertimeAlertIds((prev) => [...prev, selectedOvertimeContractor.registroId]);
+          </div>
+        )
       }
-      setSelectedOvertimeContractor(null);
-      setIsOvertimeModalExpanded(false);
-    }}
-    contratista={selectedOvertimeContractor}
-    onRegistrarSalida={handleRegistrarSalidaDesdeAlerta}
-    isProcessing={isProcessingOvertimeAction}
-    initialExpanded={isOvertimeModalExpanded}
-  />
 
-  {/* ─── TOAST NOTIFICATIONS OVERLAY ─── */ }
-  <ToastContainer toasts={toasts} onClose={removeToast} />
+      {/* ─── MODAL DE ESCANEO QR PARA CASETA ─── */}
+      <QRScannerModal
+        isOpen={showQRScannerModal}
+        onClose={() => setShowQRScannerModal(false)}
+        onScanSuccess={handleQRScanData}
+        title="Escanear Código QR de Corbatín"
+        subtitle="Apunta la cámara al código QR impreso en el corbatín o sube una imagen / foto del QR"
+      />
+
+      {/* ─── MODAL OFICIAL DE REPORTES DE BITÁCORA ─── */}
+      <ReporteBitacoraModal
+        isOpen={showReporteBitacoraModal}
+        onClose={() => setShowReporteBitacoraModal(false)}
+        bitacora={bitacora}
+        empresas={empresas}
+        currentUserRole={currentUser?.role}
+        currentUserName={currentUser?.nombre}
+        onNotify={showToast}
+      />
+
+      {/* ─── MODAL DE ALERTA DE HORARIO VENCIDO PARA CASETA ─── */}
+      <AlertaHorarioVencidoModal
+        isOpen={Boolean(selectedOvertimeContractor)}
+        onClose={() => {
+          if (selectedOvertimeContractor) {
+            setDismissedOvertimeAlertIds((prev) => [...prev, selectedOvertimeContractor.registroId]);
+          }
+          setSelectedOvertimeContractor(null);
+          setIsOvertimeModalExpanded(false);
+        }}
+        contratista={selectedOvertimeContractor}
+        onRegistrarSalida={handleRegistrarSalidaDesdeAlerta}
+        isProcessing={isProcessingOvertimeAction}
+        initialExpanded={isOvertimeModalExpanded}
+      />
+
+      {/* ─── TOAST NOTIFICATIONS OVERLAY ─── */}
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div >
   );
 }
