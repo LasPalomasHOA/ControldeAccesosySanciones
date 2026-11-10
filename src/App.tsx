@@ -6,6 +6,7 @@ import { api } from "./services/api";
 import { compressImageClient } from "./utils/imageCompressor";
 import SupervisorHistorial from "./components/SupervisorHistorial";
 import SupervisorReglamentoEditor, { ReglamentoSection } from "./components/SupervisorReglamentoEditor";
+import { ReglaReincidenciaUI } from "./types";
 import ContratistaReglamentoView from "./components/ContratistaReglamentoView";
 import ContabilidadDashboard from "./components/ContabilidadDashboard";
 import QRScannerModal from "./components/QRScannerModal";
@@ -699,6 +700,45 @@ El representante acreditado de la empresa contratista cuenta con el derecho regl
 La empresa contratista asume plena responsabilidad civil y solidaria por los daños o percances que sus colaboradores o unidades vehiculares ocasionen a la infraestructura o áreas comunes de Las Palomas.`;
 
 const DEFAULT_REGLAMENTO_TEXT = REGLAMENTO_TEXT;
+
+const DEFAULT_REGLAS_REINCIDENCIA: ReglaReincidenciaUI[] = [
+  {
+    id_regla: 1,
+    numero_falta: 1,
+    permite_acceso: true,
+    requiere_administrador: false,
+    horas_suspension: 0,
+    mensaje_alerta: "Primera Falta: Llamada de atención formal por escrito. Acceso vehicular y peatonal permitido.",
+    activo: true
+  },
+  {
+    id_regla: 2,
+    numero_falta: 2,
+    permite_acceso: false,
+    requiere_administrador: false,
+    horas_suspension: 24,
+    mensaje_alerta: "Segunda Falta: Suspensión temporal de ingreso vehicular por 24 horas. Acceso denegado.",
+    activo: true
+  },
+  {
+    id_regla: 3,
+    numero_falta: 3,
+    permite_acceso: false,
+    requiere_administrador: false,
+    horas_suspension: 168,
+    mensaje_alerta: "Tercera Falta: Suspensión temporal de ingreso vehicular por 1 semana (168 horas). Acceso denegado.",
+    activo: true
+  },
+  {
+    id_regla: 4,
+    numero_falta: 4,
+    permite_acceso: false,
+    requiere_administrador: true,
+    horas_suspension: -1,
+    mensaje_alerta: "Cuarta Falta: Sanción definitiva (bloqueo permanente). Requiere comparecencia ante Dirección HOA.",
+    activo: true
+  }
+];
 
 const IMG_AERIAL = "https://images.unsplash.com/photo-1785300674532-87efce12b5ee?w=1600&h=600&fit=crop&auto=format";
 const IMG_GATE = "https://images.unsplash.com/photo-1775112077888-8fa36e9bbc51?w=1600&h=600&fit=crop&auto=format";
@@ -1683,6 +1723,14 @@ export default function App() {
     }
   });
   const [isSavingReglamento, setIsSavingReglamento] = useState(false);
+  const [reglasReincidencia, setReglasReincidencia] = useState<ReglaReincidenciaUI[]>(() => {
+    try {
+      const saved = localStorage.getItem("hoa_reglas_reincidencia");
+      return saved ? JSON.parse(saved) : DEFAULT_REGLAS_REINCIDENCIA;
+    } catch {
+      return DEFAULT_REGLAS_REINCIDENCIA;
+    }
+  });
 
   // Estado controlado para la firma de aceptación del contratista
   const [contratistaFirmaNombre, setContratistaFirmaNombre] = useState("");
@@ -2642,7 +2690,8 @@ export default function App() {
         resBitacora,
         resReportes,
         resReglamento,
-        resCorbatines
+        resCorbatines,
+        resReglas
       ] = await Promise.allSettled([
         onlyDynamic ? Promise.resolve(null) : api.getUsuarios(),
         onlyDynamic ? Promise.resolve(null) : api.getEmpresas(),
@@ -2653,6 +2702,7 @@ export default function App() {
         fetchReportes ? api.getReportes() : Promise.resolve(null),
         onlyDynamic ? Promise.resolve(null) : api.getReglamentoVigente(),
         onlyDynamic ? Promise.resolve(null) : api.getCorbatines({ tipo: "VERDE" }),
+        onlyDynamic ? Promise.resolve(null) : api.getReglas(),
       ]);
 
       lastFetchTimestampRef.current = Date.now();
@@ -2867,9 +2917,12 @@ export default function App() {
           const descClean = cleanRawText(s.descripcion || s.motivo || "");
           const tipoInf = s.tipo || s.infraccionDescripcion || s.reporte?.infraccion?.nombre || "Infracción al Reglamento";
           const trueNivel = nivelRealMap.get(sId);
-          const medidaLimpia = trueNivel
-            ? medidasPorNivel[trueNivel]
-            : cleanRawText(s.medidaDisciplinaria || s.regla?.mensaje_alerta || `Sanción Nivel ${s.numero_reincidencia || 1}`);
+          const reglaMatch = trueNivel ? reglasReincidencia.find(r => r.numero_falta === trueNivel) : null;
+          const medidaLimpia = (reglaMatch && reglaMatch.mensaje_alerta)
+            ? reglaMatch.mensaje_alerta
+            : (trueNivel
+              ? medidasPorNivel[trueNivel]
+              : cleanRawText(s.medidaDisciplinaria || s.regla?.mensaje_alerta || `Sanción Nivel ${s.numero_reincidencia || 1}`));
 
           const rawEvidencias = (Array.isArray(s.evidencias) && s.evidencias.length > 0)
             ? s.evidencias
@@ -2995,6 +3048,22 @@ export default function App() {
             localStorage.setItem("hoa_reglamento_secciones", JSON.stringify(parsed));
           }
         }
+      }
+
+      if (resReglas && resReglas.status === "fulfilled" && Array.isArray(resReglas.value) && resReglas.value.length > 0) {
+        const mappedReglas: ReglaReincidenciaUI[] = resReglas.value.map((r: any) => ({
+          id_regla: Number(r.id_regla || r.id || 0),
+          numero_falta: Number(r.numero_falta || 1),
+          permite_acceso: Boolean(r.permite_acceso),
+          requiere_administrador: Boolean(r.requiere_administrador),
+          mensaje_alerta: String(r.mensaje_alerta || "").replace(/\[HORAS:(-?\d+)\]\s*/g, ""),
+          horas_suspension: r.horas_suspension !== undefined && r.horas_suspension !== null ? Number(r.horas_suspension) : 0,
+          activo: r.activo !== false,
+        }));
+        setReglasReincidencia(mappedReglas);
+        try {
+          localStorage.setItem("hoa_reglas_reincidencia", JSON.stringify(mappedReglas));
+        } catch { }
       }
 
       // Cargar Corbatines (Tipos: Normales y Verdes) desde la Base de Datos
@@ -3342,9 +3411,12 @@ export default function App() {
           const descClean = cleanRawText(s.descripcion || s.motivo || "");
           const tipoInf = s.tipo || s.infraccionDescripcion || s.reporte?.infraccion?.nombre || "Infracción al Reglamento";
           const trueNivel = nivelRealMap.get(sId);
-          const medidaLimpia = trueNivel
-            ? medidasPorNivel[trueNivel]
-            : cleanRawText(s.medidaDisciplinaria || s.regla?.mensaje_alerta || `Sanción Nivel ${s.numero_reincidencia || 1}`);
+          const reglaMatch = trueNivel ? reglasReincidencia.find(r => r.numero_falta === trueNivel) : null;
+          const medidaLimpia = (reglaMatch && reglaMatch.mensaje_alerta)
+            ? reglaMatch.mensaje_alerta
+            : (trueNivel
+              ? medidasPorNivel[trueNivel]
+              : cleanRawText(s.medidaDisciplinaria || s.regla?.mensaje_alerta || `Sanción Nivel ${s.numero_reincidencia || 1}`));
 
           const rawEvidencias = (Array.isArray(s.evidencias) && s.evidencias.length > 0)
             ? s.evidencias
@@ -3893,23 +3965,27 @@ export default function App() {
     setLoginError("");
   };
 
-  // Guardado de reglamento y banderines por el Supervisor (Persistencia Dual: PostgreSQL + LocalStorage)
+  // Guardado de reglamento, banderines y reincidencias por el Supervisor (Persistencia Dual: PostgreSQL + LocalStorage)
   const handleGuardarReglamentoSupervisor = async () => {
     try {
       setIsSavingReglamento(true);
       // 1. Guardar en almacenamiento local para disponibilidad inmediata offline
       localStorage.setItem("hoa_reglamento_texto", reglamentoTexto);
       localStorage.setItem("hoa_reglamento_secciones", JSON.stringify(reglamentoSecciones));
+      localStorage.setItem("hoa_reglas_reincidencia", JSON.stringify(reglasReincidencia));
 
-      // 2. Persistir en la base de datos PostgreSQL en Supabase a través del endpoint del backend
-      await api.updateReglamentoContenido({
-        contenido_texto: reglamentoTexto,
-        contenido_secciones: reglamentoSecciones,
-      });
+      // 2. Persistir en la base de datos PostgreSQL en Supabase a través de los endpoints del backend
+      await Promise.all([
+        api.updateReglamentoContenido({
+          contenido_texto: reglamentoTexto,
+          contenido_secciones: reglamentoSecciones,
+        }),
+        api.updateReglas(reglasReincidencia),
+      ]);
 
-      showToast("El reglamento general y las normas de banderines se guardaron exitosamente en la base de datos.", "success", "Cambios Oficiales Guardados");
+      showToast("El reglamento general, normas de banderines y matriz de reincidencias se guardaron exitosamente en la base de datos.", "success", "Cambios Oficiales Guardados");
     } catch (err: any) {
-      console.error("Error al guardar reglamento en la base de datos:", err);
+      console.error("Error al guardar reglamento y reglas en la base de datos:", err);
       showToast("Se guardó en memoria local. Error de conexión con el servidor: " + (err.message || "Error desconocido"), "warning", "Guardado Localmente");
     } finally {
       setIsSavingReglamento(false);
@@ -3919,9 +3995,11 @@ export default function App() {
   const handleResetReglamentoSupervisor = () => {
     setReglamentoTexto(DEFAULT_REGLAMENTO_TEXT);
     setReglamentoSecciones(DEFAULT_REGLAMENTO_SECTIONS);
+    setReglasReincidencia(DEFAULT_REGLAS_REINCIDENCIA);
     localStorage.removeItem("hoa_reglamento_texto");
     localStorage.removeItem("hoa_reglamento_secciones");
-    showToast("Se restablecieron las secciones y el texto oficial a los valores por defecto.", "info", "Valores Restablecidos");
+    localStorage.removeItem("hoa_reglas_reincidencia");
+    showToast("Se restablecieron las secciones, el texto oficial y la matriz de reincidencias a los valores por defecto.", "info", "Valores Restablecidos");
   };
 
   // Helper function to render authentic colorful logo to PNG for PDF embedding
@@ -9237,6 +9315,8 @@ export default function App() {
                   onUpdateReglamentoTexto={setReglamentoTexto}
                   reglamentoSecciones={reglamentoSecciones}
                   onUpdateReglamentoSecciones={setReglamentoSecciones}
+                  reglasReincidencia={reglasReincidencia}
+                  onUpdateReglasReincidencia={setReglasReincidencia}
                   onSave={handleGuardarReglamentoSupervisor}
                   onResetDefaults={handleResetReglamentoSupervisor}
                   isSaving={isSavingReglamento}

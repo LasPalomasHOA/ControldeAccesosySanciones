@@ -181,7 +181,18 @@ export interface ReglaReincidenciaDB {
   permite_acceso: boolean;
   requiere_administrador: boolean;
   mensaje_alerta: string;
+  horas_suspension?: number | null;
   activo: boolean;
+}
+
+export interface ReglaReincidenciaUI {
+  id_regla: number;
+  numero_falta: number;
+  permite_acceso: boolean;
+  requiere_administrador: boolean;
+  mensaje_alerta: string;
+  horas_suspension: number;
+  activo?: boolean;
 }
 
 // 12. catalogo_infracciones

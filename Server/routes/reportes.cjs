@@ -340,16 +340,38 @@ router.post('/:id/revisar', requireAuth, async (req, res) => {
         transaction
       });
 
-      const fechaInicioSancion = getNextDayMidnightLocal(new Date());
-      let fechaFinSancion = null;
-      if (nivelReincidencia === 2) {
-        // 2ª Falta: 24 horas a partir del inicio de la sanción (día siguiente 12:00 AM)
-        fechaFinSancion = new Date(fechaInicioSancion.getTime() + 24 * 60 * 60 * 1000);
-      } else if (nivelReincidencia === 3) {
-        // 3ª Falta: 1 semana (7 días) a partir del inicio de la sanción (día siguiente 12:00 AM)
-        fechaFinSancion = new Date(fechaInicioSancion.getTime() + 7 * 24 * 60 * 60 * 1000);
+      // Extraer horas de suspensión configuradas para esta regla
+      let horasSuspension = regla?.horas_suspension;
+      if (horasSuspension === undefined || horasSuspension === null) {
+        const hMatch = (regla?.mensaje_alerta || '').match(/\[HORAS:(-?\d+)\]/);
+        if (hMatch) {
+          horasSuspension = parseInt(hMatch[1], 10);
+        } else {
+          // Defaults estándar de HOA
+          if (nivelReincidencia === 1) horasSuspension = 0;
+          else if (nivelReincidencia === 2) horasSuspension = 24;
+          else if (nivelReincidencia === 3) horasSuspension = 168; // 1 semana = 168 horas
+          else horasSuspension = -1; // -1 = Bloqueo definitivo
+        }
       }
-      // 1ª Falta (Llamada de atención) y 4ª Falta (Definitiva) mantienen fecha_fin = null
+
+      const permiteAcceso = regla ? Boolean(regla.permite_acceso) : false;
+      const fechaInicioSancion = new Date();
+      let fechaFinSancion = null;
+
+      // Calcular fecha_fin dinámica con base en las horas de penalización configuradas
+      if (!permiteAcceso && horasSuspension && horasSuspension > 0) {
+        fechaFinSancion = new Date(fechaInicioSancion.getTime() + horasSuspension * 60 * 60 * 1000);
+      } else if (!permiteAcceso && (horasSuspension === -1 || regla?.requiere_administrador || nivelReincidencia >= 4)) {
+        // Bloqueo permanente / definitivo
+        fechaFinSancion = null;
+      }
+
+      const mensajeLimpio = (regla?.mensaje_alerta || '')
+        .replace(/\[HORAS:.*?\]/g, '')
+        .trim();
+
+      const motivoFinal = comentarios || mensajeLimpio || `Sanción por falta nivel ${nivelReincidencia}`;
 
       sancion = await db.Sancion.create(
         {
@@ -361,14 +383,19 @@ router.post('/:id/revisar', requireAuth, async (req, res) => {
           fecha_inicio: fechaInicioSancion,
           fecha_fin: fechaFinSancion,
           estatus: 'ACTIVA',
-          motivo: comentarios || `Sanción por falta nivel ${nivelReincidencia}`,
+          motivo: motivoFinal,
           id_usuario: usuarioValidoId
         },
         { transaction }
       );
-      // Nota: No se fuerza vehiculo.estatus_acceso = 'SUSPENDIDO' en el instante del dictamen,
-      // ya que la sanción entra en vigor hasta el día siguiente a las 12:00 AM (fecha_inicio).
-      // El estatus del vehículo se evalúa dinámicamente en función de las sanciones ya en vigor.
+
+      // Si la sanción no permite acceso vehicular, actualizar estatus del vehículo a SUSPENDIDO
+      if (!permiteAcceso && reporte.id_vehiculo) {
+        await db.Vehiculo.update(
+          { estatus_acceso: 'SUSPENDIDO' },
+          { where: { id_vehiculo: reporte.id_vehiculo }, transaction }
+        );
+      }
     }
 
     await transaction.commit();

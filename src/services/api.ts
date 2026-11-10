@@ -263,6 +263,22 @@ export const api = {
     const res = await authFetch(`${API_BASE_URL}/reglas`);
     return handleResponse(res);
   },
+  async updateReglas(reglas: any[]) {
+    const res = await authFetch(`${API_BASE_URL}/reglas`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(reglas)
+    });
+    return handleResponse(res);
+  },
+  async updateRegla(id: number | string, data: any) {
+    const res = await authFetch(`${API_BASE_URL}/reglas/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
 
   // 9. Infracciones & Reportes
   async getInfracciones() {

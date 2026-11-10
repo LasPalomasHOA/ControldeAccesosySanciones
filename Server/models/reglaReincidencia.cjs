@@ -31,6 +31,12 @@ const ReglaReincidencia = sequelize.define(
       allowNull: false,
       comment: 'Mensaje mostrado en caseta al escanear QR'
     },
+    horas_suspension: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0,
+      comment: 'Horas de suspensión (0 = sin suspensión, null o -1 = permanente)'
+    },
     activo: {
       type: DataTypes.BOOLEAN,
       allowNull: false,

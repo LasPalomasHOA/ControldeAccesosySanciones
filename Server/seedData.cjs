@@ -121,7 +121,7 @@ La empresa contratista asume plena responsabilidad civil y solidaria por los da√
       await reglamento.update({
         contenido_texto: reglamento.contenido_texto || defaultTexto,
         contenido_secciones: reglamento.contenido_secciones || defaultSecciones
-      }).catch(() => {});
+      }).catch(() => { });
     }
 
     // 5. Cat√°logo Oficial de Infracciones

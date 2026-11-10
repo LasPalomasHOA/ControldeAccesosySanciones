@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { ReglaReincidenciaUI } from "../types";
 
 export interface ReglamentoSection {
   title: string;
@@ -10,6 +11,8 @@ interface SupervisorReglamentoEditorProps {
   onUpdateReglamentoTexto: (newText: string) => void;
   reglamentoSecciones: ReglamentoSection[];
   onUpdateReglamentoSecciones: (newSections: ReglamentoSection[]) => void;
+  reglasReincidencia?: ReglaReincidenciaUI[];
+  onUpdateReglasReincidencia?: (newReglas: ReglaReincidenciaUI[]) => void;
   onSave: () => Promise<void>;
   onResetDefaults: () => void;
   isSaving: boolean;
@@ -31,12 +34,15 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
   onUpdateReglamentoTexto,
   reglamentoSecciones,
   onUpdateReglamentoSecciones,
+  reglasReincidencia,
+  onUpdateReglasReincidencia,
   onSave,
   onResetDefaults,
   isSaving,
 }) => {
-  const [activeTab, setActiveTab] = useState<"banderin" | "general">("banderin");
+  const [activeTab, setActiveTab] = useState<"banderin" | "general" | "reincidencias">("banderin");
   const [hasChanges, setHasChanges] = useState(false);
+  const [editingHoras, setEditingHoras] = useState<Record<number, string>>({});
 
   // Estado del Modal de Confirmación Moderno
   const [modalConfig, setModalConfig] = useState<ConfirmModalConfig>({
@@ -204,6 +210,22 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
     setHasChanges(true);
   };
 
+  const handleUpdateRegla = (numeroFalta: number, changes: Partial<ReglaReincidenciaUI>) => {
+    if (!reglasReincidencia || !onUpdateReglasReincidencia) return;
+    const updated = reglasReincidencia.map((r) => {
+      if (r.numero_falta === numeroFalta) {
+        return { ...r, ...changes };
+      }
+      return r;
+    });
+    onUpdateReglasReincidencia(updated);
+    setHasChanges(true);
+  };
+
+  const handleReglaChange = (numeroFalta: number, field: keyof ReglaReincidenciaUI, value: any) => {
+    handleUpdateRegla(numeroFalta, { [field]: value });
+  };
+
   const handleSaveClick = async () => {
     await onSave();
     setHasChanges(false);
@@ -288,7 +310,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
       </div>
 
       {/* Selector de Pestañas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <button
           type="button"
           onClick={() => setActiveTab("banderin")}
@@ -338,7 +360,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
                 <line x1="16" y1="13" x2="8" y2="13" />
                 <line x1="16" y1="17" x2="8" y2="17" />
               </svg>
-              2. Términos y Condiciones Generales
+              2. Términos y Condiciones
             </span>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
               Firma Digital
@@ -346,6 +368,30 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
           </div>
           <p className="text-[11px] text-slate-500 mt-1">
             Texto legal íntegro para firma digital obligatoria de contratistas al ingresar al portal.
+          </p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("reincidencias")}
+          className={`p-4 rounded-2xl text-left border-2 transition-all cursor-pointer ${activeTab === "reincidencias"
+              ? "border-[#0D6E5F] bg-[#0D6E5F]/5 shadow-sm"
+              : "border-slate-200 bg-white hover:border-slate-300 text-slate-600"
+            }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${activeTab === "reincidencias" ? "text-[#0D6E5F]" : "text-slate-700"}`}>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              3. Matriz de Reincidencias
+            </span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+              Penalizaciones
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">
+            Configura los mensajes oficiales y las horas de suspensión aplicadas a los vehículos por cada falta.
           </p>
         </button>
       </div>
@@ -627,6 +673,222 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* PESTAÑA 3: MATRIZ DE REINCIDENCIAS & PENALIZACIONES */}
+      {activeTab === "reincidencias" && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-2">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-[#0D6E5F]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                  <span>Matriz Disciplinaria de Reincidencias y Horas de Penalización</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 max-w-3xl leading-relaxed">
+                  Las suspensiones vehiculares inician automáticamente al día siguiente a las 12:00 AM tras la aprobación del supervisor y permanecen activas durante el número exacto de horas configuradas. Al vencer este plazo, el vehículo es liberado automáticamente a estatus <strong>Habilitado</strong> en caseta.
+                </p>
+              </div>
+
+              <div className="shrink-0 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleSaveClick}
+                  disabled={isSaving}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-sm hover:brightness-110 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  style={{ background: "linear-gradient(135deg, #0D6E5F, #108e7a)" }}
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  </svg>
+                  <span>Guardar Matriz de Reincidencias</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {(reglasReincidencia || []).map((regla) => {
+              const numFalta = regla.numero_falta;
+              const badgeColors: Record<number, string> = {
+                1: "bg-teal-50 text-teal-800 border-teal-200",
+                2: "bg-amber-50 text-amber-800 border-amber-200",
+                3: "bg-orange-50 text-orange-800 border-orange-200",
+                4: "bg-rose-50 text-rose-800 border-rose-200",
+              };
+
+              const formatDuracionCompact = (val: any) => {
+                const h = Number(val ?? 0);
+                if (h === 0) return "Sin suspensión";
+                if (h === -1 || h >= 9999) return "Permanente";
+                if (h < 24) return `${h} ${h === 1 ? "hr" : "hrs"}`;
+                const dias = Math.floor(h / 24);
+                const resto = h % 24;
+                if (resto === 0) return `${h} hrs (${dias} ${dias === 1 ? "día" : "días"})`;
+                return `${h} hrs (${dias}d ${resto}h)`;
+              };
+
+              return (
+                <div
+                  key={numFalta}
+                  className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:border-[#0D6E5F]/50 transition-colors space-y-4"
+                >
+                  <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 min-h-[42px]">
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border whitespace-nowrap shrink-0 ${badgeColors[numFalta] || "bg-slate-50 text-slate-800 border-slate-200"}`}>
+                        {numFalta}ª Falta Reincidente
+                      </span>
+                      <span className={`text-xs font-bold whitespace-nowrap shrink-0 ${regla.permite_acceso ? "text-emerald-700" : "text-red-700"}`}>
+                        {regla.permite_acceso ? "• Acceso Permitido" : "• Acceso Denegado"}
+                      </span>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 whitespace-nowrap shrink-0">
+                      {formatDuracionCompact(regla.horas_suspension)}
+                    </span>
+                  </div>
+
+                  {/* Mensaje oficial */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Mensaje Oficial y Medida Disciplinaria *
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={regla.mensaje_alerta}
+                      onChange={(e) => handleReglaChange(numFalta, "mensaje_alerta", e.target.value)}
+                      placeholder="Ej. Segunda Falta: Suspensión temporal de 24 horas. Acceso denegado."
+                      className="w-full rounded-xl p-3 text-xs border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 text-slate-800 leading-relaxed font-medium bg-slate-50/50 focus:bg-white"
+                    />
+                  </div>
+
+                  {/* Selector y configuración de horas */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between min-h-[20px]">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 whitespace-nowrap">
+                        Horas de Penalización en Caseta
+                      </label>
+                      <span className="text-[11px] font-bold text-[#0D6E5F] whitespace-nowrap">
+                        {formatDuracionCompact(regla.horas_suspension)}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { label: "0 hrs (Sin suspensión)", val: 0 },
+                        { label: "24 hrs (1 día)", val: 24 },
+                        { label: "48 hrs (2 días)", val: 48 },
+                        { label: "72 hrs (3 días)", val: 72 },
+                        { label: "168 hrs (1 semana)", val: 168 },
+                        { label: "336 hrs (2 semanas)", val: 336 },
+                        { label: "Permanente (-1)", val: -1 },
+                      ].map((preset) => (
+                        <button
+                          key={preset.val}
+                          type="button"
+                          onClick={() => {
+                            const isNoSuspension = preset.val === 0;
+                            const isPermanent = preset.val === -1;
+                            handleUpdateRegla(numFalta, {
+                              horas_suspension: preset.val,
+                              permite_acceso: isNoSuspension,
+                              ...(isPermanent ? { requiere_administrador: true } : {}),
+                            });
+                            setEditingHoras((prev) => ({ ...prev, [numFalta]: String(preset.val) }));
+                          }}
+                          className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition-colors cursor-pointer ${
+                            Number(regla.horas_suspension) === preset.val
+                              ? "bg-[#0D6E5F] text-white border-[#0D6E5F] shadow-xs"
+                              : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-3 pt-1">
+                      <span className="text-xs text-slate-500 font-medium">O ingresa horas exactas:</span>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="number"
+                          min={-1}
+                          max={8760}
+                          value={
+                            editingHoras[numFalta] !== undefined
+                              ? editingHoras[numFalta]
+                              : (regla.horas_suspension ?? 0)
+                          }
+                          onFocus={() => {
+                            if (editingHoras[numFalta] === undefined) {
+                              setEditingHoras((prev) => ({
+                                ...prev,
+                                [numFalta]: String(regla.horas_suspension ?? 0),
+                              }));
+                            }
+                          }}
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            setEditingHoras((prev) => ({ ...prev, [numFalta]: raw }));
+                            if (raw === "" || raw === "-") return;
+                            const parsed = parseInt(raw, 10);
+                            if (!isNaN(parsed)) {
+                              handleUpdateRegla(numFalta, {
+                                horas_suspension: parsed,
+                                permite_acceso: parsed === 0,
+                                ...(parsed === -1 ? { requiere_administrador: true } : {}),
+                              });
+                            }
+                          }}
+                          onBlur={() => {
+                            const currentRaw = editingHoras[numFalta];
+                            if (currentRaw === "" || currentRaw === undefined || isNaN(parseInt(currentRaw, 10))) {
+                              handleUpdateRegla(numFalta, {
+                                horas_suspension: 0,
+                                permite_acceso: true,
+                              });
+                              setEditingHoras((prev) => ({ ...prev, [numFalta]: "0" }));
+                            } else {
+                              const parsed = parseInt(currentRaw, 10);
+                              setEditingHoras((prev) => ({ ...prev, [numFalta]: String(parsed) }));
+                            }
+                          }}
+                          className="w-24 rounded-lg px-2.5 py-1 text-xs border border-slate-300 font-mono font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-200 bg-white"
+                        />
+                        <span className="text-xs text-slate-600 font-semibold">horas</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Parámetros booleanos */}
+                  <div className="pt-2 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={regla.permite_acceso}
+                        onChange={(e) => handleReglaChange(numFalta, "permite_acceso", e.target.checked)}
+                        className="rounded text-[#0D6E5F] focus:ring-[#0D6E5F] w-4 h-4 cursor-pointer"
+                      />
+                      <span className="font-medium text-slate-700">Permitir acceso vehicular en caseta</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={regla.requiere_administrador}
+                        onChange={(e) => handleReglaChange(numFalta, "requiere_administrador", e.target.checked)}
+                        className="rounded text-[#0D6E5F] focus:ring-[#0D6E5F] w-4 h-4 cursor-pointer"
+                      />
+                      <span className="font-medium text-slate-700">Requiere mediación de Dirección HOA</span>
+                    </label>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

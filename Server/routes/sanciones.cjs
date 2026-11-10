@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../models/index.cjs');
 const events = require('../events.cjs');
+const { saveBase64Image } = require('../utils/imageHandler.cjs');
 
 // GET /api/sanciones - Listar todas las sanciones con soporte para apelaciones (limitado a 100)
 router.get('/', async (req, res) => {
@@ -19,8 +20,8 @@ router.get('/', async (req, res) => {
         { model: db.Vehiculo, as: 'vehiculo', attributes: ['id_vehiculo', 'placas', 'marca', 'modelo', 'color', 'estatus_acceso'] },
         { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social', 'telefono', 'correo'] },
         { model: db.ReglaReincidencia, as: 'regla' },
-        { 
-          model: db.ReporteInfraccion, 
+        {
+          model: db.ReporteInfraccion,
           as: 'reporte',
           attributes: ['id_reporte', 'fecha_hora', 'id_infraccion', 'ubicacion_texto', 'descripcion_hechos', 'estatus_revision'],
           include: [
@@ -63,18 +64,6 @@ router.get('/', async (req, res) => {
       listaVeh.forEach((item, idx) => {
         const trueNivel = Math.min(idx + 1, 4);
         nivelRealPorSancionId.set(item.id_sancion, trueNivel);
-        // Auto-sanar en segundo plano si en BD había quedado un nivel inflado tras una apelación previa
-        if (Number(item.numero_reincidencia) !== trueNivel || Number(item.id_regla) !== trueNivel) {
-          const updateFields = { numero_reincidencia: trueNivel, id_regla: trueNivel };
-          if (trueNivel === 2 && !item.fecha_fin && item.fecha_inicio) {
-            updateFields.fecha_fin = new Date(new Date(item.fecha_inicio).getTime() + 24 * 60 * 60 * 1000);
-          } else if (trueNivel === 3 && !item.fecha_fin && item.fecha_inicio) {
-            updateFields.fecha_fin = new Date(new Date(item.fecha_inicio).getTime() + 7 * 24 * 60 * 60 * 1000);
-          } else if ((trueNivel === 1 || trueNivel === 4) && item.fecha_fin) {
-            updateFields.fecha_fin = null;
-          }
-          db.Sancion.update(updateFields, { where: { id_sancion: item.id_sancion } }).catch(() => {});
-        }
       });
     }
 
@@ -89,7 +78,7 @@ router.get('/', async (req, res) => {
           if (match && match[1]) {
             apelacionObj = JSON.parse(match[1]);
           }
-        } catch (e) {}
+        } catch (e) { }
       }
 
       // Extraer datos de dictamen si existen
@@ -109,7 +98,7 @@ router.get('/', async (req, res) => {
           if (rMatch && rMatch[1]) {
             resolucionOficina = JSON.parse(rMatch[1]);
           }
-        } catch (e) {}
+        } catch (e) { }
       }
 
       // Limpiar etiquetas del motivo para presentación limpia
@@ -122,12 +111,21 @@ router.get('/', async (req, res) => {
       const nivel = nivelRealPorSancionId.get(plain.id_sancion) || Number(plain.numero_reincidencia || plain.id_regla || 1);
       let fechaFinEfectiva = plain.fecha_fin;
       if (!isCanceladaOLevantada(plain)) {
-        if (nivel === 2 && !fechaFinEfectiva && plain.fecha_inicio) {
-          fechaFinEfectiva = new Date(new Date(plain.fecha_inicio).getTime() + 24 * 60 * 60 * 1000);
-        } else if (nivel === 3 && !fechaFinEfectiva && plain.fecha_inicio) {
-          fechaFinEfectiva = new Date(new Date(plain.fecha_inicio).getTime() + 7 * 24 * 60 * 60 * 1000);
-        } else if ((nivel === 1 || nivel === 4) && fechaFinEfectiva) {
-          fechaFinEfectiva = null;
+        if (!fechaFinEfectiva && plain.fecha_inicio) {
+          // Extraer horas de suspensión de la regla si la sanción no tiene fecha_fin explícita
+          let h = plain.regla?.horas_suspension;
+          if (h === undefined || h === null) {
+            const hMatch = (plain.regla?.mensaje_alerta || '').match(/\[HORAS:(-?\d+)\]/);
+            if (hMatch) h = parseInt(hMatch[1], 10);
+            else {
+              if (nivel === 2) h = 24;
+              else if (nivel === 3) h = 168;
+              else h = 0;
+            }
+          }
+          if (h && h > 0) {
+            fechaFinEfectiva = new Date(new Date(plain.fecha_inicio).getTime() + h * 60 * 60 * 1000);
+          }
         }
       }
 
@@ -173,8 +171,6 @@ router.get('/', async (req, res) => {
 
       return {
         ...plain,
-        numero_reincidencia: nivel,
-        id_regla: nivel,
         fecha_fin: fechaFinEfectiva,
         estatus: estatusEfectivo,
         enVigor,
@@ -193,9 +189,39 @@ router.get('/', async (req, res) => {
         fechaSancion: plain.fecha_inicio,
         fecha: plain.fecha_inicio ? new Date(plain.fecha_inicio).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         montoMulta: nivel * 100,
-        medidaDisciplinaria: medidasPorNivel[nivel] || plain.regla?.mensaje_alerta || `Sanción nivel ${nivel}`,
-        evidenciaUrl: plain.reporte?.evidencias?.[0]?.archivo || '',
-        evidencias: plain.reporte?.evidencias?.map(e => e.archivo).filter(Boolean) || [],
+        medidaDisciplinaria: (plain.regla?.mensaje_alerta ? plain.regla.mensaje_alerta.replace(/\[HORAS:.*?\]/g, '').trim() : '') || medidasPorNivel[nivel] || `Sanción nivel ${nivel}`,
+        evidenciaUrl: (() => {
+          const first = plain.reporte?.evidencias?.[0]?.archivo || '';
+          if (first && first.startsWith('[') && first.endsWith(']')) {
+            try { const p = JSON.parse(first); return Array.isArray(p) ? (p[0] || '') : first; } catch (e) { }
+          }
+          if (first && first.includes(',') && !first.startsWith('data:')) {
+            return first.split(',')[0].trim();
+          }
+          return first;
+        })(),
+        evidencias: (() => {
+          const list = [];
+          if (plain.reporte?.evidencias && Array.isArray(plain.reporte.evidencias)) {
+            for (const ev of plain.reporte.evidencias) {
+              if (ev.archivo) {
+                const a = String(ev.archivo).trim();
+                if (a.startsWith('[') && a.endsWith(']')) {
+                  try {
+                    const parsed = JSON.parse(a);
+                    if (Array.isArray(parsed)) list.push(...parsed);
+                    else list.push(a);
+                  } catch (e) { list.push(a); }
+                } else if (a.includes(',') && !a.startsWith('data:')) {
+                  list.push(...a.split(',').map(s => s.trim()).filter(Boolean));
+                } else {
+                  list.push(a);
+                }
+              }
+            }
+          }
+          return Array.from(new Set(list)).filter(Boolean);
+        })(),
         apelacion: apelacionObj,
         resolucionOficina: resolucionOficina
       };
@@ -266,6 +292,34 @@ router.put('/:id', async (req, res) => {
       sancion.motivo = motivo;
     }
 
+    // Si se envían evidencias adicionales al actualizar la sanción
+    if (req.body.evidencias || req.body.evidencia_url || req.body.fotos) {
+      let rawFotos = [];
+      if (Array.isArray(req.body.evidencias)) rawFotos.push(...req.body.evidencias);
+      if (Array.isArray(req.body.fotos)) rawFotos.push(...req.body.fotos);
+      if (req.body.evidencia_url) {
+        if (Array.isArray(req.body.evidencia_url)) rawFotos.push(...req.body.evidencia_url);
+        else rawFotos.push(req.body.evidencia_url);
+      }
+      for (const f of rawFotos.filter(Boolean)) {
+        try {
+          const archivoStorageUrl = await saveBase64Image(f, 'evidencia');
+          if (archivoStorageUrl && sancion.id_reporte) {
+            await db.Evidencia.create({
+              id_reporte: sancion.id_reporte,
+              archivo: archivoStorageUrl,
+              descripcion: 'Evidencia fotográfica adjunta',
+              fecha_captura: new Date(),
+              id_usuario: req.user?.id_usuario || sancion.id_usuario,
+              activa: true
+            });
+          }
+        } catch (eEv) {
+          console.warn('[sanciones] Error guardando evidencia adicional:', eEv.message);
+        }
+      }
+    }
+
     if (estatus === 'CANCELADA' || estatus === 'ACLARADA' || estatus === 'VENCIDA') {
       if (sancion.vehiculo) {
         sancion.vehiculo.estatus_acceso = 'HABILITADO';
@@ -282,49 +336,6 @@ router.put('/:id', async (req, res) => {
 
     await sancion.save();
 
-    // Si la sanción fue cancelada/aclarada o levantada definitivamente, re-indexar cronológicamente las demás sanciones vigentes del vehículo
-    const finalEst = String(sancion.estatus || '').trim().toUpperCase();
-    const fueRemovida =
-      finalEst === 'CANCELADA' ||
-      finalEst === 'ACLARADA' ||
-      (resolucionOficina && resolucionOficina.tipoResolucion === 'levantamiento_definitivo');
-
-    if (fueRemovida && sancion.id_vehiculo) {
-      try {
-        const restantes = await db.Sancion.findAll({
-          where: {
-            id_vehiculo: sancion.id_vehiculo,
-            estatus: { [Op.notIn]: ['CANCELADA', 'ACLARADA', 'CANCELADO', 'ACLARADO', 'cancelada', 'aclarada'] }
-          },
-          order: [['id_sancion', 'ASC']]
-        });
-        const validas = restantes.filter(r => {
-          const m = String(r.motivo || '');
-          return !(m.includes('[RESOLUCION_OFICINA_DATA]') && m.includes('levantamiento_definitivo'));
-        });
-        for (let i = 0; i < validas.length; i++) {
-          const item = validas[i];
-          const nuevoNivel = Math.min(i + 1, 4);
-          let nuevaFechaFin = item.fecha_fin;
-          if (nuevoNivel === 2 && !nuevaFechaFin && item.fecha_inicio) {
-            nuevaFechaFin = new Date(new Date(item.fecha_inicio).getTime() + 24 * 60 * 60 * 1000);
-          } else if (nuevoNivel === 3 && !nuevaFechaFin && item.fecha_inicio) {
-            nuevaFechaFin = new Date(new Date(item.fecha_inicio).getTime() + 7 * 24 * 60 * 60 * 1000);
-          } else if ((nuevoNivel === 1 || nuevoNivel === 4) && nuevaFechaFin) {
-            nuevaFechaFin = null;
-          }
-          if (Number(item.numero_reincidencia) !== nuevoNivel || Number(item.id_regla) !== nuevoNivel || item.fecha_fin !== nuevaFechaFin) {
-            item.numero_reincidencia = nuevoNivel;
-            item.id_regla = nuevoNivel;
-            item.fecha_fin = nuevaFechaFin;
-            await item.save();
-          }
-        }
-      } catch (recalcErr) {
-        console.warn('Error al re-indexar niveles de reincidencia tras apelación:', recalcErr);
-      }
-    }
-
     // Emitir evento SSE en tiempo real
     try {
       if (resolucionOficina) {
@@ -334,12 +345,56 @@ router.put('/:id', async (req, res) => {
       } else if (dictamen || estatus) {
         events.broadcastEvent('SANCION_DICTAMINADA', { id_sancion: sancion.id_sancion, estatus: sancion.estatus });
       }
-    } catch (e) {}
+    } catch (e) { }
 
     res.json(sancion);
   } catch (error) {
     console.error('Error al actualizar sanción:', error);
     res.status(500).json({ error: 'Error al actualizar sanción', details: error.message });
+  }
+});
+
+// POST /api/sanciones/:id/evidencias - Agregar evidencias adicionales a una sanción (vía su reporte)
+router.post('/:id/evidencias', async (req, res) => {
+  try {
+    const sancion = await db.Sancion.findByPk(req.params.id);
+    if (!sancion) return res.status(404).json({ error: 'Sanción no encontrada' });
+
+    let rawFotos = [];
+    if (Array.isArray(req.body.evidencias)) rawFotos.push(...req.body.evidencias);
+    if (Array.isArray(req.body.fotos)) rawFotos.push(...req.body.fotos);
+    if (req.body.evidencia_url) {
+      if (Array.isArray(req.body.evidencia_url)) rawFotos.push(...req.body.evidencia_url);
+      else rawFotos.push(req.body.evidencia_url);
+    }
+    if (req.body.archivo) rawFotos.push(req.body.archivo);
+
+    const fotosAProcesar = rawFotos
+      .map(f => (typeof f === 'object' && f !== null ? (f.archivo || f.url || f.uri || '') : String(f || '')))
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    const creadas = [];
+    for (let i = 0; i < fotosAProcesar.length; i++) {
+      const foto = fotosAProcesar[i];
+      const archivoStorageUrl = await saveBase64Image(foto, 'evidencia');
+      if (archivoStorageUrl && sancion.id_reporte) {
+        const ev = await db.Evidencia.create({
+          id_reporte: sancion.id_reporte,
+          archivo: archivoStorageUrl,
+          descripcion: req.body.descripcion || `Evidencia fotográfica adjunta`,
+          fecha_captura: new Date(),
+          id_usuario: req.user?.id_usuario || sancion.id_usuario,
+          activa: true
+        });
+        creadas.push(ev);
+      }
+    }
+
+    res.status(201).json({ success: true, count: creadas.length, evidencias: creadas });
+  } catch (error) {
+    console.error('Error al adjuntar evidencia a sanción:', error);
+    res.status(500).json({ error: 'Error al adjuntar evidencia', details: error.message });
   }
 });
 
