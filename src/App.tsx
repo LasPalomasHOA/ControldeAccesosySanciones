@@ -4058,7 +4058,6 @@ export default function App() {
   const handleGuardarReglamentoSupervisor = async (section: "banderin" | "general" | "reincidencias") => {
     try {
       setIsSavingReglamento(true);
-<<<<<<< Updated upstream
       if (section === "banderin") {
         localStorage.setItem("hoa_reglamento_secciones", JSON.stringify(reglamentoSecciones));
         await api.updateReglamentoContenido({ contenido_secciones: reglamentoSecciones });
@@ -4070,27 +4069,9 @@ export default function App() {
       } else {
         localStorage.setItem("hoa_reglas_reincidencia", JSON.stringify(reglasReincidencia));
         await api.updateReglas(reglasReincidencia);
+        await Promise.all([reloadSanciones(), reloadVehiculos()]);
         showToast("La matriz disciplinaria de reincidencias y horas de penalización se guardó exitosamente en la base de datos.", "success", "Matriz Guardada");
       }
-=======
-      // 1. Guardar en almacenamiento local para disponibilidad inmediata offline
-      localStorage.setItem("hoa_reglamento_texto", reglamentoTexto);
-      localStorage.setItem("hoa_reglamento_secciones", JSON.stringify(reglamentoSecciones));
-      localStorage.setItem("hoa_reglas_reincidencia", JSON.stringify(reglasReincidencia));
-
-      // 2. Persistir en la base de datos PostgreSQL en Supabase a través de los endpoints del backend
-      await Promise.all([
-        api.updateReglamentoContenido({
-          contenido_texto: reglamentoTexto,
-          contenido_secciones: reglamentoSecciones,
-        }),
-        api.updateReglas(reglasReincidencia),
-      ]);
-
-      await Promise.all([reloadSanciones(), reloadVehiculos()]);
-
-      showToast("El reglamento general, normas de banderines y matriz de reincidencias se guardaron exitosamente en la base de datos.", "success", "Cambios Oficiales Guardados");
->>>>>>> Stashed changes
     } catch (err: any) {
       console.error("Error al guardar configuración del supervisor:", err);
       showToast("Se guardó en memoria local. Error de conexión con el servidor: " + (err.message || "Error desconocido"), "warning", "Guardado Localmente");
@@ -4099,46 +4080,34 @@ export default function App() {
     }
   };
 
-<<<<<<< Updated upstream
-  const handleResetReglamentoSupervisor = (section: "banderin" | "general" | "reincidencias") => {
-    if (section === "banderin") {
-      setReglamentoSecciones(DEFAULT_REGLAMENTO_SECTIONS.map((s) => ({ ...s, items: [...s.items] })));
-      localStorage.removeItem("hoa_reglamento_secciones");
-      showToast("Se restablecieron las normas del corbatín físico a sus valores predeterminados. Presiona Guardar para aplicarlo en la base de datos.", "info", "Normas Restablecidas");
-    } else if (section === "general") {
-      setReglamentoTexto(DEFAULT_REGLAMENTO_TEXT);
-      localStorage.removeItem("hoa_reglamento_texto");
-      showToast("Se restablecieron los términos y condiciones a su texto predeterminado. Presiona Guardar para aplicarlo en la base de datos.", "info", "Términos Restablecidos");
-    } else {
-      setReglasReincidencia(DEFAULT_REGLAS_REINCIDENCIA.map((r) => ({ ...r })));
-      localStorage.removeItem("hoa_reglas_reincidencia");
-      showToast("Se restableció la matriz de reincidencias y horas de penalización a sus valores predeterminados. Presiona Guardar para aplicarlo en la base de datos.", "info", "Matriz Restablecida");
-    }
-=======
-  const handleResetReglamentoSupervisor = async () => {
-    setReglamentoTexto(DEFAULT_REGLAMENTO_TEXT);
-    setReglamentoSecciones(DEFAULT_REGLAMENTO_SECTIONS);
-    setReglasReincidencia(DEFAULT_REGLAS_REINCIDENCIA);
-    localStorage.removeItem("hoa_reglamento_texto");
-    localStorage.removeItem("hoa_reglamento_secciones");
-    localStorage.removeItem("hoa_reglas_reincidencia");
+  const handleResetReglamentoSupervisor = async (section: "banderin" | "general" | "reincidencias") => {
     try {
       setIsSavingReglamento(true);
-      await Promise.all([
-        api.updateReglamentoContenido({
-          contenido_texto: DEFAULT_REGLAMENTO_TEXT,
-          contenido_secciones: DEFAULT_REGLAMENTO_SECTIONS,
-        }),
-        api.updateReglas(DEFAULT_REGLAS_REINCIDENCIA),
-      ]);
-      await Promise.all([reloadSanciones(), reloadVehiculos()]);
+      if (section === "banderin") {
+        const defaultSections = DEFAULT_REGLAMENTO_SECTIONS.map((s) => ({ ...s, items: [...s.items] }));
+        setReglamentoSecciones(defaultSections);
+        localStorage.removeItem("hoa_reglamento_secciones");
+        await api.updateReglamentoContenido({ contenido_secciones: defaultSections });
+        showToast("Se restablecieron las normas del corbatín físico a sus valores predeterminados.", "info", "Normas Restablecidas");
+      } else if (section === "general") {
+        setReglamentoTexto(DEFAULT_REGLAMENTO_TEXT);
+        localStorage.removeItem("hoa_reglamento_texto");
+        await api.updateReglamentoContenido({ contenido_texto: DEFAULT_REGLAMENTO_TEXT });
+        showToast("Se restablecieron los términos y condiciones a su texto predeterminado.", "info", "Términos Restablecidos");
+      } else {
+        const defaultReglas = DEFAULT_REGLAS_REINCIDENCIA.map((r) => ({ ...r }));
+        setReglasReincidencia(defaultReglas);
+        localStorage.removeItem("hoa_reglas_reincidencia");
+        await api.updateReglas(defaultReglas);
+        await Promise.all([reloadSanciones(), reloadVehiculos()]);
+        showToast("Se restableció la matriz de reincidencias y horas de penalización a sus valores predeterminados.", "info", "Matriz Restablecida");
+      }
     } catch (err) {
-      console.warn("Advertencia al sincronizar restablecimiento de reglas con el servidor:", err);
+      console.warn("Advertencia al sincronizar restablecimiento con el servidor:", err);
+      showToast("Se restablecieron los valores predeterminados en memoria local.", "warning", "Restablecido Localmente");
     } finally {
       setIsSavingReglamento(false);
     }
-    showToast("Se restablecieron las secciones, el texto oficial y la matriz de reincidencias a los valores por defecto.", "info", "Valores Restablecidos");
->>>>>>> Stashed changes
   };
 
   // Helper function to render authentic colorful logo to PNG for PDF embedding

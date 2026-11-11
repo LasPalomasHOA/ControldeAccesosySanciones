@@ -298,7 +298,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
         if (tabToReset === "reincidencias") {
           setEditingHoras({});
         }
-        markTabDirty(tabToReset, true);
+        markTabDirty(tabToReset, false);
         closeModal();
       },
     });
