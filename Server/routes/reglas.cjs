@@ -21,15 +21,16 @@ async function sincronizarSancionesPorRegla(reglaActualizada) {
     });
 
     for (const s of sanciones) {
-      const { fechaInicio, fechaFin } = calcularFechasSancion(
+      const { fechaFin, horasRegla } = calcularFechasSancion(
         s.fecha_inicio,
         reglaActualizada,
         s.fecha_fin,
         numFalta
       );
-      if (fechaInicio) {
+      // Solo actualizar fecha_fin si la regla define una suspensión explícita (> 0 o permanente -1),
+      // sin borrar la fecha_fin ni alterar la fecha_inicio de suspensiones que ya estaban en vigor
+      if (horasRegla > 0 || horasRegla === -1) {
         await s.update({
-          fecha_inicio: fechaInicio,
           fecha_fin: fechaFin
         });
       }

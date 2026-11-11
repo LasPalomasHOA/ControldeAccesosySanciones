@@ -31,7 +31,8 @@ function getNextDay7AMLocal(baseDate = new Date()) {
 const getNextDayMidnightLocal = getNextDay7AMLocal;
 
 /**
- * Normaliza la fecha de inicio de una sanción al inicio reglamentario (07:00 AM hora local).
+ * Normaliza la fecha de inicio de una sanción respetando la fecha/hora ya registrada en BD
+ * (sin desplazar al día siguiente sanciones que ya están en curso).
  */
 function normalizarInicioSancion(fechaInicioRaw) {
   if (!fechaInicioRaw) return null;
@@ -47,20 +48,20 @@ function normalizarInicioSancion(fechaInicioRaw) {
   const d = new Date(fechaInicioRaw);
   if (isNaN(d.getTime())) return null;
 
-  if (d.getTimezoneOffset() === 0) {
-    const sonoraOffsetMs = -7 * 60 * 60 * 1000;
-    const localTime = new Date(d.getTime() + sonoraOffsetMs);
-    if ((localTime.getUTCHours() === 7 || localTime.getUTCHours() === 0) && localTime.getUTCMinutes() === 0 && localTime.getUTCSeconds() === 0) {
-      return new Date(Date.UTC(localTime.getUTCFullYear(), localTime.getUTCMonth(), localTime.getUTCDate(), 14, 0, 0, 0));
+  const ahora = new Date();
+  if (d > ahora) {
+    if (d.getTimezoneOffset() === 0) {
+      const sonoraOffsetMs = -7 * 60 * 60 * 1000;
+      const localTime = new Date(d.getTime() + sonoraOffsetMs);
+      if (localTime.getUTCHours() === 0 && localTime.getUTCMinutes() === 0 && localTime.getUTCSeconds() === 0) {
+        return new Date(Date.UTC(localTime.getUTCFullYear(), localTime.getUTCMonth(), localTime.getUTCDate(), 14, 0, 0, 0));
+      }
+    } else if (d.getHours() === 0 && d.getMinutes() === 0 && d.getSeconds() === 0) {
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 7, 0, 0, 0);
     }
-    return new Date(Date.UTC(localTime.getUTCFullYear(), localTime.getUTCMonth(), localTime.getUTCDate() + 1, 14, 0, 0, 0));
   }
 
-  if ((d.getHours() === 7 || d.getHours() === 0) && d.getMinutes() === 0 && d.getSeconds() === 0) {
-    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 7, 0, 0, 0);
-  }
-
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 7, 0, 0, 0);
+  return d;
 }
 
 function extraerHorasRegla(plainR, defaultHoras = 0) {
@@ -127,7 +128,9 @@ function calcularFechasSancion(fechaInicioRaw, regla, fallbackFechaFin = null, n
   } else if (horasRegla > 0 && fechaInicio) {
     fechaFin = new Date(fechaInicio.getTime() + horasRegla * 60 * 60 * 1000);
   } else if (regla && horasRegla === 0) {
-    fechaFin = null;
+    // Si la regla actual es de 0 horas (ej. tras restablecer valores), preservar la fecha_fin si la sanción ya tenía una suspensión asignada en BD
+    const existingFin = fallbackFechaFin ? new Date(fallbackFechaFin) : null;
+    fechaFin = existingFin && !isNaN(existingFin.getTime()) ? existingFin : null;
   } else {
     fechaFin = fallbackFechaFin ? new Date(fallbackFechaFin) : null;
   }
@@ -136,6 +139,12 @@ function calcularFechasSancion(fechaInicioRaw, regla, fallbackFechaFin = null, n
 }
 
 function isSancionBloqueantePorRegla(sancion, regla) {
+  if (sancion?.fecha_fin) {
+    const finDate = new Date(sancion.fecha_fin);
+    if (!isNaN(finDate.getTime()) && new Date() < finDate) {
+      return true;
+    }
+  }
   if (regla) {
     return !regla.permite_acceso || regla.horas_suspension > 0 || regla.horas_suspension === -1 || regla.requiere_administrador;
   }

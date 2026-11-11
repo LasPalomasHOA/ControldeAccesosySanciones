@@ -1,6 +1,10 @@
 const { Sequelize } = require('sequelize');
+const pg = require('pg');
 const path = require('path');
 const fs = require('fs');
+
+// Forzar que las columnas TIMESTAMP WITHOUT TIME ZONE (OID 1114) en PostgreSQL se interpreten siempre como UTC
+pg.types.setTypeParser(1114, (str) => (str ? new Date(str.replace(' ', 'T') + 'Z') : null));
 
 // Cargar .env local si existe
 const envPathRoot = path.resolve(__dirname, '../../.env');

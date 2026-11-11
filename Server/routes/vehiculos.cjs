@@ -151,8 +151,19 @@ router.get('/', async (req, res) => {
       }
 
       // Si el pase temporal ya venció o tiene una sanción bloqueante vigente (según reglas dinámicas), el estatus efectivo es SUSPENDIDO
-      const sancionBloqueante = sancionesVigentes.find(isSancionBloqueante);
+      const sancionBloqueante =
+        sancionesVigentes.find(isSancionBloqueante) ||
+        (plain.estatus_acceso === 'SUSPENDIDO' && sancionesVigentes.length > 0
+          ? sancionesVigentes[sancionesVigentes.length - 1]
+          : undefined);
       const tieneCastigoSuspendido = Boolean(sancionBloqueante) || permisoExpirado;
+      const tieneSancionVencidaOLevantada = (plain.sanciones || []).some(s => {
+        const est = String(s.estatus || '').trim().toUpperCase();
+        if (['VENCIDA', 'CUMPLIDA', 'CANCELADA', 'ACLARADA', 'CANCELADO', 'ACLARADO'].includes(est)) return true;
+        if (s.motivo && s.motivo.includes('[RESOLUCION_OFICINA_DATA]') && s.motivo.includes('levantamiento_definitivo')) return true;
+        if (s.fecha_fin && ahora >= new Date(s.fecha_fin)) return true;
+        return false;
+      });
       let estatusEfectivo = plain.estatus_acceso;
 
       if (permisoTemporal && permisoTemporal.activo) {
@@ -163,8 +174,8 @@ router.get('/', async (req, res) => {
         if (plain.estatus_acceso === 'HABILITADO') {
           db.Vehiculo.update({ estatus_acceso: 'SUSPENDIDO' }, { where: { id_vehiculo: plain.id_vehiculo } }).catch(() => { });
         }
-      } else if (plain.estatus_acceso === 'SUSPENDIDO') {
-        // Si la sanción ya cumplió su fecha_fin o la regla permite acceso, liberar automáticamente a HABILITADO
+      } else if (plain.estatus_acceso === 'SUSPENDIDO' && tieneSancionVencidaOLevantada && sancionesVigentes.length === 0) {
+        // Liberar automáticamente a HABILITADO únicamente cuando su sanción ya venció o fue levantada y no tiene sanciones vigentes
         estatusEfectivo = 'HABILITADO';
         db.Vehiculo.update({ estatus_acceso: 'HABILITADO' }, { where: { id_vehiculo: plain.id_vehiculo } }).catch(() => { });
       }

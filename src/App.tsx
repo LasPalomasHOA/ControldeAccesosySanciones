@@ -3076,8 +3076,8 @@ export default function App() {
             created_at: b.created_at,
             raw_hora_entrada: b.raw_hora_entrada || b.hora_entrada,
             raw_hora_salida: b.raw_hora_salida || b.hora_salida,
-            horaEntrada: b.hora_entrada || "00:00 hrs",
-            horaSalida: b.hora_salida || undefined,
+            horaEntrada: formatHoraLocal(b.raw_hora_entrada || b.created_at || b.hora_entrada) || "00:00 hrs",
+            horaSalida: (b.raw_hora_salida || b.hora_salida) ? formatHoraLocal(b.raw_hora_salida || b.hora_salida) : undefined,
             trabajos: cleanTrabajos,
             guardiaNombre: b.guardiaNombre || b.agenteNombre || "Oficial de Turno",
             estado: b.hora_salida ? "Salida Registrada" : "Dentro",
@@ -3263,8 +3263,8 @@ export default function App() {
             created_at: b.created_at,
             raw_hora_entrada: b.raw_hora_entrada || b.hora_entrada,
             raw_hora_salida: b.raw_hora_salida || b.hora_salida,
-            horaEntrada: b.hora_entrada || "00:00 hrs",
-            horaSalida: b.hora_salida || undefined,
+            horaEntrada: formatHoraLocal(b.raw_hora_entrada || b.created_at || b.hora_entrada) || "00:00 hrs",
+            horaSalida: (b.raw_hora_salida || b.hora_salida) ? formatHoraLocal(b.raw_hora_salida || b.hora_salida) : undefined,
             trabajos: cleanTrabajos,
             guardiaNombre: b.guardiaNombre || b.agenteNombre || "Oficial de Turno",
             estado: b.hora_salida ? "Salida Registrada" : "Dentro",
@@ -4058,6 +4058,7 @@ export default function App() {
   const handleGuardarReglamentoSupervisor = async (section: "banderin" | "general" | "reincidencias") => {
     try {
       setIsSavingReglamento(true);
+<<<<<<< Updated upstream
       if (section === "banderin") {
         localStorage.setItem("hoa_reglamento_secciones", JSON.stringify(reglamentoSecciones));
         await api.updateReglamentoContenido({ contenido_secciones: reglamentoSecciones });
@@ -4071,6 +4072,25 @@ export default function App() {
         await api.updateReglas(reglasReincidencia);
         showToast("La matriz disciplinaria de reincidencias y horas de penalización se guardó exitosamente en la base de datos.", "success", "Matriz Guardada");
       }
+=======
+      // 1. Guardar en almacenamiento local para disponibilidad inmediata offline
+      localStorage.setItem("hoa_reglamento_texto", reglamentoTexto);
+      localStorage.setItem("hoa_reglamento_secciones", JSON.stringify(reglamentoSecciones));
+      localStorage.setItem("hoa_reglas_reincidencia", JSON.stringify(reglasReincidencia));
+
+      // 2. Persistir en la base de datos PostgreSQL en Supabase a través de los endpoints del backend
+      await Promise.all([
+        api.updateReglamentoContenido({
+          contenido_texto: reglamentoTexto,
+          contenido_secciones: reglamentoSecciones,
+        }),
+        api.updateReglas(reglasReincidencia),
+      ]);
+
+      await Promise.all([reloadSanciones(), reloadVehiculos()]);
+
+      showToast("El reglamento general, normas de banderines y matriz de reincidencias se guardaron exitosamente en la base de datos.", "success", "Cambios Oficiales Guardados");
+>>>>>>> Stashed changes
     } catch (err: any) {
       console.error("Error al guardar configuración del supervisor:", err);
       showToast("Se guardó en memoria local. Error de conexión con el servidor: " + (err.message || "Error desconocido"), "warning", "Guardado Localmente");
@@ -4079,6 +4099,7 @@ export default function App() {
     }
   };
 
+<<<<<<< Updated upstream
   const handleResetReglamentoSupervisor = (section: "banderin" | "general" | "reincidencias") => {
     if (section === "banderin") {
       setReglamentoSecciones(DEFAULT_REGLAMENTO_SECTIONS.map((s) => ({ ...s, items: [...s.items] })));
@@ -4093,6 +4114,31 @@ export default function App() {
       localStorage.removeItem("hoa_reglas_reincidencia");
       showToast("Se restableció la matriz de reincidencias y horas de penalización a sus valores predeterminados. Presiona Guardar para aplicarlo en la base de datos.", "info", "Matriz Restablecida");
     }
+=======
+  const handleResetReglamentoSupervisor = async () => {
+    setReglamentoTexto(DEFAULT_REGLAMENTO_TEXT);
+    setReglamentoSecciones(DEFAULT_REGLAMENTO_SECTIONS);
+    setReglasReincidencia(DEFAULT_REGLAS_REINCIDENCIA);
+    localStorage.removeItem("hoa_reglamento_texto");
+    localStorage.removeItem("hoa_reglamento_secciones");
+    localStorage.removeItem("hoa_reglas_reincidencia");
+    try {
+      setIsSavingReglamento(true);
+      await Promise.all([
+        api.updateReglamentoContenido({
+          contenido_texto: DEFAULT_REGLAMENTO_TEXT,
+          contenido_secciones: DEFAULT_REGLAMENTO_SECTIONS,
+        }),
+        api.updateReglas(DEFAULT_REGLAS_REINCIDENCIA),
+      ]);
+      await Promise.all([reloadSanciones(), reloadVehiculos()]);
+    } catch (err) {
+      console.warn("Advertencia al sincronizar restablecimiento de reglas con el servidor:", err);
+    } finally {
+      setIsSavingReglamento(false);
+    }
+    showToast("Se restablecieron las secciones, el texto oficial y la matriz de reincidencias a los valores por defecto.", "info", "Valores Restablecidos");
+>>>>>>> Stashed changes
   };
 
   // Helper function to render authentic colorful logo to PNG for PDF embedding
@@ -13015,13 +13061,13 @@ export default function App() {
                                     <span className="font-mono font-bold text-slate-900 truncate text-xs">
                                       {item.placas || `Folio #${item.id}`}
                                     </span>
-                                    {item.corbatinNum && (
+                                    {item.corbatinNum && item.corbatinNum !== "—" && (
                                       <span className="px-1.5 py-0.2 rounded bg-teal-800 text-white font-mono font-bold text-[9px]">
-                                        #{item.corbatinNum}
+                                        {item.corbatinNum.startsWith("#") ? item.corbatinNum : `#${item.corbatinNum}`}
                                       </span>
                                     )}
                                     <span className="text-[10px] text-slate-400 font-mono">
-                                      · {formatHoraLocal(item.horaEntrada)}
+                                      · {formatHoraLocal(item.raw_hora_entrada || item.created_at || item.horaEntrada)}
                                     </span>
                                   </div>
                                   <div className="text-[11px] text-slate-600 truncate mt-0.5">
