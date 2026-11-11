@@ -503,6 +503,53 @@ function EmpresaAvatar({ nombre, seed }: { nombre: string; seed?: string }) {
   );
 }
 
+function BlurredBackdropImageFrame({
+  src,
+  alt,
+  heightClass = "h-[260px] xs:h-[320px] sm:h-[460px]",
+  fallbackIcon,
+  fallbackText,
+}: {
+  src?: string;
+  alt: string;
+  heightClass?: string;
+  fallbackIcon?: React.ReactNode;
+  fallbackText?: string;
+}) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [src]);
+
+  if (!src || hasError) {
+    return (
+      <div className={`w-full ${heightClass} rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 flex flex-col items-center justify-center p-6 text-center text-slate-400`}>
+        {fallbackIcon || <IconCar className="w-16 h-16 text-slate-400" />}
+        {fallbackText && <span className="text-xs font-medium mt-2">{fallbackText}</span>}
+      </div>
+    );
+  }
+
+  return (
+    <div className={`w-full ${heightClass} rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/90 flex items-center justify-center p-3 relative`}>
+      <img
+        src={src}
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-75 saturate-125 pointer-events-none select-none"
+      />
+      <div className="absolute inset-0 bg-white/15 backdrop-blur-[2px] pointer-events-none" />
+      <img
+        src={src}
+        alt={alt}
+        onError={() => setHasError(true)}
+        className="relative z-10 w-full h-full object-contain rounded-xl drop-shadow-[0_10px_24px_rgba(15,23,42,0.28)]"
+      />
+    </div>
+  );
+}
+
 // ─── Types & Roles ────────────────────────────────────────────────────────────
 
 type UserRole = "admin" | "supervisor" | "contratista" | "caseta" | "contabilidad";
@@ -15412,17 +15459,11 @@ export default function App() {
                 <button onClick={() => setSelectedFotoTrabajadorPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
               </div>
 
-              <div className="w-full h-[260px] xs:h-[320px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2">
-                {selectedFotoTrabajadorPreview.foto_url || selectedFotoTrabajadorPreview.foto ? (
-                  <img
-                    src={normalizeFotoUrl(selectedFotoTrabajadorPreview.foto_url || selectedFotoTrabajadorPreview.foto)}
-                    alt="Credencial"
-                    className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
-                  />
-                ) : (
-                  <IconUsers className="w-20 h-20 text-slate-600" />
-                )}
-              </div>
+              <BlurredBackdropImageFrame
+                src={selectedFotoTrabajadorPreview.foto_url || selectedFotoTrabajadorPreview.foto ? normalizeFotoUrl(selectedFotoTrabajadorPreview.foto_url || selectedFotoTrabajadorPreview.foto) : undefined}
+                alt="Credencial"
+                fallbackIcon={<IconUsers className="w-20 h-20 text-slate-400" />}
+              />
 
               <div className="flex justify-between items-center text-xs pt-1">
                 <span className="font-semibold text-slate-700">{selectedFotoTrabajadorPreview.empresaNombre}</span>
@@ -15570,28 +15611,13 @@ export default function App() {
                 <button onClick={() => setSelectedFotoGuardiaPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
               </div>
 
-              <div className="w-full h-[380px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 relative">
-                {selectedFotoGuardiaPreview.foto_url ? (
-                  <>
-                    <img
-                      src={selectedFotoGuardiaPreview.foto_url}
-                      alt={selectedFotoGuardiaPreview.nombre}
-                      className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                        if (fallback) fallback.style.display = "flex";
-                      }}
-                    />
-                    <div className="hidden flex-col items-center justify-center p-6 text-center text-slate-400">
-                      <IconUsers className="w-20 h-20 mb-2 text-slate-600" />
-                      <span className="text-xs font-medium">Fotografía no disponible</span>
-                    </div>
-                  </>
-                ) : (
-                  <IconUsers className="w-20 h-20 text-slate-600" />
-                )}
-              </div>
+              <BlurredBackdropImageFrame
+                src={selectedFotoGuardiaPreview.foto_url}
+                alt={selectedFotoGuardiaPreview.nombre}
+                heightClass="h-[380px] sm:h-[460px]"
+                fallbackIcon={<IconUsers className="w-20 h-20 text-slate-400" />}
+                fallbackText="Fotografía no disponible"
+              />
 
               <div className="flex justify-between items-center text-xs">
                 <span className="font-mono text-slate-600 font-semibold">{selectedFotoGuardiaPreview.username}</span>
@@ -16159,17 +16185,11 @@ export default function App() {
                 <button onClick={() => setSelectedFotoVehiculoPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
               </div>
 
-              <div className="w-full h-[260px] xs:h-[320px] sm:h-[460px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 relative">
-                {selectedFotoVehiculoPreview.foto ? (
-                  <img
-                    src={normalizeFotoUrl(selectedFotoVehiculoPreview.foto)}
-                    alt={`${selectedFotoVehiculoPreview.marca} ${selectedFotoVehiculoPreview.modelo}`}
-                    className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
-                  />
-                ) : (
-                  <IconCar className="w-20 h-20 text-slate-600" />
-                )}
-              </div>
+              <BlurredBackdropImageFrame
+                src={selectedFotoVehiculoPreview.foto ? normalizeFotoUrl(selectedFotoVehiculoPreview.foto) : undefined}
+                alt={`${selectedFotoVehiculoPreview.marca} ${selectedFotoVehiculoPreview.modelo}`}
+                fallbackIcon={<IconCar className="w-20 h-20 text-slate-400" />}
+              />
 
               <div className="flex justify-between items-center text-xs pt-1">
                 <span className="font-semibold text-slate-700">{selectedFotoVehiculoPreview.empresaNombre}</span>
@@ -16202,13 +16222,11 @@ export default function App() {
                 <button onClick={() => setGenericImagePreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
               </div>
 
-              <div className="w-full h-[400px] sm:h-[500px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center p-2 relative">
-                <img
-                  src={genericImagePreview.src}
-                  alt="Vista Ampliada"
-                  className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
-                />
-              </div>
+              <BlurredBackdropImageFrame
+                src={genericImagePreview.src}
+                alt="Vista Ampliada"
+                heightClass="h-[400px] sm:h-[500px]"
+              />
 
               <div className="flex justify-between items-center text-xs pt-1">
                 <span className="text-slate-400 font-mono text-[11px]">Alta Resolución</span>
