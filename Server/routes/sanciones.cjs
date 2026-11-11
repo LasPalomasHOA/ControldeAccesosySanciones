@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../models/index.cjs');
 const events = require('../events.cjs');
 const { saveBase64Image } = require('../utils/imageHandler.cjs');
+const { cargarMapaReglas, calcularFechasSancion } = require('../utils/sancionReglas.cjs');
 
 // GET /api/sanciones - Listar todas las sanciones con soporte para apelaciones (limitado a 100)
 router.get('/', async (req, res) => {
@@ -35,6 +36,7 @@ router.get('/', async (req, res) => {
     });
 
     const ahora = new Date();
+    const reglasMap = await cargarMapaReglas(db);
 
     // Calcular el índice cronológico real de reincidencia por vehículo excluyendo apelaciones aprobadas (CANCELADA/ACLARADA) y levantamientos definitivos
     const isCanceladaOLevantada = (plainRow) => {
@@ -109,56 +111,23 @@ router.get('/', async (req, res) => {
         .trim();
 
       const nivel = nivelRealPorSancionId.get(plain.id_sancion) || Number(plain.numero_reincidencia || plain.id_regla || 1);
-      const normalizarInicio7AMLocal = (rawInicio) => {
-        if (!rawInicio) return null;
-        const d = rawInicio instanceof Date ? rawInicio : new Date(rawInicio);
-        if (isNaN(d.getTime())) return null;
-        if (d.getTimezoneOffset() === 0) {
-          const sonoraOffsetMs = -7 * 60 * 60 * 1000;
-          const localTime = new Date(d.getTime() + sonoraOffsetMs);
-          if (localTime.getUTCHours() === 7 && localTime.getUTCMinutes() === 0 && localTime.getUTCSeconds() === 0) {
-            return new Date(Date.UTC(localTime.getUTCFullYear(), localTime.getUTCMonth(), localTime.getUTCDate(), 14, 0, 0, 0));
-          }
-          if (localTime.getUTCHours() === 0 && localTime.getUTCMinutes() === 0 && localTime.getUTCSeconds() === 0) {
-            return new Date(Date.UTC(localTime.getUTCFullYear(), localTime.getUTCMonth(), localTime.getUTCDate(), 14, 0, 0, 0));
-          }
-          return new Date(Date.UTC(localTime.getUTCFullYear(), localTime.getUTCMonth(), localTime.getUTCDate() + 1, 14, 0, 0, 0));
-        }
-        if (d.getHours() === 7 && d.getMinutes() === 0 && d.getSeconds() === 0) {
-          return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 7, 0, 0, 0);
-        }
-        if (d.getHours() === 0 && d.getMinutes() === 0 && d.getSeconds() === 0) {
-          return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 7, 0, 0, 0);
-        }
-        return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 7, 0, 0, 0);
-      };
-
-      const fechaInicioEfectiva = normalizarInicio7AMLocal(plain.fecha_inicio) || (plain.fecha_inicio ? new Date(plain.fecha_inicio) : null);
+      const reglaMatch = reglasMap.get(nivel) || plain.regla;
+      let fechaInicioEfectiva = plain.fecha_inicio;
       let fechaFinEfectiva = plain.fecha_fin;
+
       if (!isCanceladaOLevantada(plain)) {
-        if (fechaInicioEfectiva) {
-          // Extraer horas de suspensión de la regla para calcular fecha_fin desde las 7:00 AM del día siguiente
-          let h = plain.regla?.horas_suspension;
-          if (h === undefined || h === null) {
-            const hMatch = (plain.regla?.mensaje_alerta || '').match(/\[HORAS:(-?\d+)\]/);
-            if (hMatch) h = parseInt(hMatch[1], 10);
-            else {
-              if (nivel === 2) h = 24;
-              else if (nivel === 3) h = 168;
-              else if (nivel >= 4) h = -1;
-              else h = 0;
-            }
-          }
-          if (Number(h) === -1 || Number(h) === 0) {
-            fechaFinEfectiva = null;
-          } else if (Number(h) > 0) {
-            fechaFinEfectiva = new Date(fechaInicioEfectiva.getTime() + Number(h) * 60 * 60 * 1000);
-          }
-        }
+        const calc = calcularFechasSancion(
+          plain.fecha_inicio,
+          reglaMatch,
+          plain.fecha_fin,
+          nivel
+        );
+        if (calc.fechaInicio) fechaInicioEfectiva = calc.fechaInicio;
+        fechaFinEfectiva = calc.fechaFin;
       }
 
       // Normalizar status con cálculo dinámico de expiración en memoria
-      const isExpired = fechaFinEfectiva && ahora >= new Date(fechaFinEfectiva) && (plain.estatus === 'ACTIVA' || plain.estatus === 'RATIFICADA');
+      const isExpired = fechaFinEfectiva && ahora >= new Date(fechaFinEfectiva) && ['ACTIVA', 'RATIFICADA', 'PROGRAMADA'].includes(String(plain.estatus || '').trim().toUpperCase());
       const estatusEfectivo = isExpired ? 'VENCIDA' : plain.estatus;
 
       let frontendStatus = 'Activa';
@@ -195,7 +164,7 @@ router.get('/', async (req, res) => {
         3: 'Tercera Falta: Suspensión temporal de 1 semana. Acceso denegado.',
         4: 'Cuarta Falta: Sanción definitiva (bloqueo permanente).'
       };
-      const enVigor = !fechaInicioEfectiva || ahora >= fechaInicioEfectiva;
+      const enVigor = !fechaInicioEfectiva || ahora >= new Date(fechaInicioEfectiva);
 
       return {
         ...plain,
@@ -215,8 +184,8 @@ router.get('/', async (req, res) => {
         gravedad: nivel >= 3 ? 'critica' : (nivel === 2 ? 'grave' : 'moderada'),
         estado: estatusEfectivo === 'ACTIVA' ? 'activa' : (estatusEfectivo === 'VENCIDA' ? 'resuelta' : (frontendStatus === 'Levantada' ? 'levantada' : 'pendiente_aprobacion')),
         status: frontendStatus,
-        fechaSancion: plain.fecha_inicio,
-        fecha: plain.fecha_inicio ? new Date(plain.fecha_inicio).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        fechaSancion: fechaInicioEfectiva,
+        fecha: fechaInicioEfectiva ? new Date(fechaInicioEfectiva).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         montoMulta: nivel * 100,
         medidaDisciplinaria: (plain.regla?.mensaje_alerta ? plain.regla.mensaje_alerta.replace(/\[HORAS:.*?\]/g, '').trim() : '') || medidasPorNivel[nivel] || `Sanción nivel ${nivel}`,
         evidenciaUrl: (() => {
