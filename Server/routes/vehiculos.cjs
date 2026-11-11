@@ -118,6 +118,30 @@ router.get('/', async (req, res) => {
       return texto || `Sanción nivel ${nivel}`;
     };
 
+    const normalizarInicio7AMLocal = (rawInicio) => {
+      if (!rawInicio) return null;
+      const d = rawInicio instanceof Date ? rawInicio : new Date(rawInicio);
+      if (isNaN(d.getTime())) return null;
+      if (d.getTimezoneOffset() === 0) {
+        const sonoraOffsetMs = -7 * 60 * 60 * 1000;
+        const localTime = new Date(d.getTime() + sonoraOffsetMs);
+        if (localTime.getUTCHours() === 7 && localTime.getUTCMinutes() === 0 && localTime.getUTCSeconds() === 0) {
+          return new Date(Date.UTC(localTime.getUTCFullYear(), localTime.getUTCMonth(), localTime.getUTCDate(), 14, 0, 0, 0));
+        }
+        if (localTime.getUTCHours() === 0 && localTime.getUTCMinutes() === 0 && localTime.getUTCSeconds() === 0) {
+          return new Date(Date.UTC(localTime.getUTCFullYear(), localTime.getUTCMonth(), localTime.getUTCDate(), 14, 0, 0, 0));
+        }
+        return new Date(Date.UTC(localTime.getUTCFullYear(), localTime.getUTCMonth(), localTime.getUTCDate() + 1, 14, 0, 0, 0));
+      }
+      if (d.getHours() === 7 && d.getMinutes() === 0 && d.getSeconds() === 0) {
+        return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 7, 0, 0, 0);
+      }
+      if (d.getHours() === 0 && d.getMinutes() === 0 && d.getSeconds() === 0) {
+        return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 7, 0, 0, 0);
+      }
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 7, 0, 0, 0);
+    };
+
     const resultado = vehiculos.map(v => {
       const plain = v.get({ plain: true });
       const corbatinActivo = plain.corbatines?.find(c => c.estatus === 'ACTIVO') || plain.corbatines?.[0];
@@ -138,17 +162,19 @@ router.get('/', async (req, res) => {
             ? Number(reglaNivel.horas_suspension)
             : (trueNivel === 2 ? 24 : trueNivel === 3 ? 168 : trueNivel >= 4 ? -1 : 0);
 
+          const fechaInicioEfectiva = normalizarInicio7AMLocal(s.fecha_inicio) || (s.fecha_inicio ? new Date(s.fecha_inicio) : null);
           let fechaFinEfectiva = s.fecha_fin;
-          if (horasRegla === -1) {
+          if (horasRegla === -1 || horasRegla === 0) {
             fechaFinEfectiva = null;
-          } else if (!fechaFinEfectiva && s.fecha_inicio && horasRegla > 0) {
-            fechaFinEfectiva = new Date(new Date(s.fecha_inicio).getTime() + horasRegla * 60 * 60 * 1000);
+          } else if (fechaInicioEfectiva && horasRegla > 0) {
+            fechaFinEfectiva = new Date(fechaInicioEfectiva.getTime() + horasRegla * 60 * 60 * 1000);
           }
 
           return {
             ...s,
             numero_reincidencia: trueNivel,
             id_regla: reglaNivel?.id_regla || trueNivel,
+            fecha_inicio: fechaInicioEfectiva || s.fecha_inicio,
             fecha_fin: fechaFinEfectiva
           };
         });

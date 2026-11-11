@@ -5446,7 +5446,7 @@ export default function App() {
       await reloadReportes();
       await reloadSanciones();
       await reloadVehiculos();
-      showToast(`Infracción ${inf.folio} aprobada. La empresa ha sido notificada al instante y la sanción entrará en vigor mañana a las 12:00 AM.`, "success", "Infracción Aprobada");
+      showToast(`Infracción ${inf.folio} aprobada. La empresa ha sido notificada al instante y la sanción entrará en vigor mañana a las 7:00 AM.`, "success", "Infracción Aprobada");
     } catch (err: any) {
       await reloadReportes();
       await reloadSanciones();

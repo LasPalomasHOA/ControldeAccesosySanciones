@@ -109,10 +109,35 @@ router.get('/', async (req, res) => {
         .trim();
 
       const nivel = nivelRealPorSancionId.get(plain.id_sancion) || Number(plain.numero_reincidencia || plain.id_regla || 1);
+      const normalizarInicio7AMLocal = (rawInicio) => {
+        if (!rawInicio) return null;
+        const d = rawInicio instanceof Date ? rawInicio : new Date(rawInicio);
+        if (isNaN(d.getTime())) return null;
+        if (d.getTimezoneOffset() === 0) {
+          const sonoraOffsetMs = -7 * 60 * 60 * 1000;
+          const localTime = new Date(d.getTime() + sonoraOffsetMs);
+          if (localTime.getUTCHours() === 7 && localTime.getUTCMinutes() === 0 && localTime.getUTCSeconds() === 0) {
+            return new Date(Date.UTC(localTime.getUTCFullYear(), localTime.getUTCMonth(), localTime.getUTCDate(), 14, 0, 0, 0));
+          }
+          if (localTime.getUTCHours() === 0 && localTime.getUTCMinutes() === 0 && localTime.getUTCSeconds() === 0) {
+            return new Date(Date.UTC(localTime.getUTCFullYear(), localTime.getUTCMonth(), localTime.getUTCDate(), 14, 0, 0, 0));
+          }
+          return new Date(Date.UTC(localTime.getUTCFullYear(), localTime.getUTCMonth(), localTime.getUTCDate() + 1, 14, 0, 0, 0));
+        }
+        if (d.getHours() === 7 && d.getMinutes() === 0 && d.getSeconds() === 0) {
+          return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 7, 0, 0, 0);
+        }
+        if (d.getHours() === 0 && d.getMinutes() === 0 && d.getSeconds() === 0) {
+          return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 7, 0, 0, 0);
+        }
+        return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 7, 0, 0, 0);
+      };
+
+      const fechaInicioEfectiva = normalizarInicio7AMLocal(plain.fecha_inicio) || (plain.fecha_inicio ? new Date(plain.fecha_inicio) : null);
       let fechaFinEfectiva = plain.fecha_fin;
       if (!isCanceladaOLevantada(plain)) {
-        if (!fechaFinEfectiva && plain.fecha_inicio) {
-          // Extraer horas de suspensión de la regla si la sanción no tiene fecha_fin explícita
+        if (fechaInicioEfectiva) {
+          // Extraer horas de suspensión de la regla para calcular fecha_fin desde las 7:00 AM del día siguiente
           let h = plain.regla?.horas_suspension;
           if (h === undefined || h === null) {
             const hMatch = (plain.regla?.mensaje_alerta || '').match(/\[HORAS:(-?\d+)\]/);
@@ -120,11 +145,14 @@ router.get('/', async (req, res) => {
             else {
               if (nivel === 2) h = 24;
               else if (nivel === 3) h = 168;
+              else if (nivel >= 4) h = -1;
               else h = 0;
             }
           }
-          if (h && h > 0) {
-            fechaFinEfectiva = new Date(new Date(plain.fecha_inicio).getTime() + h * 60 * 60 * 1000);
+          if (Number(h) === -1 || Number(h) === 0) {
+            fechaFinEfectiva = null;
+          } else if (Number(h) > 0) {
+            fechaFinEfectiva = new Date(fechaInicioEfectiva.getTime() + Number(h) * 60 * 60 * 1000);
           }
         }
       }
@@ -167,10 +195,11 @@ router.get('/', async (req, res) => {
         3: 'Tercera Falta: Suspensión temporal de 1 semana. Acceso denegado.',
         4: 'Cuarta Falta: Sanción definitiva (bloqueo permanente).'
       };
-      const enVigor = !plain.fecha_inicio || ahora >= new Date(plain.fecha_inicio);
+      const enVigor = !fechaInicioEfectiva || ahora >= fechaInicioEfectiva;
 
       return {
         ...plain,
+        fecha_inicio: fechaInicioEfectiva || plain.fecha_inicio,
         fecha_fin: fechaFinEfectiva,
         estatus: estatusEfectivo,
         enVigor,

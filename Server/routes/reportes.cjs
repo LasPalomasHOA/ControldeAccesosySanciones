@@ -7,11 +7,12 @@ const { saveBase64Image } = require('../utils/imageHandler.cjs');
 const { requireAuth } = require('../middlewares/auth.cjs');
 
 /**
- * Calcula las 12:00 AM (00:00:00.000) del día calendario siguiente en hora local.
+ * Calcula las 7:00 AM (07:00:00.000) del día calendario siguiente en hora local.
  * Si el proceso corre en UTC puro (ej. servidor cloud con getTimezoneOffset() === 0),
- * toma como referencia la zona horaria local de Sonora (America/Hermosillo, UTC-7).
+ * toma como referencia la zona horaria local de Sonora (America/Hermosillo, UTC-7),
+ * donde las 07:00 AM locales equivalen a las 14:00 UTC.
  */
-function getNextDayMidnightLocal(baseDate = new Date()) {
+function getNextDay7AMLocal(baseDate = new Date()) {
   const now = baseDate instanceof Date ? baseDate : new Date(baseDate);
   if (now.getTimezoneOffset() === 0) {
     const sonoraOffsetMs = -7 * 60 * 60 * 1000;
@@ -21,11 +22,11 @@ function getNextDayMidnightLocal(baseDate = new Date()) {
         localTime.getUTCFullYear(),
         localTime.getUTCMonth(),
         localTime.getUTCDate() + 1,
-        7, 0, 0, 0
+        14, 0, 0, 0
       )
     );
   }
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 7, 0, 0, 0);
 }
 
 // GET /api/reportes/stream - Canal SSE para actualizaciones en vivo
@@ -332,7 +333,7 @@ router.post('/:id/revisar', requireAuth, async (req, res) => {
       { transaction }
     );
 
-    // 9. Si se aprueba, generar sanción única programada para iniciar al día siguiente a las 12:00 AM (hora local)
+    // 9. Si se aprueba, generar sanción única programada para iniciar al día siguiente a las 7:00 AM (hora local)
     let sancion = null;
     if (decision === 'APROBADO') {
       const regla = await db.ReglaReincidencia.findOne({
@@ -356,11 +357,11 @@ router.post('/:id/revisar', requireAuth, async (req, res) => {
       }
 
       const permiteAcceso = regla ? Boolean(regla.permite_acceso) : false;
-      const fechaInicioSancion = new Date();
+      const fechaInicioSancion = getNextDay7AMLocal(new Date());
       let fechaFinSancion = null;
 
-      // Calcular fecha_fin dinámica con base en las horas de penalización configuradas
-      if (!permiteAcceso && horasSuspension && horasSuspension > 0) {
+      // Calcular fecha_fin dinámica con base en las horas de penalización configuradas desde las 7:00 AM del día siguiente
+      if (horasSuspension && horasSuspension > 0) {
         fechaFinSancion = new Date(fechaInicioSancion.getTime() + horasSuspension * 60 * 60 * 1000);
       } else if (!permiteAcceso && (horasSuspension === -1 || regla?.requiere_administrador || nivelReincidencia >= 4)) {
         // Bloqueo permanente / definitivo
@@ -389,8 +390,9 @@ router.post('/:id/revisar', requireAuth, async (req, res) => {
         { transaction }
       );
 
-      // Si la sanción no permite acceso vehicular, actualizar estatus del vehículo a SUSPENDIDO
-      if (!permiteAcceso && reporte.id_vehiculo) {
+      // Si la sanción ya está en vigor (fechaInicioSancion <= ahora) y no permite acceso, actualizar estatus a SUSPENDIDO.
+      // Cuando fechaInicioSancion es mañana a las 7:00 AM, el vehículo permanece HABILITADO hoy y pasa a SUSPENDIDO automáticamente a las 7:00 AM.
+      if ((!permiteAcceso || (horasSuspension && horasSuspension > 0)) && reporte.id_vehiculo && new Date() >= fechaInicioSancion) {
         await db.Vehiculo.update(
           { estatus_acceso: 'SUSPENDIDO' },
           { where: { id_vehiculo: reporte.id_vehiculo }, transaction }
