@@ -9762,9 +9762,9 @@ export default function App() {
                                 className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]"
                               >
                                 <option value="all">Todos los corbatines ({totalCount})</option>
-                                <option value="disponibles">🟢 Solo Disponibles ({disponibles.length})</option>
-                                <option value="asignados">🟡 Solo Asignados ({asignados.length})</option>
-                                <option value="vencidos">🔴 Solo Vencidos ({vencidos.length})</option>
+                                <option value="disponibles">Solo Disponibles ({disponibles.length})</option>
+                                <option value="asignados">Solo Asignados ({asignados.length})</option>
+                                <option value="vencidos">Solo Vencidos ({vencidos.length})</option>
                               </select>
                             </div>
 
@@ -9909,7 +9909,7 @@ export default function App() {
                                         <div className="truncate">
                                           <div className="font-bold text-xs text-slate-900 truncate flex items-center gap-1.5">
                                             {isDisponible ? (
-                                              <span className="text-emerald-700 font-semibold italic">🟢 Libre / Disponible</span>
+                                              <span className="text-emerald-700 font-semibold italic">Libre / Disponible</span>
                                             ) : (
                                               <span>{c.empresaNombre}</span>
                                             )}
@@ -10080,9 +10080,9 @@ export default function App() {
                                       <div>
                                         <div className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Estatus Físico</div>
                                         <div className="font-bold mt-0.5">
-                                          {isDisponible && <span className="text-emerald-700">🟢 Disponible (Libre)</span>}
-                                          {isAsignado && <span className="text-amber-800">🟡 En Uso ({activeItem.empresaNombre})</span>}
-                                          {isVencido && <span className="text-red-700">🔴 Vencido</span>}
+                                          {isDisponible && <span className="text-emerald-700">Disponible (Libre)</span>}
+                                          {isAsignado && <span className="text-amber-800">En Uso ({activeItem.empresaNombre})</span>}
+                                          {isVencido && <span className="text-red-700">Vencido</span>}
                                         </div>
                                       </div>
                                       <div>
