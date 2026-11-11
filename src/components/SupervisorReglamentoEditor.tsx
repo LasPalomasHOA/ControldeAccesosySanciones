@@ -331,7 +331,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
             type="button"
             onClick={handleResetClick}
             disabled={isSaving}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-300 text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer disabled:opacity-50"
+            className="w-[176px] h-9 px-3 rounded-xl text-xs font-bold border border-slate-300 text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-center whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
             title={currentActionMeta.resetTooltip}
           >
             {currentActionMeta.resetLabel}
@@ -340,20 +340,20 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
             type="button"
             onClick={handleSaveClick}
             disabled={isSaving}
-            className="px-5 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-sm hover:brightness-110 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            className="w-[176px] h-9 px-3 rounded-xl text-xs font-bold text-white transition-all shadow-sm hover:brightness-110 flex items-center justify-center gap-2 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
             style={{ background: "linear-gradient(135deg, #0D6E5F, #108e7a)" }}
           >
             {isSaving ? (
               <>
-                <svg className="animate-spin w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none">
+                <svg className="animate-spin w-3.5 h-3.5 text-white shrink-0" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
                 </svg>
-                <span>Guardando en BD...</span>
+                <span>Guardando...</span>
               </>
             ) : (
               <>
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
                   <polyline points="17 21 17 13 7 13 7 21"></polyline>
                   <polyline points="7 3 7 8 15 8"></polyline>
