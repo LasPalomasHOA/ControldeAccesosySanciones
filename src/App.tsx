@@ -5446,7 +5446,7 @@ export default function App() {
       await reloadReportes();
       await reloadSanciones();
       await reloadVehiculos();
-      showToast(`Infracción ${inf.folio} aprobada. La empresa ha sido notificada al instante y la sanción entrará en vigor mañana a las 12:00 AM.`, "success", "Infracción Aprobada");
+      showToast(`Infracción ${inf.folio} aprobada. La empresa ha sido notificada al instante y la sanción entrará en vigor mañana a las 7:00 AM.`, "success", "Infracción Aprobada");
     } catch (err: any) {
       await reloadReportes();
       await reloadSanciones();
@@ -11639,7 +11639,7 @@ export default function App() {
                                         <IconClock className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
                                         <span>
                                           {s.fecha_inicio && new Date() < new Date(s.fecha_inicio) ? (
-                                            <>Entra en vigor el: <strong className="text-slate-800 font-mono">{new Date(s.fecha_inicio).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })} a las 12:00 AM</strong>{s.fecha_fin ? <> (Hasta: <strong className="text-slate-800 font-mono">{new Date(s.fecha_fin).toLocaleString("es-MX", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })} hrs</strong>)</> : null}</>
+                                            <>Entra en vigor el: <strong className="text-slate-800 font-mono">{new Date(s.fecha_inicio).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })} a las 7:00 AM</strong>{s.fecha_fin ? <> (Hasta: <strong className="text-slate-800 font-mono">{new Date(s.fecha_fin).toLocaleString("es-MX", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })} hrs</strong>)</> : null}</>
                                           ) : s.fecha_fin ? (
                                             <>Suspensión temporal vigente hasta: <strong className="text-slate-800 font-mono">{new Date(s.fecha_fin).toLocaleString("es-MX", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })} hrs</strong></>
                                           ) : (

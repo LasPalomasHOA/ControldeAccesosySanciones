@@ -6,11 +6,12 @@ const DEFAULT_REGLAS = [
 ];
 
 /**
- * Devuelve las 12:00:00.000 AM (medianoche local) del día calendario siguiente a baseDate.
+ * Devuelve las 07:00:00.000 AM (hora local) del día calendario siguiente a baseDate.
  * Si el proceso corre en UTC puro (ej. servidor cloud con getTimezoneOffset() === 0),
- * toma como referencia la zona horaria local de Sonora (America/Hermosillo, UTC-7).
+ * toma como referencia la zona horaria local de Sonora (America/Hermosillo, UTC-7),
+ * donde las 07:00 AM locales equivalen a las 14:00 UTC.
  */
-function getNextDayMidnightLocal(baseDate = new Date()) {
+function getNextDay7AMLocal(baseDate = new Date()) {
   const now = baseDate instanceof Date ? baseDate : new Date(baseDate);
   if (now.getTimezoneOffset() === 0) {
     const sonoraOffsetMs = -7 * 60 * 60 * 1000;
@@ -20,17 +21,17 @@ function getNextDayMidnightLocal(baseDate = new Date()) {
         localTime.getUTCFullYear(),
         localTime.getUTCMonth(),
         localTime.getUTCDate() + 1,
-        7, 0, 0, 0
+        14, 0, 0, 0
       )
     );
   }
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 7, 0, 0, 0);
 }
 
+const getNextDayMidnightLocal = getNextDay7AMLocal;
+
 /**
- * Normaliza la fecha de inicio de una sanción al inicio reglamentario (12:00 AM hora local).
- * Si la fecha fue guardada con hora distinta a 00:00:00 (por ejemplo, la hora exacta de aprobación del día anterior),
- * la ajusta a las 00:00:00 del día siguiente. Si ya está en medianoche local, se conserva tal cual.
+ * Normaliza la fecha de inicio de una sanción al inicio reglamentario (07:00 AM hora local).
  */
 function normalizarInicioSancion(fechaInicioRaw) {
   if (!fechaInicioRaw) return null;
@@ -38,9 +39,9 @@ function normalizarInicioSancion(fechaInicioRaw) {
   if (typeof fechaInicioRaw === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fechaInicioRaw.trim())) {
     const [y, m, day] = fechaInicioRaw.trim().split('-').map(Number);
     if (new Date().getTimezoneOffset() === 0) {
-      return new Date(Date.UTC(y, m - 1, day, 7, 0, 0, 0));
+      return new Date(Date.UTC(y, m - 1, day, 14, 0, 0, 0));
     }
-    return new Date(y, m - 1, day, 0, 0, 0, 0);
+    return new Date(y, m - 1, day, 7, 0, 0, 0);
   }
 
   const d = new Date(fechaInicioRaw);
@@ -49,18 +50,17 @@ function normalizarInicioSancion(fechaInicioRaw) {
   if (d.getTimezoneOffset() === 0) {
     const sonoraOffsetMs = -7 * 60 * 60 * 1000;
     const localTime = new Date(d.getTime() + sonoraOffsetMs);
-    if (localTime.getUTCHours() !== 0 || localTime.getUTCMinutes() !== 0 || localTime.getUTCSeconds() !== 0) {
-      return getNextDayMidnightLocal(d);
+    if ((localTime.getUTCHours() === 7 || localTime.getUTCHours() === 0) && localTime.getUTCMinutes() === 0 && localTime.getUTCSeconds() === 0) {
+      return new Date(Date.UTC(localTime.getUTCFullYear(), localTime.getUTCMonth(), localTime.getUTCDate(), 14, 0, 0, 0));
     }
-    return new Date(Date.UTC(localTime.getUTCFullYear(), localTime.getUTCMonth(), localTime.getUTCDate(), 7, 0, 0, 0));
+    return new Date(Date.UTC(localTime.getUTCFullYear(), localTime.getUTCMonth(), localTime.getUTCDate() + 1, 14, 0, 0, 0));
   }
 
-  if (d.getHours() !== 0 || d.getMinutes() !== 0 || d.getSeconds() !== 0) {
-    return getNextDayMidnightLocal(d);
+  if ((d.getHours() === 7 || d.getHours() === 0) && d.getMinutes() === 0 && d.getSeconds() === 0) {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 7, 0, 0, 0);
   }
 
-  d.setMilliseconds(0);
-  return d;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 7, 0, 0, 0);
 }
 
 function extraerHorasRegla(plainR, defaultHoras = 0) {
@@ -145,6 +145,7 @@ function isSancionBloqueantePorRegla(sancion, regla) {
 
 module.exports = {
   DEFAULT_REGLAS,
+  getNextDay7AMLocal,
   getNextDayMidnightLocal,
   normalizarInicioSancion,
   extraerHorasRegla,

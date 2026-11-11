@@ -5,7 +5,7 @@ const db = require('../models/index.cjs');
 const events = require('../events.cjs');
 const { saveBase64Image } = require('../utils/imageHandler.cjs');
 const { requireAuth } = require('../middlewares/auth.cjs');
-const { getNextDayMidnightLocal, extraerHorasRegla, DEFAULT_REGLAS } = require('../utils/sancionReglas.cjs');
+const { getNextDay7AMLocal, extraerHorasRegla, DEFAULT_REGLAS } = require('../utils/sancionReglas.cjs');
 
 // GET /api/reportes/stream - Canal SSE para actualizaciones en vivo
 router.get('/stream', (req, res) => {
@@ -311,7 +311,7 @@ router.post('/:id/revisar', requireAuth, async (req, res) => {
       { transaction }
     );
 
-    // 9. Si se aprueba, generar sanción única programada para iniciar al día siguiente a las 12:00 AM (hora local)
+    // 9. Si se aprueba, generar sanción única programada para iniciar al día siguiente a las 7:00 AM (hora local)
     let sancion = null;
     if (decision === 'APROBADO') {
       const regla = await db.ReglaReincidencia.findOne({
@@ -326,11 +326,11 @@ router.post('/:id/revisar', requireAuth, async (req, res) => {
         : defRegla.horas_suspension;
 
       const permiteAcceso = regla ? Boolean(regla.permite_acceso) : false;
-      // Toda sanción aprobada inicia a las 12:00 AM (medianoche local) del día siguiente
-      const fechaInicioSancion = getNextDayMidnightLocal(new Date());
+      // Toda sanción aprobada inicia a las 7:00 AM (hora local) del día siguiente
+      const fechaInicioSancion = getNextDay7AMLocal(new Date());
       let fechaFinSancion = null;
 
-      // Calcular fecha_fin dinámica sumando las horas configuradas a partir de las 12:00 AM de inicio
+      // Calcular fecha_fin dinámica sumando las horas configuradas a partir de las 7:00 AM de inicio
       if (horasSuspension === -1) {
         // Bloqueo permanente / definitivo
         fechaFinSancion = null;
@@ -363,7 +363,7 @@ router.post('/:id/revisar', requireAuth, async (req, res) => {
       );
 
       // Si la sanción ya está en vigor en este instante (ahora >= fechaInicioSancion) y bloquea acceso, suspender de inmediato;
-      // si inicia a las 12:00 AM de mañana, GET /api/vehiculos activará la suspensión automáticamente al cruzar la medianoche.
+      // si inicia a las 7:00 AM de mañana, GET /api/vehiculos activará la suspensión automáticamente al llegar las 7:00 AM.
       if ((!permiteAcceso || horasSuspension > 0 || horasSuspension === -1) && reporte.id_vehiculo && new Date() >= fechaInicioSancion) {
         await db.Vehiculo.update(
           { estatus_acceso: 'SUSPENDIDO' },

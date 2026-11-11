@@ -168,7 +168,7 @@ router.get('/', async (req, res) => {
 
       return {
         ...plain,
-        fecha_inicio: fechaInicioEfectiva,
+        fecha_inicio: fechaInicioEfectiva || plain.fecha_inicio,
         fecha_fin: fechaFinEfectiva,
         estatus: estatusEfectivo,
         enVigor,

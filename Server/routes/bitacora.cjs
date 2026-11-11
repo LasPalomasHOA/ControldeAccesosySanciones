@@ -6,8 +6,20 @@ const events = require('../events.cjs');
 // GET /api/bitacora - Listar accesos de caseta (limitado a los 100 más recientes para ahorrar Egress)
 router.get('/', async (req, res) => {
   try {
+    const whereClause = {};
+    if (req.query.id_vehiculo && !isNaN(Number(req.query.id_vehiculo))) {
+      whereClause.id_vehiculo = Number(req.query.id_vehiculo);
+    }
+    if (req.query.id_corbatin && !isNaN(Number(req.query.id_corbatin))) {
+      whereClause.id_corbatin = Number(req.query.id_corbatin);
+    }
+    const queryLimit = req.query.limit && !isNaN(Number(req.query.limit))
+      ? Math.min(Math.max(Number(req.query.limit), 1), 100)
+      : 100;
+
     const accesos = await db.BitacoraAcceso.findAll({
-      limit: 100,
+      where: whereClause,
+      limit: queryLimit,
       attributes: ['id_acceso', 'id_caseta', 'id_vehiculo', 'id_corbatin', 'id_conductor', 'id_usuario', 'fecha', 'hora_entrada', 'hora_salida', 'num_pasajeros', 'estatus_acceso', 'motivo_rechazo', 'ubicacion_trabajo', 'observaciones', 'created_at', 'updated_at'],
       include: [
         { model: db.Caseta, as: 'caseta', attributes: ['id_caseta', 'nombre'] },
