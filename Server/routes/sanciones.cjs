@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../models/index.cjs');
 const events = require('../events.cjs');
 const { saveBase64Image } = require('../utils/imageHandler.cjs');
+const { cargarMapaReglas, calcularFechasSancion } = require('../utils/sancionReglas.cjs');
 
 // GET /api/sanciones - Listar todas las sanciones con soporte para apelaciones (limitado a 100)
 router.get('/', async (req, res) => {
@@ -35,6 +36,7 @@ router.get('/', async (req, res) => {
     });
 
     const ahora = new Date();
+    const reglasMap = await cargarMapaReglas(db);
 
     // Calcular el índice cronológico real de reincidencia por vehículo excluyendo apelaciones aprobadas (CANCELADA/ACLARADA) y levantamientos definitivos
     const isCanceladaOLevantada = (plainRow) => {
@@ -109,28 +111,23 @@ router.get('/', async (req, res) => {
         .trim();
 
       const nivel = nivelRealPorSancionId.get(plain.id_sancion) || Number(plain.numero_reincidencia || plain.id_regla || 1);
+      const reglaMatch = reglasMap.get(nivel) || plain.regla;
+      let fechaInicioEfectiva = plain.fecha_inicio;
       let fechaFinEfectiva = plain.fecha_fin;
+
       if (!isCanceladaOLevantada(plain)) {
-        if (!fechaFinEfectiva && plain.fecha_inicio) {
-          // Extraer horas de suspensión de la regla si la sanción no tiene fecha_fin explícita
-          let h = plain.regla?.horas_suspension;
-          if (h === undefined || h === null) {
-            const hMatch = (plain.regla?.mensaje_alerta || '').match(/\[HORAS:(-?\d+)\]/);
-            if (hMatch) h = parseInt(hMatch[1], 10);
-            else {
-              if (nivel === 2) h = 24;
-              else if (nivel === 3) h = 168;
-              else h = 0;
-            }
-          }
-          if (h && h > 0) {
-            fechaFinEfectiva = new Date(new Date(plain.fecha_inicio).getTime() + h * 60 * 60 * 1000);
-          }
-        }
+        const calc = calcularFechasSancion(
+          plain.fecha_inicio,
+          reglaMatch,
+          plain.fecha_fin,
+          nivel
+        );
+        if (calc.fechaInicio) fechaInicioEfectiva = calc.fechaInicio;
+        fechaFinEfectiva = calc.fechaFin;
       }
 
       // Normalizar status con cálculo dinámico de expiración en memoria
-      const isExpired = fechaFinEfectiva && ahora >= new Date(fechaFinEfectiva) && (plain.estatus === 'ACTIVA' || plain.estatus === 'RATIFICADA');
+      const isExpired = fechaFinEfectiva && ahora >= new Date(fechaFinEfectiva) && ['ACTIVA', 'RATIFICADA', 'PROGRAMADA'].includes(String(plain.estatus || '').trim().toUpperCase());
       const estatusEfectivo = isExpired ? 'VENCIDA' : plain.estatus;
 
       let frontendStatus = 'Activa';
@@ -167,10 +164,11 @@ router.get('/', async (req, res) => {
         3: 'Tercera Falta: Suspensión temporal de 1 semana. Acceso denegado.',
         4: 'Cuarta Falta: Sanción definitiva (bloqueo permanente).'
       };
-      const enVigor = !plain.fecha_inicio || ahora >= new Date(plain.fecha_inicio);
+      const enVigor = !fechaInicioEfectiva || ahora >= new Date(fechaInicioEfectiva);
 
       return {
         ...plain,
+        fecha_inicio: fechaInicioEfectiva,
         fecha_fin: fechaFinEfectiva,
         estatus: estatusEfectivo,
         enVigor,
@@ -186,8 +184,8 @@ router.get('/', async (req, res) => {
         gravedad: nivel >= 3 ? 'critica' : (nivel === 2 ? 'grave' : 'moderada'),
         estado: estatusEfectivo === 'ACTIVA' ? 'activa' : (estatusEfectivo === 'VENCIDA' ? 'resuelta' : (frontendStatus === 'Levantada' ? 'levantada' : 'pendiente_aprobacion')),
         status: frontendStatus,
-        fechaSancion: plain.fecha_inicio,
-        fecha: plain.fecha_inicio ? new Date(plain.fecha_inicio).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        fechaSancion: fechaInicioEfectiva,
+        fecha: fechaInicioEfectiva ? new Date(fechaInicioEfectiva).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         montoMulta: nivel * 100,
         medidaDisciplinaria: (plain.regla?.mensaje_alerta ? plain.regla.mensaje_alerta.replace(/\[HORAS:.*?\]/g, '').trim() : '') || medidasPorNivel[nivel] || `Sanción nivel ${nivel}`,
         evidenciaUrl: (() => {

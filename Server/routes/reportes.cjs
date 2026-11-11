@@ -5,28 +5,7 @@ const db = require('../models/index.cjs');
 const events = require('../events.cjs');
 const { saveBase64Image } = require('../utils/imageHandler.cjs');
 const { requireAuth } = require('../middlewares/auth.cjs');
-
-/**
- * Calcula las 12:00 AM (00:00:00.000) del día calendario siguiente en hora local.
- * Si el proceso corre en UTC puro (ej. servidor cloud con getTimezoneOffset() === 0),
- * toma como referencia la zona horaria local de Sonora (America/Hermosillo, UTC-7).
- */
-function getNextDayMidnightLocal(baseDate = new Date()) {
-  const now = baseDate instanceof Date ? baseDate : new Date(baseDate);
-  if (now.getTimezoneOffset() === 0) {
-    const sonoraOffsetMs = -7 * 60 * 60 * 1000;
-    const localTime = new Date(now.getTime() + sonoraOffsetMs);
-    return new Date(
-      Date.UTC(
-        localTime.getUTCFullYear(),
-        localTime.getUTCMonth(),
-        localTime.getUTCDate() + 1,
-        7, 0, 0, 0
-      )
-    );
-  }
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
-}
+const { getNextDayMidnightLocal, extraerHorasRegla, DEFAULT_REGLAS } = require('../utils/sancionReglas.cjs');
 
 // GET /api/reportes/stream - Canal SSE para actualizaciones en vivo
 router.get('/stream', (req, res) => {
@@ -341,29 +320,23 @@ router.post('/:id/revisar', requireAuth, async (req, res) => {
       });
 
       // Extraer horas de suspensión configuradas para esta regla
-      let horasSuspension = regla?.horas_suspension;
-      if (horasSuspension === undefined || horasSuspension === null) {
-        const hMatch = (regla?.mensaje_alerta || '').match(/\[HORAS:(-?\d+)\]/);
-        if (hMatch) {
-          horasSuspension = parseInt(hMatch[1], 10);
-        } else {
-          // Defaults estándar de HOA
-          if (nivelReincidencia === 1) horasSuspension = 0;
-          else if (nivelReincidencia === 2) horasSuspension = 24;
-          else if (nivelReincidencia === 3) horasSuspension = 168; // 1 semana = 168 horas
-          else horasSuspension = -1; // -1 = Bloqueo definitivo
-        }
-      }
+      const defRegla = DEFAULT_REGLAS.find(d => d.numero_falta === nivelReincidencia) || DEFAULT_REGLAS[0];
+      const horasSuspension = regla
+        ? extraerHorasRegla(regla, defRegla.horas_suspension)
+        : defRegla.horas_suspension;
 
       const permiteAcceso = regla ? Boolean(regla.permite_acceso) : false;
-      const fechaInicioSancion = new Date();
+      // Toda sanción aprobada inicia a las 12:00 AM (medianoche local) del día siguiente
+      const fechaInicioSancion = getNextDayMidnightLocal(new Date());
       let fechaFinSancion = null;
 
-      // Calcular fecha_fin dinámica con base en las horas de penalización configuradas
-      if (!permiteAcceso && horasSuspension && horasSuspension > 0) {
-        fechaFinSancion = new Date(fechaInicioSancion.getTime() + horasSuspension * 60 * 60 * 1000);
-      } else if (!permiteAcceso && (horasSuspension === -1 || regla?.requiere_administrador || nivelReincidencia >= 4)) {
+      // Calcular fecha_fin dinámica sumando las horas configuradas a partir de las 12:00 AM de inicio
+      if (horasSuspension === -1) {
         // Bloqueo permanente / definitivo
+        fechaFinSancion = null;
+      } else if (horasSuspension > 0 && (!permiteAcceso || horasSuspension > 0)) {
+        fechaFinSancion = new Date(fechaInicioSancion.getTime() + horasSuspension * 60 * 60 * 1000);
+      } else if (!permiteAcceso && (regla?.requiere_administrador || nivelReincidencia >= 4)) {
         fechaFinSancion = null;
       }
 
@@ -389,8 +362,9 @@ router.post('/:id/revisar', requireAuth, async (req, res) => {
         { transaction }
       );
 
-      // Si la sanción no permite acceso vehicular, actualizar estatus del vehículo a SUSPENDIDO
-      if (!permiteAcceso && reporte.id_vehiculo) {
+      // Si la sanción ya está en vigor en este instante (ahora >= fechaInicioSancion) y bloquea acceso, suspender de inmediato;
+      // si inicia a las 12:00 AM de mañana, GET /api/vehiculos activará la suspensión automáticamente al cruzar la medianoche.
+      if ((!permiteAcceso || horasSuspension > 0 || horasSuspension === -1) && reporte.id_vehiculo && new Date() >= fechaInicioSancion) {
         await db.Vehiculo.update(
           { estatus_acceso: 'SUSPENDIDO' },
           { where: { id_vehiculo: reporte.id_vehiculo }, transaction }

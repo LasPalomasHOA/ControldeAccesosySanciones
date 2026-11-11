@@ -4,6 +4,11 @@ const { Op } = require('sequelize');
 const db = require('../models/index.cjs');
 const events = require('../events.cjs');
 const { saveBase64Image } = require('../utils/imageHandler.cjs');
+const {
+  cargarMapaReglas,
+  calcularFechasSancion,
+  isSancionBloqueantePorRegla
+} = require('../utils/sancionReglas.cjs');
 
 // GET /api/vehiculos - Listar vehículos optimizado (1 sola query SQL con LEFT JOIN y soporte de límite)
 router.get('/', async (req, res) => {
@@ -56,56 +61,11 @@ router.get('/', async (req, res) => {
     };
 
     const ahora = new Date();
-
-    // Cargar reglas de reincidencia activas para evaluar suspensiones y permisos dinámicamente en todos los niveles
-    const DEFAULT_REGLAS = [
-      { id_regla: 1, numero_falta: 1, permite_acceso: true, requiere_administrador: false, horas_suspension: 0 },
-      { id_regla: 2, numero_falta: 2, permite_acceso: false, requiere_administrador: false, horas_suspension: 24 },
-      { id_regla: 3, numero_falta: 3, permite_acceso: false, requiere_administrador: false, horas_suspension: 168 },
-      { id_regla: 4, numero_falta: 4, permite_acceso: false, requiere_administrador: true, horas_suspension: -1 }
-    ];
-
-    let reglasRaw = [];
-    try {
-      reglasRaw = await db.ReglaReincidencia.findAll({ where: { activo: true } });
-    } catch (e) {
-      reglasRaw = [];
-    }
-
-    const reglasMap = new Map();
-    for (const d of DEFAULT_REGLAS) {
-      reglasMap.set(d.numero_falta, { ...d });
-    }
-    for (const r of (reglasRaw || [])) {
-      const plainR = typeof r?.toJSON === 'function' ? r.toJSON() : r;
-      const numFalta = Number(plainR.numero_falta || plainR.id_regla);
-      if (!numFalta) continue;
-      let horas = plainR.horas_suspension;
-      if (horas === undefined || horas === null) {
-        const hMatch = String(plainR.mensaje_alerta || '').match(/\[HORAS:(-?\d+)\]/);
-        if (hMatch) {
-          horas = parseInt(hMatch[1], 10);
-        } else {
-          const def = reglasMap.get(numFalta);
-          horas = def ? def.horas_suspension : 0;
-        }
-      }
-      reglasMap.set(numFalta, {
-        ...plainR,
-        numero_falta: numFalta,
-        horas_suspension: Number(horas),
-        permite_acceso: Boolean(plainR.permite_acceso),
-        requiere_administrador: Boolean(plainR.requiere_administrador)
-      });
-    }
+    const reglasMap = await cargarMapaReglas(db);
 
     const isSancionBloqueante = (s) => {
       const nivel = Number(s.numero_reincidencia || s.id_regla || 1);
-      const regla = reglasMap.get(nivel);
-      if (regla) {
-        return !regla.permite_acceso || regla.horas_suspension > 0 || regla.horas_suspension === -1 || regla.requiere_administrador;
-      }
-      return nivel >= 2 || Boolean(s.fecha_fin);
+      return isSancionBloqueantePorRegla(s, reglasMap.get(nivel));
     };
 
     const limpiarMotivoSancion = (motivo, nivel) => {
@@ -134,22 +94,19 @@ router.get('/', async (req, res) => {
         .map((s, idx) => {
           const trueNivel = Math.min(idx + 1, 4);
           const reglaNivel = reglasMap.get(trueNivel);
-          const horasRegla = reglaNivel
-            ? Number(reglaNivel.horas_suspension)
-            : (trueNivel === 2 ? 24 : trueNivel === 3 ? 168 : trueNivel >= 4 ? -1 : 0);
-
-          let fechaFinEfectiva = s.fecha_fin;
-          if (horasRegla === -1) {
-            fechaFinEfectiva = null;
-          } else if (!fechaFinEfectiva && s.fecha_inicio && horasRegla > 0) {
-            fechaFinEfectiva = new Date(new Date(s.fecha_inicio).getTime() + horasRegla * 60 * 60 * 1000);
-          }
+          const { fechaInicio, fechaFin } = calcularFechasSancion(
+            s.fecha_inicio,
+            reglaNivel,
+            s.fecha_fin,
+            trueNivel
+          );
 
           return {
             ...s,
             numero_reincidencia: trueNivel,
             id_regla: reglaNivel?.id_regla || trueNivel,
-            fecha_fin: fechaFinEfectiva
+            fecha_inicio: fechaInicio || s.fecha_inicio,
+            fecha_fin: fechaFin
           };
         });
 

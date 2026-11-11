@@ -1,13 +1,43 @@
 const express = require('express');
 const router = express.Router();
+const { Op } = require('sequelize');
 const db = require('../models/index.cjs');
+const { DEFAULT_REGLAS, calcularFechasSancion } = require('../utils/sancionReglas.cjs');
 
-const DEFAULT_REGLAS = [
-  { id_regla: 1, numero_falta: 1, permite_acceso: true, requiere_administrador: false, horas_suspension: 0, mensaje_alerta: 'Primera Falta: Llamada de atención. Acceso permitido.', activo: true },
-  { id_regla: 2, numero_falta: 2, permite_acceso: false, requiere_administrador: false, horas_suspension: 24, mensaje_alerta: 'Segunda Falta: Suspensión temporal de 24 horas. Acceso denegado.', activo: true },
-  { id_regla: 3, numero_falta: 3, permite_acceso: false, requiere_administrador: false, horas_suspension: 168, mensaje_alerta: 'Tercera Falta: Suspensión temporal de 1 semana. Acceso denegado.', activo: true },
-  { id_regla: 4, numero_falta: 4, permite_acceso: false, requiere_administrador: true, horas_suspension: -1, mensaje_alerta: 'Cuarta Falta: Sanción definitiva (bloqueo permanente). Requiere resolución de Dirección HOA.', activo: true }
-];
+/**
+ * Recalcula fecha_inicio (12:00 AM) y fecha_fin en BD para sanciones activas/programadas
+ * cuando el supervisor edita las horas de penalización de una regla.
+ */
+async function sincronizarSancionesPorRegla(reglaActualizada) {
+  try {
+    const numFalta = Number(reglaActualizada?.numero_falta || reglaActualizada?.id_regla);
+    if (!numFalta) return;
+
+    const sanciones = await db.Sancion.findAll({
+      where: {
+        numero_reincidencia: numFalta,
+        estatus: { [Op.in]: ['ACTIVA', 'PROGRAMADA', 'RATIFICADA', 'EN_APELACION', 'PERMANENTE'] }
+      }
+    });
+
+    for (const s of sanciones) {
+      const { fechaInicio, fechaFin } = calcularFechasSancion(
+        s.fecha_inicio,
+        reglaActualizada,
+        s.fecha_fin,
+        numFalta
+      );
+      if (fechaInicio) {
+        await s.update({
+          fecha_inicio: fechaInicio,
+          fecha_fin: fechaFin
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('Advertencia al sincronizar fechas de sanciones tras editar regla:', err.message);
+  }
+}
 
 let columnCheckDone = false;
 async function ensureColumnExists() {
@@ -143,7 +173,9 @@ router.put('/', async (req, res) => {
         }
       }
 
-      updated.push(normalizarRegla(regla));
+      const reglaNormalizada = normalizarRegla(regla);
+      await sincronizarSancionesPorRegla(reglaNormalizada);
+      updated.push(reglaNormalizada);
     }
 
     res.json({ success: true, count: updated.length, reglas: updated });
@@ -192,7 +224,9 @@ router.put('/:id', async (req, res) => {
       });
     }
 
-    res.json(normalizarRegla(regla));
+    const reglaNormalizada = normalizarRegla(regla);
+    await sincronizarSancionesPorRegla(reglaNormalizada);
+    res.json(reglaNormalizada);
   } catch (error) {
     console.error('Error al actualizar regla:', error);
     res.status(500).json({ error: 'Error al actualizar regla', details: error.message });
