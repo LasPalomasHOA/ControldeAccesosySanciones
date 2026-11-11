@@ -57,6 +57,67 @@ router.get('/', async (req, res) => {
 
     const ahora = new Date();
 
+    // Cargar reglas de reincidencia activas para evaluar suspensiones y permisos dinámicamente en todos los niveles
+    const DEFAULT_REGLAS = [
+      { id_regla: 1, numero_falta: 1, permite_acceso: true, requiere_administrador: false, horas_suspension: 0 },
+      { id_regla: 2, numero_falta: 2, permite_acceso: false, requiere_administrador: false, horas_suspension: 24 },
+      { id_regla: 3, numero_falta: 3, permite_acceso: false, requiere_administrador: false, horas_suspension: 168 },
+      { id_regla: 4, numero_falta: 4, permite_acceso: false, requiere_administrador: true, horas_suspension: -1 }
+    ];
+
+    let reglasRaw = [];
+    try {
+      reglasRaw = await db.ReglaReincidencia.findAll({ where: { activo: true } });
+    } catch (e) {
+      reglasRaw = [];
+    }
+
+    const reglasMap = new Map();
+    for (const d of DEFAULT_REGLAS) {
+      reglasMap.set(d.numero_falta, { ...d });
+    }
+    for (const r of (reglasRaw || [])) {
+      const plainR = typeof r?.toJSON === 'function' ? r.toJSON() : r;
+      const numFalta = Number(plainR.numero_falta || plainR.id_regla);
+      if (!numFalta) continue;
+      let horas = plainR.horas_suspension;
+      if (horas === undefined || horas === null) {
+        const hMatch = String(plainR.mensaje_alerta || '').match(/\[HORAS:(-?\d+)\]/);
+        if (hMatch) {
+          horas = parseInt(hMatch[1], 10);
+        } else {
+          const def = reglasMap.get(numFalta);
+          horas = def ? def.horas_suspension : 0;
+        }
+      }
+      reglasMap.set(numFalta, {
+        ...plainR,
+        numero_falta: numFalta,
+        horas_suspension: Number(horas),
+        permite_acceso: Boolean(plainR.permite_acceso),
+        requiere_administrador: Boolean(plainR.requiere_administrador)
+      });
+    }
+
+    const isSancionBloqueante = (s) => {
+      const nivel = Number(s.numero_reincidencia || s.id_regla || 1);
+      const regla = reglasMap.get(nivel);
+      if (regla) {
+        return !regla.permite_acceso || regla.horas_suspension > 0 || regla.horas_suspension === -1 || regla.requiere_administrador;
+      }
+      return nivel >= 2 || Boolean(s.fecha_fin);
+    };
+
+    const limpiarMotivoSancion = (motivo, nivel) => {
+      const texto = String(motivo || '')
+        .replace(/\[APELACION_DATA\].*?\[\/APELACION_DATA\]/g, '')
+        .replace(/\[DICTAMEN_DATA\].*?\[\/DICTAMEN_DATA\]/g, '')
+        .replace(/\[RESOLUCION_OFICINA_DATA\].*?\[\/RESOLUCION_OFICINA_DATA\]/g, '')
+        .replace(/\[HORAS:.*?\]/g, '')
+        .trim();
+      return texto || `Sanción nivel ${nivel}`;
+    };
+
     const resultado = vehiculos.map(v => {
       const plain = v.get({ plain: true });
       const corbatinActivo = plain.corbatines?.find(c => c.estatus === 'ACTIVO') || plain.corbatines?.[0];
@@ -72,18 +133,22 @@ router.get('/', async (req, res) => {
         .sort((a, b) => Number(a.id_sancion || 0) - Number(b.id_sancion || 0))
         .map((s, idx) => {
           const trueNivel = Math.min(idx + 1, 4);
+          const reglaNivel = reglasMap.get(trueNivel);
+          const horasRegla = reglaNivel
+            ? Number(reglaNivel.horas_suspension)
+            : (trueNivel === 2 ? 24 : trueNivel === 3 ? 168 : trueNivel >= 4 ? -1 : 0);
+
           let fechaFinEfectiva = s.fecha_fin;
-          if (trueNivel === 2 && !fechaFinEfectiva && s.fecha_inicio) {
-            fechaFinEfectiva = new Date(new Date(s.fecha_inicio).getTime() + 24 * 60 * 60 * 1000);
-          } else if (trueNivel === 3 && !fechaFinEfectiva && s.fecha_inicio) {
-            fechaFinEfectiva = new Date(new Date(s.fecha_inicio).getTime() + 7 * 24 * 60 * 60 * 1000);
-          } else if ((trueNivel === 1 || trueNivel === 4) && fechaFinEfectiva) {
+          if (horasRegla === -1) {
             fechaFinEfectiva = null;
+          } else if (!fechaFinEfectiva && s.fecha_inicio && horasRegla > 0) {
+            fechaFinEfectiva = new Date(new Date(s.fecha_inicio).getTime() + horasRegla * 60 * 60 * 1000);
           }
+
           return {
             ...s,
             numero_reincidencia: trueNivel,
-            id_regla: trueNivel,
+            id_regla: reglaNivel?.id_regla || trueNivel,
             fecha_fin: fechaFinEfectiva
           };
         });
@@ -91,7 +156,7 @@ router.get('/', async (req, res) => {
       // Evaluar sanciones vigentes y pases provisionales de oficina
       const sancionesVigentes = sancionesHistoricasValidas.filter(s => {
         const est = String(s.estatus || '').trim().toUpperCase();
-        if (est !== 'ACTIVA' && est !== 'RATIFICADA' && est !== 'EN_APELACION') return false;
+        if (!['ACTIVA', 'RATIFICADA', 'EN_APELACION', 'PROGRAMADA', 'PERMANENTE'].includes(est)) return false;
         if (s.fecha_inicio && ahora < new Date(s.fecha_inicio)) return false;
         if (s.fecha_fin && ahora >= new Date(s.fecha_fin)) return false;
         return true;
@@ -128,21 +193,21 @@ router.get('/', async (req, res) => {
         }
       }
 
-      // Si el pase temporal ya venció o tiene una sanción de suspensión vigente sin pase activo, el estatus efectivo es SUSPENDIDO
-      const sancionBloqueante = sancionesVigentes.find(s => Number(s.numero_reincidencia || s.id_regla || 1) >= 2);
-      const tieneCastigoSuspendido = sancionesVigentes.some(s => (s.numero_reincidencia || 1) >= 2 || permisoExpirado || plain.estatus_acceso === 'SUSPENDIDO');
+      // Si el pase temporal ya venció o tiene una sanción bloqueante vigente (según reglas dinámicas), el estatus efectivo es SUSPENDIDO
+      const sancionBloqueante = sancionesVigentes.find(isSancionBloqueante);
+      const tieneCastigoSuspendido = Boolean(sancionBloqueante) || permisoExpirado;
       let estatusEfectivo = plain.estatus_acceso;
 
       if (permisoTemporal && permisoTemporal.activo) {
         estatusEfectivo = 'HABILITADO';
-      } else if (permisoExpirado || (sancionesVigentes.length > 0 && tieneCastigoSuspendido)) {
+      } else if (tieneCastigoSuspendido) {
         estatusEfectivo = 'SUSPENDIDO';
-        // Sincronizar en segundo plano en BD si había quedado como HABILITADO por un pase de ayer
+        // Sincronizar en segundo plano en BD si había quedado como HABILITADO
         if (plain.estatus_acceso === 'HABILITADO') {
           db.Vehiculo.update({ estatus_acceso: 'SUSPENDIDO' }, { where: { id_vehiculo: plain.id_vehiculo } }).catch(() => { });
         }
-      } else if (sancionesVigentes.length === 0 && plain.estatus_acceso === 'SUSPENDIDO') {
-        // Si la sanción ya cumplió su fecha_fin, liberar automáticamente a HABILITADO
+      } else if (plain.estatus_acceso === 'SUSPENDIDO') {
+        // Si la sanción ya cumplió su fecha_fin o la regla permite acceso, liberar automáticamente a HABILITADO
         estatusEfectivo = 'HABILITADO';
         db.Vehiculo.update({ estatus_acceso: 'HABILITADO' }, { where: { id_vehiculo: plain.id_vehiculo } }).catch(() => { });
       }
@@ -174,9 +239,9 @@ router.get('/', async (req, res) => {
         estadoAcceso,
         permisoTemporal,
         sancionActiva: sancionBloqueante ? {
-          motivo: sancionBloqueante.motivo || `Sanción nivel ${sancionBloqueante.numero_reincidencia}`,
+          motivo: limpiarMotivoSancion(sancionBloqueante.motivo, sancionBloqueante.numero_reincidencia),
           expiracion: sancionBloqueante.fecha_fin
-            ? new Date(sancionBloqueante.fecha_fin).toISOString().split('T')[0]
+            ? `${new Date(sancionBloqueante.fecha_fin).toLocaleString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })} hrs`
             : 'Definitiva'
         } : undefined,
         status: estatusEfectivo === 'HABILITADO' ? 'Habilitado' : (estatusEfectivo === 'SUSPENDIDO' ? 'Suspendido' : (estatusEfectivo === 'DESHABILITADO' ? 'Deshabilitado' : 'Restringido'))
