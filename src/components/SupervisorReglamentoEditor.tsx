@@ -1,10 +1,50 @@
 import React, { useState, useMemo } from "react";
 import { ReglaReincidenciaUI } from "../types";
 
+export type ReglamentoEditorTab = "banderin" | "general" | "reincidencias";
+
 export interface ReglamentoSection {
   title: string;
   items: string[];
 }
+
+const TAB_ACTION_META: Record<ReglamentoEditorTab, {
+  resetLabel: string;
+  saveLabel: string;
+  pendingText: string;
+  modalTitle: string;
+  modalDescription: string;
+  modalConfirm: string;
+  resetTooltip: string;
+}> = {
+  banderin: {
+    resetLabel: "Restablecer Normas",
+    saveLabel: "Guardar Normas",
+    pendingText: "Cambios pendientes en Normas de Corbatín Físico",
+    modalTitle: "¿Restablecer Normas de Corbatín Físico?",
+    modalDescription: "¿Seguro que deseas restablecer únicamente las secciones y normas del corbatín físico a sus valores predeterminados? Las demás pestañas no se modificarán.",
+    modalConfirm: "Sí, Restablecer Normas",
+    resetTooltip: "Restablecer únicamente las normas del corbatín físico a sus valores predeterminados",
+  },
+  general: {
+    resetLabel: "Restablecer Términos",
+    saveLabel: "Guardar Términos",
+    pendingText: "Cambios pendientes en Términos y Condiciones",
+    modalTitle: "¿Restablecer Términos y Condiciones?",
+    modalDescription: "¿Seguro que deseas restablecer únicamente el texto de Términos y Condiciones a su versión oficial predeterminada? Las demás pestañas no se modificarán.",
+    modalConfirm: "Sí, Restablecer Términos",
+    resetTooltip: "Restablecer únicamente los términos y condiciones a sus valores predeterminados",
+  },
+  reincidencias: {
+    resetLabel: "Restablecer Matriz",
+    saveLabel: "Guardar Matriz",
+    pendingText: "Cambios pendientes en Matriz de Reincidencias",
+    modalTitle: "¿Restablecer Matriz de Reincidencias?",
+    modalDescription: "¿Seguro que deseas restablecer únicamente la Matriz de Reincidencias y sus horas de penalización (0h, 24h, 168h, Permanente) a los valores predeterminados? Las demás pestañas no se modificarán.",
+    modalConfirm: "Sí, Restablecer Matriz",
+    resetTooltip: "Restablecer únicamente la matriz de reincidencias a sus valores predeterminados",
+  },
+};
 
 interface SupervisorReglamentoEditorProps {
   reglamentoTexto: string;
@@ -13,8 +53,8 @@ interface SupervisorReglamentoEditorProps {
   onUpdateReglamentoSecciones: (newSections: ReglamentoSection[]) => void;
   reglasReincidencia?: ReglaReincidenciaUI[];
   onUpdateReglasReincidencia?: (newReglas: ReglaReincidenciaUI[]) => void;
-  onSave: () => Promise<void>;
-  onResetDefaults: () => void;
+  onSave: (section: ReglamentoEditorTab) => Promise<void>;
+  onResetDefaults: (section: ReglamentoEditorTab) => void;
   isSaving: boolean;
 }
 
@@ -40,9 +80,19 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
   onResetDefaults,
   isSaving,
 }) => {
-  const [activeTab, setActiveTab] = useState<"banderin" | "general" | "reincidencias">("banderin");
-  const [hasChanges, setHasChanges] = useState(false);
+  const [activeTab, setActiveTab] = useState<ReglamentoEditorTab>("banderin");
+  const [dirtyTabs, setDirtyTabs] = useState<Record<ReglamentoEditorTab, boolean>>({
+    banderin: false,
+    general: false,
+    reincidencias: false,
+  });
   const [editingHoras, setEditingHoras] = useState<Record<number, string>>({});
+
+  const markTabDirty = (tab: ReglamentoEditorTab, dirty = true) => {
+    setDirtyTabs((prev) => (prev[tab] === dirty ? prev : { ...prev, [tab]: dirty }));
+  };
+  const hasChanges = dirtyTabs[activeTab];
+  const currentActionMeta = TAB_ACTION_META[activeTab];
 
   // Estado del Modal de Confirmación Moderno
   const [modalConfig, setModalConfig] = useState<ConfirmModalConfig>({
@@ -106,7 +156,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
     const updated = [...reglamentoSecciones];
     updated[index] = { ...updated[index], title: newTitle };
     onUpdateReglamentoSecciones(updated);
-    setHasChanges(true);
+    markTabDirty("banderin", true);
   };
 
   const handleItemChange = (secIndex: number, itemIndex: number, newValue: string) => {
@@ -115,7 +165,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
     currentItems[itemIndex] = newValue;
     updated[secIndex] = { ...updated[secIndex], items: currentItems };
     onUpdateReglamentoSecciones(updated);
-    setHasChanges(true);
+    markTabDirty("banderin", true);
   };
 
   const handleAddItem = (secIndex: number) => {
@@ -138,7 +188,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
       items: [...currentItems, "Nueva norma reglamentaria"],
     };
     onUpdateReglamentoSecciones(updated);
-    setHasChanges(true);
+    markTabDirty("banderin", true);
   };
 
   const handleRemoveItem = (secIndex: number, itemIndex: number) => {
@@ -147,7 +197,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
     const newItems = currentItems.filter((_, i) => i !== itemIndex);
     updated[secIndex] = { ...updated[secIndex], items: newItems };
     onUpdateReglamentoSecciones(updated);
-    setHasChanges(true);
+    markTabDirty("banderin", true);
   };
 
   const handleAddSection = () => {
@@ -171,7 +221,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
       items: ["Norma u obligación operativa"],
     };
     onUpdateReglamentoSecciones([...reglamentoSecciones, newSection]);
-    setHasChanges(true);
+    markTabDirty("banderin", true);
   };
 
   const handleRemoveSection = (secIndex: number) => {
@@ -199,7 +249,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
       onConfirm: () => {
         const updated = reglamentoSecciones.filter((_, i) => i !== secIndex);
         onUpdateReglamentoSecciones(updated);
-        setHasChanges(true);
+        markTabDirty("banderin", true);
         closeModal();
       },
     });
@@ -207,7 +257,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
 
   const handleTextoGeneralChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onUpdateReglamentoTexto(e.target.value);
-    setHasChanges(true);
+    markTabDirty("general", true);
   };
 
   const handleUpdateRegla = (numeroFalta: number, changes: Partial<ReglaReincidenciaUI>) => {
@@ -219,7 +269,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
       return r;
     });
     onUpdateReglasReincidencia(updated);
-    setHasChanges(true);
+    markTabDirty("reincidencias", true);
   };
 
   const handleReglaChange = (numeroFalta: number, field: keyof ReglaReincidenciaUI, value: any) => {
@@ -227,22 +277,28 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
   };
 
   const handleSaveClick = async () => {
-    await onSave();
-    setHasChanges(false);
+    const tabToSave = activeTab;
+    await onSave(tabToSave);
+    markTabDirty(tabToSave, false);
   };
 
   const handleResetClick = () => {
+    const tabToReset = activeTab;
+    const meta = TAB_ACTION_META[tabToReset];
     setModalConfig({
       isOpen: true,
-      title: "¿Restablecer Valores de Fábrica?",
-      description: "¿Seguro que deseas restablecer tanto el banderín físico como el reglamento digital a sus valores de fábrica? Los cambios que no hayas guardado se perderán definitivamente.",
-      confirmText: "Sí, Restablecer Todo",
+      title: meta.modalTitle,
+      description: meta.modalDescription,
+      confirmText: meta.modalConfirm,
       cancelText: "Cancelar",
       isDestructive: true,
       icon: "reset",
       onConfirm: () => {
-        onResetDefaults();
-        setHasChanges(true);
+        onResetDefaults(tabToReset);
+        if (tabToReset === "reincidencias") {
+          setEditingHoras({});
+        }
+        markTabDirty(tabToReset, true);
         closeModal();
       },
     });
@@ -257,7 +313,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
             <div className="mb-2">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 animate-pulse">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
-                Cambios pendientes por guardar
+                {currentActionMeta.pendingText}
               </span>
             </div>
           )}
@@ -269,16 +325,16 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
           </p>
         </div>
 
-        {/* Acciones principales */}
+        {/* Acciones principales independientes de la pestaña activa */}
         <div className="flex items-center gap-2.5 shrink-0">
           <button
             type="button"
             onClick={handleResetClick}
             disabled={isSaving}
             className="px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-300 text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer disabled:opacity-50"
-            title="Restablecer contenido a los textos oficiales originales"
+            title={currentActionMeta.resetTooltip}
           >
-            Restablecer Valores
+            {currentActionMeta.resetLabel}
           </button>
           <button
             type="button"
@@ -302,7 +358,7 @@ export const SupervisorReglamentoEditor: React.FC<SupervisorReglamentoEditorProp
                   <polyline points="17 21 17 13 7 13 7 21"></polyline>
                   <polyline points="7 3 7 8 15 8"></polyline>
                 </svg>
-                <span>Guardar Cambios Oficiales</span>
+                <span>{currentActionMeta.saveLabel}</span>
               </>
             )}
           </button>

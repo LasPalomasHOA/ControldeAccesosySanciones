@@ -4054,41 +4054,45 @@ export default function App() {
     setLoginError("");
   };
 
-  // Guardado de reglamento, banderines y reincidencias por el Supervisor (Persistencia Dual: PostgreSQL + LocalStorage)
-  const handleGuardarReglamentoSupervisor = async () => {
+  // Guardado independiente de reglamento, banderines o reincidencias por el Supervisor (Persistencia Dual: PostgreSQL + LocalStorage)
+  const handleGuardarReglamentoSupervisor = async (section: "banderin" | "general" | "reincidencias") => {
     try {
       setIsSavingReglamento(true);
-      // 1. Guardar en almacenamiento local para disponibilidad inmediata offline
-      localStorage.setItem("hoa_reglamento_texto", reglamentoTexto);
-      localStorage.setItem("hoa_reglamento_secciones", JSON.stringify(reglamentoSecciones));
-      localStorage.setItem("hoa_reglas_reincidencia", JSON.stringify(reglasReincidencia));
-
-      // 2. Persistir en la base de datos PostgreSQL en Supabase a través de los endpoints del backend
-      await Promise.all([
-        api.updateReglamentoContenido({
-          contenido_texto: reglamentoTexto,
-          contenido_secciones: reglamentoSecciones,
-        }),
-        api.updateReglas(reglasReincidencia),
-      ]);
-
-      showToast("El reglamento general, normas de banderines y matriz de reincidencias se guardaron exitosamente en la base de datos.", "success", "Cambios Oficiales Guardados");
+      if (section === "banderin") {
+        localStorage.setItem("hoa_reglamento_secciones", JSON.stringify(reglamentoSecciones));
+        await api.updateReglamentoContenido({ contenido_secciones: reglamentoSecciones });
+        showToast("Las normas de corbatín físico se guardaron exitosamente en la base de datos.", "success", "Normas Guardadas");
+      } else if (section === "general") {
+        localStorage.setItem("hoa_reglamento_texto", reglamentoTexto);
+        await api.updateReglamentoContenido({ contenido_texto: reglamentoTexto });
+        showToast("Los términos y condiciones oficiales se guardaron exitosamente en la base de datos.", "success", "Términos Guardados");
+      } else {
+        localStorage.setItem("hoa_reglas_reincidencia", JSON.stringify(reglasReincidencia));
+        await api.updateReglas(reglasReincidencia);
+        showToast("La matriz disciplinaria de reincidencias y horas de penalización se guardó exitosamente en la base de datos.", "success", "Matriz Guardada");
+      }
     } catch (err: any) {
-      console.error("Error al guardar reglamento y reglas en la base de datos:", err);
+      console.error("Error al guardar configuración del supervisor:", err);
       showToast("Se guardó en memoria local. Error de conexión con el servidor: " + (err.message || "Error desconocido"), "warning", "Guardado Localmente");
     } finally {
       setIsSavingReglamento(false);
     }
   };
 
-  const handleResetReglamentoSupervisor = () => {
-    setReglamentoTexto(DEFAULT_REGLAMENTO_TEXT);
-    setReglamentoSecciones(DEFAULT_REGLAMENTO_SECTIONS);
-    setReglasReincidencia(DEFAULT_REGLAS_REINCIDENCIA);
-    localStorage.removeItem("hoa_reglamento_texto");
-    localStorage.removeItem("hoa_reglamento_secciones");
-    localStorage.removeItem("hoa_reglas_reincidencia");
-    showToast("Se restablecieron las secciones, el texto oficial y la matriz de reincidencias a los valores por defecto.", "info", "Valores Restablecidos");
+  const handleResetReglamentoSupervisor = (section: "banderin" | "general" | "reincidencias") => {
+    if (section === "banderin") {
+      setReglamentoSecciones(DEFAULT_REGLAMENTO_SECTIONS.map((s) => ({ ...s, items: [...s.items] })));
+      localStorage.removeItem("hoa_reglamento_secciones");
+      showToast("Se restablecieron las normas del corbatín físico a sus valores predeterminados. Presiona Guardar para aplicarlo en la base de datos.", "info", "Normas Restablecidas");
+    } else if (section === "general") {
+      setReglamentoTexto(DEFAULT_REGLAMENTO_TEXT);
+      localStorage.removeItem("hoa_reglamento_texto");
+      showToast("Se restablecieron los términos y condiciones a su texto predeterminado. Presiona Guardar para aplicarlo en la base de datos.", "info", "Términos Restablecidos");
+    } else {
+      setReglasReincidencia(DEFAULT_REGLAS_REINCIDENCIA.map((r) => ({ ...r })));
+      localStorage.removeItem("hoa_reglas_reincidencia");
+      showToast("Se restableció la matriz de reincidencias y horas de penalización a sus valores predeterminados. Presiona Guardar para aplicarlo en la base de datos.", "info", "Matriz Restablecida");
+    }
   };
 
   // Helper function to render authentic colorful logo to PNG for PDF embedding
