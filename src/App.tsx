@@ -12443,8 +12443,9 @@ export default function App() {
                                                 <span className="font-bold text-slate-900 text-xs sm:text-sm block truncate">
                                                   {t.nombre} {t.apellidos}
                                                 </span>
-                                                <span className="text-[11px] text-slate-500 font-mono block">
-                                                  📞 {t.telefono || "Sin teléfono"}
+                                                <span className="text-[11px] text-slate-500 font-mono flex items-center gap-1">
+                                                  <IconPhone className="w-3 h-3 text-slate-400 shrink-0" />
+                                                  <span>{t.telefono || "Sin teléfono"}</span>
                                                 </span>
                                               </div>
                                             </div>
