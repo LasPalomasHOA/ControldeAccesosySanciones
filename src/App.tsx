@@ -7339,8 +7339,8 @@ export default function App() {
 
                   {/* Acciones */}
                   <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
-                    <span className="text-[11px] text-slate-400 font-medium">
-                      🚶 Cuadrilla puede entrar a pie
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      Cuadrilla puede entrar a pie
                     </span>
                     <button
                       type="button"
@@ -12300,7 +12300,10 @@ export default function App() {
                                               </span>
                                             </div>
                                             <div className="mt-0.5 text-[11px] text-slate-500 truncate flex items-center justify-between gap-2">
-                                              <span className="truncate">📞 {c.telefono || "Sin teléfono"}</span>
+                                              <span className="truncate flex items-center gap-1">
+                                                <IconPhone className="w-3 h-3 text-slate-400 shrink-0" />
+                                                <span>{c.telefono || "Sin teléfono"}</span>
+                                              </span>
                                               <span className="text-[10px] text-slate-400 font-mono shrink-0">Vence: {c.fechaVencimiento || "Vigente"}</span>
                                             </div>
                                           </div>
