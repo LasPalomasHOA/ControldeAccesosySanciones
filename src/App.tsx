@@ -1429,7 +1429,7 @@ function formatFechaLegible(dateStr?: string | null, includeTime = true): string
   }
 }
 
-// ─── Format Time Helper (Convierte timestamps UTC / ISO a hora local del navegador) ──
+// ─── Format Time Helper (Convierte timestamps UTC / ISO a hora local del resort en America/Hermosillo) ──
 function formatHoraLocal(timeStr?: string | Date | null): string {
   if (!timeStr || timeStr === "—" || timeStr === "N/A" || timeStr === "null" || timeStr === "undefined") return "—";
   const raw = String(timeStr).trim();
@@ -1440,8 +1440,8 @@ function formatHoraLocal(timeStr?: string | Date | null): string {
     return raw.replace(/ hrs/i, "");
   }
 
-  // Si ya tiene formato 12h como "01:13 PM" o "1:13 PM"
-  if (/^\d{1,2}:\d{2}\s*(AM|PM)(\s*hrs)?$/i.test(raw)) {
+  // Si ya tiene formato 12h como "01:13 PM" o "10:27 a. m." o "05:27 p.m."
+  if (/^\d{1,2}:\d{2}\s*([ap]\.?\s*m\.?)(\s*hrs)?$/i.test(raw)) {
     return raw.replace(/ hrs/i, "");
   }
 
@@ -1458,13 +1458,24 @@ function formatHoraLocal(timeStr?: string | Date | null): string {
     }
 
     if (!isNaN(dateObj.getTime())) {
-      let hours = dateObj.getHours();
-      const minutes = String(dateObj.getMinutes()).padStart(2, "0");
-      const ampm = hours >= 12 ? "PM" : "AM";
-      hours = hours % 12;
-      hours = hours ? hours : 12;
-      const strHours = String(hours).padStart(2, "0");
-      return `${strHours}:${minutes} ${ampm}`;
+      try {
+        return dateObj.toLocaleTimeString("en-US", {
+          timeZone: "America/Hermosillo",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+      } catch {
+        const utcMs = dateObj.getTime() + dateObj.getTimezoneOffset() * 60000;
+        const d = new Date(utcMs - 7 * 3600000);
+        let hours = d.getHours();
+        const minutes = String(d.getMinutes()).padStart(2, "0");
+        const ampm = hours >= 12 ? "PM" : "AM";
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        const strHours = String(hours).padStart(2, "0");
+        return `${strHours}:${minutes} ${ampm}`;
+      }
     }
   } catch {
     // fallback
