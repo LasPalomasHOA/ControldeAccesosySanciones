@@ -50,8 +50,9 @@ router.get('/', async (req, res) => {
 
     const resultado = accesos.map(a => {
       const plain = a.get({ plain: true });
-      const isCorbatinVerde = (plain.corbatin?.tipos || '').toUpperCase() === 'VERDE' || Boolean(plain.observaciones && plain.observaciones.includes('CORBATÍN VERDE'));
-      const empNombre = plain.corbatin?.empresa_nombre || plain.vehiculo?.empresa?.razon_social || plain.conductor?.empresa?.razon_social || '';
+      const isVisitante = Boolean(plain.observaciones && plain.observaciones.includes('[VISITANTE]')) || (plain.ubicacion_trabajo && plain.ubicacion_trabajo.includes('Visitante'));
+      const isCorbatinVerde = !isVisitante && ((plain.corbatin?.tipos || '').toUpperCase() === 'VERDE' || Boolean(plain.observaciones && plain.observaciones.includes('CORBATÍN VERDE')));
+      const empNombre = isVisitante ? 'Visitante' : (plain.corbatin?.empresa_nombre || plain.vehiculo?.empresa?.razon_social || plain.conductor?.empresa?.razon_social || '');
 
       let conductorNombre = 'Conductor Acreditado';
       if (plain.conductor) {
@@ -67,75 +68,85 @@ router.get('/', async (req, res) => {
       }
 
       let corbatinNum = '';
-      if (plain.corbatin?.numero) {
-        corbatinNum = isCorbatinVerde
-          ? `00${parseInt(String(plain.corbatin.numero).replace(/[^0-9]/g, ''), 10) || plain.corbatin.numero}`
-          : String(plain.corbatin.numero);
-      } else if (plain.vehiculo?.corbatines?.[0]?.numero) {
-        corbatinNum = String(plain.vehiculo.corbatines[0].numero);
-      } else if (plain.observaciones && plain.observaciones.includes('CORBATÍN VERDE #')) {
-        const m = plain.observaciones.match(/CORBATÍN VERDE #([0-9]+)/i);
-        if (m && m[1]) corbatinNum = `00${parseInt(m[1], 10)}`;
-      }
+        if (isVisitante && plain.observaciones && plain.observaciones.includes('Corbatín:')) {
+          const m = plain.observaciones.match(/Corbat[íi]n:\s*#?([0-9]+)/i);
+          if (m && m[1]) corbatinNum = String(parseInt(m[1], 10));
+        } else if (plain.corbatin?.numero) {
+          corbatinNum = isCorbatinVerde
+            ? `00${parseInt(String(plain.corbatin.numero).replace(/[^0-9]/g, ''), 10) || plain.corbatin.numero}`
+            : String(plain.corbatin.numero);
+        } else if (plain.vehiculo?.corbatines?.[0]?.numero) {
+          corbatinNum = String(plain.vehiculo.corbatines[0].numero);
+        } else if (plain.observaciones && plain.observaciones.includes('CORBATÍN VERDE #')) {
+          const m = plain.observaciones.match(/CORBATÍN VERDE #([0-9]+)/i);
+          if (m && m[1]) corbatinNum = `00${parseInt(m[1], 10)}`;
+        }
 
-      let placasFinal = plain.vehiculo?.placas;
-      if (!placasFinal && plain.observaciones && plain.observaciones.includes('Placas:')) {
-        const m = plain.observaciones.match(/Placas:\s*([^|\]]+)/i);
-        if (m && m[1]) placasFinal = m[1].trim();
-      }
-      if (!placasFinal) {
-        placasFinal = isCorbatinVerde ? 'PROYECTO' : (plain.id_vehiculo ? 'VEHICULAR' : 'PEATONAL');
-      }
+        let vehiculoTexto = '';
+        if (plain.observaciones && plain.observaciones.includes('Vehículo:')) {
+          const m = plain.observaciones.match(/Veh[íi]culo:\s*([^|\]]+)/i);
+          if (m && m[1]) vehiculoTexto = m[1].trim();
+        }
 
-      const rawHoraEntrada = plain.hora_entrada
-        ? (plain.hora_entrada instanceof Date ? plain.hora_entrada.toISOString() : new Date(plain.hora_entrada).toISOString())
-        : null;
-      const rawHoraSalida = plain.hora_salida
-        ? (plain.hora_salida instanceof Date ? plain.hora_salida.toISOString() : new Date(plain.hora_salida).toISOString())
-        : null;
+        let placasFinal = plain.vehiculo?.placas;
+        if (!placasFinal && plain.observaciones && plain.observaciones.includes('Placas:')) {
+          const m = plain.observaciones.match(/Placas:\s*([^|\]]+)/i);
+          if (m && m[1]) placasFinal = m[1].trim();
+        }
+        if (!placasFinal) {
+          placasFinal = isVisitante ? 'VISITANTE' : (isCorbatinVerde ? 'PROYECTO' : (plain.id_vehiculo ? 'VEHICULAR' : 'PEATONAL'));
+        }
 
-      const trabajoLimpio = (plain.ubicacion_trabajo && plain.ubicacion_trabajo.trim() !== 'x')
-        ? plain.ubicacion_trabajo.trim()
-        : (plain.observaciones && plain.observaciones.trim() !== 'x' && !plain.observaciones.startsWith('Chofer [') && !plain.observaciones.startsWith('Peatonal [') && !plain.observaciones.startsWith('[CORBATÍN VERDE')
-          ? plain.observaciones.trim()
-          : (isCorbatinVerde ? `Proyecto Temporal — ${empNombre || 'Contratista'}` : (plain.id_vehiculo ? 'Mantenimiento / Acceso regular' : 'Labores y mantenimiento a pie')));
+        const rawHoraEntrada = plain.hora_entrada
+          ? (plain.hora_entrada instanceof Date ? plain.hora_entrada.toISOString() : new Date(plain.hora_entrada).toISOString())
+          : null;
+        const rawHoraSalida = plain.hora_salida
+          ? (plain.hora_salida instanceof Date ? plain.hora_salida.toISOString() : new Date(plain.hora_salida).toISOString())
+          : null;
 
-      const tipoFinal = isCorbatinVerde ? 'Corbatín Verde' : (plain.id_vehiculo ? 'Vehicular' : 'Peatonal');
+        const trabajoLimpio = (plain.ubicacion_trabajo && plain.ubicacion_trabajo.trim() !== 'x')
+          ? plain.ubicacion_trabajo.trim()
+        : (plain.observaciones && plain.observaciones.trim() !== 'x' && !plain.observaciones.startsWith('Chofer [') && !plain.observaciones.startsWith('Peatonal [') && !plain.observaciones.startsWith('[CORBATÍN VERDE') && !plain.observaciones.startsWith('[VISITANTE')
+      ? plain.observaciones.trim()
+          : (isVisitante ? 'Visita autorizada al complejo' : (isCorbatinVerde ? `Proyecto Temporal — ${empNombre || 'Contratista'}` : (plain.id_vehiculo ? 'Mantenimiento / Acceso regular' : 'Labores y mantenimiento a pie'))));
 
-      return {
-        ...plain,
-        id: String(plain.id_acceso),
-        num_pasajeros: plain.num_pasajeros !== undefined && plain.num_pasajeros !== null ? Number(plain.num_pasajeros) : 0,
-        placa: placasFinal,
-        empresaNombre: empNombre,
-        conductor: conductorNombre,
-        trabajadorNombre: conductorNombre,
-        telefono: plain.corbatin?.telefono || plain.vehiculo?.empresa?.telefono || plain.conductor?.telefono || '',
-        corbatinNumero: corbatinNum || '—',
-        corbatinNum: corbatinNum || '—',
-        tipoCorbatin: isCorbatinVerde ? 'VERDE' : 'NORMAL',
-        ubicacion_trabajo: trabajoLimpio,
-        trabajos: trabajoLimpio,
-        raw_hora_entrada: rawHoraEntrada || plain.hora_entrada,
-        raw_hora_salida: rawHoraSalida || plain.hora_salida,
-        fecha: plain.fecha || (rawHoraEntrada ? rawHoraEntrada.split('T')[0] : (plain.created_at ? new Date(plain.created_at).toISOString().split('T')[0] : null)),
-        hora_entrada: plain.hora_entrada ? new Date(plain.hora_entrada).toLocaleTimeString('es-MX', { timeZone: 'America/Hermosillo', hour: '2-digit', minute: '2-digit' }) : (rawHoraEntrada || ''),
-        hora_salida: plain.hora_salida ? new Date(plain.hora_salida).toLocaleTimeString('es-MX', { timeZone: 'America/Hermosillo', hour: '2-digit', minute: '2-digit' }) : null,
-        fechaHora: rawHoraEntrada || (plain.created_at ? new Date(plain.created_at).toISOString() : new Date().toISOString()),
-        tipo: tipoFinal,
-        tipoAcceso: tipoFinal,
-        estado: plain.hora_salida ? 'Salida Registrada' : 'Dentro',
-        agenteNombre: plain.guardia?.nombre || 'Oficial en Caseta',
-        guardiaNombre: plain.guardia?.nombre || 'Oficial de Turno',
-        cabina: plain.caseta?.nombre || 'Caseta Principal'
-      };
+const tipoFinal = isVisitante ? 'Visitante' : (isCorbatinVerde ? 'Corbatín Verde' : (plain.id_vehiculo ? 'Vehicular' : 'Peatonal'));
+
+return {
+  ...plain,
+  id: String(plain.id_acceso),
+  num_pasajeros: plain.num_pasajeros !== undefined && plain.num_pasajeros !== null ? Number(plain.num_pasajeros) : 0,
+  placa: placasFinal,
+  empresaNombre: empNombre,
+  conductor: conductorNombre,
+  trabajadorNombre: conductorNombre,
+  telefono: plain.corbatin?.telefono || plain.vehiculo?.empresa?.telefono || plain.conductor?.telefono || '',
+  corbatinNumero: corbatinNum || '—',
+  corbatinNum: corbatinNum || '—',
+  tipoCorbatin: isVisitante ? 'VISITANTE' : (isCorbatinVerde ? 'VERDE' : 'NORMAL'),
+  color: vehiculoTexto || plain.vehiculo?.color || 'N/A',
+  ubicacion_trabajo: trabajoLimpio,
+  trabajos: trabajoLimpio,
+  raw_hora_entrada: rawHoraEntrada || plain.hora_entrada,
+  raw_hora_salida: rawHoraSalida || plain.hora_salida,
+  fecha: plain.fecha || (rawHoraEntrada ? rawHoraEntrada.split('T')[0] : (plain.created_at ? new Date(plain.created_at).toISOString().split('T')[0] : null)),
+  hora_entrada: plain.hora_entrada ? new Date(plain.hora_entrada).toLocaleTimeString('es-MX', { timeZone: 'America/Hermosillo', hour: '2-digit', minute: '2-digit' }) : (rawHoraEntrada || ''),
+  hora_salida: plain.hora_salida ? new Date(plain.hora_salida).toLocaleTimeString('es-MX', { timeZone: 'America/Hermosillo', hour: '2-digit', minute: '2-digit' }) : null,
+  fechaHora: rawHoraEntrada || (plain.created_at ? new Date(plain.created_at).toISOString() : new Date().toISOString()),
+  tipo: tipoFinal,
+  tipoAcceso: tipoFinal,
+  estado: plain.hora_salida ? 'Salida Registrada' : 'Dentro',
+  agenteNombre: plain.guardia?.nombre || 'Oficial en Caseta',
+  guardiaNombre: plain.guardia?.nombre || 'Oficial de Turno',
+  cabina: plain.caseta?.nombre || 'Caseta Principal'
+};
     });
 
-    res.json(resultado);
+res.json(resultado);
   } catch (error) {
-    console.error('Error al consultar bitácora:', error);
-    res.status(500).json({ error: 'Error al consultar bitácora de accesos', details: error.message });
-  }
+  console.error('Error al consultar bitácora:', error);
+  res.status(500).json({ error: 'Error al consultar bitácora de accesos', details: error.message });
+}
 });
 
 // POST /api/bitacora - Registrar entrada en caseta
@@ -197,6 +208,25 @@ router.post('/', async (req, res) => {
           error: 'El corbatín ya cuenta con una entrada activa pendiente de salida.',
           id_acceso_activo: accesoActivo.id_acceso
         });
+      }
+    }
+
+    // Validación de corbatín físico de visitante (1 al 30)
+    if (!esSalida && observaciones && String(observaciones).includes('[VISITANTE]')) {
+      const m = String(observaciones).match(/Corbat[íi]n:\s*#?([0-9]+)/i);
+      if (m && m[1]) {
+        const numVis = m[1];
+        const visitActivo = await db.BitacoraAcceso.findOne({
+          where: {
+            observaciones: { [db.Sequelize.Op.like]: `%[VISITANTE]%Corbatín: #${numVis}%` },
+            hora_salida: null
+          }
+        });
+        if (visitActivo) {
+          return res.status(400).json({
+            error: `El Corbatín de Visitante #${numVis} ya se encuentra asignado a un visitante dentro del complejo. Debe registrar su salida antes de volver a asignarlo.`
+          });
+        }
       }
     }
 
