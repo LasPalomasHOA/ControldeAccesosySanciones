@@ -91,13 +91,13 @@ router.get('/', async (req, res) => {
   try {
     await ensureColumnExists();
     let reglas = await db.ReglaReincidencia.findAll({ order: [['numero_falta', 'ASC']] });
-    
+
     if (!reglas || reglas.length === 0) {
       for (const d of DEFAULT_REGLAS) {
         await db.ReglaReincidencia.findOrCreate({
           where: { numero_falta: d.numero_falta },
           defaults: d
-        }).catch(() => {});
+        }).catch(() => { });
       }
       reglas = await db.ReglaReincidencia.findAll({ order: [['numero_falta', 'ASC']] });
     }

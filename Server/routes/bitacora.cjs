@@ -23,8 +23,8 @@ router.get('/', async (req, res) => {
       attributes: ['id_acceso', 'id_caseta', 'id_vehiculo', 'id_corbatin', 'id_conductor', 'id_usuario', 'fecha', 'hora_entrada', 'hora_salida', 'num_pasajeros', 'estatus_acceso', 'motivo_rechazo', 'ubicacion_trabajo', 'observaciones', 'created_at', 'updated_at'],
       include: [
         { model: db.Caseta, as: 'caseta', attributes: ['id_caseta', 'nombre'] },
-        { 
-          model: db.Vehiculo, 
+        {
+          model: db.Vehiculo,
           as: 'vehiculo',
           attributes: ['id_vehiculo', 'placas', 'marca', 'modelo', 'color'],
           include: [
@@ -32,13 +32,13 @@ router.get('/', async (req, res) => {
             { model: db.Corbatin, as: 'corbatines', attributes: ['id_corbatin', 'numero', 'estatus'] }
           ]
         },
-        { 
-          model: db.Corbatin, 
-          as: 'corbatin', 
-          attributes: ['id_corbatin', 'numero', 'estatus', 'tipos', 'empresa_nombre', 'telefono', 'vigencia_texto'] 
+        {
+          model: db.Corbatin,
+          as: 'corbatin',
+          attributes: ['id_corbatin', 'numero', 'estatus', 'tipos', 'empresa_nombre', 'telefono', 'vigencia_texto']
         },
-        { 
-          model: db.Trabajador, 
+        {
+          model: db.Trabajador,
           as: 'conductor',
           attributes: ['id_trabajador', 'nombre', 'apellidos', 'telefono'],
           include: [{ model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social', 'telefono'] }]
@@ -52,7 +52,7 @@ router.get('/', async (req, res) => {
       const plain = a.get({ plain: true });
       const isCorbatinVerde = (plain.corbatin?.tipos || '').toUpperCase() === 'VERDE' || Boolean(plain.observaciones && plain.observaciones.includes('CORBATÍN VERDE'));
       const empNombre = plain.corbatin?.empresa_nombre || plain.vehiculo?.empresa?.razon_social || plain.conductor?.empresa?.razon_social || '';
-      
+
       let conductorNombre = 'Conductor Acreditado';
       if (plain.conductor) {
         conductorNombre = `${plain.conductor.nombre} ${plain.conductor.apellidos}`;
@@ -141,15 +141,15 @@ router.get('/', async (req, res) => {
 // POST /api/bitacora - Registrar entrada en caseta
 router.post('/', async (req, res) => {
   try {
-    const { 
-      id_caseta, 
-      id_vehiculo, 
-      id_corbatin, 
-      id_conductor, 
-      id_usuario, 
-      estatus_acceso, 
-      motivo_rechazo, 
-      ubicacion_trabajo, 
+    const {
+      id_caseta,
+      id_vehiculo,
+      id_corbatin,
+      id_conductor,
+      id_usuario,
+      estatus_acceso,
+      motivo_rechazo,
+      ubicacion_trabajo,
       observaciones,
       num_pasajeros,
       tipo // 'entrada' | 'salida'
@@ -176,7 +176,7 @@ router.post('/', async (req, res) => {
       });
 
       if (accesoActivo) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: 'El vehículo ya se encuentra dentro de las instalaciones. Debe registrar su salida antes de registrar una nueva entrada.',
           id_acceso_activo: accesoActivo.id_acceso
         });
@@ -193,7 +193,7 @@ router.post('/', async (req, res) => {
       });
 
       if (accesoActivo) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: 'El corbatín ya cuenta con una entrada activa pendiente de salida.',
           id_acceso_activo: accesoActivo.id_acceso
         });
@@ -222,7 +222,7 @@ router.post('/', async (req, res) => {
         id_vehiculo: nuevoAcceso.id_vehiculo,
         tipo: esSalida ? 'salida' : 'entrada'
       });
-    } catch (e) {}
+    } catch (e) { }
 
     res.status(201).json(nuevoAcceso);
   } catch (error) {
@@ -245,7 +245,7 @@ router.put('/:id/salida', async (req, res) => {
       events.broadcastEvent('SALIDA_REGISTRADA', {
         id_acceso: acceso.id_acceso
       });
-    } catch (e) {}
+    } catch (e) { }
 
     res.json(acceso);
   } catch (error) {
