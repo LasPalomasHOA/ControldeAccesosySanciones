@@ -9310,7 +9310,7 @@ export default function App() {
                                         subtitle: `Placas: ${s.placas} · Empresa: ${s.empresaNombre}`,
                                         badge: "Vehículo Registrado"
                                       })}
-                                      className="cursor-pointer group relative overflow-hidden rounded-xl border-2 border-emerald-300 hover:border-[#0D6E5F] bg-white shadow-2xs transition-all h-28 sm:h-32 flex flex-col"
+                                      className="cursor-pointer group relative overflow-hidden rounded-xl border border-slate-200 hover:border-emerald-600 bg-white shadow-2xs transition-all h-28 sm:h-32 flex flex-col"
                                       title="Clic para ver fotografía de la unidad"
                                     >
                                       <div className="relative w-full flex-1 overflow-hidden bg-slate-100">
@@ -9326,9 +9326,12 @@ export default function App() {
                                           </span>
                                         </div>
                                       </div>
-                                      <div className="px-2 py-1 bg-emerald-50 border-t border-emerald-200 text-[10px] font-bold text-emerald-800 truncate flex items-center justify-between">
-                                        <span>🚗 Unidad</span>
-                                        <span className="font-mono font-semibold">{s.placas}</span>
+                                      <div className="px-2.5 py-1.5 bg-slate-50 border-t border-slate-200 text-[10px] font-bold text-slate-800 truncate flex items-center justify-between">
+                                        <span className="flex items-center gap-1.5 text-emerald-800">
+                                          <IconCar className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                                          <span>Unidad</span>
+                                        </span>
+                                        <span className="font-mono font-semibold text-slate-900 bg-white px-1.5 py-0.5 rounded border border-slate-200/80">{s.placas}</span>
                                       </div>
                                     </div>
                                   )}
@@ -9360,9 +9363,12 @@ export default function App() {
                                           </span>
                                         </div>
                                       </div>
-                                      <div className="px-2 py-1 bg-red-50 border-t border-red-200 text-[10px] font-bold text-red-800 truncate flex items-center justify-between">
-                                        <span>📸 Evidencia #{idx + 1}</span>
-                                        <span className="text-[9px] text-red-600 font-normal">Reporte</span>
+                                      <div className="px-2.5 py-1.5 bg-slate-50 border-t border-slate-200 text-[10px] font-bold text-slate-800 truncate flex items-center justify-between">
+                                        <span className="flex items-center gap-1.5 text-red-800">
+                                          <IconCamera className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                                          <span>Evidencia #{idx + 1}</span>
+                                        </span>
+                                        <span className="text-[9px] font-semibold text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200/80 uppercase tracking-wider">Reporte</span>
                                       </div>
                                     </div>
                                   ))}
@@ -9378,7 +9384,7 @@ export default function App() {
                                         subtitle: `Recurso #${s.id} · Placas: ${s.placas} (${s.empresaNombre})`,
                                         badge: "Apelación"
                                       })}
-                                      className="cursor-pointer group relative overflow-hidden rounded-xl border border-sky-300 hover:border-sky-500 bg-white shadow-2xs transition-all h-28 sm:h-32 flex flex-col"
+                                      className="cursor-pointer group relative overflow-hidden rounded-xl border border-slate-200 hover:border-sky-500 bg-white shadow-2xs transition-all h-28 sm:h-32 flex flex-col"
                                       title="Clic para ver fotografía de descargo"
                                     >
                                       <div className="relative w-full flex-1 overflow-hidden bg-slate-100">
@@ -9394,9 +9400,12 @@ export default function App() {
                                           </span>
                                         </div>
                                       </div>
-                                      <div className="px-2 py-1 bg-sky-50 border-t border-sky-200 text-[10px] font-bold text-sky-800 truncate flex items-center justify-between">
-                                        <span>📄 Prueba #{idx + 1}</span>
-                                        <span className="text-[9px] text-sky-600 font-normal">Apelación</span>
+                                      <div className="px-2.5 py-1.5 bg-slate-50 border-t border-slate-200 text-[10px] font-bold text-slate-800 truncate flex items-center justify-between">
+                                        <span className="flex items-center gap-1.5 text-sky-800">
+                                          <IconFileText className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                                          <span>Prueba #{idx + 1}</span>
+                                        </span>
+                                        <span className="text-[9px] font-semibold text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200/80 uppercase tracking-wider">Apelación</span>
                                       </div>
                                     </div>
                                   ))}
