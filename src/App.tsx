@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+﻿import { useState, useEffect, useRef, useMemo } from "react";
 import QRCode from "qrcode";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -12261,15 +12261,47 @@ export default function App() {
                     Validación en tiempo real de permisos, suspensiones disciplinarias HOA y tarjetones
                   </p>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200 shrink-0 flex-wrap">
                   <button
                     type="button"
-                    onClick={() => setShowQRScannerModal(true)}
-                    className="px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
-                    title="Abrir cámara para escanear código QR"
+                    onClick={() => setCasetaModoAcceso("vehicular")}
+                    className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${casetaModoAcceso === "vehicular"
+                      ? "bg-[#0D6E5F] text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                      }`}
                   >
-                    <IconCamera className="w-3.5 h-3.5 text-emerald-100" />
-                    <span>Escanear Código QR</span>
+                    <IconCar className="w-3.5 h-3.5" />
+                    <span>Contratista</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCasetaModoAcceso("visitante");
+                      setHoraActual();
+                    }}
+                    className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${casetaModoAcceso === "visitante"
+                      ? "bg-amber-600 text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                      }`}
+                  >
+                    <IconUser className="w-3.5 h-3.5" />
+                    <span>Visitante</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCasetaModoAcceso("peatonal");
+                      setHoraActual();
+                    }}
+                    className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${casetaModoAcceso === "peatonal"
+                      ? "bg-sky-700 text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                      }`}
+                  >
+                    <IconWalk className="w-3.5 h-3.5" />
+                    <span>A Pie</span>
                   </button>
                 </div>
               </div>
@@ -12353,47 +12385,15 @@ export default function App() {
                         </p>
                       </div>
 
-                      <div className="flex gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200 shrink-0 flex-wrap">
+                      <div className="flex items-center gap-2 shrink-0">
                         <button
                           type="button"
-                          onClick={() => setCasetaModoAcceso("vehicular")}
-                          className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${casetaModoAcceso === "vehicular"
-                            ? "bg-[#0D6E5F] text-white shadow-xs"
-                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
-                            }`}
+                          onClick={() => setShowQRScannerModal(true)}
+                          className="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                          title="Abrir cámara para escanear código QR"
                         >
-                          <IconCar className="w-3.5 h-3.5" />
-                          <span>Contratista</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCasetaModoAcceso("visitante");
-                            setHoraActual();
-                          }}
-                          className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${casetaModoAcceso === "visitante"
-                            ? "bg-amber-600 text-white shadow-xs"
-                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
-                            }`}
-                        >
-                          <IconUser className="w-3.5 h-3.5" />
-                          <span>Visitante</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCasetaModoAcceso("peatonal");
-                            setHoraActual();
-                          }}
-                          className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${casetaModoAcceso === "peatonal"
-                            ? "bg-sky-700 text-white shadow-xs"
-                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
-                            }`}
-                        >
-                          <IconWalk className="w-3.5 h-3.5" />
-                          <span>A Pie</span>
+                          <IconCamera className="w-3.5 h-3.5 text-emerald-100" />
+                          <span>Escanear Código QR</span>
                         </button>
                       </div>
                     </div>
@@ -13347,8 +13347,8 @@ export default function App() {
                                   type="button"
                                   onClick={() => setCasetaVisitanteCorbatin(String(num))}
                                   className={`h-9 rounded-lg font-mono font-bold text-xs flex flex-col items-center justify-center transition-all cursor-pointer ${isSelected
-                                      ? "bg-amber-600 text-white border-2 border-amber-700 shadow-sm scale-105 z-10"
-                                      : "bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 hover:border-amber-300"
+                                    ? "bg-amber-600 text-white border-2 border-amber-700 shadow-sm scale-105 z-10"
+                                    : "bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 hover:border-amber-300"
                                     }`}
                                   title={`Asignar corbatín #${num}`}
                                 >
@@ -13524,8 +13524,8 @@ export default function App() {
                             type="submit"
                             disabled={isSubmittingEntrada || !casetaVisitanteCorbatin}
                             className={`w-full h-11 rounded-xl text-sm font-bold text-white transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md ${isSubmittingEntrada || !casetaVisitanteCorbatin
-                                ? "bg-slate-400 cursor-not-allowed opacity-70"
-                                : "bg-gradient-to-r from-amber-600 to-amber-700 hover:brightness-105 active:scale-[0.99]"
+                              ? "bg-slate-400 cursor-not-allowed opacity-70"
+                              : "bg-gradient-to-r from-amber-600 to-amber-700 hover:brightness-105 active:scale-[0.99]"
                               }`}
                           >
                             {isSubmittingEntrada ? (
@@ -13784,8 +13784,8 @@ export default function App() {
                               <div
                                 key={item.id}
                                 className={`p-2.5 rounded-xl border transition-all flex items-center justify-between gap-2 text-xs shadow-2xs ${isVisitanteItem
-                                    ? "border-amber-200/80 bg-amber-50/40 hover:bg-amber-50/70"
-                                    : "border-slate-200 bg-slate-50/70 hover:bg-slate-50"
+                                  ? "border-amber-200/80 bg-amber-50/40 hover:bg-amber-50/70"
+                                  : "border-slate-200 bg-slate-50/70 hover:bg-slate-50"
                                   }`}
                               >
                                 <div className="min-w-0 flex-1">
@@ -13795,8 +13795,8 @@ export default function App() {
                                     </span>
                                     {item.corbatinNum && item.corbatinNum !== "—" && (
                                       <span className={`px-1.5 py-0.2 rounded font-mono font-bold text-[9px] ${isVisitanteItem
-                                          ? "bg-amber-600 text-white"
-                                          : "bg-teal-800 text-white"
+                                        ? "bg-amber-600 text-white"
+                                        : "bg-teal-800 text-white"
                                         }`}>
                                         {item.corbatinNum.startsWith("#") ? item.corbatinNum : `#${item.corbatinNum}`}
                                       </span>
