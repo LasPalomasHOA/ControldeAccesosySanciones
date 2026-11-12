@@ -18,7 +18,7 @@ router.get('/', async (req, res) => {
       where,
       limit: 100,
       include: [
-        { model: db.Vehiculo, as: 'vehiculo', attributes: ['id_vehiculo', 'placas', 'marca', 'modelo', 'color', 'estatus_acceso'] },
+        { model: db.Vehiculo, as: 'vehiculo', attributes: ['id_vehiculo', 'placas', 'marca', 'modelo', 'color', 'estatus_acceso', 'foto_url'] },
         { model: db.Empresa, as: 'empresa', attributes: ['id_empresa', 'razon_social', 'telefono', 'correo'] },
         { model: db.ReglaReincidencia, as: 'regla' },
         {
@@ -221,7 +221,8 @@ router.get('/', async (req, res) => {
           return Array.from(new Set(list)).filter(Boolean);
         })(),
         apelacion: apelacionObj,
-        resolucionOficina: resolucionOficina
+        resolucionOficina: resolucionOficina,
+        vehiculoFoto: plain.vehiculo?.foto_url || ''
       };
     });
 

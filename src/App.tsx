@@ -694,6 +694,7 @@ interface Sancion {
   descripcion: string;
   evidenciaUrl?: string;
   evidencias?: string[];
+  vehiculoFoto?: string;
   apelacion?: {
     fecha: string;
     argumentos: string;
@@ -701,6 +702,7 @@ interface Sancion {
     estado: "Pendiente" | "Aprobada" | "Rechazada";
     dictamenSupervisor?: string;
     fechaDictamen?: string;
+    evidencias?: string[];
   };
   resolucionOficina?: ResolucionCastigoOficina;
 }
@@ -3088,6 +3090,7 @@ export default function App() {
             descripcion: descClean || "Infracción detectada en campo y documentada por seguridad",
             evidenciaUrl: repEvidenciaUrl || (cleanEvidencias.length > 0 ? cleanEvidencias[0] : undefined),
             evidencias: cleanEvidencias,
+            vehiculoFoto: s.vehiculoFoto || s.vehiculo?.foto_url || s.vehiculo?.foto || undefined,
             apelacion: s.apelacion || undefined,
             resolucionOficina: s.resolucionOficina || undefined,
           };
@@ -3582,6 +3585,7 @@ export default function App() {
             descripcion: descClean || "Infracción detectada en campo y documentada por seguridad",
             evidenciaUrl: repEvidenciaUrl || (cleanEvidencias.length > 0 ? cleanEvidencias[0] : undefined),
             evidencias: cleanEvidencias,
+            vehiculoFoto: s.vehiculoFoto || s.vehiculo?.foto_url || s.vehiculo?.foto || undefined,
             apelacion: s.apelacion || undefined,
             resolucionOficina: s.resolucionOficina || undefined,
           };
@@ -9208,60 +9212,199 @@ export default function App() {
                       <p className="text-xs text-slate-500 mt-1">No hay recursos de reconsideración pendientes de dictamen por parte de los contratistas.</p>
                     </div>
                   ) : (
-                    sanciones.filter(s => s.status === "En Apelación").map((s) => (
-                      <div
-                        key={s.id}
-                        className="rounded-2xl border bg-white shadow-sm overflow-hidden border-sky-300 ring-1 ring-sky-100 hover:shadow-md transition-shadow"
-                      >
-                        {/* Cabecera del Recurso */}
-                        <div className="px-5 py-3.5 border-b bg-sky-50/80 flex flex-wrap items-center justify-between gap-3">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-xl bg-sky-600 text-white shrink-0">
-                              <IconMessageSquare className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-mono font-bold text-xs text-sky-900 bg-sky-100/90 px-2 py-0.5 rounded-lg border border-sky-200">
-                                  Recurso de Apelación #{s.id}
-                                </span>
-                                <span className="text-xs text-sky-700 font-medium">
-                                  • Interpuesto: {s.apelacion?.fecha || s.fecha}
-                                </span>
-                              </div>
-                              <h4 className="font-bold text-sm text-slate-900 mt-0.5">{s.tipo}</h4>
-                            </div>
-                          </div>
-                          <span className="text-xs font-bold px-3 py-1 rounded-full bg-sky-100 text-sky-800 border border-sky-300 flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
-                            <span>Pendiente de Dictamen</span>
-                          </span>
-                        </div>
+                    sanciones.filter(s => s.status === "En Apelación").map((s) => {
+                      const normPlaca = (s.placas || "").replace(/[-\s]/g, "").toUpperCase();
+                      const vehMatch = vehicles.find(v => (v.placas && v.placas.replace(/[-\s]/g, "").toUpperCase() === normPlaca) || (v.id && s.vehicleId && String(v.id) === String(s.vehicleId)));
+                      const fotoVehiculo = s.vehiculoFoto || vehMatch?.foto || (s as any).vehiculo?.foto_url || "";
 
-                        {/* Contenido del Recurso */}
-                        <div className="p-5 sm:p-6 space-y-4">
-                          {/* Datos Originales */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
-                              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                                <IconShield className="w-3.5 h-3.5 text-red-500" />
-                                <span>Infracción Original & Sanción</span>
-                              </div>
-                              <div className="text-xs font-bold text-red-700">{s.medidaDisciplinaria}</div>
-                              <div className="text-xs text-slate-600 leading-relaxed mt-1">{s.descripcion}</div>
-                            </div>
+                      const repMatch = infraccionesPendientes.find(inf => (s.id_reporte && String(inf.id) === String(s.id_reporte)) || (inf.placas && inf.placas.replace(/[-\s]/g, "").toUpperCase() === normPlaca && inf.evidencias && inf.evidencias.length > 0));
 
-                            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5 text-xs">
-                              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                                <IconCar className="w-3.5 h-3.5 text-slate-600" />
-                                <span>Unidad y Representante Legal</span>
+                      const rawEvidencias = (s.evidencias && s.evidencias.length > 0)
+                        ? s.evidencias
+                        : (s.evidenciaUrl ? [s.evidenciaUrl] : (repMatch?.evidencias || []));
+                      const fotosEvidencia = Array.from(new Set(rawEvidencias.filter(Boolean)));
+                      const fotosApelacion = Array.isArray(s.apelacion?.evidencias) ? s.apelacion.evidencias.filter(Boolean) : [];
+                      const totalFotos = fotosEvidencia.length + (fotoVehiculo ? 1 : 0) + fotosApelacion.length;
+
+                      return (
+                        <div
+                          key={s.id}
+                          className="rounded-2xl border bg-white shadow-sm overflow-hidden border-sky-300 ring-1 ring-sky-100 hover:shadow-md transition-shadow"
+                        >
+                          {/* Cabecera del Recurso */}
+                          <div className="px-5 py-3.5 border-b bg-sky-50/80 flex flex-wrap items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 rounded-xl bg-sky-600 text-white shrink-0">
+                                <IconMessageSquare className="w-4 h-4" />
                               </div>
-                              <div><strong>Empresa:</strong> <span className="text-slate-800">{s.empresaNombre}</span></div>
-                              <div><strong>Placas:</strong> <span className="font-mono font-bold text-slate-900">{s.placas}</span></div>
-                              <div><strong>Representante Acreditado:</strong> <span className="text-slate-700">{s.apelacion?.representante || "Representante de la empresa"}</span></div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono font-bold text-xs text-sky-900 bg-sky-100/90 px-2 py-0.5 rounded-lg border border-sky-200">
+                                    Recurso de Apelación #{s.id}
+                                  </span>
+                                  <span className="text-xs text-sky-700 font-medium">
+                                    • Interpuesto: {s.apelacion?.fecha || s.fecha}
+                                  </span>
+                                </div>
+                                <h4 className="font-bold text-sm text-slate-900 mt-0.5">{s.tipo}</h4>
+                              </div>
                             </div>
+                            <span className="text-xs font-bold px-3 py-1 rounded-full bg-sky-100 text-sky-800 border border-sky-300 flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
+                              <span>Pendiente de Dictamen</span>
+                            </span>
                           </div>
 
-                          {/* Argumentos de Aclaración */}
+                          {/* Contenido del Recurso */}
+                          <div className="p-5 sm:p-6 space-y-4">
+                            {/* Datos Originales */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                                  <IconShield className="w-3.5 h-3.5 text-red-500" />
+                                  <span>Infracción Original & Sanción</span>
+                                </div>
+                                <div className="text-xs font-bold text-red-700">{s.medidaDisciplinaria}</div>
+                                <div className="text-xs text-slate-600 leading-relaxed mt-1">{s.descripcion}</div>
+                              </div>
+
+                              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5 text-xs">
+                                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                                  <IconCar className="w-3.5 h-3.5 text-slate-600" />
+                                  <span>Unidad y Representante Legal</span>
+                                </div>
+                                <div><strong>Empresa:</strong> <span className="text-slate-800">{s.empresaNombre}</span></div>
+                                <div><strong>Placas:</strong> <span className="font-mono font-bold text-slate-900">{s.placas}</span></div>
+                                <div><strong>Representante Acreditado:</strong> <span className="text-slate-700">{s.apelacion?.representante || "Representante de la empresa"}</span></div>
+                              </div>
+                            </div>
+
+                            {/* Galería de Fotografías: Reporte, Sanción y Unidad */}
+                            <div className="p-4 rounded-xl bg-slate-50/90 border border-slate-200/90 space-y-3">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                                  <IconCamera className="w-3.5 h-3.5 text-[#0D6E5F]" />
+                                  <span>Fotografías del Reporte, Sanción y Unidad ({totalFotos})</span>
+                                </div>
+                                {totalFotos > 0 && (
+                                  <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
+                                    Clic en cualquier imagen para ampliar en alta definición
+                                  </span>
+                                )}
+                              </div>
+
+                              {totalFotos === 0 ? (
+                                <div className="p-3.5 bg-white rounded-lg border border-slate-200 text-center text-xs text-slate-500 italic flex items-center justify-center gap-2">
+                                  <IconCamera className="w-4 h-4 text-slate-400" />
+                                  <span>Sin fotografías adjuntas en el reporte o en el registro de la unidad.</span>
+                                </div>
+                              ) : (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                                  {/* Fotografía de la Unidad Vehicular Registrada */}
+                                  {fotoVehiculo && (
+                                    <div
+                                      onClick={() => setGenericImagePreview({
+                                        isOpen: true,
+                                        src: fotoVehiculo,
+                                        title: `Unidad Vehicular: ${vehMatch?.marca || ""} ${vehMatch?.modelo || ""}`.trim() || `Placas ${s.placas}`,
+                                        subtitle: `Placas: ${s.placas} · Empresa: ${s.empresaNombre}`,
+                                        badge: "Vehículo Registrado"
+                                      })}
+                                      className="cursor-pointer group relative overflow-hidden rounded-xl border-2 border-emerald-300 hover:border-[#0D6E5F] bg-white shadow-2xs transition-all h-28 sm:h-32 flex flex-col"
+                                      title="Clic para ver fotografía de la unidad"
+                                    >
+                                      <div className="relative w-full flex-1 overflow-hidden bg-slate-100">
+                                        <img
+                                          src={fotoVehiculo}
+                                          alt="Vehículo"
+                                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                        />
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 flex items-center justify-center transition-colors">
+                                          <span className="opacity-0 group-hover:opacity-100 text-[10px] font-bold bg-white/95 text-slate-800 px-2 py-0.5 rounded-md shadow-sm transition-opacity flex items-center gap-1">
+                                            <IconEye className="w-3 h-3 text-[#0D6E5F]" />
+                                            <span>Ampliar</span>
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="px-2 py-1 bg-emerald-50 border-t border-emerald-200 text-[10px] font-bold text-emerald-800 truncate flex items-center justify-between">
+                                        <span>🚗 Unidad</span>
+                                        <span className="font-mono font-semibold">{s.placas}</span>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Fotografías de la Evidencia del Reporte en Campo */}
+                                  {fotosEvidencia.map((foto, idx) => (
+                                    <div
+                                      key={`evidencia-${idx}`}
+                                      onClick={() => setGenericImagePreview({
+                                        isOpen: true,
+                                        src: foto,
+                                        title: `Evidencia Fotográfica de la Infracción #${idx + 1}`,
+                                        subtitle: `Infracción: ${s.tipo} · Placas: ${s.placas} (${s.empresaNombre})`,
+                                        badge: `Reporte #${s.id_reporte || s.id}`
+                                      })}
+                                      className="cursor-pointer group relative overflow-hidden rounded-xl border border-slate-200 hover:border-red-400 bg-white shadow-2xs transition-all h-28 sm:h-32 flex flex-col"
+                                      title="Clic para ver fotografía de la infracción"
+                                    >
+                                      <div className="relative w-full flex-1 overflow-hidden bg-slate-100">
+                                        <img
+                                          src={foto}
+                                          alt={`Evidencia ${idx + 1}`}
+                                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                        />
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 flex items-center justify-center transition-colors">
+                                          <span className="opacity-0 group-hover:opacity-100 text-[10px] font-bold bg-white/95 text-slate-800 px-2 py-0.5 rounded-md shadow-sm transition-opacity flex items-center gap-1">
+                                            <IconEye className="w-3 h-3 text-red-600" />
+                                            <span>Ampliar</span>
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="px-2 py-1 bg-red-50 border-t border-red-200 text-[10px] font-bold text-red-800 truncate flex items-center justify-between">
+                                        <span>📸 Evidencia #{idx + 1}</span>
+                                        <span className="text-[9px] text-red-600 font-normal">Reporte</span>
+                                      </div>
+                                    </div>
+                                  ))}
+
+                                  {/* Fotografías adjuntas al recurso de apelación si las hay */}
+                                  {fotosApelacion.map((foto, idx) => (
+                                    <div
+                                      key={`apelacion-foto-${idx}`}
+                                      onClick={() => setGenericImagePreview({
+                                        isOpen: true,
+                                        src: foto,
+                                        title: `Prueba Adjunta por Contratista #${idx + 1}`,
+                                        subtitle: `Recurso #${s.id} · Placas: ${s.placas} (${s.empresaNombre})`,
+                                        badge: "Apelación"
+                                      })}
+                                      className="cursor-pointer group relative overflow-hidden rounded-xl border border-sky-300 hover:border-sky-500 bg-white shadow-2xs transition-all h-28 sm:h-32 flex flex-col"
+                                      title="Clic para ver fotografía de descargo"
+                                    >
+                                      <div className="relative w-full flex-1 overflow-hidden bg-slate-100">
+                                        <img
+                                          src={foto}
+                                          alt={`Prueba Apelación ${idx + 1}`}
+                                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                        />
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 flex items-center justify-center transition-colors">
+                                          <span className="opacity-0 group-hover:opacity-100 text-[10px] font-bold bg-white/95 text-slate-800 px-2 py-0.5 rounded-md shadow-sm transition-opacity flex items-center gap-1">
+                                            <IconEye className="w-3 h-3 text-sky-600" />
+                                            <span>Ampliar</span>
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="px-2 py-1 bg-sky-50 border-t border-sky-200 text-[10px] font-bold text-sky-800 truncate flex items-center justify-between">
+                                        <span>📄 Prueba #{idx + 1}</span>
+                                        <span className="text-[9px] text-sky-600 font-normal">Apelación</span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Argumentos de Aclaración */}
                           <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200/90 text-xs space-y-1.5">
                             <div className="text-amber-900 font-bold uppercase flex items-center gap-1.5">
                               <IconMessageSquare className="w-4 h-4 text-amber-700" />
@@ -9313,8 +9456,9 @@ export default function App() {
                           </div>
                         </div>
                       </div>
-                    ))
-                  )}
+                    );
+                  })
+                )}
                 </div>
               )}
 
