@@ -1955,6 +1955,9 @@ export default function App() {
   const [hasShownAutoOvertimeModal, setHasShownAutoOvertimeModal] = useState<Record<string, boolean>>({});
   const [isProcessingOvertimeAction, setIsProcessingOvertimeAction] = useState(false);
 
+  // Modal con los datos completos de un acceso al presionar en bitácora
+  const [selectedDetalleAcceso, setSelectedDetalleAcceso] = useState<RegistroCaseta | null>(null);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTimeTicker(Date.now());
@@ -14242,7 +14245,7 @@ export default function App() {
                             const isMarcando = Boolean(marcandoSalidaIds[item.id]);
                             const isVisitanteItem = item.empresaNombre === "Visitante" || (item as any).tipo === "Visitante" || item.tipoAcceso === "Visitante" || String(item.observaciones).includes("[VISITANTE]");
                             const isCorbatinVerde = item.tipoCorbatin === "VERDE" || item.tipoAcceso === "Corbatín Verde" || (item as any).tipo === "Corbatín Verde" || String(item.observaciones).includes("[CORBATÍN VERDE");
-                            const isPeatonalItem = !isVisitanteItem && (item.tipoAcceso === "Peatonal" || (item as any).tipo === "Peatonal" || item.placas === "PEATONAL" || item.placas === "PEATONAL (A PIE)" || (!item.id_vehiculo && !item.placas) || String(item.observaciones).includes("Peatonal ["));
+                            const isPeatonalItem = !isVisitanteItem && (item.tipoAcceso === "Peatonal" || (item as any).tipo === "Peatonal" || item.placas === "PEATONAL" || item.placas === "PEATONAL (A PIE)" || (!(item as any).id_vehiculo && !item.placas) || String(item.observaciones).includes("Peatonal ["));
                             const isContratistaNormal = !isVisitanteItem && !isCorbatinVerde && !isPeatonalItem;
 
                             const cardBorderBg = isVisitanteItem
@@ -14264,7 +14267,9 @@ export default function App() {
                             return (
                               <div
                                 key={item.id}
-                                className={`p-2.5 rounded-xl border transition-all flex items-center justify-between gap-2 text-xs shadow-2xs ${cardBorderBg}`}
+                                onClick={() => setSelectedDetalleAcceso(item)}
+                                className={`p-2.5 rounded-xl border transition-all flex items-center justify-between gap-2 text-xs shadow-2xs cursor-pointer hover:shadow-xs active:scale-[0.99] ${cardBorderBg}`}
+                                title="Clic para ver los datos completos de este acceso"
                               >
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -14309,7 +14314,10 @@ export default function App() {
                                   {isDentro ? (
                                     <button
                                       type="button"
-                                      onClick={() => handleMarcarSalida(item.id)}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleMarcarSalida(item.id);
+                                      }}
                                       disabled={isMarcando}
                                       title="Registrar salida de este vehículo"
                                       className="px-2.5 py-1 rounded-lg text-[10px] font-bold text-white bg-red-600 hover:bg-red-700 active:scale-95 transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50 shadow-2xs"
@@ -14523,8 +14531,15 @@ export default function App() {
                               const horaSalidaLimpia = b.horaSalida ? formatHoraLocal(b.horaSalida) : "";
 
                               return (
-                                <tr key={b.id} className="hover:bg-slate-50 transition-colors">
-                                  <td className="px-1.5 py-2.5 font-mono text-xs font-bold text-slate-700 text-center truncate">{b.id}</td>
+                                <tr
+                                  key={b.id}
+                                  onClick={() => setSelectedDetalleAcceso(b)}
+                                  className="hover:bg-slate-100/80 transition-colors cursor-pointer group"
+                                  title="Clic para ver todos los datos completos de este acceso"
+                                >
+                                  <td className="px-1.5 py-2.5 font-mono text-xs font-bold text-slate-700 text-center truncate group-hover:text-[#0D6E5F]">
+                                    {b.id}
+                                  </td>
                                   <td className="px-1 py-2.5 text-center">
                                     {(b as any).tipo === "Visitante" || b.tipoAcceso === "Visitante" || b.empresaNombre === "Visitante" || String(b.observaciones).includes("[VISITANTE]") ? (
                                       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-300">
@@ -14561,7 +14576,10 @@ export default function App() {
                                   <td className="px-2.5 py-2.5 text-xs text-slate-700 font-medium">
                                     <div className="truncate font-semibold text-slate-800" title={b.conductor}>{b.conductor}</div>
                                     {b.telefono && (
-                                      <div className="text-[10px] text-slate-400 font-mono truncate">
+                                      <div
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="text-[10px] text-slate-400 font-mono truncate"
+                                      >
                                         <CopyableInlineText text={b.telefono} label="Teléfono" onCopyToast={showToast} />
                                       </div>
                                     )}
@@ -14609,7 +14627,8 @@ export default function App() {
                                         return (
                                           <button
                                             type="button"
-                                            onClick={() => {
+                                            onClick={(e) => {
+                                              e.stopPropagation();
                                               setIsOvertimeModalExpanded(true);
                                               setSelectedOvertimeContractor(exc);
                                             }}
@@ -14626,7 +14645,10 @@ export default function App() {
                                     {b.estado === "Dentro" ? (
                                       <button
                                         type="button"
-                                        onClick={() => handleMarcarSalida(b.id)}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleMarcarSalida(b.id);
+                                        }}
                                         disabled={Boolean(marcandoSalidaIds[b.id])}
                                         className={`w-full py-1 text-[11px] font-bold rounded-lg bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 cursor-pointer flex items-center justify-center gap-1 shadow-sm transition-all whitespace-nowrap ${marcandoSalidaIds[b.id] ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
                                           }`}
@@ -18793,6 +18815,283 @@ export default function App() {
         isProcessing={isProcessingOvertimeAction}
         initialExpanded={isOvertimeModalExpanded}
       />
+
+      {/* ─── MODAL DE DETALLE COMPLETO DE ACCESO (AL PRESIONAR EN BITÁCORA) ─── */}
+      {selectedDetalleAcceso && (() => {
+        const b = selectedDetalleAcceso;
+        const isVisitante = b.empresaNombre === "Visitante" || (b as any).tipo === "Visitante" || b.tipoAcceso === "Visitante" || String(b.observaciones).includes("[VISITANTE]");
+        const isPeatonal = !isVisitante && (b.tipoAcceso === "Peatonal" || (b as any).tipo === "Peatonal" || b.placas === "PEATONAL" || b.placas === "PEATONAL (A PIE)" || (!(b as any).id_vehiculo && !b.placas) || String(b.observaciones).includes("Peatonal ["));
+        const isCorbatinVerde = !isVisitante && !isPeatonal && (b.tipoCorbatin === "VERDE" || b.tipoAcceso === "Corbatín Verde" || (b as any).tipo === "Corbatín Verde" || String(b.observaciones).includes("[CORBATÍN VERDE"));
+        const isContratistaNormal = !isVisitante && !isPeatonal && !isCorbatinVerde;
+
+        // Cruzar con la lista de visitantes si aplica
+        const visMatch = isVisitante ? visitantesList.find(v => 
+          (v.id_bitacora && String(v.id_bitacora) === String(b.id)) ||
+          (v.placas && b.placas && v.placas.toUpperCase() === b.placas.toUpperCase() && (v.fecha === b.fecha || !v.fecha))
+        ) : null;
+
+        const obs = String(b.observaciones || "");
+        const parseObs = (tag: string) => {
+          const m = obs.match(new RegExp(`${tag}:\\s*([^|\\]]+)`, "i"));
+          return m && m[1] ? m[1].trim() : "";
+        };
+
+        const choferNom = visMatch?.nombre_conductor || parseObs("Chofer") || b.conductor || "Visitante";
+        const marcaVal = visMatch?.marca || parseObs("Marca") || "";
+        const modeloVal = visMatch?.modelo || parseObs("Modelo") || "";
+        const anioVal = visMatch?.año || visMatch?.anio || parseObs("Año") || parseObs("Anio") || "";
+        const colorVal = visMatch?.color || parseObs("Color") || b.color || "";
+        const placasVal = b.placas || visMatch?.placas || parseObs("Placas") || "—";
+        const destinoVal = visMatch?.destino || parseObs("Destino") || b.trabajos || "Acceso regular";
+        const pasajerosVal = b.num_pasajeros ?? (visMatch?.pasajeros ?? 0);
+        const notaObs = parseObs("Obs") || (isVisitante ? "" : b.observaciones) || "";
+
+        const horaEntradaLimpia = formatHoraLocal(b.horaEntrada);
+        const horaSalidaLimpia = b.horaSalida ? formatHoraLocal(b.horaSalida) : "";
+        const fechaVal = b.fecha || (b.created_at ? new Date(b.created_at).toLocaleDateString("es-MX") : "Hoy");
+
+        const corbNumDisplay = b.corbatinNum && b.corbatinNum !== "—"
+          ? (b.corbatinNum.startsWith("#") ? b.corbatinNum : `#${b.corbatinNum}`)
+          : (visMatch?.corbatin_num ? `#${visMatch.corbatin_num}` : (parseObs("Corbatín") ? `#${parseObs("Corbatín")}` : "—"));
+
+        const modConfig = isVisitante
+          ? { label: "Visitante", corbBg: "bg-blue-600 text-white", tagBg: "bg-blue-50 text-blue-800 border-blue-200", icon: <IconUser className="w-5 h-5" />, headerBg: "from-blue-600 to-indigo-700" }
+          : isCorbatinVerde
+          ? { label: "Corbatín Verde", corbBg: "bg-emerald-600 text-white", tagBg: "bg-emerald-50 text-emerald-800 border-emerald-200", icon: <IconCar className="w-5 h-5" />, headerBg: "from-emerald-700 to-teal-800" }
+          : isPeatonal
+          ? { label: "Personal Peatonal (A Pie)", corbBg: "bg-purple-600 text-white", tagBg: "bg-purple-50 text-purple-800 border-purple-200", icon: <IconWalk className="w-5 h-5" />, headerBg: "from-purple-700 to-purple-900" }
+          : { label: "Contratista Acreditado", corbBg: "bg-orange-500 text-white", tagBg: "bg-orange-50 text-orange-800 border-orange-200", icon: <IconCar className="w-5 h-5" />, headerBg: "from-amber-600 to-orange-700" };
+
+        return (
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-150"
+            onClick={() => setSelectedDetalleAcceso(null)}
+          >
+            <div 
+              className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className={`p-4 sm:p-5 bg-gradient-to-r ${modConfig.headerBg} text-white flex items-start justify-between gap-3 shadow-sm`}>
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-2xl bg-white/15 backdrop-blur-md text-white shadow-2xs">
+                    {modConfig.icon}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-mono font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-md">
+                        Folio #{b.id}
+                      </span>
+                      <span className="text-xs font-semibold text-white/90">
+                        {modConfig.label}
+                      </span>
+                    </div>
+                    <h3 className="text-base sm:text-lg font-bold text-white mt-0.5 truncate max-w-[280px] sm:max-w-[340px]">
+                      {choferNom}
+                    </h3>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedDetalleAcceso(null)}
+                  className="p-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white cursor-pointer transition-colors"
+                  title="Cerrar ventana"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Contenido Completo */}
+              <div className="p-4 sm:p-5 overflow-y-auto space-y-3.5 text-xs">
+                
+                {/* Corbatín y Estatus */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Corbatín Asignado</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-xl text-sm font-mono font-black shadow-2xs ${modConfig.corbBg}`}>
+                        {corbNumDisplay}
+                      </span>
+                      <span className="text-[11px] font-semibold text-slate-600 truncate">
+                        {isVisitante ? "Badge Físico" : isCorbatinVerde ? "Corbatín Verde" : isPeatonal ? "A Pie" : "Contratista"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Estatus de Acceso</span>
+                    <div className="mt-1">
+                      <StatusBadge status={b.estado} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Persona y Empresa */}
+                <div className="p-3.5 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-2.5">
+                  <div className="text-[11px] font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
+                    <IconUser className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Datos del Chofer / Colaborador</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-slate-700">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-medium">Nombre:</span>
+                      <span className="font-bold text-slate-900 text-xs">{choferNom}</span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-medium">Empresa:</span>
+                      <span className="font-semibold text-slate-800 text-xs">{b.empresaNombre || "Particular / Visita"}</span>
+                    </div>
+
+                    {b.telefono && (
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Teléfono:</span>
+                        <div className="font-mono text-xs font-semibold text-[#0D6E5F]">
+                          <CopyableInlineText text={b.telefono} label="Teléfono" onCopyToast={showToast} />
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-medium">Pasajeros Acompañantes:</span>
+                      <span className="font-semibold text-slate-800 text-xs">
+                        {pasajerosVal > 0 ? `+${pasajerosVal} persona(s) adicional(es)` : "0 (Solo el chofer)"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Vehículo */}
+                {!isPeatonal && (
+                  <div className="p-3.5 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-2.5">
+                    <div className="text-[11px] font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
+                      <IconCar className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Datos del Vehículo</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-slate-700">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Placas:</span>
+                        <span className="font-mono font-extrabold text-slate-900 text-xs bg-slate-100 px-2 py-0.5 rounded border border-slate-200 inline-block mt-0.5">
+                          {placasVal}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Marca:</span>
+                        <span className="font-semibold text-slate-800 text-xs">{marcaVal || "—"}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Modelo / Año:</span>
+                        <span className="font-semibold text-slate-800 text-xs">
+                          {modeloVal ? `${modeloVal} ${anioVal ? `(${anioVal})` : ""}` : (anioVal || "—")}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Color:</span>
+                        <span className="font-semibold text-slate-800 text-xs">{colorVal || "—"}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tiempos & Destino */}
+                <div className="p-3.5 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-2.5">
+                  <div className="text-[11px] font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
+                    <IconClock className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Registro de Tiempos y Ubicación</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-slate-700">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-medium">Fecha:</span>
+                      <span className="font-semibold text-slate-800 font-mono text-xs">{fechaVal}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-medium">Hora Entrada:</span>
+                      <span className="font-bold text-emerald-700 font-mono text-xs bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block">
+                        {horaEntradaLimpia || "—"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-medium">Hora Salida:</span>
+                      {horaSalidaLimpia ? (
+                        <span className="font-bold text-slate-700 font-mono text-xs bg-slate-100 px-2 py-0.5 rounded border border-slate-200 inline-block">
+                          {horaSalidaLimpia}
+                        </span>
+                      ) : (
+                        <span className="font-bold text-amber-700 font-mono text-xs bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-block">
+                          Actualmente Dentro
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-medium">Destino / Trabajos Autorizados:</span>
+                    <p className="text-xs font-semibold text-slate-800 bg-slate-50 p-2 rounded-xl border border-slate-100 mt-0.5">
+                      {destinoVal}
+                    </p>
+                  </div>
+
+                  {b.guardiaNombre && (
+                    <div className="flex items-center gap-1.5 text-[11px] text-slate-500 pt-0.5">
+                      <IconShield className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Oficial en Caseta: <strong>{b.guardiaNombre}</strong></span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Observaciones */}
+                {notaObs && (
+                  <div className="p-3 rounded-2xl bg-amber-50/60 border border-amber-200 text-slate-700 text-xs">
+                    <span className="font-bold text-amber-900 block text-[11px] mb-0.5">Notas / Observaciones:</span>
+                    <p className="text-slate-800">{notaObs}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="p-3.5 sm:p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedDetalleAcceso(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-200 border border-slate-300 transition-colors cursor-pointer"
+                >
+                  Cerrar
+                </button>
+
+                {b.estado === "Dentro" && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await handleMarcarSalida(b.id);
+                      setSelectedDetalleAcceso((prev) => prev ? { ...prev, estado: "Salida Registrada", horaSalida: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }) } : null);
+                    }}
+                    disabled={Boolean(marcandoSalidaIds[b.id])}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 shadow-sm flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-60"
+                  >
+                    {marcandoSalidaIds[b.id] ? (
+                      <>
+                        <IconSpinner className="w-3.5 h-3.5 animate-spin" />
+                        <span>Registrando Salida...</span>
+                      </>
+                    ) : (
+                      <>
+                        <IconLogOut className="w-3.5 h-3.5" />
+                        <span>Registrar Salida de Caseta</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ─── TOAST NOTIFICATIONS OVERLAY ─── */}
       <ToastContainer toasts={toasts} onClose={removeToast} />
