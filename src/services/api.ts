@@ -349,5 +349,26 @@ export const api = {
     }
     const res = await authFetch(`${API_BASE_URL}/seed`, { method: 'POST', headers });
     return handleResponse(res);
+  },
+
+  // 13. Visitantes
+  async getVisitantes() {
+    const res = await authFetch(`${API_BASE_URL}/visitantes`);
+    return handleResponse(res);
+  },
+  async crearVisitante(data: any) {
+    const res = await authFetch(`${API_BASE_URL}/visitantes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+  async registrarSalidaVisitante(id: string | number) {
+    const res = await authFetch(`${API_BASE_URL}/visitantes/${id}/salida`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return handleResponse(res);
   }
 };

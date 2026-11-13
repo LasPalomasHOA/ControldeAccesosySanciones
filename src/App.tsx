@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import QRCode from "qrcode";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -554,7 +554,7 @@ function BlurredBackdropImageFrame({
 
 type UserRole = "admin" | "supervisor" | "contratista" | "caseta" | "contabilidad";
 type PortalScreen = "reglamento" | "dashboard" | "alta" | "trabajadores" | "sanciones" | "consulta_reglamento";
-type SupervisorTab = "bandeja" | "apelaciones" | "sanciones_activas" | "proveedores" | "guardias" | "historial" | "reglamento" | "corbatines" | "corbatines_verdes";
+type SupervisorTab = "bandeja" | "apelaciones" | "sanciones_activas" | "proveedores" | "guardias" | "visitantes" | "historial" | "reglamento" | "corbatines" | "corbatines_verdes";
 type AdminTab = "administradores" | "supervisores" | "auditoria";
 type CasetaTab = "registro" | "bitacora";
 
@@ -2233,13 +2233,19 @@ export default function App() {
   const [supervisorCorbatinStatusFilter, setSupervisorCorbatinStatusFilter] = useState<string>("all");
   const [casetaModoAcceso, setCasetaModoAcceso] = useState<"vehicular" | "visitante" | "peatonal">("vehicular");
   const [casetaVisitanteConductor, setCasetaVisitanteConductor] = useState("");
-  const [casetaVisitanteVehiculo, setCasetaVisitanteVehiculo] = useState("");
+  const [casetaVisitanteMarca, setCasetaVisitanteMarca] = useState("");
   const [casetaVisitanteModelo, setCasetaVisitanteModelo] = useState("");
+  const [casetaVisitanteAnio, setCasetaVisitanteAnio] = useState("");
   const [casetaVisitantePlacas, setCasetaVisitantePlacas] = useState("");
+  const [casetaVisitanteColor, setCasetaVisitanteColor] = useState("");
   const [casetaVisitanteCorbatin, setCasetaVisitanteCorbatin] = useState("");
   const [casetaVisitanteDestino, setCasetaVisitanteDestino] = useState("");
   const [casetaVisitantePasajeros, setCasetaVisitantePasajeros] = useState("");
   const [casetaVisitanteObservaciones, setCasetaVisitanteObservaciones] = useState("");
+  const [visitantesList, setVisitantesList] = useState<any[]>([]);
+  const [isLoadingVisitantes, setIsLoadingVisitantes] = useState(false);
+  const [searchVisitantes, setSearchVisitantes] = useState("");
+  const [filterVisitantesEstado, setFilterVisitantesEstado] = useState<"todos" | "dentro" | "salida">("todos");
   const [casetaPeatonalTrabajadorId, setCasetaPeatonalTrabajadorId] = useState<string>("");
   const [casetaPeatonalNombre, setCasetaPeatonalNombre] = useState("");
   const [casetaPeatonalTelefono, setCasetaPeatonalTelefono] = useState("");
@@ -2301,20 +2307,26 @@ export default function App() {
     );
   }, [currentCasetaCorbatinVerde, bitacora, casetaPlacasVerde]);
 
-  // Detección de corbatines físicos de visitante (1 al 30) actualmente en uso dentro del predio
-  const corbatinesVisitanteOcupados = useMemo(() => {
-    const mapa = new Map<number, { conductor: string; placas: string; hora: string; vehiculo: string }>();
+  // Detección de corbatines físicos de visitante (1 al 30) utilizados el día de hoy (Regla: no reutilizables el mismo día)
+  const corbatinesVisitanteUsadosHoy = useMemo(() => {
+    const mapa = new Map<number, { conductor: string; placas: string; hora: string; vehiculo: string; estado: string }>();
+    const hoyStr = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD
+
+    // 1. Revisar bitácora de accesos
     for (const b of bitacora) {
-      if (b.estado === "Salida Registrada" || Boolean(b.horaSalida) || Boolean(b.raw_hora_salida)) continue;
       const obs = String(b.observaciones || "");
       const trab = String(b.trabajos || "");
       const isVis = obs.includes("[VISITANTE]") || trab.includes("Visita") || (b as any).tipo === "Visitante" || b.tipoAcceso === "Visitante" || b.empresaNombre === "Visitante";
+      if (!isVis) continue;
+
+      const fechaB = b.fecha || (b.raw_hora_entrada ? b.raw_hora_entrada.split("T")[0] : (b.created_at ? new Date(b.created_at).toLocaleDateString("en-CA") : ""));
+      if (fechaB !== hoyStr) continue;
 
       let num: number | null = null;
       const matchCorb = obs.match(/Corbat[íi]n:\s*#?([0-9]+)/i);
       if (matchCorb && matchCorb[1]) {
         num = parseInt(matchCorb[1], 10);
-      } else if (isVis && b.corbatinNum && b.corbatinNum !== "—") {
+      } else if (b.corbatinNum && b.corbatinNum !== "—") {
         num = parseInt(String(b.corbatinNum).replace(/[^0-9]/g, ""), 10);
       }
 
@@ -2329,12 +2341,60 @@ export default function App() {
           conductor: b.conductor || "Visitante",
           placas: b.placas || "",
           hora: b.horaEntrada || "",
-          vehiculo: vehDesc || b.color || ""
+          vehiculo: vehDesc || b.color || "",
+          estado: b.estado || (b.horaSalida ? "Salida Registrada" : "Dentro")
         });
       }
     }
+
+    // 2. Revisar lista de visitantes registrados
+    for (const v of visitantesList) {
+      const fechaV = v.fecha || (v.hora_entrada ? String(v.hora_entrada).split("T")[0] : (v.created_at ? new Date(v.created_at).toLocaleDateString("en-CA") : ""));
+      if (fechaV !== hoyStr) continue;
+      const num = Number(v.corbatin_num);
+      if (num && num >= 1 && num <= 30 && !mapa.has(num)) {
+        mapa.set(num, {
+          conductor: v.nombre_conductor || "Visitante",
+          placas: v.placas || "",
+          hora: v.hora_entrada || "",
+          vehiculo: `${v.marca || ""} ${v.modelo || ""}`.trim(),
+          estado: v.hora_salida ? "Salida Registrada" : "Dentro"
+        });
+      }
+    }
+
     return mapa;
-  }, [bitacora]);
+  }, [bitacora, visitantesList]);
+
+  // Corbatines de visitante actualmente dentro sin salida
+  const corbatinesVisitanteOcupados = useMemo(() => {
+    const mapa = new Map<number, { conductor: string; placas: string; hora: string; vehiculo: string }>();
+    for (const [num, info] of corbatinesVisitanteUsadosHoy.entries()) {
+      if (info.estado === "Dentro") {
+        mapa.set(num, info);
+      }
+    }
+    return mapa;
+  }, [corbatinesVisitanteUsadosHoy]);
+
+  // Siguiente corbatín disponible automáticamente para hoy (del 1 al 30)
+  const corbatinAutoDisponible = useMemo(() => {
+    for (let i = 1; i <= 30; i++) {
+      if (!corbatinesVisitanteUsadosHoy.has(i)) {
+        return String(i);
+      }
+    }
+    return "";
+  }, [corbatinesVisitanteUsadosHoy]);
+
+  // Auto-seleccionar el corbatín disponible automáticamente
+  useEffect(() => {
+    if (casetaModoAcceso === "visitante") {
+      if (!casetaVisitanteCorbatin || corbatinesVisitanteUsadosHoy.has(Number(casetaVisitanteCorbatin))) {
+        setCasetaVisitanteCorbatin(corbatinAutoDisponible);
+      }
+    }
+  }, [casetaModoAcceso, corbatinAutoDisponible, corbatinesVisitanteUsadosHoy]);
   const empresaTrabajadores = selectedEmpresaId
     ? trabajadores.filter((t) => (t.id_empresa === selectedEmpresaId || t.empresaNombre === currentEmpresa?.nombre) && t.activo !== false)
     : trabajadores.filter((t) => t.activo !== false);
@@ -2872,7 +2932,8 @@ export default function App() {
         resReportes,
         resReglamento,
         resCorbatines,
-        resReglas
+        resReglas,
+        resVisitantes
       ] = await Promise.allSettled([
         onlyDynamic ? Promise.resolve(null) : api.getUsuarios(),
         onlyDynamic ? Promise.resolve(null) : api.getEmpresas(),
@@ -2884,6 +2945,7 @@ export default function App() {
         onlyDynamic ? Promise.resolve(null) : api.getReglamentoVigente(),
         onlyDynamic ? Promise.resolve(null) : api.getCorbatines({ tipo: "VERDE" }),
         onlyDynamic ? Promise.resolve(null) : api.getReglas(),
+        fetchBitacora ? api.getVisitantes() : Promise.resolve(null),
       ]);
 
       lastFetchTimestampRef.current = Date.now();
@@ -3200,7 +3262,7 @@ export default function App() {
             trabajos: cleanTrabajos,
             guardiaNombre: b.guardiaNombre || b.agenteNombre || "Oficial de Turno",
             estado: b.hora_salida ? "Salida Registrada" : "Dentro",
-            tipoAcceso: (isVisitante ? "Visitante" : (b.tipo || (b.id_vehiculo ? "Vehicular" : "Peatonal"))) as any,
+            tipoAcceso: (isVisitante ? "Vehicular" : (b.tipo || (b.id_vehiculo ? "Vehicular" : "Peatonal"))) as any,
             tipoCorbatin: isVisitante ? "VISITANTE" : (b.tipoCorbatin || "NORMAL"),
             observaciones: b.observaciones || undefined,
             num_pasajeros: b.num_pasajeros !== undefined && b.num_pasajeros !== null ? Number(b.num_pasajeros) : 0
@@ -3208,6 +3270,7 @@ export default function App() {
         });
         setBitacora(mappedBit);
       }
+      reloadVisitantes();
 
       if (resReportes.status === "fulfilled" && Array.isArray(resReportes.value)) {
         const rawVehs = resVehicles.status === "fulfilled" && Array.isArray(resVehicles.value) ? resVehicles.value : [];
@@ -3344,6 +3407,10 @@ export default function App() {
           localStorage.setItem("hoa_corbatines_verdes", JSON.stringify(mappedVerdes));
         } catch { }
       }
+
+      if (resVisitantes && resVisitantes.status === "fulfilled" && Array.isArray(resVisitantes.value)) {
+        setVisitantesList(resVisitantes.value);
+      }
     } catch (err) {
       console.warn("Error cargando base de datos:", err);
     } finally {
@@ -3414,7 +3481,7 @@ export default function App() {
             trabajos: cleanTrabajos,
             guardiaNombre: b.guardiaNombre || b.agenteNombre || "Oficial de Turno",
             estado: b.hora_salida ? "Salida Registrada" : "Dentro",
-            tipoAcceso: (isVisitante ? "Visitante" : (b.tipo || (b.id_vehiculo ? "Vehicular" : "Peatonal"))) as any,
+            tipoAcceso: (isVisitante ? "Vehicular" : (b.tipo || (b.id_vehiculo ? "Vehicular" : "Peatonal"))) as any,
             tipoCorbatin: isVisitante ? "VISITANTE" : (b.tipoCorbatin || "NORMAL"),
             observaciones: b.observaciones || undefined,
             num_pasajeros: b.num_pasajeros !== undefined && b.num_pasajeros !== null ? Number(b.num_pasajeros) : 0
@@ -3422,10 +3489,26 @@ export default function App() {
         });
         setBitacora(mappedBit);
       }
+      reloadVisitantes();
     } catch (e) {
       console.warn("Error al recargar bitácora:", e);
     }
   };
+
+  // Recarga granular de Visitantes
+  const reloadVisitantes = useCallback(async () => {
+    try {
+      setIsLoadingVisitantes(true);
+      const res = await api.getVisitantes();
+      if (Array.isArray(res)) {
+        setVisitantesList(res);
+      }
+    } catch (e) {
+      console.warn("Error al recargar visitantes:", e);
+    } finally {
+      setIsLoadingVisitantes(false);
+    }
+  }, []);
 
   // Recarga granular de Vehículos
   const reloadVehiculos = async () => {
@@ -5537,32 +5620,37 @@ export default function App() {
       // Registro en Modalidad Visitante
       if (casetaModoAcceso === "visitante") {
         const choferNom = casetaVisitanteConductor.trim();
-        const vehMarca = casetaVisitanteVehiculo.trim();
-        const vehMod = casetaVisitanteModelo.trim();
-        const vehPlacas = casetaVisitantePlacas.trim().toUpperCase();
+        const marca = casetaVisitanteMarca.trim();
+        const modelo = casetaVisitanteModelo.trim();
+        const anio = casetaVisitanteAnio.trim();
+        const placas = casetaVisitantePlacas.trim().toUpperCase();
+        const color = casetaVisitanteColor.trim();
         const corbNum = parseInt(casetaVisitanteCorbatin, 10);
 
-        if (!choferNom || !vehMarca || !vehPlacas) {
-          showToast("Nombre del chofer, vehículo y placas son obligatorios.", "error", "Datos Incompletos");
+        if (!choferNom || !marca || !modelo || !placas) {
+          showToast("Nombre del chofer, marca, modelo y placas son obligatorios.", "error", "Datos Incompletos");
           return;
         }
 
         if (isNaN(corbNum) || corbNum < 1 || corbNum > 30) {
-          showToast("Debes asignar un número de corbatín válido del 1 al 30.", "error", "Corbatín Requerido");
+          showToast("Debes contar con un número de corbatín válido del 1 al 30.", "error", "Corbatín Requerido");
           return;
         }
 
-        if (corbatinesVisitanteOcupados.has(corbNum)) {
-          const ocup = corbatinesVisitanteOcupados.get(corbNum);
+        if (corbatinesVisitanteUsadosHoy.has(corbNum)) {
+          const ocup = corbatinesVisitanteUsadosHoy.get(corbNum);
           showToast(
-            `El Corbatín #${corbNum} ya está en uso por ${ocup?.conductor} (${ocup?.placas}). Selecciona uno libre.`,
+            `El Corbatín #${corbNum} ya fue utilizado el día de hoy por ${ocup?.conductor} (${ocup?.placas}). Cada número sólo puede usarse una vez al día para evitar duplicidad.`,
             "warning",
-            "Corbatín Ocupado"
+            "Corbatín Ya Usado Hoy"
           );
           return;
         }
 
-        await api.registrarAcceso({
+        const obsVis = `[VISITANTE] Chofer: ${choferNom} | Marca: ${marca} | Modelo: ${modelo} | Año: ${anio || "S/A"} | Placas: ${placas} | Color: ${color || "S/C"} | Corbatín: #${corbNum} | Destino: ${casetaVisitanteDestino.trim() || "Visita general"}${casetaVisitanteObservaciones ? ` | Obs: ${casetaVisitanteObservaciones.trim()}` : ""}`;
+
+        // 1. Registrar acceso en bitácora
+        const bitacoraRes = await api.registrarAcceso({
           id_caseta: 1,
           id_vehiculo: null,
           id_corbatin: null,
@@ -5571,17 +5659,41 @@ export default function App() {
           num_pasajeros: Math.max(0, Number(casetaVisitantePasajeros) || 0),
           ubicacion_trabajo: `Visita a: ${casetaVisitanteDestino.trim() || "Residencia / Complejo"}`,
           estatus_acceso: "AUTORIZADO",
-          observaciones: `[VISITANTE] Chofer: ${choferNom} | Vehículo: ${vehMarca} ${vehMod} | Placas: ${vehPlacas} | Corbatín: #${corbNum} | Destino: ${casetaVisitanteDestino.trim() || "Visita general"}${casetaVisitanteObservaciones ? ` | Obs: ${casetaVisitanteObservaciones.trim()}` : ""}`,
+          observaciones: obsVis,
           tipo: 'entrada'
         });
 
+        // 2. Registrar en tabla dedicada de visitantes con vinculación
+        try {
+          await api.crearVisitante({
+            nombre_conductor: choferNom,
+            marca: marca,
+            modelo: modelo,
+            año: anio || "",
+            anio: anio || "",
+            placas: placas,
+            color: color || "",
+            corbatin_num: corbNum,
+            destino: casetaVisitanteDestino.trim() || "Visita general",
+            pasajeros: Math.max(0, Number(casetaVisitantePasajeros) || 0),
+            observaciones: casetaVisitanteObservaciones.trim() || null,
+            id_usuario: Number(currentUser?.id) || null,
+            id_bitacora: (bitacoraRes && (bitacoraRes.id_acceso || bitacoraRes.id)) ? Number(bitacoraRes.id_acceso || bitacoraRes.id) : null
+          });
+        } catch (visDirectErr) {
+          console.warn("Nota: el servidor replicó o manejó visitante:", visDirectErr);
+        }
+
         await reloadBitacora();
+        await reloadVisitantes();
 
         // Reset completo del formulario de visitante
         setCasetaVisitanteConductor("");
-        setCasetaVisitanteVehiculo("");
+        setCasetaVisitanteMarca("");
         setCasetaVisitanteModelo("");
+        setCasetaVisitanteAnio("");
         setCasetaVisitantePlacas("");
+        setCasetaVisitanteColor("");
         setCasetaVisitanteCorbatin("");
         setCasetaVisitanteDestino("");
         setCasetaVisitantePasajeros("");
@@ -5590,7 +5702,7 @@ export default function App() {
         setCasetaHoraSalida("");
         setCasetaSuccessMsg(true);
         setTimeout(() => setCasetaSuccessMsg(false), 4000);
-        showToast(`Ingreso de visitante autorizado: ${choferNom} (${vehMarca} ${vehPlacas}) - Corbatín #${corbNum}.`, "success", "Visitante Registrado");
+        showToast(`Ingreso de visitante autorizado: ${choferNom} (${marca} ${modelo} · ${placas}) - Corbatín #${corbNum}.`, "success", "Visitante Registrado");
         return;
       }
 
@@ -8321,6 +8433,235 @@ export default function App() {
     );
   };
 
+  const renderVisitantesManagementView = () => {
+    const q = searchVisitantes.trim().toLowerCase();
+
+    const filtered = visitantesList.filter((v) => {
+      const isDentro = v.estado === "Dentro" || !v.hora_salida;
+      if (filterVisitantesEstado === "dentro" && !isDentro) return false;
+      if (filterVisitantesEstado === "salida" && isDentro) return false;
+
+      if (!q) return true;
+      const matchText = `${v.id || ""} ${v.nombre_conductor || ""} ${v.marca || ""} ${v.modelo || ""} ${v.placas || ""} ${v.color || ""} ${v.destino || ""} ${v.corbatin_num || ""}`.toLowerCase();
+      return matchText.includes(q);
+    });
+
+    const totalDentro = visitantesList.filter((v) => v.estado === "Dentro" || !v.hora_salida).length;
+    const totalSalida = visitantesList.filter((v) => v.estado === "Salida Registrada" || Boolean(v.hora_salida)).length;
+
+    return (
+      <div className="space-y-4">
+        {/* ENCABEZADO Y TARJETAS DE ESTADÍSTICAS */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div>
+              <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                <IconCar className="w-5 h-5 text-amber-600" />
+                <span>Directorio y Registro de Vehículos Visitantes</span>
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Historial y control de vehículos particulares, choferes y asignación de corbatines físicos del 1 al 30.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={reloadVisitantes}
+              disabled={isLoadingVisitantes}
+              className="px-3.5 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs shrink-0 disabled:opacity-50"
+            >
+              <IconSpinner className={`w-3.5 h-3.5 ${isLoadingVisitantes ? "animate-spin" : ""}`} />
+              <span>Actualizar Lista</span>
+            </button>
+          </div>
+
+          {/* 4 STATS CARDS */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Visitantes</span>
+              <span className="text-xl font-mono font-extrabold text-slate-800">{visitantesList.length}</span>
+            </div>
+            <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200">
+              <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider block">Actualmente Dentro</span>
+              <span className="text-xl font-mono font-extrabold text-amber-900">{totalDentro}</span>
+            </div>
+            <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200">
+              <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider block">Salidas Registradas</span>
+              <span className="text-xl font-mono font-extrabold text-emerald-900">{totalSalida}</span>
+            </div>
+            <div className="p-3.5 rounded-xl bg-teal-50/70 border border-teal-200">
+              <span className="text-[11px] font-bold text-teal-700 uppercase tracking-wider block">Corbatines Usados Hoy</span>
+              <span className="text-xl font-mono font-extrabold text-teal-900">{corbatinesVisitanteUsadosHoy.size} <span className="text-xs font-sans text-teal-700 font-semibold">/ 30</span></span>
+            </div>
+          </div>
+        </div>
+
+        {/* FILTROS Y TABLA */}
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-2xs overflow-hidden">
+          <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            {/* BUSCADOR */}
+            <div className="relative flex-1 max-w-md">
+              <IconSearch className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchVisitantes}
+                onChange={(e) => setSearchVisitantes(e.target.value)}
+                placeholder="Buscar por placa, chofer, marca, modelo, corbatín o destino..."
+                className="w-full h-9 pl-9 pr-3 text-xs rounded-xl border border-slate-300 bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 shadow-2xs font-medium"
+              />
+            </div>
+
+            {/* FILTROS DE ESTADO */}
+            <div className="flex gap-1 p-0.5 rounded-xl bg-slate-100 border border-slate-200 text-xs shrink-0">
+              <button
+                type="button"
+                onClick={() => setFilterVisitantesEstado("todos")}
+                className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  filterVisitantesEstado === "todos" ? "bg-slate-800 text-white shadow-2xs" : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                Todos ({visitantesList.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterVisitantesEstado("dentro")}
+                className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  filterVisitantesEstado === "dentro" ? "bg-amber-600 text-white shadow-2xs" : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                Dentro ({totalDentro})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterVisitantesEstado("salida")}
+                className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  filterVisitantesEstado === "salida" ? "bg-emerald-600 text-white shadow-2xs" : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                Salidas ({totalSalida})
+              </button>
+            </div>
+          </div>
+
+          {/* TABLA DE VEHÍCULOS VISITANTES */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                <tr>
+                  <th className="px-3 py-3 text-center">Folio</th>
+                  <th className="px-3 py-3 text-center">Corbatín</th>
+                  <th className="px-3 py-3 text-left">Placas</th>
+                  <th className="px-3 py-3 text-left">Vehículo (Marca / Modelo / Año / Color)</th>
+                  <th className="px-3 py-3 text-left">Chofer / Visitante</th>
+                  <th className="px-3 py-3 text-center">Entrada</th>
+                  <th className="px-3 py-3 text-center">Salida</th>
+                  <th className="px-3 py-3 text-left">Destino</th>
+                  <th className="px-3 py-3 text-center">Estatus</th>
+                  <th className="px-3 py-3 text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="px-4 py-12 text-center text-slate-400">
+                      <IconCar className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                      <p className="font-semibold text-xs">No se encontraron vehículos visitantes registrados.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((v) => {
+                    const isDentro = v.estado === "Dentro" || !v.hora_salida;
+                    const horaEnt = formatHoraLocal(v.hora_entrada || v.created_at);
+                    const horaSal = v.hora_salida ? formatHoraLocal(v.hora_salida) : null;
+
+                    return (
+                      <tr key={v.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="px-3 py-2.5 font-mono text-center font-bold text-slate-700">#{v.id}</td>
+                        <td className="px-3 py-2.5 text-center">
+                          <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 font-mono font-bold text-xs">
+                            #{v.corbatin_num}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5 font-mono font-bold text-slate-900">
+                          <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200">
+                            {v.placas}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <div className="font-bold text-slate-800">{v.marca} {v.modelo}</div>
+                          <div className="text-[11px] text-slate-500 font-medium">
+                            {v.año || v.anio ? `Año ${v.año || v.anio} · ` : ""}{v.color || "Color no especificado"}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <div className="font-bold text-slate-800">{v.nombre_conductor}</div>
+                          {v.pasajeros > 0 && (
+                            <div className="text-[10px] text-slate-400">+{v.pasajeros} pasajero{v.pasajeros > 1 ? "s" : ""}</div>
+                          )}
+                        </td>
+                        <td className="px-3 py-2.5 text-center font-mono text-[11px] text-slate-700">
+                          <div>{horaEnt}</div>
+                          <div className="text-[10px] text-slate-400">{v.fecha || (v.created_at ? new Date(v.created_at).toLocaleDateString() : "")}</div>
+                        </td>
+                        <td className="px-3 py-2.5 text-center font-mono text-[11px]">
+                          {horaSal ? (
+                            <span className="text-slate-700">{horaSal}</span>
+                          ) : (
+                            <span className="text-amber-700 font-bold font-sans text-[10px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                              Dentro
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2.5 text-slate-700 max-w-xs truncate" title={v.destino || "Visita general"}>
+                          {v.destino || "Visita general"}
+                        </td>
+                        <td className="px-3 py-2.5 text-center">
+                          {isDentro ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                              <span>Dentro</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                              <span>Salida</span>
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2.5 text-center">
+                          {isDentro ? (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                try {
+                                  await api.registrarSalidaVisitante(v.id);
+                                  await reloadVisitantes();
+                                  await reloadBitacora();
+                                  showToast(`Salida registrada para vehículo ${v.placas}.`, "success", "Salida Registrada");
+                                } catch (err: any) {
+                                  showToast("Error al registrar salida: " + (err.message || err), "error");
+                                }
+                              }}
+                              className="px-2.5 py-1 rounded-lg text-[10px] font-bold text-white bg-red-600 hover:bg-red-700 active:scale-95 transition-all flex items-center gap-1 cursor-pointer mx-auto shadow-2xs"
+                              title="Marcar salida de este visitante"
+                            >
+                              <IconLogOut className="w-3 h-3" />
+                              <span>Salida</span>
+                            </button>
+                          ) : (
+                            <span className="text-slate-400 text-[11px] font-semibold">Completado</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col justify-between w-full max-w-full overflow-x-hidden min-h-screen" style={{ background: "var(--color-bg)", fontFamily: "var(--font-body)" }}>
       <div className="w-full max-w-full">
@@ -8361,7 +8702,7 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setOpenSupervisorDropdown(openSupervisorDropdown === "directorio" ? null : "directorio")}
-                      className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${["proveedores", "guardias"].includes(supervisorTab)
+                      className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${["proveedores", "guardias", "visitantes"].includes(supervisorTab)
                         ? "bg-[#0D6E5F] text-white shadow-xs"
                         : "text-slate-700 hover:bg-white hover:text-slate-900"
                         }`}
@@ -8409,6 +8750,24 @@ export default function App() {
                           </div>
                           <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">
                             {users.filter(u => u.role === "caseta").length}
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSupervisorTab("visitantes");
+                            setOpenSupervisorDropdown(null);
+                          }}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between text-xs transition-colors hover:bg-slate-50 cursor-pointer ${supervisorTab === "visitantes" ? "bg-teal-50 text-[#0D6E5F] font-bold" : "text-slate-700"
+                            }`}
+                        >
+                          <div>
+                            <div className="font-semibold">Visitantes</div>
+                            <div className="text-[11px] text-slate-400">Vehículos temporales registrados</div>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold">
+                            {visitantesList.length}
                           </span>
                         </button>
                       </div>
@@ -8834,6 +9193,13 @@ export default function App() {
                   className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${["proveedores", "guardias"].includes(supervisorTab) ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
                 >
                   Directorio ({empresas.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSupervisorTab("visitantes")}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${supervisorTab === "visitantes" ? "bg-[#0D6E5F] text-white shadow-xs" : "text-slate-700"}`}
+                >
+                  Visitantes ({visitantesList.length})
                 </button>
                 <button
                   type="button"
@@ -9721,6 +10087,8 @@ export default function App() {
               {supervisorTab === "sanciones_activas" && renderSancionesActivasView()}
 
               {supervisorTab === "proveedores" && renderEmpresasManagementView()}
+
+              {supervisorTab === "visitantes" && renderVisitantesManagementView()}
 
               {supervisorTab === "guardias" && (
                 <div className="space-y-4">
@@ -13281,19 +13649,19 @@ export default function App() {
                             </div>
                             <div>
                               <div className="font-extrabold text-amber-900 flex items-center gap-1.5">
-                                <span>Control de Corbatines Manuales Físicos (1 al 30)</span>
+                                <span>Control de Corbatines Físicos (1 al 30) · Asignación Automática Diaria</span>
                               </div>
                               <p className="text-[11px] text-amber-800/90 mt-0.5">
-                                Asigna un tarjetón físico al visitante. Los números en uso quedan bloqueados hasta registrar su salida.
+                                El sistema asigna automáticamente el siguiente disponible. Los corbatines utilizados hoy quedan bloqueados hasta el día siguiente para evitar repetición.
                               </p>
                             </div>
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0 text-[11px] font-mono">
                             <span className="px-2 py-0.5 rounded-md bg-white border border-amber-300 font-bold text-emerald-800">
-                              {30 - corbatinesVisitanteOcupados.size} Libres
+                              {30 - corbatinesVisitanteUsadosHoy.size} Libres hoy
                             </span>
                             <span className="px-2 py-0.5 rounded-md bg-white border border-amber-300 font-bold text-red-700">
-                              {corbatinesVisitanteOcupados.size} En Uso
+                              {corbatinesVisitanteUsadosHoy.size} Usados hoy
                             </span>
                           </div>
                         </div>
@@ -13303,40 +13671,46 @@ export default function App() {
                           <div className="flex items-center justify-between gap-2">
                             <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                               <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                              <span>1. Seleccionar Corbatín Físico Asignado *</span>
+                              <span>1. Corbatín Físico Asignado (Auto-asignado del 1 al 30) *</span>
                             </label>
-                            {casetaVisitanteCorbatin && (
-                              <div className="flex items-center gap-1 text-[11px] font-semibold text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded-md border border-amber-200">
-                                <IconCheckCircle className="w-3.5 h-3.5 text-amber-600" />
-                                <span>Seleccionado: <strong>#{casetaVisitanteCorbatin}</strong></span>
+                            {casetaVisitanteCorbatin ? (
+                              <div className="flex items-center gap-1 text-[11px] font-semibold text-amber-800 bg-amber-100/90 px-2.5 py-0.5 rounded-lg border border-amber-300 shadow-2xs">
+                                <IconCheckCircle className="w-3.5 h-3.5 text-amber-700" />
+                                <span>Asignado: <strong className="font-mono text-xs">#{casetaVisitanteCorbatin}</strong> (Automático)</span>
                               </div>
+                            ) : (
+                              <span className="text-[11px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                                Sin corbatines disponibles hoy
+                              </span>
                             )}
                           </div>
 
                           {/* REJILLA DE LOS 30 BOTONES DE CORBATÍN */}
                           <div className="grid grid-cols-6 sm:grid-cols-10 gap-1.5">
                             {Array.from({ length: 30 }, (_, i) => i + 1).map((num) => {
-                              const isOcupado = corbatinesVisitanteOcupados.has(num);
-                              const ocup = corbatinesVisitanteOcupados.get(num);
+                              const isUsadoHoy = corbatinesVisitanteUsadosHoy.has(num);
+                              const info = corbatinesVisitanteUsadosHoy.get(num);
                               const isSelected = casetaVisitanteCorbatin === String(num);
 
-                              if (isOcupado) {
+                              if (isUsadoHoy) {
                                 return (
                                   <button
                                     key={num}
                                     type="button"
                                     onClick={() => {
                                       showToast(
-                                        `Corbatín #${num} en uso por: ${ocup?.conductor || "Visitante"} (${ocup?.placas || "Sin placa"}). Debe registrar salida antes de reasignarlo.`,
+                                        `El Corbatín #${num} ya fue utilizado el día de hoy por: ${info?.conductor || "Visitante"} (${info?.placas || "Sin placas"}). No puede reutilizarse hasta mañana para evitar duplicidad diaria.`,
                                         "warning",
-                                        "Corbatín No Disponible"
+                                        "Corbatín No Disponible Hoy"
                                       );
                                     }}
-                                    title={`Ocupado por ${ocup?.conductor} (${ocup?.placas})`}
-                                    className="h-9 rounded-lg font-mono font-bold text-xs flex flex-col items-center justify-center bg-red-50 text-red-700 border border-red-200 cursor-not-allowed opacity-75 relative group transition-all"
+                                    title={`Usado hoy por ${info?.conductor} (${info?.placas}) - ${info?.estado}`}
+                                    className="h-9 rounded-lg font-mono font-bold text-xs flex flex-col items-center justify-center bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-65 relative group transition-all"
                                   >
-                                    <span className="leading-none">#{num}</span>
-                                    <span className="text-[8px] font-sans font-medium text-red-600 leading-none mt-0.5">Ocup</span>
+                                    <span className="leading-none text-slate-500">#{num}</span>
+                                    <span className="text-[7.5px] font-sans font-semibold text-red-500 leading-none mt-0.5">
+                                      {info?.estado === "Dentro" ? "Dentro" : "Usado hoy"}
+                                    </span>
                                   </button>
                                 );
                               }
@@ -13350,11 +13724,11 @@ export default function App() {
                                     ? "bg-amber-600 text-white border-2 border-amber-700 shadow-sm scale-105 z-10"
                                     : "bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 hover:border-amber-300"
                                     }`}
-                                  title={`Asignar corbatín #${num}`}
+                                  title={`Seleccionar corbatín #${num}`}
                                 >
                                   <span className="leading-none">#{num}</span>
                                   <span className={`text-[8px] font-sans leading-none mt-0.5 ${isSelected ? "text-amber-100 font-bold" : "text-slate-400"}`}>
-                                    {isSelected ? "Listo" : "Libre"}
+                                    {isSelected ? "Auto" : "Libre"}
                                   </span>
                                 </button>
                               );
@@ -13362,77 +13736,106 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* DATOS DEL VISITANTE Y VEHÍCULO */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {/* NOMBRE DEL CHOFER */}
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-700 mb-1">
-                              2. Nombre Completo del Chofer / Visitante *
-                            </label>
-                            <div className="relative">
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
-                                <IconUser className="w-3.5 h-3.5" />
-                              </span>
-                              <input
-                                type="text"
-                                required
-                                value={casetaVisitanteConductor}
-                                onChange={(e) => setCasetaVisitanteConductor(e.target.value)}
-                                placeholder="Ej. Juan Manuel Pérez García"
-                                className="w-full h-10 rounded-xl pl-9 pr-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 shadow-2xs font-medium"
-                              />
-                            </div>
-                          </div>
-
-                          {/* PLACAS */}
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
-                              <span>3. Placas de la Unidad *</span>
-                              <span className="text-[10px] text-slate-400 font-normal">Mayúsculas automáticas</span>
-                            </label>
+                        {/* CHOFER / VISITANTE */}
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            2. Nombre Completo del Chofer / Visitante *
+                          </label>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
+                              <IconUser className="w-3.5 h-3.5" />
+                            </span>
                             <input
                               type="text"
                               required
-                              value={casetaVisitantePlacas}
-                              onChange={(e) => setCasetaVisitantePlacas(e.target.value.toUpperCase())}
-                              placeholder="Ej. ABC-123-D"
-                              className="w-full h-10 rounded-xl px-3.5 text-sm font-mono font-bold uppercase tracking-wider border border-slate-300 text-slate-900 bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 shadow-2xs"
+                              value={casetaVisitanteConductor}
+                              onChange={(e) => setCasetaVisitanteConductor(e.target.value)}
+                              placeholder="Ej. Juan Manuel Pérez García"
+                              className="w-full h-10 rounded-xl pl-9 pr-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 shadow-2xs font-medium"
                             />
                           </div>
                         </div>
 
-                        {/* VEHÍCULO: MARCA Y MODELO */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {/* VEHÍCULO / MARCA */}
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-700 mb-1">
-                              4. Vehículo / Marca *
-                            </label>
-                            <div className="relative">
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
-                                <IconCar className="w-3.5 h-3.5" />
-                              </span>
+                        {/* DATOS DEL VEHÍCULO (EXACTOS DE LA SEGUNDA IMAGEN) */}
+                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                          <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5 border-b border-slate-200/80 pb-2">
+                            <IconCar className="w-4 h-4 text-slate-600" />
+                            <span>3. Datos del Vehículo Visitante</span>
+                          </div>
+
+                          {/* Fila 1: Marca y Modelo */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                Marca *
+                              </label>
                               <input
                                 type="text"
                                 required
-                                value={casetaVisitanteVehiculo}
-                                onChange={(e) => setCasetaVisitanteVehiculo(e.target.value)}
-                                placeholder="Ej. Nissan, Chevrolet, Toyota, Ford..."
-                                className="w-full h-10 rounded-xl pl-9 pr-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 shadow-2xs font-medium"
+                                value={casetaVisitanteMarca}
+                                onChange={(e) => setCasetaVisitanteMarca(e.target.value)}
+                                placeholder="Toyota, Ford, Nissan"
+                                className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 shadow-2xs font-medium"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                Modelo *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                value={casetaVisitanteModelo}
+                                onChange={(e) => setCasetaVisitanteModelo(e.target.value)}
+                                placeholder="Hilux, Transit, NP300"
+                                className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 shadow-2xs font-medium"
                               />
                             </div>
                           </div>
 
-                          {/* MODELO Y COLOR */}
+                          {/* Fila 2: Año y Placas */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                Año *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                value={casetaVisitanteAnio}
+                                onChange={(e) => setCasetaVisitanteAnio(e.target.value)}
+                                placeholder="2023"
+                                className="w-full h-10 rounded-xl px-3.5 text-sm font-mono border border-slate-300 text-slate-800 bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 shadow-2xs font-medium"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                Placas *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                value={casetaVisitantePlacas}
+                                onChange={(e) => setCasetaVisitantePlacas(e.target.value.toUpperCase())}
+                                placeholder="MTY-0000-A"
+                                className="w-full h-10 rounded-xl px-3.5 text-sm font-mono font-bold uppercase tracking-wider border border-slate-300 text-slate-900 bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 shadow-2xs"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Fila 3: Color */}
                           <div>
                             <label className="block text-xs font-semibold text-slate-700 mb-1">
-                              5. Modelo / Color (Opcional)
+                              Color *
                             </label>
                             <input
                               type="text"
-                              value={casetaVisitanteModelo}
-                              onChange={(e) => setCasetaVisitanteModelo(e.target.value)}
-                              placeholder="Ej. Versa 2022 Gris Plata"
+                              required
+                              value={casetaVisitanteColor}
+                              onChange={(e) => setCasetaVisitanteColor(e.target.value)}
+                              placeholder="Blanco, Gris, Negro"
                               className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 shadow-2xs font-medium"
                             />
                           </div>
