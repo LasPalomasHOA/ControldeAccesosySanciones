@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+﻿import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import QRCode from "qrcode";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -18825,7 +18825,7 @@ export default function App() {
         const isContratistaNormal = !isVisitante && !isPeatonal && !isCorbatinVerde;
 
         // 1. Cruzar con la lista de visitantes si aplica
-        const visMatch = isVisitante ? visitantesList.find(v => 
+        const visMatch = isVisitante ? visitantesList.find(v =>
           (v.id_bitacora && String(v.id_bitacora) === String(b.id)) ||
           (v.placas && b.placas && v.placas.toUpperCase().trim() === b.placas.toUpperCase().trim() && (v.fecha === b.fecha || !v.fecha))
         ) : null;
@@ -18925,11 +18925,11 @@ export default function App() {
           return m && m[1] ? m[1].trim() : "";
         };
 
-        const choferNom = visMatch?.nombre_conductor 
+        const choferNom = visMatch?.nombre_conductor
           || (trabMatch ? `${trabMatch.nombre} ${trabMatch.apellidos || ""}`.trim() : "")
           || (vehMatch?.conductor && vehMatch.conductor !== "Conductor Acreditado" ? vehMatch.conductor : "")
-          || parseObs("Chofer") 
-          || b.conductor 
+          || parseObs("Chofer")
+          || b.conductor
           || (isVisitante ? "Visitante" : "Conductor Acreditado");
 
         const marcaVal = vehMatch?.marca || visMatch?.marca || parseObs("Marca") || "";
@@ -18958,48 +18958,48 @@ export default function App() {
           : (visMatch?.corbatin_num ? `#${visMatch.corbatin_num}` : (parseObs("Corbatín") ? `#${parseObs("Corbatín")}` : "—"));
 
         const modConfig = isVisitante
-          ? { label: "Visitante", corbBg: "bg-blue-600 text-white", tagBg: "bg-blue-50 text-blue-800 border-blue-200", icon: <IconUser className="w-5 h-5" />, headerBg: "from-blue-600 to-indigo-700" }
+          ? { label: "Visitante", corbBg: "bg-blue-600 text-white", tagBg: "bg-blue-50 text-blue-800 border-blue-200", iconBg: "bg-blue-50 text-blue-700 border-blue-200", icon: <IconUser className="w-5 h-5 text-blue-700" /> }
           : isCorbatinVerde
-          ? { label: "Corbatín Verde", corbBg: "bg-emerald-600 text-white", tagBg: "bg-emerald-50 text-emerald-800 border-emerald-200", icon: <IconCar className="w-5 h-5" />, headerBg: "from-emerald-700 to-teal-800" }
-          : isPeatonal
-          ? { label: "Personal Peatonal (A Pie)", corbBg: "bg-purple-600 text-white", tagBg: "bg-purple-50 text-purple-800 border-purple-200", icon: <IconWalk className="w-5 h-5" />, headerBg: "from-purple-700 to-purple-900" }
-          : { label: "Contratista Acreditado", corbBg: "bg-orange-500 text-white", tagBg: "bg-orange-50 text-orange-800 border-orange-200", icon: <IconCar className="w-5 h-5" />, headerBg: "from-amber-600 to-orange-700" };
+            ? { label: "Corbatín Verde", corbBg: "bg-emerald-600 text-white", tagBg: "bg-emerald-50 text-emerald-800 border-emerald-200", iconBg: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: <IconCar className="w-5 h-5 text-emerald-700" /> }
+            : isPeatonal
+              ? { label: "Personal Peatonal (A Pie)", corbBg: "bg-purple-600 text-white", tagBg: "bg-purple-50 text-purple-800 border-purple-200", iconBg: "bg-purple-50 text-purple-700 border-purple-200", icon: <IconWalk className="w-5 h-5 text-purple-700" /> }
+              : { label: "Contratista Acreditado", corbBg: "bg-orange-500 text-white", tagBg: "bg-orange-50 text-orange-800 border-orange-200", iconBg: "bg-orange-50 text-orange-700 border-orange-200", icon: <IconCar className="w-5 h-5 text-orange-700" /> };
 
         return (
-          <div 
+          <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-150"
             onClick={() => setSelectedDetalleAcceso(null)}
           >
-            <div 
+            <div
               className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
-              <div className={`p-4 sm:p-5 bg-gradient-to-r ${modConfig.headerBg} text-white flex items-start justify-between gap-3 shadow-sm`}>
+              {/* Header Flat y Limpio */}
+              <div className="p-4 sm:p-5 bg-white border-b border-slate-200 flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                   {fotoChofer ? (
                     <img
                       src={fotoChofer}
                       alt="Chofer"
-                      className="w-11 h-11 rounded-2xl object-cover border-2 border-white/40 shadow-sm shrink-0 cursor-pointer hover:scale-105 transition-transform"
+                      className="w-12 h-12 rounded-2xl object-cover border border-slate-200 shadow-2xs shrink-0 cursor-pointer hover:scale-105 transition-transform"
                       onClick={() => setSelectedFotoTrabajadorPreview(trabMatch)}
                       title="Clic para ver credencial ampliada"
                     />
                   ) : (
-                    <div className="p-2.5 rounded-2xl bg-white/15 backdrop-blur-md text-white shadow-2xs">
+                    <div className={`p-2.5 rounded-2xl border shrink-0 ${modConfig.iconBg}`}>
                       {modConfig.icon}
                     </div>
                   )}
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-mono font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-md">
+                      <span className="text-xs font-mono font-bold text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">
                         Folio #{b.id}
                       </span>
-                      <span className="text-xs font-semibold text-white/90">
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${modConfig.tagBg}`}>
                         {modConfig.label}
                       </span>
                     </div>
-                    <h3 className="text-base sm:text-lg font-bold text-white mt-0.5 truncate max-w-[280px] sm:max-w-[340px]">
+                    <h3 className="text-base sm:text-lg font-extrabold text-slate-900 mt-1 truncate max-w-[280px] sm:max-w-[340px]">
                       {choferNom}
                     </h3>
                   </div>
@@ -19008,18 +19008,16 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setSelectedDetalleAcceso(null)}
-                  className="p-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white cursor-pointer transition-colors"
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center cursor-pointer transition-colors text-xs font-bold"
                   title="Cerrar ventana"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  ✕
                 </button>
               </div>
 
               {/* Contenido Completo */}
               <div className="p-4 sm:p-5 overflow-y-auto space-y-3.5 text-xs">
-                
+
                 {/* Corbatín y Estatus */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
@@ -19048,10 +19046,10 @@ export default function App() {
                     <IconUser className="w-3.5 h-3.5 text-slate-500" />
                     <span>Datos del Chofer / Colaborador</span>
                   </div>
-                  
+
                   <div className="flex flex-col sm:flex-row gap-3 items-start">
                     {fotoChofer && (
-                      <div 
+                      <div
                         onClick={() => setSelectedFotoTrabajadorPreview(trabMatch)}
                         className="w-14 h-14 rounded-2xl overflow-hidden border border-slate-200 shadow-2xs shrink-0 cursor-pointer hover:border-[#0D6E5F] relative group bg-slate-100"
                         title="Clic para ver credencial ampliada"
@@ -19116,7 +19114,7 @@ export default function App() {
                     <div className="flex flex-col sm:flex-row gap-3 items-center sm:items-start">
                       {/* Fotografía del Vehículo */}
                       {fotoVehiculo ? (
-                        <div 
+                        <div
                           onClick={() => setSelectedFotoVehiculoPreview(vehMatch || { marca: marcaVal, modelo: modeloVal, foto: fotoVehiculo } as any)}
                           className="w-full sm:w-36 h-28 shrink-0 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 relative group shadow-2xs cursor-pointer hover:border-[#0D6E5F] transition-all"
                           title="Clic para ver fotografía ampliada"
