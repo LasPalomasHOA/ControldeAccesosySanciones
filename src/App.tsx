@@ -12759,32 +12759,52 @@ export default function App() {
                   {/* COLUMNA PRINCIPAL: FORMULARIO */}
                   <div className="lg:col-span-7 xl:col-span-8 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs space-y-3 flex flex-col">
                     {/* SELECTOR DE MODALIDAD Y ENCABEZADO DEL FORMULARIO */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-100 pb-2.5">
-                      <div>
-                        <h2 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full bg-[#0D6E5F]"></span>
-                          {casetaModoAcceso === "vehicular" && <span>Ingreso Vehicular de Contratistas</span>}
-                          {casetaModoAcceso === "visitante" && <span>Ingreso de Visitantes & Corbatín Manual (1 al 30)</span>}
-                          {casetaModoAcceso === "peatonal" && <span>Ingreso Peatonal / Personal a Pie</span>}
-                        </h2>
-                        <p className="text-[11px] text-slate-400 mt-0.5">
-                          {casetaModoAcceso === "vehicular" && "Captura la unidad de contratista, valida corbatín regular/verde y registra el pase"}
-                          {casetaModoAcceso === "visitante" && "Registro ágil de chofer, vehículo, placas y asignación de corbatín físico del 1 al 30"}
-                          {casetaModoAcceso === "peatonal" && "Autorización de personal a pie / colaboradores con vehículo retenido afuera"}
-                        </p>
-                      </div>
+                    <div className="border-b border-slate-100 pb-3 space-y-1.5">
+                      {/* FILA SUPERIOR: TÍTULO A LA IZQUIERDA Y BOTÓN QR EN LA PARTE SUPERIOR DERECHA */}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#0D6E5F] shrink-0"></span>
+                          <h2 className="font-bold text-sm sm:text-base text-slate-900">
+                            {casetaModoAcceso === "vehicular" && "Ingreso Vehicular de Contratistas"}
+                            {casetaModoAcceso === "visitante" && (
+                              <span>
+                                Ingreso de Visitantes & Corbatín Manual <span className="whitespace-nowrap">(1 al 30)</span>
+                              </span>
+                            )}
+                            {casetaModoAcceso === "peatonal" && "Ingreso Peatonal / Personal a Pie"}
+                          </h2>
+                        </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
+                        {/* BOTÓN EN LA PARTE SUPERIOR DERECHA */}
                         <button
                           type="button"
                           onClick={() => setShowQRScannerModal(true)}
-                          className="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                          className="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
                           title="Abrir cámara para escanear código QR"
                         >
                           <IconCamera className="w-3.5 h-3.5 text-emerald-100" />
                           <span>Escanear Código QR</span>
                         </button>
                       </div>
+
+                      {/* SUBTÍTULO DESCRIPTIVO */}
+                      <p className="text-[11px] text-slate-400 pl-4.5">
+                        {casetaModoAcceso === "vehicular" && "Captura la unidad de contratista, valida corbatín regular/verde y registra el pase"}
+                        {casetaModoAcceso === "visitante" && "Registro ágil de chofer, vehículo, placas y asignación de corbatín físico del 1 al 30"}
+                        {casetaModoAcceso === "peatonal" && "Autorización de personal a pie / colaboradores con vehículo retenido afuera"}
+                      </p>
+
+                      {/* CONTADORES EN TIEMPO REAL (MODO VISITANTE) */}
+                      {casetaModoAcceso === "visitante" && (
+                        <div className="flex items-center gap-2 pl-4.5 pt-0.5 text-[11px] font-mono">
+                          <span className="px-2.5 py-1 rounded-xl bg-white border border-slate-200 font-bold text-emerald-800 shadow-2xs whitespace-nowrap">
+                            {30 - corbatinesVisitanteUsadosHoy.size} Libres hoy
+                          </span>
+                          <span className="px-2.5 py-1 rounded-xl bg-white border border-slate-200 font-bold text-red-700 shadow-2xs whitespace-nowrap">
+                            {corbatinesVisitanteUsadosHoy.size} Usados hoy
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {casetaSuccessMsg && (
@@ -13662,31 +13682,6 @@ export default function App() {
                     {/* FORMULARIO DE ACCESO VISITANTE (CORBATÍN MANUAL 1 AL 30) */}
                     {casetaModoAcceso === "visitante" && (
                       <form onSubmit={handleRegistrarEntrada} className="space-y-3.5">
-                        {/* BANNER INFORMATIVO HOA VISITANTE */}
-                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 shadow-2xs">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="p-1.5 rounded-lg bg-[#0D6E5F] text-white shrink-0 shadow-2xs">
-                              <IconBadge className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <div className="font-extrabold text-slate-900 flex items-center gap-1.5">
-                                <span>Control de Corbatines Físicos (1 al 30) · Asignación Automática Diaria</span>
-                              </div>
-                              <p className="text-[11px] text-slate-500 mt-0.5">
-                                El sistema asigna automáticamente el siguiente disponible. Los corbatines entregados duran 1 día sin reusarse, salvo que los 30 estén agotados.
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1.5 shrink-0 text-[11px] font-mono">
-                            <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 font-bold text-emerald-800">
-                              {30 - corbatinesVisitanteUsadosHoy.size} Libres hoy
-                            </span>
-                            <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 font-bold text-red-700">
-                              {corbatinesVisitanteUsadosHoy.size} Usados hoy
-                            </span>
-                          </div>
-                        </div>
-
                         {/* SELECTOR EN COMBOBOX DE CORBATINES 1 AL 30 */}
                         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                           <div className="flex flex-wrap items-center justify-between gap-2">
