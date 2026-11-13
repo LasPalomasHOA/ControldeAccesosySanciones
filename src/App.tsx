@@ -18824,11 +18824,100 @@ export default function App() {
         const isCorbatinVerde = !isVisitante && !isPeatonal && (b.tipoCorbatin === "VERDE" || b.tipoAcceso === "Corbatín Verde" || (b as any).tipo === "Corbatín Verde" || String(b.observaciones).includes("[CORBATÍN VERDE"));
         const isContratistaNormal = !isVisitante && !isPeatonal && !isCorbatinVerde;
 
-        // Cruzar con la lista de visitantes si aplica
+        // 1. Cruzar con la lista de visitantes si aplica
         const visMatch = isVisitante ? visitantesList.find(v => 
           (v.id_bitacora && String(v.id_bitacora) === String(b.id)) ||
-          (v.placas && b.placas && v.placas.toUpperCase() === b.placas.toUpperCase() && (v.fecha === b.fecha || !v.fecha))
+          (v.placas && b.placas && v.placas.toUpperCase().trim() === b.placas.toUpperCase().trim() && (v.fecha === b.fecha || !v.fecha))
         ) : null;
+
+        // 2. Cruzar con el catálogo de vehículos de contratistas (vehicles)
+        const vehMatch = (!isPeatonal) ? (() => {
+          if (isVisitante) return null;
+
+          // Por vehicleId / id_vehiculo
+          if (b.vehicleId && b.vehicleId !== "—" && b.vehicleId !== "PEATONAL") {
+            const byId = vehicles.find((v) => String(v.id) === String(b.vehicleId));
+            if (byId) return byId;
+          }
+
+          // Por placas normalizadas
+          if (b.placas && b.placas !== "—" && b.placas !== "PEATONAL (A PIE)" && b.placas !== "VISITANTE") {
+            const bPlacas = b.placas.trim().toUpperCase().replace(/[\s-]/g, "");
+            const byPlacas = vehicles.find((v) => {
+              const vPlacas = String(v.placas || "").trim().toUpperCase().replace(/[\s-]/g, "");
+              return vPlacas === bPlacas;
+            });
+            if (byPlacas) return byPlacas;
+          }
+
+          // Por número de corbatín y empresa
+          if (b.corbatinNum && b.corbatinNum !== "—") {
+            const bCorbClean = String(b.corbatinNum).replace(/[^0-9]/g, "");
+            const byCorb = vehicles.find((v) => {
+              const vCorbClean = String(v.corbatinNum || "").replace(/[^0-9]/g, "");
+              return vCorbClean === bCorbClean && (!b.empresaNombre || v.empresaNombre.toLowerCase().trim() === b.empresaNombre.toLowerCase().trim());
+            });
+            if (byCorb) return byCorb;
+          }
+
+          // Si es corbatín verde, buscar en corbatinesVerdes
+          if (isCorbatinVerde) {
+            const cvMatch = corbatinesVerdes.find((cv) => {
+              const numCv = String(cv.corbatinNum || cv.numero || "").replace(/[^0-9]/g, "");
+              const bNum = String(b.corbatinNum || "").replace(/[^0-9]/g, "");
+              return numCv === bNum;
+            });
+            if (cvMatch) {
+              return {
+                id: String(cvMatch.id),
+                empresaId: String(cvMatch.id_empresa || ""),
+                empresaNombre: cvMatch.empresaNombre,
+                marca: "",
+                modelo: "",
+                placas: b.placas,
+                color: b.color,
+                conductor: b.conductor,
+                telefono: cvMatch.telefono || b.telefono,
+                foto: "",
+                status: "Habilitado" as const,
+                corbatinNum: cvMatch.corbatinNum
+              } as Vehicle;
+            }
+          }
+
+          return null;
+        })() : null;
+
+        // 3. Cruzar con el catálogo de trabajadores de contratistas (trabajadores)
+        const trabMatch = (!isVisitante) ? (() => {
+          const nom = b.conductor?.trim().toLowerCase();
+          if (nom && nom !== "conductor acreditado" && nom !== "colaborador peatonal") {
+            const byNom = trabajadores.find((t) => {
+              const full = `${t.nombre} ${t.apellidos || ""}`.trim().toLowerCase();
+              return (full.includes(nom) || nom.includes(full)) && (!b.empresaNombre || t.empresaNombre === b.empresaNombre);
+            });
+            if (byNom) return byNom;
+          }
+
+          if (b.telefono) {
+            const telClean = b.telefono.replace(/[^0-9]/g, "");
+            if (telClean && telClean.length >= 7) {
+              const byTel = trabajadores.find((t) => t.telefono && t.telefono.replace(/[^0-9]/g, "").includes(telClean));
+              if (byTel) return byTel;
+            }
+          }
+
+          if (vehMatch?.conductor && vehMatch.conductor !== "Conductor Acreditado") {
+            const vehNom = vehMatch.conductor.trim().toLowerCase();
+            const byVehNom = trabajadores.find((t) => {
+              const full = `${t.nombre} ${t.apellidos || ""}`.trim().toLowerCase();
+              return full.includes(vehNom) || vehNom.includes(full);
+            });
+            if (byVehNom) return byVehNom;
+          }
+
+          return null;
+        })() : null;
 
         const obs = String(b.observaciones || "");
         const parseObs = (tag: string) => {
@@ -18836,15 +18925,29 @@ export default function App() {
           return m && m[1] ? m[1].trim() : "";
         };
 
-        const choferNom = visMatch?.nombre_conductor || parseObs("Chofer") || b.conductor || "Visitante";
-        const marcaVal = visMatch?.marca || parseObs("Marca") || "";
-        const modeloVal = visMatch?.modelo || parseObs("Modelo") || "";
-        const anioVal = visMatch?.año || visMatch?.anio || parseObs("Año") || parseObs("Anio") || "";
-        const colorVal = visMatch?.color || parseObs("Color") || b.color || "";
-        const placasVal = b.placas || visMatch?.placas || parseObs("Placas") || "—";
+        const choferNom = visMatch?.nombre_conductor 
+          || (trabMatch ? `${trabMatch.nombre} ${trabMatch.apellidos || ""}`.trim() : "")
+          || (vehMatch?.conductor && vehMatch.conductor !== "Conductor Acreditado" ? vehMatch.conductor : "")
+          || parseObs("Chofer") 
+          || b.conductor 
+          || (isVisitante ? "Visitante" : "Conductor Acreditado");
+
+        const marcaVal = vehMatch?.marca || visMatch?.marca || parseObs("Marca") || "";
+        const modeloVal = vehMatch?.modelo || visMatch?.modelo || parseObs("Modelo") || "";
+        const anioVal = vehMatch?.año || vehMatch?.anio || visMatch?.año || visMatch?.anio || parseObs("Año") || parseObs("Anio") || "";
+        const colorVal = vehMatch?.color || visMatch?.color || parseObs("Color") || (b.color && b.color !== "N/A" ? b.color : "");
+        const placasVal = vehMatch?.placas || b.placas || visMatch?.placas || parseObs("Placas") || "—";
         const destinoVal = visMatch?.destino || parseObs("Destino") || b.trabajos || "Acceso regular";
         const pasajerosVal = b.num_pasajeros ?? (visMatch?.pasajeros ?? 0);
         const notaObs = parseObs("Obs") || (isVisitante ? "" : b.observaciones) || "";
+
+        const fotoVehiculo = vehMatch?.foto ? normalizeFotoUrl(vehMatch.foto) : "";
+        const fotoChofer = (trabMatch?.foto_url || trabMatch?.foto) ? normalizeFotoUrl(trabMatch?.foto_url || trabMatch?.foto) : "";
+        const telefonoVal = b.telefono || vehMatch?.telefono || trabMatch?.telefono || "";
+        const empresaVal = vehMatch?.empresaNombre || trabMatch?.empresaNombre || b.empresaNombre || (isVisitante ? "Particular / Visita" : "Contratista");
+        const estatusHOAVehiculo = vehMatch?.status || "";
+        const sancionActiva = vehMatch?.sancionActiva;
+        const permisoTemporal = vehMatch?.permisoTemporal;
 
         const horaEntradaLimpia = formatHoraLocal(b.horaEntrada);
         const horaSalidaLimpia = b.horaSalida ? formatHoraLocal(b.horaSalida) : "";
@@ -18874,9 +18977,19 @@ export default function App() {
               {/* Header */}
               <div className={`p-4 sm:p-5 bg-gradient-to-r ${modConfig.headerBg} text-white flex items-start justify-between gap-3 shadow-sm`}>
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-2xl bg-white/15 backdrop-blur-md text-white shadow-2xs">
-                    {modConfig.icon}
-                  </div>
+                  {fotoChofer ? (
+                    <img
+                      src={fotoChofer}
+                      alt="Chofer"
+                      className="w-11 h-11 rounded-2xl object-cover border-2 border-white/40 shadow-sm shrink-0 cursor-pointer hover:scale-105 transition-transform"
+                      onClick={() => setSelectedFotoTrabajadorPreview(trabMatch)}
+                      title="Clic para ver credencial ampliada"
+                    />
+                  ) : (
+                    <div className="p-2.5 rounded-2xl bg-white/15 backdrop-blur-md text-white shadow-2xs">
+                      {modConfig.icon}
+                    </div>
+                  )}
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-xs font-mono font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-md">
@@ -18936,65 +19049,150 @@ export default function App() {
                     <span>Datos del Chofer / Colaborador</span>
                   </div>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-slate-700">
-                    <div>
-                      <span className="text-[10px] text-slate-400 block font-medium">Nombre:</span>
-                      <span className="font-bold text-slate-900 text-xs">{choferNom}</span>
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] text-slate-400 block font-medium">Empresa:</span>
-                      <span className="font-semibold text-slate-800 text-xs">{b.empresaNombre || "Particular / Visita"}</span>
-                    </div>
-
-                    {b.telefono && (
-                      <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Teléfono:</span>
-                        <div className="font-mono text-xs font-semibold text-[#0D6E5F]">
-                          <CopyableInlineText text={b.telefono} label="Teléfono" onCopyToast={showToast} />
+                  <div className="flex flex-col sm:flex-row gap-3 items-start">
+                    {fotoChofer && (
+                      <div 
+                        onClick={() => setSelectedFotoTrabajadorPreview(trabMatch)}
+                        className="w-14 h-14 rounded-2xl overflow-hidden border border-slate-200 shadow-2xs shrink-0 cursor-pointer hover:border-[#0D6E5F] relative group bg-slate-100"
+                        title="Clic para ver credencial ampliada"
+                      >
+                        <img
+                          src={fotoChofer}
+                          alt={choferNom}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                        <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <span className="text-[8px] text-white font-bold bg-black/60 px-1 py-0.5 rounded">Ver</span>
                         </div>
                       </div>
                     )}
 
-                    <div>
-                      <span className="text-[10px] text-slate-400 block font-medium">Pasajeros Acompañantes:</span>
-                      <span className="font-semibold text-slate-800 text-xs">
-                        {pasajerosVal > 0 ? `+${pasajerosVal} persona(s) adicional(es)` : "0 (Solo el chofer)"}
-                      </span>
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-slate-700 w-full">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Nombre:</span>
+                        <span className="font-bold text-slate-900 text-xs">{choferNom}</span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Empresa:</span>
+                        <span className="font-semibold text-slate-800 text-xs">{empresaVal}</span>
+                      </div>
+
+                      {telefonoVal && (
+                        <div>
+                          <span className="text-[10px] text-slate-400 block font-medium">Teléfono:</span>
+                          <div className="font-mono text-xs font-semibold text-[#0D6E5F]">
+                            <CopyableInlineText text={telefonoVal} label="Teléfono" onCopyToast={showToast} />
+                          </div>
+                        </div>
+                      )}
+
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Pasajeros Acompañantes:</span>
+                        <span className="font-semibold text-slate-800 text-xs">
+                          {pasajerosVal > 0 ? `+${pasajerosVal} persona(s) adicional(es)` : "0 (Solo el chofer)"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Vehículo */}
+                {/* Vehículo con Fotografía y Especificaciones Completas */}
                 {!isPeatonal && (
-                  <div className="p-3.5 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-2.5">
-                    <div className="text-[11px] font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
-                      <IconCar className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Datos del Vehículo</span>
+                  <div className="p-3.5 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-3">
+                    <div className="text-[11px] font-bold text-slate-900 uppercase tracking-wider flex items-center justify-between border-b border-slate-100 pb-2">
+                      <div className="flex items-center gap-1.5">
+                        <IconCar className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Datos del Vehículo</span>
+                      </div>
+                      {estatusHOAVehiculo && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-slate-400 font-semibold">Estatus HOA:</span>
+                          <StatusBadge status={estatusHOAVehiculo} />
+                        </div>
+                      )}
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-slate-700">
-                      <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Placas:</span>
-                        <span className="font-mono font-extrabold text-slate-900 text-xs bg-slate-100 px-2 py-0.5 rounded border border-slate-200 inline-block mt-0.5">
-                          {placasVal}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Marca:</span>
-                        <span className="font-semibold text-slate-800 text-xs">{marcaVal || "—"}</span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Modelo / Año:</span>
-                        <span className="font-semibold text-slate-800 text-xs">
-                          {modeloVal ? `${modeloVal} ${anioVal ? `(${anioVal})` : ""}` : (anioVal || "—")}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Color:</span>
-                        <span className="font-semibold text-slate-800 text-xs">{colorVal || "—"}</span>
+                    <div className="flex flex-col sm:flex-row gap-3 items-center sm:items-start">
+                      {/* Fotografía del Vehículo */}
+                      {fotoVehiculo ? (
+                        <div 
+                          onClick={() => setSelectedFotoVehiculoPreview(vehMatch || { marca: marcaVal, modelo: modeloVal, foto: fotoVehiculo } as any)}
+                          className="w-full sm:w-36 h-28 shrink-0 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 relative group shadow-2xs cursor-pointer hover:border-[#0D6E5F] transition-all"
+                          title="Clic para ver fotografía ampliada"
+                        >
+                          <img
+                            src={fotoVehiculo}
+                            alt={`${marcaVal} ${modeloVal}`}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span className="text-[10px] text-white font-bold bg-black/60 px-2 py-0.5 rounded-full shadow-sm">
+                              🔍 Ampliar Foto
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="w-full sm:w-28 h-24 shrink-0 rounded-2xl border border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center text-slate-400">
+                          <IconCar className="w-7 h-7 text-slate-300 mb-1" />
+                          <span className="text-[9px] font-medium text-slate-400">Sin fotografía</span>
+                        </div>
+                      )}
+
+                      {/* Grid de Especificaciones */}
+                      <div className="flex-1 grid grid-cols-2 gap-2.5 text-slate-700 w-full">
+                        <div>
+                          <span className="text-[10px] text-slate-400 block font-medium">Placas:</span>
+                          <span className="font-mono font-extrabold text-slate-900 text-xs bg-slate-100 px-2.5 py-0.5 rounded-lg border border-slate-200 inline-block mt-0.5 shadow-2xs">
+                            {placasVal}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 block font-medium">Marca:</span>
+                          <span className="font-bold text-slate-900 text-xs">{marcaVal || "—"}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 block font-medium">Modelo:</span>
+                          <span className="font-bold text-slate-900 text-xs">{modeloVal || "—"}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 block font-medium">Año:</span>
+                          <span className="font-semibold text-slate-800 text-xs">{anioVal || "—"}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 block font-medium">Color:</span>
+                          <span className="font-semibold text-slate-800 text-xs">{colorVal || "—"}</span>
+                        </div>
+                        {vehMatch?.conductor && vehMatch.conductor !== choferNom && (
+                          <div>
+                            <span className="text-[10px] text-slate-400 block font-medium">Chofer Asignado Base:</span>
+                            <span className="font-medium text-slate-700 text-xs truncate block">{vehMatch.conductor}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
+
+                    {/* Alerta de Sanción Disciplinaria si existe */}
+                    {sancionActiva && (
+                      <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs space-y-1">
+                        <div className="font-bold flex items-center gap-1.5">
+                          <IconAlertTriangle className="w-3.5 h-3.5 text-red-600" />
+                          <span>Sanción Disciplinaria Activa</span>
+                        </div>
+                        <p className="text-[11px] text-red-700">{sancionActiva.motivo} · {sancionActiva.medidaDisciplinaria}</p>
+                      </div>
+                    )}
+
+                    {/* Permiso Temporal si existe */}
+                    {permisoTemporal && (
+                      <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs space-y-1">
+                        <div className="font-bold flex items-center gap-1.5">
+                          <IconCheckCircle className="w-3.5 h-3.5 text-amber-600" />
+                          <span>Permiso Temporal de Acceso Vigente</span>
+                        </div>
+                        <p className="text-[11px] text-amber-700">Autorizado por: {permisoTemporal.autorizadoPorOficina || permisoTemporal.supervisorEjecutor || "Oficina HOA"} hasta {permisoTemporal.fechaExpiracion}</p>
+                      </div>
+                    )}
                   </div>
                 )}
 
