@@ -8579,18 +8579,18 @@ export default function App() {
 
           {/* TABLA DE VEHÍCULOS VISITANTES */}
           <div className="overflow-x-auto">
-            <table className="w-full table-fixed min-w-[980px] text-xs">
+            <table className="w-full table-fixed min-w-[1320px] text-xs">
               <colgroup>
-                <col className="w-[5%]" />
-                <col className="w-[7%]" />
-                <col className="w-[11%]" />
-                <col className="w-[22%]" />
-                <col className="w-[16%]" />
-                <col className="w-[9%]" />
-                <col className="w-[9%]" />
-                <col className="w-[11%]" />
-                <col className="w-[5%]" />
-                <col className="w-[5%]" />
+                <col style={{ width: "70px" }} />
+                <col style={{ width: "90px" }} />
+                <col style={{ width: "130px" }} />
+                <col style={{ width: "300px" }} />
+                <col style={{ width: "200px" }} />
+                <col style={{ width: "115px" }} />
+                <col style={{ width: "110px" }} />
+                <col style={{ width: "145px" }} />
+                <col style={{ width: "100px" }} />
+                <col style={{ width: "110px" }} />
               </colgroup>
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">
                 <tr>
