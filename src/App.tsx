@@ -8480,9 +8480,9 @@ export default function App() {
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Visitantes</span>
               <span className="text-xl font-mono font-extrabold text-slate-800">{visitantesList.length}</span>
             </div>
-            <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200">
-              <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider block">Actualmente Dentro</span>
-              <span className="text-xl font-mono font-extrabold text-amber-900">{totalDentro}</span>
+            <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200">
+              <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider block">Actualmente Dentro</span>
+              <span className="text-xl font-mono font-extrabold text-blue-900">{totalDentro}</span>
             </div>
             <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200">
               <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider block">Salidas Registradas</span>
@@ -8506,7 +8506,7 @@ export default function App() {
                 value={searchVisitantes}
                 onChange={(e) => setSearchVisitantes(e.target.value)}
                 placeholder="Buscar por placa, chofer, marca, modelo, corbatín o destino..."
-                className="w-full h-9 pl-9 pr-3 text-xs rounded-xl border border-slate-300 bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 shadow-2xs font-medium"
+                className="w-full h-9 pl-9 pr-3 text-xs rounded-xl border border-slate-300 bg-white outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 shadow-2xs font-medium"
               />
             </div>
 
@@ -8515,27 +8515,24 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setFilterVisitantesEstado("todos")}
-                className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
-                  filterVisitantesEstado === "todos" ? "bg-slate-800 text-white shadow-2xs" : "text-slate-600 hover:text-slate-900"
-                }`}
+                className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${filterVisitantesEstado === "todos" ? "bg-slate-800 text-white shadow-2xs" : "text-slate-600 hover:text-slate-900"
+                  }`}
               >
                 Todos ({visitantesList.length})
               </button>
               <button
                 type="button"
                 onClick={() => setFilterVisitantesEstado("dentro")}
-                className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
-                  filterVisitantesEstado === "dentro" ? "bg-amber-600 text-white shadow-2xs" : "text-slate-600 hover:text-slate-900"
-                }`}
+                className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${filterVisitantesEstado === "dentro" ? "bg-amber-600 text-white shadow-2xs" : "text-slate-600 hover:text-slate-900"
+                  }`}
               >
                 Dentro ({totalDentro})
               </button>
               <button
                 type="button"
                 onClick={() => setFilterVisitantesEstado("salida")}
-                className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
-                  filterVisitantesEstado === "salida" ? "bg-emerald-600 text-white shadow-2xs" : "text-slate-600 hover:text-slate-900"
-                }`}
+                className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${filterVisitantesEstado === "salida" ? "bg-emerald-600 text-white shadow-2xs" : "text-slate-600 hover:text-slate-900"
+                  }`}
               >
                 Salidas ({totalSalida})
               </button>
@@ -8577,7 +8574,7 @@ export default function App() {
                       <tr key={v.id} className="hover:bg-slate-50/80 transition-colors">
                         <td className="px-3 py-2.5 font-mono text-center font-bold text-slate-700">#{v.id}</td>
                         <td className="px-3 py-2.5 text-center">
-                          <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 font-mono font-bold text-xs">
+                          <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-900 border border-blue-300 font-mono font-bold text-xs">
                             #{v.corbatin_num}
                           </span>
                         </td>
@@ -8606,7 +8603,7 @@ export default function App() {
                           {horaSal ? (
                             <span className="text-slate-700">{horaSal}</span>
                           ) : (
-                            <span className="text-amber-700 font-bold font-sans text-[10px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                            <span className="text-blue-700 font-bold font-sans text-[10px] bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
                               Dentro
                             </span>
                           )}
@@ -8616,8 +8613,8 @@ export default function App() {
                         </td>
                         <td className="px-3 py-2.5 text-center">
                           {isDentro ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-900 border border-blue-300">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
                               <span>Dentro</span>
                             </span>
                           ) : (
@@ -12649,7 +12646,7 @@ export default function App() {
                       setHoraActual();
                     }}
                     className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${casetaModoAcceso === "visitante"
-                      ? "bg-amber-600 text-white shadow-xs"
+                      ? "bg-[#0D6E5F] text-white shadow-xs"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
                       }`}
                   >
@@ -12664,7 +12661,7 @@ export default function App() {
                       setHoraActual();
                     }}
                     className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${casetaModoAcceso === "peatonal"
-                      ? "bg-sky-700 text-white shadow-xs"
+                      ? "bg-[#0D6E5F] text-white shadow-xs"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
                       }`}
                   >
@@ -12727,24 +12724,10 @@ export default function App() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-100 pb-2.5">
                       <div>
                         <h2 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
-                          {casetaModoAcceso === "vehicular" && (
-                            <>
-                              <span className="w-2.5 h-2.5 rounded-full bg-[#0D6E5F]"></span>
-                              <span>Ingreso Vehicular de Contratistas</span>
-                            </>
-                          )}
-                          {casetaModoAcceso === "visitante" && (
-                            <>
-                              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
-                              <span>Ingreso de Visitantes & Corbatín Manual (1 al 30)</span>
-                            </>
-                          )}
-                          {casetaModoAcceso === "peatonal" && (
-                            <>
-                              <span className="w-2.5 h-2.5 rounded-full bg-sky-600"></span>
-                              <span>Ingreso Peatonal / Personal a Pie</span>
-                            </>
-                          )}
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#0D6E5F]"></span>
+                          {casetaModoAcceso === "vehicular" && <span>Ingreso Vehicular de Contratistas</span>}
+                          {casetaModoAcceso === "visitante" && <span>Ingreso de Visitantes & Corbatín Manual (1 al 30)</span>}
+                          {casetaModoAcceso === "peatonal" && <span>Ingreso Peatonal / Personal a Pie</span>}
                         </h2>
                         <p className="text-[11px] text-slate-400 mt-0.5">
                           {casetaModoAcceso === "vehicular" && "Captura la unidad de contratista, valida corbatín regular/verde y registra el pase"}
@@ -12870,7 +12853,7 @@ export default function App() {
                                           >
                                             <div className="flex items-center justify-between gap-2">
                                               <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                                                <span className="px-1.5 py-0.5 rounded-md bg-teal-800 text-white font-mono font-bold text-xs shrink-0">
+                                                <span className="px-1.5 py-0.5 rounded-md bg-orange-500 text-white font-mono font-bold text-xs shrink-0">
                                                   #{v.corbatinNum}
                                                 </span>
                                                 <span className="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-900 font-mono font-bold text-xs tracking-wider shrink-0">
@@ -13161,7 +13144,7 @@ export default function App() {
                                   setCasetaConductorId("");
                                   setCasetaConductorQuery("");
                                 }}
-                                className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 bg-white font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                                className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 bg-white font-medium text-slate-800 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
                               >
                                 <option value="">-- Seleccionar Empresa Contratista --</option>
                                 {empresas.map((emp) => (
@@ -13197,7 +13180,7 @@ export default function App() {
                                     setCasetaConductorQuery("");
                                   }
                                 }}
-                                className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 bg-white font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                                className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 bg-white font-medium text-slate-800 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
                               >
                                 <option value="">-- Seleccionar Vehículo Asignado --</option>
                                 {empresaVehicles.length === 0 && selectedEmpresaId ? (
@@ -13642,25 +13625,25 @@ export default function App() {
                     {casetaModoAcceso === "visitante" && (
                       <form onSubmit={handleRegistrarEntrada} className="space-y-3.5">
                         {/* BANNER INFORMATIVO HOA VISITANTE */}
-                        <div className="p-3 rounded-xl bg-amber-50/80 border border-amber-200/90 text-xs text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 shadow-2xs">
+                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 shadow-2xs">
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="p-1.5 rounded-lg bg-amber-500 text-white shrink-0 shadow-2xs">
+                            <div className="p-1.5 rounded-lg bg-[#0D6E5F] text-white shrink-0 shadow-2xs">
                               <IconBadge className="w-4 h-4" />
                             </div>
                             <div>
-                              <div className="font-extrabold text-amber-900 flex items-center gap-1.5">
+                              <div className="font-extrabold text-slate-900 flex items-center gap-1.5">
                                 <span>Control de Corbatines Físicos (1 al 30) · Asignación Automática Diaria</span>
                               </div>
-                              <p className="text-[11px] text-amber-800/90 mt-0.5">
+                              <p className="text-[11px] text-slate-500 mt-0.5">
                                 El sistema asigna automáticamente el siguiente disponible. Los corbatines utilizados hoy quedan bloqueados hasta el día siguiente para evitar repetición.
                               </p>
                             </div>
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0 text-[11px] font-mono">
-                            <span className="px-2 py-0.5 rounded-md bg-white border border-amber-300 font-bold text-emerald-800">
+                            <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 font-bold text-emerald-800">
                               {30 - corbatinesVisitanteUsadosHoy.size} Libres hoy
                             </span>
-                            <span className="px-2 py-0.5 rounded-md bg-white border border-amber-300 font-bold text-red-700">
+                            <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 font-bold text-red-700">
                               {corbatinesVisitanteUsadosHoy.size} Usados hoy
                             </span>
                           </div>
@@ -13670,12 +13653,12 @@ export default function App() {
                         <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                           <div className="flex items-center justify-between gap-2">
                             <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#0D6E5F]"></span>
                               <span>1. Corbatín Físico Asignado (Auto-asignado del 1 al 30) *</span>
                             </label>
                             {casetaVisitanteCorbatin ? (
-                              <div className="flex items-center gap-1 text-[11px] font-semibold text-amber-800 bg-amber-100/90 px-2.5 py-0.5 rounded-lg border border-amber-300 shadow-2xs">
-                                <IconCheckCircle className="w-3.5 h-3.5 text-amber-700" />
+                              <div className="flex items-center gap-1 text-[11px] font-semibold text-[#0D6E5F] bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200 shadow-2xs">
+                                <IconCheckCircle className="w-3.5 h-3.5 text-[#0D6E5F]" />
                                 <span>Asignado: <strong className="font-mono text-xs">#{casetaVisitanteCorbatin}</strong> (Automático)</span>
                               </div>
                             ) : (
@@ -13721,13 +13704,13 @@ export default function App() {
                                   type="button"
                                   onClick={() => setCasetaVisitanteCorbatin(String(num))}
                                   className={`h-9 rounded-lg font-mono font-bold text-xs flex flex-col items-center justify-center transition-all cursor-pointer ${isSelected
-                                    ? "bg-amber-600 text-white border-2 border-amber-700 shadow-sm scale-105 z-10"
-                                    : "bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 hover:border-amber-300"
+                                    ? "bg-[#0D6E5F] text-white border-2 border-[#095247] shadow-sm scale-105 z-10"
+                                    : "bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 border border-slate-200 hover:border-emerald-300"
                                     }`}
                                   title={`Seleccionar corbatín #${num}`}
                                 >
                                   <span className="leading-none">#{num}</span>
-                                  <span className={`text-[8px] font-sans leading-none mt-0.5 ${isSelected ? "text-amber-100 font-bold" : "text-slate-400"}`}>
+                                  <span className={`text-[8px] font-sans leading-none mt-0.5 ${isSelected ? "text-emerald-100 font-bold" : "text-slate-400"}`}>
                                     {isSelected ? "Auto" : "Libre"}
                                   </span>
                                 </button>
@@ -13751,7 +13734,7 @@ export default function App() {
                               value={casetaVisitanteConductor}
                               onChange={(e) => setCasetaVisitanteConductor(e.target.value)}
                               placeholder="Ej. Juan Manuel Pérez García"
-                              className="w-full h-10 rounded-xl pl-9 pr-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 shadow-2xs font-medium"
+                              className="w-full h-10 rounded-xl pl-9 pr-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-2xs font-medium"
                             />
                           </div>
                         </div>
@@ -13775,7 +13758,7 @@ export default function App() {
                                 value={casetaVisitanteMarca}
                                 onChange={(e) => setCasetaVisitanteMarca(e.target.value)}
                                 placeholder="Toyota, Ford, Nissan"
-                                className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 shadow-2xs font-medium"
+                                className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-2xs font-medium"
                               />
                             </div>
 
@@ -13789,7 +13772,7 @@ export default function App() {
                                 value={casetaVisitanteModelo}
                                 onChange={(e) => setCasetaVisitanteModelo(e.target.value)}
                                 placeholder="Hilux, Transit, NP300"
-                                className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 shadow-2xs font-medium"
+                                className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-2xs font-medium"
                               />
                             </div>
                           </div>
@@ -13806,7 +13789,7 @@ export default function App() {
                                 value={casetaVisitanteAnio}
                                 onChange={(e) => setCasetaVisitanteAnio(e.target.value)}
                                 placeholder="2023"
-                                className="w-full h-10 rounded-xl px-3.5 text-sm font-mono border border-slate-300 text-slate-800 bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 shadow-2xs font-medium"
+                                className="w-full h-10 rounded-xl px-3.5 text-sm font-mono border border-slate-300 text-slate-800 bg-white outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-2xs font-medium"
                               />
                             </div>
 
@@ -13820,7 +13803,7 @@ export default function App() {
                                 value={casetaVisitantePlacas}
                                 onChange={(e) => setCasetaVisitantePlacas(e.target.value.toUpperCase())}
                                 placeholder="MTY-0000-A"
-                                className="w-full h-10 rounded-xl px-3.5 text-sm font-mono font-bold uppercase tracking-wider border border-slate-300 text-slate-900 bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 shadow-2xs"
+                                className="w-full h-10 rounded-xl px-3.5 text-sm font-mono font-bold uppercase tracking-wider border border-slate-300 text-slate-900 bg-white outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-2xs"
                               />
                             </div>
                           </div>
@@ -13836,7 +13819,7 @@ export default function App() {
                               value={casetaVisitanteColor}
                               onChange={(e) => setCasetaVisitanteColor(e.target.value)}
                               placeholder="Blanco, Gris, Negro"
-                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 shadow-2xs font-medium"
+                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-2xs font-medium"
                             />
                           </div>
                         </div>
@@ -13853,7 +13836,7 @@ export default function App() {
                               value={casetaVisitantePasajeros}
                               onChange={(e) => setCasetaVisitantePasajeros(e.target.value)}
                               placeholder="0"
-                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 font-mono font-bold text-slate-800 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none bg-white text-center shadow-2xs"
+                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 font-mono font-bold text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none bg-white text-center shadow-2xs"
                             />
                           </div>
 
@@ -13903,7 +13886,7 @@ export default function App() {
                               value={casetaVisitanteDestino}
                               onChange={(e) => setCasetaVisitanteDestino(e.target.value)}
                               placeholder="Ej. Torre 1 - Depto 402 / Familia López"
-                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 shadow-2xs"
+                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-2xs"
                             />
                           </div>
 
@@ -13916,7 +13899,7 @@ export default function App() {
                               value={casetaVisitanteObservaciones}
                               onChange={(e) => setCasetaVisitanteObservaciones(e.target.value)}
                               placeholder="Ej. Identificación verificada, entrega corbatín físico"
-                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-700 bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 shadow-2xs"
+                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-700 bg-white outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-2xs"
                             />
                           </div>
                         </div>
@@ -13928,7 +13911,7 @@ export default function App() {
                             disabled={isSubmittingEntrada || !casetaVisitanteCorbatin}
                             className={`w-full h-11 rounded-xl text-sm font-bold text-white transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md ${isSubmittingEntrada || !casetaVisitanteCorbatin
                               ? "bg-slate-400 cursor-not-allowed opacity-70"
-                              : "bg-gradient-to-r from-amber-600 to-amber-700 hover:brightness-105 active:scale-[0.99]"
+                              : "bg-gradient-to-r from-[#0D6E5F] to-[#0A584C] hover:brightness-105 active:scale-[0.99]"
                               }`}
                           >
                             {isSubmittingEntrada ? (
@@ -13966,7 +13949,7 @@ export default function App() {
                                 setSelectedEmpresaId(e.target.value);
                                 setCasetaPeatonalTrabajadorId("");
                               }}
-                              className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 bg-white font-medium text-slate-800 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                              className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 bg-white font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                             >
                               <option value="">-- Seleccionar Empresa Contratista --</option>
                               {empresas.map((emp) => (
@@ -13982,7 +13965,7 @@ export default function App() {
                             <select
                               value={casetaPeatonalTrabajadorId}
                               onChange={(e) => setCasetaPeatonalTrabajadorId(e.target.value)}
-                              className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 bg-white text-slate-800 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                              className="w-full h-10 rounded-xl px-3.5 text-xs sm:text-sm border border-slate-300 bg-white text-slate-800 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                             >
                               <option value="">[+] Capturar colaborador / Nombre libre</option>
                               {empresaTrabajadores.map((t) => (
@@ -13995,13 +13978,13 @@ export default function App() {
                         </div>
 
                         {/* DIAGNÓSTICO / PROTOCOLO PEATONAL */}
-                        <div className="p-3 rounded-xl bg-sky-50 border border-sky-200 text-xs space-y-2">
+                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
                           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                             {currentTrabajadorPeatonal?.foto_url ? (
                               <button
                                 type="button"
                                 onClick={() => setSelectedFotoTrabajadorPreview(currentTrabajadorPeatonal)}
-                                className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-sky-300 bg-white shadow-2xs group relative cursor-pointer"
+                                className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-slate-300 bg-white shadow-2xs group relative cursor-pointer"
                                 title="Clic para ver credencial del trabajador"
                               >
                                 <img
@@ -14014,20 +13997,20 @@ export default function App() {
                                 </div>
                               </button>
                             ) : (
-                              <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-800 flex items-center justify-center shrink-0">
+                              <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
                                 <IconWalk className="w-5 h-5" />
                               </div>
                             )}
                             <div className="flex-1 min-w-0">
-                              <div className="font-bold text-sky-900 flex items-center justify-between">
+                              <div className="font-bold text-slate-900 flex items-center justify-between">
                                 <span className="flex items-center gap-1.5 truncate">
                                   <span>Diagnóstico de Acceso Peatonal {currentTrabajadorPeatonal ? `· ${currentTrabajadorPeatonal.nombre} ${currentTrabajadorPeatonal.apellidos}` : "· Protocolo Activo"}</span>
                                 </span>
-                                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-sky-200 text-sky-900 shrink-0">
+                                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-700 shrink-0">
                                   A Pie
                                 </span>
                               </div>
-                              <p className="text-sky-800 text-xs mt-0.5">
+                              <p className="text-slate-600 text-xs mt-0.5">
                                 {currentTrabajadorPeatonal
                                   ? `Colaborador Acreditado · ID #${currentTrabajadorPeatonal.id_trabajador}. Verifica identificación oficial antes de permitir ingreso.`
                                   : "Verifica que el colaborador externo porte su identificación oficial y equipo de seguridad antes de autorizar el ingreso."}
@@ -14047,7 +14030,7 @@ export default function App() {
                               value={casetaPeatonalNombre}
                               onChange={(e) => setCasetaPeatonalNombre(e.target.value)}
                               placeholder="Ej. Carlos Ortega Vega"
-                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                             />
                           </div>
 
@@ -14060,7 +14043,7 @@ export default function App() {
                               value={casetaPeatonalTelefono}
                               onChange={(e) => setCasetaPeatonalTelefono(e.target.value)}
                               placeholder="+52 638 000 0000"
-                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 font-mono text-slate-800 bg-white outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                              className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 font-mono text-slate-800 bg-white outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                             />
                           </div>
                         </div>
@@ -14109,7 +14092,7 @@ export default function App() {
                             value={casetaTrabajos}
                             onChange={(e) => setCasetaTrabajos(e.target.value)}
                             placeholder="Ej. Reparación urgente en Torre 2 con herramienta de mano"
-                            className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                            className="w-full h-10 rounded-xl px-3.5 text-sm border border-slate-300 text-slate-800 bg-white outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                           />
                         </div>
 
@@ -14130,7 +14113,7 @@ export default function App() {
                           <button
                             type="submit"
                             disabled={isSubmittingEntrada}
-                            className={`w-full h-11 rounded-xl text-sm font-bold text-white bg-sky-700 hover:bg-sky-800 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md ${isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+                            className={`w-full h-11 rounded-xl text-sm font-bold text-white bg-[#0D6E5F] hover:bg-[#0A584C] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md ${isSubmittingEntrada ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
                               }`}
                           >
                             {isSubmittingEntrada ? (
@@ -14182,14 +14165,30 @@ export default function App() {
                             const isDentro = item.estado === "Dentro";
                             const isMarcando = Boolean(marcandoSalidaIds[item.id]);
                             const isVisitanteItem = item.empresaNombre === "Visitante" || (item as any).tipo === "Visitante" || item.tipoAcceso === "Visitante" || String(item.observaciones).includes("[VISITANTE]");
+                            const isCorbatinVerde = item.tipoCorbatin === "VERDE" || item.tipoAcceso === "Corbatín Verde" || (item as any).tipo === "Corbatín Verde" || String(item.observaciones).includes("[CORBATÍN VERDE");
+                            const isPeatonalItem = !isVisitanteItem && (item.tipoAcceso === "Peatonal" || (item as any).tipo === "Peatonal" || item.placas === "PEATONAL" || item.placas === "PEATONAL (A PIE)" || (!item.id_vehiculo && !item.placas) || String(item.observaciones).includes("Peatonal ["));
+                            const isContratistaNormal = !isVisitanteItem && !isCorbatinVerde && !isPeatonalItem;
+
+                            const cardBorderBg = isVisitanteItem
+                              ? "border-blue-200/80 bg-blue-50/40 hover:bg-blue-50/70"
+                              : isCorbatinVerde
+                                ? "border-emerald-200/80 bg-emerald-50/40 hover:bg-emerald-50/70"
+                                : isPeatonalItem
+                                  ? "border-purple-200/80 bg-purple-50/40 hover:bg-purple-50/70"
+                                  : "border-orange-200/80 bg-orange-50/30 hover:bg-orange-50/60";
+
+                            const badgeCorbatinColor = isVisitanteItem
+                              ? "bg-blue-600 text-white"
+                              : isCorbatinVerde
+                                ? "bg-emerald-600 text-white"
+                                : isPeatonalItem
+                                  ? "bg-purple-600 text-white"
+                                  : "bg-orange-500 text-white";
 
                             return (
                               <div
                                 key={item.id}
-                                className={`p-2.5 rounded-xl border transition-all flex items-center justify-between gap-2 text-xs shadow-2xs ${isVisitanteItem
-                                  ? "border-amber-200/80 bg-amber-50/40 hover:bg-amber-50/70"
-                                  : "border-slate-200 bg-slate-50/70 hover:bg-slate-50"
-                                  }`}
+                                className={`p-2.5 rounded-xl border transition-all flex items-center justify-between gap-2 text-xs shadow-2xs ${cardBorderBg}`}
                               >
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -14197,16 +14196,28 @@ export default function App() {
                                       {item.placas || `Folio #${item.id}`}
                                     </span>
                                     {item.corbatinNum && item.corbatinNum !== "—" && (
-                                      <span className={`px-1.5 py-0.2 rounded font-mono font-bold text-[9px] ${isVisitanteItem
-                                        ? "bg-amber-600 text-white"
-                                        : "bg-teal-800 text-white"
-                                        }`}>
+                                      <span className={`px-1.5 py-0.2 rounded font-mono font-bold text-[9px] ${badgeCorbatinColor}`}>
                                         {item.corbatinNum.startsWith("#") ? item.corbatinNum : `#${item.corbatinNum}`}
                                       </span>
                                     )}
                                     {isVisitanteItem && (
-                                      <span className="px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-bold text-[9px] border border-amber-300">
+                                      <span className="px-1.5 py-0.2 rounded bg-blue-100 text-blue-800 font-bold text-[9px] border border-blue-300">
                                         Visitante
+                                      </span>
+                                    )}
+                                    {isCorbatinVerde && (
+                                      <span className="px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-bold text-[9px] border border-emerald-300">
+                                        C. Verde
+                                      </span>
+                                    )}
+                                    {isPeatonalItem && (
+                                      <span className="px-1.5 py-0.2 rounded bg-purple-100 text-purple-800 font-bold text-[9px] border border-purple-300">
+                                        A Pie
+                                      </span>
+                                    )}
+                                    {isContratistaNormal && (
+                                      <span className="px-1.5 py-0.2 rounded bg-orange-100 text-orange-800 font-bold text-[9px] border border-orange-300">
+                                        Contratista
                                       </span>
                                     )}
                                     <span className="text-[10px] text-slate-400 font-mono">
@@ -14440,14 +14451,14 @@ export default function App() {
                                   <td className="px-1.5 py-2.5 font-mono text-xs font-bold text-slate-700 text-center truncate">{b.id}</td>
                                   <td className="px-1 py-2.5 text-center">
                                     {(b as any).tipo === "Visitante" || b.tipoAcceso === "Visitante" || b.empresaNombre === "Visitante" || String(b.observaciones).includes("[VISITANTE]") ? (
-                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-300">
                                         <IconUser className="w-3 h-3 shrink-0" />
                                         <span>Visitante</span>
                                       </span>
                                     ) : b.tipoAcceso === "Peatonal" || b.vehicleId === "PEATONAL" ? (
-                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-300">
                                         <IconWalk className="w-3 h-3 shrink-0" />
-                                        <span>Peatonal</span>
+                                        <span>A Pie</span>
                                       </span>
                                     ) : b.tipoCorbatin === "VERDE" || b.tipoAcceso === "Corbatín Verde" ? (
                                       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
@@ -14455,9 +14466,9 @@ export default function App() {
                                         <span>C. Verde</span>
                                       </span>
                                     ) : (
-                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-50 text-orange-800 border border-orange-300">
                                         <IconCar className="w-3 h-3 shrink-0" />
-                                        <span>Vehicular</span>
+                                        <span>Contratista</span>
                                       </span>
                                     )}
                                   </td>
@@ -14466,7 +14477,7 @@ export default function App() {
                                   </td>
                                   <td className="px-2 py-2.5 text-xs font-mono font-bold text-slate-800 truncate" title={b.placas}>
                                     {b.placas === "PEATONAL (A PIE)" ? (
-                                      <span className="text-sky-700 font-sans font-semibold text-[11px]">A Pie</span>
+                                      <span className="text-purple-700 font-sans font-semibold text-[11px]">A Pie</span>
                                     ) : (
                                       b.placas
                                     )}
@@ -14491,15 +14502,15 @@ export default function App() {
                                   </td>
                                   <td className="px-1 py-2.5 text-center text-xs font-mono font-bold truncate">
                                     {(b as any).tipo === "Visitante" || b.tipoAcceso === "Visitante" || b.empresaNombre === "Visitante" || String(b.observaciones).includes("[VISITANTE]") ? (
-                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-600 text-white shadow-2xs">
                                         {b.corbatinNum && b.corbatinNum !== "—" ? (b.corbatinNum.startsWith("#") ? b.corbatinNum : `#${b.corbatinNum}`) : "—"}
                                       </span>
                                     ) : b.tipoCorbatin === "VERDE" || b.tipoAcceso === "Corbatín Verde" ? (
-                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-600 text-white shadow-2xs">
                                         {b.corbatinNum && b.corbatinNum !== "—" ? (b.corbatinNum.startsWith("#") ? b.corbatinNum : `#${b.corbatinNum}`) : "—"}
                                       </span>
                                     ) : (
-                                      <span style={{ color: "var(--color-primary)" }}>
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-orange-500 text-white shadow-2xs">
                                         {b.corbatinNum && b.corbatinNum !== "—" ? (b.corbatinNum.startsWith("#") ? b.corbatinNum : `#${b.corbatinNum}`) : "—"}
                                       </span>
                                     )}

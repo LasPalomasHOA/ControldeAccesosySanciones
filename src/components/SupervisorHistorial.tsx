@@ -1594,8 +1594,8 @@ export const SupervisorHistorial: React.FC<SupervisorHistorialProps> = ({
                         {/* Placa o Badge Peatonal */}
                         <div className="text-right">
                           {mov.tipoAcceso === 'Peatonal' ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-200">
-                              Peatonal
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                              A Pie
                             </span>
                           ) : (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-bold bg-slate-200 text-slate-900">
