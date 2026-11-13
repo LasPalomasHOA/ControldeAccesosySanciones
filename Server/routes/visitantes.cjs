@@ -196,18 +196,42 @@ router.post('/', async (req, res) => {
     const hoyFecha = ahora.toISOString().split('T')[0];
     const numCorb = parseInt(corbatin_num, 10);
 
-    // Validación diaria: si ya se usó hoy (con o sin salida), no se puede reusar hasta mañana
+    // Validación diaria: regla de 1 día sin reusar corbatín, EXCEPTO si los 30 ya fueron usados hoy
     try {
-      const [rowsUsado] = await db.sequelize.query(`
-        SELECT id FROM "${schema}"."visitantes"
-        WHERE corbatin_num = :corb AND fecha = :fecha
-        LIMIT 1
-      `, { replacements: { corb: numCorb, fecha: hoyFecha } }).catch(() => [[]]);
+      const [rowsCount] = await db.sequelize.query(`
+        SELECT COUNT(DISTINCT corbatin_num) as total_usados
+        FROM "${schema}"."visitantes"
+        WHERE fecha = :fecha AND corbatin_num BETWEEN 1 AND 30
+      `, { replacements: { fecha: hoyFecha } }).catch(() => [[]]);
 
-      if (rowsUsado && rowsUsado.length > 0) {
-        return res.status(400).json({
-          error: `El Corbatín #${numCorb} ya fue utilizado hoy (${hoyFecha}). No puede reutilizarse el mismo día para evitar duplicidad.`
-        });
+      const totalUsadosHoy = Number(rowsCount?.[0]?.total_usados || 0);
+
+      if (totalUsadosHoy < 30) {
+        // Aún quedan corbatines del 1 al 30 sin entregar hoy: regla estricta de no repetición
+        const [rowsUsado] = await db.sequelize.query(`
+          SELECT id, nombre_conductor, placas FROM "${schema}"."visitantes"
+          WHERE corbatin_num = :corb AND fecha = :fecha
+          LIMIT 1
+        `, { replacements: { corb: numCorb, fecha: hoyFecha } }).catch(() => [[]]);
+
+        if (rowsUsado && rowsUsado.length > 0) {
+          return res.status(400).json({
+            error: `El Corbatín #${numCorb} ya fue utilizado hoy (${hoyFecha}) por ${rowsUsado[0].nombre_conductor} (${rowsUsado[0].placas}). Debe durar 1 día sin entregarse para volver a asignarse, a excepción de que los 30 corbatines del día ya estén agotados.`
+          });
+        }
+      } else {
+        // Excepción: Los 30 corbatines ya se usaron hoy. Se permite reutilizar, pero no si sigue actualmente dentro
+        const [rowsActivo] = await db.sequelize.query(`
+          SELECT id, nombre_conductor, placas FROM "${schema}"."visitantes"
+          WHERE corbatin_num = :corb AND fecha = :fecha AND hora_salida IS NULL
+          LIMIT 1
+        `, { replacements: { corb: numCorb, fecha: hoyFecha } }).catch(() => [[]]);
+
+        if (rowsActivo && rowsActivo.length > 0) {
+          return res.status(400).json({
+            error: `El Corbatín #${numCorb} se encuentra actualmente dentro con ${rowsActivo[0].nombre_conductor} (${rowsActivo[0].placas}). Debe registrarse su salida antes de poder reasignarlo.`
+          });
+        }
       }
     } catch (chkErr) { }
 

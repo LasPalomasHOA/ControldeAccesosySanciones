@@ -2377,24 +2377,49 @@ export default function App() {
     return mapa;
   }, [corbatinesVisitanteUsadosHoy]);
 
+  // Total de corbatines agotados hoy (los 30 números físicos ya fueron entregados)
+  const todosCorbatinesAgotadosHoy = useMemo(() => {
+    return corbatinesVisitanteUsadosHoy.size >= 30;
+  }, [corbatinesVisitanteUsadosHoy]);
+
   // Siguiente corbatín disponible automáticamente para hoy (del 1 al 30)
   const corbatinAutoDisponible = useMemo(() => {
+    // 1. Prioridad: Buscar el número menor (1 al 30) que NO se haya entregado hoy
     for (let i = 1; i <= 30; i++) {
       if (!corbatinesVisitanteUsadosHoy.has(i)) {
+        return String(i);
+      }
+    }
+    // 2. EXCEPCIÓN: Si los 30 corbatines ya fueron entregados hoy, se permite reutilizar
+    // Buscamos el menor cuyo vehículo ya haya registrado salida (estado !== "Dentro")
+    for (let i = 1; i <= 30; i++) {
+      const info = corbatinesVisitanteUsadosHoy.get(i);
+      if (info && info.estado !== "Dentro") {
         return String(i);
       }
     }
     return "";
   }, [corbatinesVisitanteUsadosHoy]);
 
-  // Auto-seleccionar el corbatín disponible automáticamente
+  // Auto-seleccionar el corbatín disponible automáticamente en el combobox
   useEffect(() => {
     if (casetaModoAcceso === "visitante") {
-      if (!casetaVisitanteCorbatin || corbatinesVisitanteUsadosHoy.has(Number(casetaVisitanteCorbatin))) {
+      const numActual = Number(casetaVisitanteCorbatin);
+
+      if (!casetaVisitanteCorbatin) {
         setCasetaVisitanteCorbatin(corbatinAutoDisponible);
+      } else if (!todosCorbatinesAgotadosHoy && corbatinesVisitanteUsadosHoy.has(numActual)) {
+        // Si aún no se agotan los 30 y el seleccionado ya fue entregado hoy, reajustar al disponible
+        setCasetaVisitanteCorbatin(corbatinAutoDisponible);
+      } else if (todosCorbatinesAgotadosHoy) {
+        // Si los 30 ya se agotaron, verificar que el seleccionado no siga actualmente dentro
+        const info = corbatinesVisitanteUsadosHoy.get(numActual);
+        if (info && info.estado === "Dentro") {
+          setCasetaVisitanteCorbatin(corbatinAutoDisponible);
+        }
       }
     }
-  }, [casetaModoAcceso, corbatinAutoDisponible, corbatinesVisitanteUsadosHoy]);
+  }, [casetaModoAcceso, corbatinAutoDisponible, corbatinesVisitanteUsadosHoy, todosCorbatinesAgotadosHoy]);
   const empresaTrabajadores = selectedEmpresaId
     ? trabajadores.filter((t) => (t.id_empresa === selectedEmpresaId || t.empresaNombre === currentEmpresa?.nombre) && t.activo !== false)
     : trabajadores.filter((t) => t.activo !== false);
@@ -5637,14 +5662,24 @@ export default function App() {
           return;
         }
 
+        const todosAgotadosHoy = corbatinesVisitanteUsadosHoy.size >= 30;
         if (corbatinesVisitanteUsadosHoy.has(corbNum)) {
           const ocup = corbatinesVisitanteUsadosHoy.get(corbNum);
-          showToast(
-            `El Corbatín #${corbNum} ya fue utilizado el día de hoy por ${ocup?.conductor} (${ocup?.placas}). Cada número sólo puede usarse una vez al día para evitar duplicidad.`,
-            "warning",
-            "Corbatín Ya Usado Hoy"
-          );
-          return;
+          if (!todosAgotadosHoy) {
+            showToast(
+              `El Corbatín #${corbNum} ya fue utilizado el día de hoy por ${ocup?.conductor} (${ocup?.placas}). Para evitar duplicidad, debe transcurrir 1 día sin entregarse (a menos que los 30 números del día ya estén agotados).`,
+              "warning",
+              "Corbatín Ya Usado Hoy"
+            );
+            return;
+          } else if (ocup?.estado === "Dentro") {
+            showToast(
+              `El Corbatín #${corbNum} se encuentra actualmente dentro con ${ocup?.conductor} (${ocup?.placas}). Debe registrarse su salida antes de poder reasignarlo hoy.`,
+              "warning",
+              "Vehículo Aún Adentro"
+            );
+            return;
+          }
         }
 
         const obsVis = `[VISITANTE] Chofer: ${choferNom} | Marca: ${marca} | Modelo: ${modelo} | Año: ${anio || "S/A"} | Placas: ${placas} | Color: ${color || "S/C"} | Corbatín: #${corbNum} | Destino: ${casetaVisitanteDestino.trim() || "Visita general"}${casetaVisitanteObservaciones ? ` | Obs: ${casetaVisitanteObservaciones.trim()}` : ""}`;
@@ -13635,7 +13670,7 @@ export default function App() {
                                 <span>Control de Corbatines Físicos (1 al 30) · Asignación Automática Diaria</span>
                               </div>
                               <p className="text-[11px] text-slate-500 mt-0.5">
-                                El sistema asigna automáticamente el siguiente disponible. Los corbatines utilizados hoy quedan bloqueados hasta el día siguiente para evitar repetición.
+                                El sistema asigna automáticamente el siguiente disponible. Los corbatines entregados duran 1 día sin reusarse, salvo que los 30 estén agotados.
                               </p>
                             </div>
                           </div>
@@ -13649,73 +13684,114 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* SELECTOR INTERACTIVO DE CORBATINES 1 AL 30 */}
-                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                          <div className="flex items-center justify-between gap-2">
-                            <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#0D6E5F]"></span>
+                        {/* SELECTOR EN COMBOBOX DE CORBATINES 1 AL 30 */}
+                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <label htmlFor="casetaVisitanteCorbatinSelect" className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-[#0D6E5F]"></span>
                               <span>1. Corbatín Físico Asignado (Auto-asignado del 1 al 30) *</span>
                             </label>
                             {casetaVisitanteCorbatin ? (
-                              <div className="flex items-center gap-1 text-[11px] font-semibold text-[#0D6E5F] bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200 shadow-2xs">
+                              <div className="flex items-center gap-1.5 text-xs font-semibold text-[#0D6E5F] bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 shadow-2xs">
                                 <IconCheckCircle className="w-3.5 h-3.5 text-[#0D6E5F]" />
-                                <span>Asignado: <strong className="font-mono text-xs">#{casetaVisitanteCorbatin}</strong> (Automático)</span>
+                                <span>Asignado: <strong className="font-mono text-sm font-extrabold text-[#0D6E5F]">#{casetaVisitanteCorbatin}</strong> {String(casetaVisitanteCorbatin) === corbatinAutoDisponible ? "(Automático)" : "(Manual)"}</span>
                               </div>
+                            ) : todosCorbatinesAgotadosHoy ? (
+                              <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                                Sin corbatines liberados hoy (todos adentro)
+                              </span>
                             ) : (
-                              <span className="text-[11px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                              <span className="text-[11px] font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-200">
                                 Sin corbatines disponibles hoy
                               </span>
                             )}
                           </div>
 
-                          {/* REJILLA DE LOS 30 BOTONES DE CORBATÍN */}
-                          <div className="grid grid-cols-6 sm:grid-cols-10 gap-1.5">
-                            {Array.from({ length: 30 }, (_, i) => i + 1).map((num) => {
-                              const isUsadoHoy = corbatinesVisitanteUsadosHoy.has(num);
-                              const info = corbatinesVisitanteUsadosHoy.get(num);
-                              const isSelected = casetaVisitanteCorbatin === String(num);
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-[#0D6E5F] pointer-events-none">
+                              <IconBadge className="w-4 h-4" />
+                            </span>
+                            <select
+                              id="casetaVisitanteCorbatinSelect"
+                              value={casetaVisitanteCorbatin}
+                              onChange={(e) => setCasetaVisitanteCorbatin(e.target.value)}
+                              className="w-full h-11 pl-9 pr-10 rounded-xl bg-white border border-slate-300 hover:border-[#0D6E5F] focus:border-[#0D6E5F] focus:ring-2 focus:ring-[#0D6E5F]/20 text-xs sm:text-sm font-semibold text-slate-800 transition-all cursor-pointer shadow-2xs appearance-none"
+                            >
+                              {!casetaVisitanteCorbatin && (
+                                <option value="" disabled>-- Selecciona un corbatín físico (1 al 30) --</option>
+                              )}
+                              {Array.from({ length: 30 }, (_, i) => i + 1).map((num) => {
+                                const numStr = String(num);
+                                const isUsadoHoy = corbatinesVisitanteUsadosHoy.has(num);
+                                const info = corbatinesVisitanteUsadosHoy.get(num);
+                                const isAuto = numStr === corbatinAutoDisponible;
 
-                              if (isUsadoHoy) {
+                                if (!isUsadoHoy) {
+                                  return (
+                                    <option key={num} value={numStr} className="text-slate-900 font-semibold py-1">
+                                      Corbatín #{num} — DISPONIBLE {isAuto ? "★ (Siguiente disponible automático)" : ""}
+                                    </option>
+                                  );
+                                }
+
+                                if (!todosCorbatinesAgotadosHoy) {
+                                  // Regla estricta: si aún quedan libres entre los 30, los usados quedan bloqueados por 1 día
+                                  return (
+                                    <option key={num} value={numStr} disabled className="text-slate-400 bg-slate-100/70">
+                                      Corbatín #{num} — Usado hoy ({info?.conductor || "Visitante"} - Placas: {info?.placas || "Sin placas"}) [Bloqueado por 24h]
+                                    </option>
+                                  );
+                                }
+
+                                // Excepción: Todos los 30 ya se usaron hoy
+                                if (info?.estado === "Dentro") {
+                                  return (
+                                    <option key={num} value={numStr} disabled className="text-red-400 bg-red-50/50">
+                                      Corbatín #{num} — Ocupado adentro ({info?.conductor} · {info?.placas}) [Esperando salida]
+                                    </option>
+                                  );
+                                }
+
                                 return (
-                                  <button
-                                    key={num}
-                                    type="button"
-                                    onClick={() => {
-                                      showToast(
-                                        `El Corbatín #${num} ya fue utilizado el día de hoy por: ${info?.conductor || "Visitante"} (${info?.placas || "Sin placas"}). No puede reutilizarse hasta mañana para evitar duplicidad diaria.`,
-                                        "warning",
-                                        "Corbatín No Disponible Hoy"
-                                      );
-                                    }}
-                                    title={`Usado hoy por ${info?.conductor} (${info?.placas}) - ${info?.estado}`}
-                                    className="h-9 rounded-lg font-mono font-bold text-xs flex flex-col items-center justify-center bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-65 relative group transition-all"
-                                  >
-                                    <span className="leading-none text-slate-500">#{num}</span>
-                                    <span className="text-[7.5px] font-sans font-semibold text-red-500 leading-none mt-0.5">
-                                      {info?.estado === "Dentro" ? "Dentro" : "Usado hoy"}
-                                    </span>
-                                  </button>
+                                  <option key={num} value={numStr} className="text-emerald-700 font-bold bg-emerald-50/60 py-1">
+                                    Corbatín #{num} — REUTILIZABLE (Salida previa registrada) {isAuto ? "★ (Recomendado)" : ""}
+                                  </option>
                                 );
-                              }
+                              })}
+                            </select>
+                            <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </span>
+                          </div>
 
-                              return (
-                                <button
-                                  key={num}
-                                  type="button"
-                                  onClick={() => setCasetaVisitanteCorbatin(String(num))}
-                                  className={`h-9 rounded-lg font-mono font-bold text-xs flex flex-col items-center justify-center transition-all cursor-pointer ${isSelected
-                                    ? "bg-[#0D6E5F] text-white border-2 border-[#095247] shadow-sm scale-105 z-10"
-                                    : "bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 border border-slate-200 hover:border-emerald-300"
-                                    }`}
-                                  title={`Seleccionar corbatín #${num}`}
-                                >
-                                  <span className="leading-none">#{num}</span>
-                                  <span className={`text-[8px] font-sans leading-none mt-0.5 ${isSelected ? "text-emerald-100 font-bold" : "text-slate-400"}`}>
-                                    {isSelected ? "Auto" : "Libre"}
-                                  </span>
-                                </button>
-                              );
-                            })}
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px]">
+                            {todosCorbatinesAgotadosHoy ? (
+                              <span className="text-amber-800 font-medium flex items-center gap-1.5">
+                                <IconAlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                <span>
+                                  <strong>Excepción activa:</strong> Los 30 corbatines del día ya fueron entregados. Se permite reutilizar los que ya registraron su salida.
+                                </span>
+                              </span>
+                            ) : (
+                              <span className="text-slate-500 flex items-center gap-1.5">
+                                <IconCheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                <span>
+                                  Auto-asignado: se entrega el siguiente número libre. Una vez entregado no se repite durante el día.
+                                </span>
+                              </span>
+                            )}
+
+                            {casetaVisitanteCorbatin !== corbatinAutoDisponible && corbatinAutoDisponible && (
+                              <button
+                                type="button"
+                                onClick={() => setCasetaVisitanteCorbatin(corbatinAutoDisponible)}
+                                className="text-xs font-bold text-[#0D6E5F] hover:text-[#095247] hover:underline cursor-pointer flex items-center gap-1"
+                              >
+                                <span>↺ Reasignar auto (#{corbatinAutoDisponible})</span>
+                              </button>
+                            )}
                           </div>
                         </div>
 

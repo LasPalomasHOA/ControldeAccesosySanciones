@@ -211,22 +211,51 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // Validación de corbatín físico de visitante (1 al 30): regla de no repetición en el mismo día
+    // Validación de corbatín físico de visitante (1 al 30): regla de no repetición en el mismo día (salvo si ya se agotaron los 30)
     if (!esSalida && observaciones && String(observaciones).includes('[VISITANTE]')) {
       const m = String(observaciones).match(/Corbat[íi]n:\s*#?([0-9]+)/i);
       if (m && m[1]) {
         const numVis = parseInt(m[1], 10);
         const hoyFecha = ahora.toISOString().split('T')[0];
-        const visitUsadoHoy = await db.BitacoraAcceso.findOne({
-          where: {
-            observaciones: { [db.Sequelize.Op.like]: `%[VISITANTE]%Corbatín: #${numVis}%` },
-            fecha: hoyFecha
-          }
-        });
-        if (visitUsadoHoy) {
-          return res.status(400).json({
-            error: `El Corbatín de Visitante #${numVis} ya fue utilizado el día de hoy (${hoyFecha}). Para evitar duplicidad diaria, selecciona otro corbatín disponible del 1 al 30.`
+        const schema = process.env.DB_SCHEMA || 'control_acceso';
+
+        // Consultar cuántos corbatines únicos del 1 al 30 ya se usaron hoy
+        let totalUsadosHoy = 0;
+        try {
+          const [cntRows] = await db.sequelize.query(`
+            SELECT COUNT(DISTINCT corbatin_num) as total
+            FROM "${schema}"."visitantes"
+            WHERE fecha = :fecha AND corbatin_num BETWEEN 1 AND 30
+          `, { replacements: { fecha: hoyFecha } }).catch(() => [[]]);
+          totalUsadosHoy = Number(cntRows?.[0]?.total || 0);
+        } catch (e) { }
+
+        if (totalUsadosHoy < 30) {
+          const visitUsadoHoy = await db.BitacoraAcceso.findOne({
+            where: {
+              observaciones: { [db.Sequelize.Op.like]: `%[VISITANTE]%Corbatín: #${numVis}%` },
+              fecha: hoyFecha
+            }
           });
+          if (visitUsadoHoy) {
+            return res.status(400).json({
+              error: `El Corbatín de Visitante #${numVis} ya fue utilizado el día de hoy (${hoyFecha}). Para evitar duplicidad diaria, selecciona otro corbatín disponible del 1 al 30 (la reutilización se permite únicamente al agotarse los 30 del día).`
+            });
+          }
+        } else {
+          // Si los 30 ya se entregaron hoy, verificar que no siga actualmente adentro sin salida
+          const visitAdentro = await db.BitacoraAcceso.findOne({
+            where: {
+              observaciones: { [db.Sequelize.Op.like]: `%[VISITANTE]%Corbatín: #${numVis}%` },
+              fecha: hoyFecha,
+              hora_salida: null
+            }
+          });
+          if (visitAdentro) {
+            return res.status(400).json({
+              error: `El Corbatín de Visitante #${numVis} se encuentra actualmente dentro del complejo. Debe registrarse su salida antes de poder reasignarlo.`
+            });
+          }
         }
       }
     }
