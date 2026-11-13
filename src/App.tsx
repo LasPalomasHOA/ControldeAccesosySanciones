@@ -8579,8 +8579,20 @@ export default function App() {
 
           {/* TABLA DE VEHÍCULOS VISITANTES */}
           <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+            <table className="w-full table-fixed min-w-[980px] text-xs">
+              <colgroup>
+                <col className="w-[5%]" />
+                <col className="w-[7%]" />
+                <col className="w-[11%]" />
+                <col className="w-[22%]" />
+                <col className="w-[16%]" />
+                <col className="w-[9%]" />
+                <col className="w-[9%]" />
+                <col className="w-[11%]" />
+                <col className="w-[5%]" />
+                <col className="w-[5%]" />
+              </colgroup>
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">
                 <tr>
                   <th className="px-3 py-3 text-center">Folio</th>
                   <th className="px-3 py-3 text-center">Corbatín</th>
@@ -8610,34 +8622,34 @@ export default function App() {
 
                     return (
                       <tr key={v.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="px-3 py-2.5 font-mono text-center font-bold text-slate-700">#{v.id}</td>
-                        <td className="px-3 py-2.5 text-center">
-                          <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-900 border border-blue-300 font-mono font-bold text-xs">
+                        <td className="px-3 py-2.5 font-mono text-center font-bold text-slate-700 whitespace-nowrap">#{v.id}</td>
+                        <td className="px-3 py-2.5 text-center whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-900 border border-blue-300 font-mono font-bold text-xs inline-block">
                             #{v.corbatin_num}
                           </span>
                         </td>
-                        <td className="px-3 py-2.5 font-mono font-bold text-slate-900">
+                        <td className="px-3 py-2.5 font-mono font-bold text-slate-900 whitespace-nowrap">
                           <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200">
                             {v.placas}
                           </span>
                         </td>
-                        <td className="px-3 py-2.5">
-                          <div className="font-bold text-slate-800">{v.marca} {v.modelo}</div>
-                          <div className="text-[11px] text-slate-500 font-medium">
+                        <td className="px-3 py-2.5 min-w-0">
+                          <div className="font-bold text-slate-800 truncate">{v.marca} {v.modelo}</div>
+                          <div className="text-[11px] text-slate-500 font-medium truncate">
                             {v.año || v.anio ? `Año ${v.año || v.anio} · ` : ""}{v.color || "Color no especificado"}
                           </div>
                         </td>
-                        <td className="px-3 py-2.5">
-                          <div className="font-bold text-slate-800">{v.nombre_conductor}</div>
+                        <td className="px-3 py-2.5 min-w-0">
+                          <div className="font-bold text-slate-800 truncate">{v.nombre_conductor}</div>
                           {v.pasajeros > 0 && (
-                            <div className="text-[10px] text-slate-400">+{v.pasajeros} pasajero{v.pasajeros > 1 ? "s" : ""}</div>
+                            <div className="text-[10px] text-slate-400 truncate">+{v.pasajeros} pasajero{v.pasajeros > 1 ? "s" : ""}</div>
                           )}
                         </td>
-                        <td className="px-3 py-2.5 text-center font-mono text-[11px] text-slate-700">
+                        <td className="px-3 py-2.5 text-center font-mono text-[11px] text-slate-700 whitespace-nowrap">
                           <div>{horaEnt}</div>
                           <div className="text-[10px] text-slate-400">{v.fecha || (v.created_at ? new Date(v.created_at).toLocaleDateString() : "")}</div>
                         </td>
-                        <td className="px-3 py-2.5 text-center font-mono text-[11px]">
+                        <td className="px-3 py-2.5 text-center font-mono text-[11px] whitespace-nowrap">
                           {horaSal ? (
                             <span className="text-slate-700">{horaSal}</span>
                           ) : (
@@ -8646,10 +8658,10 @@ export default function App() {
                             </span>
                           )}
                         </td>
-                        <td className="px-3 py-2.5 text-slate-700 max-w-xs truncate" title={v.destino || "Visita general"}>
-                          {v.destino || "Visita general"}
+                        <td className="px-3 py-2.5 text-slate-700 min-w-0" title={v.destino || "Visita general"}>
+                          <div className="truncate">{v.destino || "Visita general"}</div>
                         </td>
-                        <td className="px-3 py-2.5 text-center">
+                        <td className="px-3 py-2.5 text-center whitespace-nowrap">
                           {isDentro ? (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-900 border border-blue-300">
                               <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
@@ -8661,7 +8673,7 @@ export default function App() {
                             </span>
                           )}
                         </td>
-                        <td className="px-3 py-2.5 text-center">
+                        <td className="px-3 py-2.5 text-center whitespace-nowrap">
                           {isDentro ? (
                             <button
                               type="button"
@@ -14478,7 +14490,7 @@ export default function App() {
 
                     {/* Tabla de Registros (Exactamente 10 por página) */}
                     <div className="overflow-x-auto">
-                      <table className="w-full table-fixed text-xs">
+                      <table className="w-full table-fixed min-w-[1050px] text-xs">
                         <colgroup>
                           <col className="w-[4%]" />
                           <col className="w-[8%]" />
