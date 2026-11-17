@@ -21,25 +21,28 @@ router.get('/', async (req, res) => {
   try {
     const schema = process.env.DB_SCHEMA || 'control_acceso';
 
-    // 1. Consultar tabla "visitantes" directamente
+    // 1. Consultar tabla "visitantes" directamente (limitado a los 100 más recientes para ahorrar Egress)
     let rawVisitantes = [];
     try {
       const [rows] = await db.sequelize.query(`
         SELECT * FROM "${schema}"."visitantes"
+        ORDER BY id DESC
+        LIMIT 100
       `);
       rawVisitantes = rows || [];
     } catch (err) {
       console.warn('Nota al consultar tabla visitantes:', err.message);
     }
 
-    // 2. Consultar bitácora para sincronizar registros de visitantes (como los ya registrados hoy)
+    // 2. Consultar bitácora para sincronizar registros de visitantes (solo columnas necesarias, máx 100)
     let rawBitacora = [];
     try {
       const [bRows] = await db.sequelize.query(`
-        SELECT * FROM "${schema}"."bitacora_accesos"
+        SELECT id_acceso, observaciones, ubicacion_trabajo, num_pasajeros, fecha, hora_entrada, hora_salida
+        FROM "${schema}"."bitacora_accesos"
         WHERE observaciones LIKE '%[VISITANTE]%' OR ubicacion_trabajo LIKE '%Visita%'
         ORDER BY id_acceso DESC
-        LIMIT 200
+        LIMIT 100
       `);
       rawBitacora = bRows || [];
     } catch (bErr) {

@@ -27,7 +27,7 @@ router.get('/', async (req, res) => {
           attributes: ['id_reporte', 'fecha_hora', 'id_infraccion', 'ubicacion_texto', 'descripcion_hechos', 'estatus_revision'],
           include: [
             { model: db.CatalogoInfraccion, as: 'infraccion' },
-            { model: db.Evidencia, as: 'evidencias', attributes: ['id_evidencia', 'archivo', 'descripcion', 'fecha_captura', 'activa'] }
+            { model: db.Evidencia, as: 'evidencias', attributes: ['id_evidencia', 'archivo', 'descripcion', 'fecha_captura', 'activa'], separate: true }
           ]
         },
         { model: db.Usuario, as: 'usuario_aprobador', attributes: ['id_usuario', 'nombre'] }

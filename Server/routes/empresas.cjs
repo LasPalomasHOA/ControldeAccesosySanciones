@@ -74,15 +74,15 @@ router.get('/:id', async (req, res) => {
   try {
     const empresa = await db.Empresa.findByPk(req.params.id, {
       include: [
-        { model: db.Trabajador, as: 'trabajadores', attributes: ['id_trabajador', 'nombre', 'apellidos', 'telefono', 'activo'] },
-        { 
-          model: db.Vehiculo, 
+        { model: db.Trabajador, as: 'trabajadores', attributes: ['id_trabajador', 'nombre', 'apellidos', 'telefono', 'activo'], separate: true },
+        {
+          model: db.Vehiculo,
           as: 'vehiculos',
           attributes: ['id_vehiculo', 'marca', 'modelo', 'placas', 'color', 'estatus_acceso'],
           where: { eliminado: { [Op.or]: [false, null] } },
-          required: false
+          separate: true
         },
-        { model: db.Usuario, as: 'usuarios', attributes: ['id_usuario', 'nombre', 'correo', 'activo'] }
+        { model: db.Usuario, as: 'usuarios', attributes: ['id_usuario', 'nombre', 'correo', 'activo'], separate: true }
       ]
     });
     if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
@@ -252,22 +252,22 @@ router.delete('/:id', async (req, res) => {
 
     // 3. Limpiar corbatines asociados a los vehículos
     if (vehiculoIds.length > 0 && db.Corbatin) {
-      await db.BitacoraAcceso.update({ id_corbatin: null }, { where: { id_vehiculo: vehiculoIds } }).catch(() => {});
-      await db.Corbatin.destroy({ where: { id_vehiculo: vehiculoIds } }).catch(() => {});
+      await db.BitacoraAcceso.update({ id_corbatin: null }, { where: { id_vehiculo: vehiculoIds } }).catch(() => { });
+      await db.Corbatin.destroy({ where: { id_vehiculo: vehiculoIds } }).catch(() => { });
     }
 
 
 
     // 5. Desvincular corbatines de vehículos para que queden liberados
     if (vehiculoIds.length > 0 && db.Corbatin) {
-      await db.Corbatin.update({ id_vehiculo: null, estatus: 'INACTIVO' }, { where: { id_vehiculo: vehiculoIds } }).catch(() => {});
+      await db.Corbatin.update({ id_vehiculo: null, estatus: 'INACTIVO' }, { where: { id_vehiculo: vehiculoIds } }).catch(() => { });
     }
 
     // 6. Eliminar sanciones, revisiones, evidencias y reportes
     if (db.Sancion) {
-      await db.Sancion.destroy({ where: { id_empresa: idEmp } }).catch(() => {});
+      await db.Sancion.destroy({ where: { id_empresa: idEmp } }).catch(() => { });
       if (vehiculoIds.length > 0) {
-        await db.Sancion.destroy({ where: { id_vehiculo: vehiculoIds } }).catch(() => {});
+        await db.Sancion.destroy({ where: { id_vehiculo: vehiculoIds } }).catch(() => { });
       }
     }
 
@@ -275,12 +275,12 @@ router.delete('/:id', async (req, res) => {
     const reporteIds = reportes.map(r => r.id_reporte);
     if (reporteIds.length > 0) {
       if (db.RevisionReporte) {
-        await db.RevisionReporte.destroy({ where: { id_reporte: reporteIds } }).catch(() => {});
+        await db.RevisionReporte.destroy({ where: { id_reporte: reporteIds } }).catch(() => { });
       }
       if (db.Evidencia) {
-        await db.Evidencia.destroy({ where: { id_reporte: reporteIds } }).catch(() => {});
+        await db.Evidencia.destroy({ where: { id_reporte: reporteIds } }).catch(() => { });
       }
-      await db.ReporteInfraccion.destroy({ where: { id_reporte: reporteIds } }).catch(() => {});
+      await db.ReporteInfraccion.destroy({ where: { id_reporte: reporteIds } }).catch(() => { });
     }
 
     // 7. Marcar vehículos como eliminados (Soft Delete) para no romper el historial de bitácora
@@ -288,20 +288,20 @@ router.delete('/:id', async (req, res) => {
       await db.Vehiculo.update(
         { eliminado: true, estatus_acceso: 'RESTRINGIDO' },
         { where: { id_vehiculo: vehiculoIds } }
-      ).catch(() => {});
+      ).catch(() => { });
     }
     if (trabajadorIds.length > 0) {
-      await db.Trabajador.destroy({ where: { id_trabajador: trabajadorIds } }).catch(() => {});
+      await db.Trabajador.destroy({ where: { id_trabajador: trabajadorIds } }).catch(() => { });
     }
 
     // 8. Eliminar aceptaciones de reglamento
     if (db.AceptacionReglamento) {
-      await db.AceptacionReglamento.destroy({ where: { id_empresa: idEmp } }).catch(() => {});
+      await db.AceptacionReglamento.destroy({ where: { id_empresa: idEmp } }).catch(() => { });
     }
 
     // 9. Eliminar usuarios de la empresa
     if (db.Usuario) {
-      await db.Usuario.destroy({ where: { id_empresa: idEmp } }).catch(() => {});
+      await db.Usuario.destroy({ where: { id_empresa: idEmp } }).catch(() => { });
     }
 
     // 10. Eliminar la empresa

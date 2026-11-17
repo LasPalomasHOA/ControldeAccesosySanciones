@@ -1439,7 +1439,7 @@ function formatFechaLegible(dateStr?: string | null, includeTime = true): string
   }
 }
 
-// ─── Format Time Helper (Convierte timestamps UTC / ISO a hora local del navegador) ──
+// ─── Format Time Helper (Convierte timestamps UTC / ISO a hora local del resort en America/Hermosillo) ──
 function formatHoraLocal(timeStr?: string | Date | null): string {
   if (!timeStr || timeStr === "—" || timeStr === "N/A" || timeStr === "null" || timeStr === "undefined") return "—";
   const raw = String(timeStr).trim();
@@ -1450,8 +1450,8 @@ function formatHoraLocal(timeStr?: string | Date | null): string {
     return raw.replace(/ hrs/i, "");
   }
 
-  // Si ya tiene formato 12h como "01:13 PM" o "1:13 PM"
-  if (/^\d{1,2}:\d{2}\s*(AM|PM)(\s*hrs)?$/i.test(raw)) {
+  // Si ya tiene formato 12h como "01:13 PM" o "10:27 a. m." o "05:27 p.m."
+  if (/^\d{1,2}:\d{2}\s*([ap]\.?\s*m\.?)(\s*hrs)?$/i.test(raw)) {
     return raw.replace(/ hrs/i, "");
   }
 
@@ -1468,13 +1468,24 @@ function formatHoraLocal(timeStr?: string | Date | null): string {
     }
 
     if (!isNaN(dateObj.getTime())) {
-      let hours = dateObj.getHours();
-      const minutes = String(dateObj.getMinutes()).padStart(2, "0");
-      const ampm = hours >= 12 ? "PM" : "AM";
-      hours = hours % 12;
-      hours = hours ? hours : 12;
-      const strHours = String(hours).padStart(2, "0");
-      return `${strHours}:${minutes} ${ampm}`;
+      try {
+        return dateObj.toLocaleTimeString("en-US", {
+          timeZone: "America/Hermosillo",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+      } catch {
+        const utcMs = dateObj.getTime() + dateObj.getTimezoneOffset() * 60000;
+        const d = new Date(utcMs - 7 * 3600000);
+        let hours = d.getHours();
+        const minutes = String(d.getMinutes()).padStart(2, "0");
+        const ampm = hours >= 12 ? "PM" : "AM";
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        const strHours = String(hours).padStart(2, "0");
+        return `${strHours}:${minutes} ${ampm}`;
+      }
     }
   } catch {
     // fallback
@@ -2941,6 +2952,16 @@ export default function App() {
 
   const isFetchingDbRef = useRef(false);
   const lastFetchTimestampRef = useRef<number>(0);
+  const lastGranularReloadRef = useRef<Record<string, number>>({});
+
+  const shouldSkipGranularReload = (key: string, force: boolean = false, cooldownMs: number = 3000): boolean => {
+    const now = Date.now();
+    if (!force && now - (lastGranularReloadRef.current[key] || 0) < cooldownMs) {
+      return true;
+    }
+    lastGranularReloadRef.current[key] = now;
+    return false;
+  };
 
   // Cargar datos en vivo desde PostgreSQL con protección de concurrencia y caché temporal
   const loadDatabaseData = async (force: boolean = false, onlyDynamic: boolean = false) => {
@@ -3309,7 +3330,9 @@ export default function App() {
         });
         setBitacora(mappedBit);
       }
-      reloadVisitantes();
+      if (resVisitantes.status === "fulfilled" && Array.isArray(resVisitantes.value)) {
+        setVisitantesList(resVisitantes.value);
+      }
 
       if (resReportes.status === "fulfilled" && Array.isArray(resReportes.value)) {
         const rawVehs = resVehicles.status === "fulfilled" && Array.isArray(resVehicles.value) ? resVehicles.value : [];
@@ -3458,7 +3481,8 @@ export default function App() {
   };
 
   // Recarga granular de Bitácora (evita recargar los otros 6 módulos en Caseta)
-  const reloadBitacora = async () => {
+  const reloadBitacora = async (force: boolean = false) => {
+    if (shouldSkipGranularReload("bitacora", force)) return;
     try {
       const res = await api.getBitacora();
       if (Array.isArray(res)) {
@@ -3535,7 +3559,8 @@ export default function App() {
   };
 
   // Recarga granular de Visitantes
-  const reloadVisitantes = useCallback(async () => {
+  const reloadVisitantes = useCallback(async (force: boolean = false) => {
+    if (shouldSkipGranularReload("visitantes", force)) return;
     try {
       setIsLoadingVisitantes(true);
       const res = await api.getVisitantes();
@@ -3550,7 +3575,8 @@ export default function App() {
   }, []);
 
   // Recarga granular de Vehículos
-  const reloadVehiculos = async () => {
+  const reloadVehiculos = async (force: boolean = false) => {
+    if (shouldSkipGranularReload("vehiculos", force)) return;
     try {
       const res = await api.getVehiculos();
       if (Array.isArray(res)) {
@@ -3719,7 +3745,8 @@ export default function App() {
   };
 
   // Recarga granular de Sanciones
-  const reloadSanciones = async () => {
+  const reloadSanciones = async (force: boolean = false) => {
+    if (shouldSkipGranularReload("sanciones", force)) return;
     try {
       const res = await api.getSanciones();
       if (Array.isArray(res)) {
@@ -3817,7 +3844,8 @@ export default function App() {
   };
 
   // Recarga granular de Reportes de Infracciones
-  const reloadReportes = async () => {
+  const reloadReportes = async (force: boolean = false) => {
+    if (shouldSkipGranularReload("reportes", force)) return;
     try {
       const res = await api.getReportes();
       if (Array.isArray(res)) {
@@ -3987,7 +4015,7 @@ export default function App() {
       }
     }
 
-    // 3. Sincronización periódica controlada (cada 5 min / 300s) solo para roles operativos en vivo
+    // 3. Sincronización periódica controlada (cada 10 min / 600s) solo para roles operativos en vivo
     const backgroundSyncInterval = setInterval(() => {
       if (
         document.visibilityState === "visible" &&
@@ -3996,13 +4024,13 @@ export default function App() {
       ) {
         loadDatabaseData(false, true);
       }
-    }, 300000);
+    }, 600000);
 
-    // 4. Sincronización inteligente al regresar a la pestaña (si pasaron >3 min de inactividad)
+    // 4. Sincronización inteligente al regresar a la pestaña (si pasaron >5 min de inactividad)
     const handleFocusOrVisibility = () => {
       if (document.visibilityState === "visible") {
         const now = Date.now();
-        if (now - lastFetchTimestampRef.current > 180000) {
+        if (now - lastFetchTimestampRef.current > 300000) {
           loadDatabaseData(false, true);
         }
       }
@@ -8543,7 +8571,7 @@ export default function App() {
             </div>
             <button
               type="button"
-              onClick={reloadVisitantes}
+              onClick={() => reloadVisitantes(true)}
               disabled={isLoadingVisitantes}
               className="px-3.5 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs shrink-0 disabled:opacity-50"
             >
@@ -8617,21 +8645,36 @@ export default function App() {
             </div>
           </div>
 
-          {/* TABLA DE VEHÍCULOS VISITANTES */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+          {/* TABLA DE VEHÍCULOS VISITANTES (SIN SCROLL HORIZONTAL, SÓLO VERTICAL) */}
+          <div className="overflow-x-hidden overflow-y-auto max-h-[620px]">
+            <table className="w-full table-fixed text-xs">
+              <colgroup>
+                <col className="w-[5%]" />
+                <col className="w-[6%]" />
+                <col className="w-[10%]" />
+                <col className="w-[19%]" />
+                <col className="w-[16%]" />
+                <col className="w-[9%]" />
+                <col className="w-[8%]" />
+                <col className="w-[11%]" />
+                <col className="w-[8%]" />
+                <col className="w-[8%]" />
+              </colgroup>
+              <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px] shadow-2xs">
                 <tr>
-                  <th className="px-3 py-3 text-center">Folio</th>
-                  <th className="px-3 py-3 text-center">Corbatín</th>
-                  <th className="px-3 py-3 text-left">Placas</th>
-                  <th className="px-3 py-3 text-left">Vehículo (Marca / Modelo / Año / Color)</th>
-                  <th className="px-3 py-3 text-left">Chofer / Visitante</th>
-                  <th className="px-3 py-3 text-center">Entrada</th>
-                  <th className="px-3 py-3 text-center">Salida</th>
-                  <th className="px-3 py-3 text-left">Destino</th>
-                  <th className="px-3 py-3 text-center">Estatus</th>
-                  <th className="px-3 py-3 text-center">Acción</th>
+                  <th className="px-1.5 py-3 text-center">Folio</th>
+                  <th className="px-1 py-3 text-center">Corbatín</th>
+                  <th className="px-2 py-3 text-left">Placas</th>
+                  <th className="px-2 py-3 text-left">
+                    <div>Vehículo</div>
+                    <div className="text-[9px] font-normal text-slate-400 capitalize tracking-normal leading-tight">Marca / Modelo / Color</div>
+                  </th>
+                  <th className="px-2 py-3 text-left">Chofer / Visitante</th>
+                  <th className="px-1.5 py-3 text-center">Entrada</th>
+                  <th className="px-1.5 py-3 text-center">Salida</th>
+                  <th className="px-2 py-3 text-left">Destino</th>
+                  <th className="px-1 py-3 text-center">Estatus</th>
+                  <th className="px-1 py-3 text-center">Acción</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -8650,58 +8693,58 @@ export default function App() {
 
                     return (
                       <tr key={v.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="px-3 py-2.5 font-mono text-center font-bold text-slate-700">#{v.id}</td>
-                        <td className="px-3 py-2.5 text-center">
-                          <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-900 border border-blue-300 font-mono font-bold text-xs">
+                        <td className="px-1.5 py-2.5 font-mono text-center font-bold text-slate-700 whitespace-nowrap">#{v.id}</td>
+                        <td className="px-1 py-2.5 text-center whitespace-nowrap">
+                          <span className="px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-900 border border-blue-300 font-mono font-bold text-xs inline-block">
                             #{v.corbatin_num}
                           </span>
                         </td>
-                        <td className="px-3 py-2.5 font-mono font-bold text-slate-900">
-                          <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200">
+                        <td className="px-2 py-2.5 font-mono font-bold text-slate-900 whitespace-nowrap">
+                          <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200">
                             {v.placas}
                           </span>
                         </td>
-                        <td className="px-3 py-2.5">
-                          <div className="font-bold text-slate-800">{v.marca} {v.modelo}</div>
-                          <div className="text-[11px] text-slate-500 font-medium">
+                        <td className="px-2 py-2.5 min-w-0">
+                          <div className="font-bold text-slate-800 truncate" title={`${v.marca} ${v.modelo}`}>{v.marca} {v.modelo}</div>
+                          <div className="text-[11px] text-slate-500 font-medium truncate">
                             {v.año || v.anio ? `Año ${v.año || v.anio} · ` : ""}{v.color || "Color no especificado"}
                           </div>
                         </td>
-                        <td className="px-3 py-2.5">
-                          <div className="font-bold text-slate-800">{v.nombre_conductor}</div>
+                        <td className="px-2 py-2.5 min-w-0">
+                          <div className="font-bold text-slate-800 truncate" title={v.nombre_conductor}>{v.nombre_conductor}</div>
                           {v.pasajeros > 0 && (
-                            <div className="text-[10px] text-slate-400">+{v.pasajeros} pasajero{v.pasajeros > 1 ? "s" : ""}</div>
+                            <div className="text-[10px] text-slate-400 truncate">+{v.pasajeros} pasajero{v.pasajeros > 1 ? "s" : ""}</div>
                           )}
                         </td>
-                        <td className="px-3 py-2.5 text-center font-mono text-[11px] text-slate-700">
+                        <td className="px-1.5 py-2.5 text-center font-mono text-[11px] text-slate-700 whitespace-nowrap">
                           <div>{horaEnt}</div>
                           <div className="text-[10px] text-slate-400">{v.fecha || (v.created_at ? new Date(v.created_at).toLocaleDateString() : "")}</div>
                         </td>
-                        <td className="px-3 py-2.5 text-center font-mono text-[11px]">
+                        <td className="px-1.5 py-2.5 text-center font-mono text-[11px] whitespace-nowrap">
                           {horaSal ? (
                             <span className="text-slate-700">{horaSal}</span>
                           ) : (
-                            <span className="text-blue-700 font-bold font-sans text-[10px] bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                            <span className="text-blue-700 font-bold font-sans text-[10px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
                               Dentro
                             </span>
                           )}
                         </td>
-                        <td className="px-3 py-2.5 text-slate-700 max-w-xs truncate" title={v.destino || "Visita general"}>
-                          {v.destino || "Visita general"}
+                        <td className="px-2 py-2.5 text-slate-700 min-w-0" title={v.destino || "Visita general"}>
+                          <div className="truncate">{v.destino || "Visita general"}</div>
                         </td>
-                        <td className="px-3 py-2.5 text-center">
+                        <td className="px-1 py-2.5 text-center whitespace-nowrap">
                           {isDentro ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-900 border border-blue-300">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-900 border border-blue-300">
                               <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
                               <span>Dentro</span>
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
                               <span>Salida</span>
                             </span>
                           )}
                         </td>
-                        <td className="px-3 py-2.5 text-center">
+                        <td className="px-1 py-2.5 text-center whitespace-nowrap">
                           {isDentro ? (
                             <button
                               type="button"
@@ -8715,7 +8758,7 @@ export default function App() {
                                   showToast("Error al registrar salida: " + (err.message || err), "error");
                                 }
                               }}
-                              className="px-2.5 py-1 rounded-lg text-[10px] font-bold text-white bg-red-600 hover:bg-red-700 active:scale-95 transition-all flex items-center gap-1 cursor-pointer mx-auto shadow-2xs"
+                              className="px-2 py-1 rounded-lg text-[10px] font-bold text-white bg-red-600 hover:bg-red-700 active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer mx-auto shadow-2xs whitespace-nowrap"
                               title="Marcar salida de este visitante"
                             >
                               <IconLogOut className="w-3 h-3" />
@@ -12799,32 +12842,52 @@ export default function App() {
                   {/* COLUMNA PRINCIPAL: FORMULARIO */}
                   <div className="lg:col-span-7 xl:col-span-8 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs space-y-3 flex flex-col">
                     {/* SELECTOR DE MODALIDAD Y ENCABEZADO DEL FORMULARIO */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-100 pb-2.5">
-                      <div>
-                        <h2 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full bg-[#0D6E5F]"></span>
-                          {casetaModoAcceso === "vehicular" && <span>Ingreso Vehicular de Contratistas</span>}
-                          {casetaModoAcceso === "visitante" && <span>Ingreso de Visitantes & Corbatín Manual (1 al 30)</span>}
-                          {casetaModoAcceso === "peatonal" && <span>Ingreso Peatonal / Personal a Pie</span>}
-                        </h2>
-                        <p className="text-[11px] text-slate-400 mt-0.5">
-                          {casetaModoAcceso === "vehicular" && "Captura la unidad de contratista, valida corbatín regular/verde y registra el pase"}
-                          {casetaModoAcceso === "visitante" && "Registro ágil de chofer, vehículo, placas y asignación de corbatín físico del 1 al 30"}
-                          {casetaModoAcceso === "peatonal" && "Autorización de personal a pie / colaboradores con vehículo retenido afuera"}
-                        </p>
-                      </div>
+                    <div className="border-b border-slate-100 pb-3 space-y-1.5">
+                      {/* FILA SUPERIOR: TÍTULO A LA IZQUIERDA Y BOTÓN QR EN LA PARTE SUPERIOR DERECHA */}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#0D6E5F] shrink-0"></span>
+                          <h2 className="font-bold text-sm sm:text-base text-slate-900">
+                            {casetaModoAcceso === "vehicular" && "Ingreso Vehicular de Contratistas"}
+                            {casetaModoAcceso === "visitante" && (
+                              <span>
+                                Ingreso de Visitantes & Corbatín Manual <span className="whitespace-nowrap">(1 al 30)</span>
+                              </span>
+                            )}
+                            {casetaModoAcceso === "peatonal" && "Ingreso Peatonal / Personal a Pie"}
+                          </h2>
+                        </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
+                        {/* BOTÓN EN LA PARTE SUPERIOR DERECHA */}
                         <button
                           type="button"
                           onClick={() => setShowQRScannerModal(true)}
-                          className="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                          className="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
                           title="Abrir cámara para escanear código QR"
                         >
                           <IconCamera className="w-3.5 h-3.5 text-emerald-100" />
                           <span>Escanear Código QR</span>
                         </button>
                       </div>
+
+                      {/* SUBTÍTULO DESCRIPTIVO */}
+                      <p className="text-[11px] text-slate-400 pl-4.5">
+                        {casetaModoAcceso === "vehicular" && "Captura la unidad de contratista, valida corbatín regular/verde y registra el pase"}
+                        {casetaModoAcceso === "visitante" && "Registro ágil de chofer, vehículo, placas y asignación de corbatín físico del 1 al 30"}
+                        {casetaModoAcceso === "peatonal" && "Autorización de personal a pie / colaboradores con vehículo retenido afuera"}
+                      </p>
+
+                      {/* CONTADORES EN TIEMPO REAL (MODO VISITANTE) */}
+                      {casetaModoAcceso === "visitante" && (
+                        <div className="flex items-center gap-2 pl-4.5 pt-0.5 text-[11px] font-mono">
+                          <span className="px-2.5 py-1 rounded-xl bg-white border border-slate-200 font-bold text-emerald-800 shadow-2xs whitespace-nowrap">
+                            {30 - corbatinesVisitanteUsadosHoy.size} Libres hoy
+                          </span>
+                          <span className="px-2.5 py-1 rounded-xl bg-white border border-slate-200 font-bold text-red-700 shadow-2xs whitespace-nowrap">
+                            {corbatinesVisitanteUsadosHoy.size} Usados hoy
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {casetaSuccessMsg && (
@@ -13702,31 +13765,6 @@ export default function App() {
                     {/* FORMULARIO DE ACCESO VISITANTE (CORBATÍN MANUAL 1 AL 30) */}
                     {casetaModoAcceso === "visitante" && (
                       <form onSubmit={handleRegistrarEntrada} className="space-y-3.5">
-                        {/* BANNER INFORMATIVO HOA VISITANTE */}
-                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 shadow-2xs">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="p-1.5 rounded-lg bg-[#0D6E5F] text-white shrink-0 shadow-2xs">
-                              <IconBadge className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <div className="font-extrabold text-slate-900 flex items-center gap-1.5">
-                                <span>Control de Corbatines Físicos (1 al 30) · Asignación Automática Diaria</span>
-                              </div>
-                              <p className="text-[11px] text-slate-500 mt-0.5">
-                                El sistema asigna automáticamente el siguiente disponible. Los corbatines entregados duran 1 día sin reusarse, salvo que los 30 estén agotados.
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1.5 shrink-0 text-[11px] font-mono">
-                            <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 font-bold text-emerald-800">
-                              {30 - corbatinesVisitanteUsadosHoy.size} Libres hoy
-                            </span>
-                            <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 font-bold text-red-700">
-                              {corbatinesVisitanteUsadosHoy.size} Usados hoy
-                            </span>
-                          </div>
-                        </div>
-
                         {/* SELECTOR EN COMBOBOX DE CORBATINES 1 AL 30 */}
                         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -14523,7 +14561,7 @@ export default function App() {
 
                     {/* Tabla de Registros (Exactamente 10 por página) */}
                     <div className="overflow-x-auto">
-                      <table className="w-full table-fixed text-xs">
+                      <table className="w-full table-fixed min-w-[1050px] text-xs">
                         <colgroup>
                           <col className="w-[4%]" />
                           <col className="w-[8%]" />
