@@ -7,8 +7,8 @@ router.get('/', async (req, res) => {
   try {
     const reglamentos = await db.Reglamento.findAll({
       include: [
-        { model: db.CatalogoInfraccion, as: 'infracciones' },
-        { model: db.AceptacionReglamento, as: 'aceptaciones' }
+        { model: db.CatalogoInfraccion, as: 'infracciones', separate: true },
+        { model: db.AceptacionReglamento, as: 'aceptaciones', separate: true }
       ],
       order: [['created_at', 'DESC']],
       limit: 10
@@ -25,7 +25,7 @@ router.get('/vigente', async (req, res) => {
   try {
     const vigente = await db.Reglamento.findOne({
       where: { vigente: true },
-      include: [{ model: db.CatalogoInfraccion, as: 'infracciones' }]
+      include: [{ model: db.CatalogoInfraccion, as: 'infracciones', separate: true }]
     });
     res.json(vigente);
   } catch (error) {

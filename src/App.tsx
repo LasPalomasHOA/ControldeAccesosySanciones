@@ -2810,6 +2810,16 @@ export default function App() {
 
   const isFetchingDbRef = useRef(false);
   const lastFetchTimestampRef = useRef<number>(0);
+  const lastGranularReloadRef = useRef<Record<string, number>>({});
+
+  const shouldSkipGranularReload = (key: string, force: boolean = false, cooldownMs: number = 3000): boolean => {
+    const now = Date.now();
+    if (!force && now - (lastGranularReloadRef.current[key] || 0) < cooldownMs) {
+      return true;
+    }
+    lastGranularReloadRef.current[key] = now;
+    return false;
+  };
 
   // Cargar datos en vivo desde PostgreSQL con protección de concurrencia y caché temporal
   const loadDatabaseData = async (force: boolean = false, onlyDynamic: boolean = false) => {
@@ -3293,7 +3303,8 @@ export default function App() {
   };
 
   // Recarga granular de Bitácora (evita recargar los otros 6 módulos en Caseta)
-  const reloadBitacora = async () => {
+  const reloadBitacora = async (force: boolean = false) => {
+    if (shouldSkipGranularReload("bitacora", force)) return;
     try {
       const res = await api.getBitacora();
       if (Array.isArray(res)) {
@@ -3342,7 +3353,8 @@ export default function App() {
   };
 
   // Recarga granular de Vehículos
-  const reloadVehiculos = async () => {
+  const reloadVehiculos = async (force: boolean = false) => {
+    if (shouldSkipGranularReload("vehiculos", force)) return;
     try {
       const res = await api.getVehiculos();
       if (Array.isArray(res)) {
@@ -3511,7 +3523,8 @@ export default function App() {
   };
 
   // Recarga granular de Sanciones
-  const reloadSanciones = async () => {
+  const reloadSanciones = async (force: boolean = false) => {
+    if (shouldSkipGranularReload("sanciones", force)) return;
     try {
       const res = await api.getSanciones();
       if (Array.isArray(res)) {
@@ -3609,7 +3622,8 @@ export default function App() {
   };
 
   // Recarga granular de Reportes de Infracciones
-  const reloadReportes = async () => {
+  const reloadReportes = async (force: boolean = false) => {
+    if (shouldSkipGranularReload("reportes", force)) return;
     try {
       const res = await api.getReportes();
       if (Array.isArray(res)) {
@@ -3779,7 +3793,7 @@ export default function App() {
       }
     }
 
-    // 3. Sincronización periódica controlada (cada 5 min / 300s) solo para roles operativos en vivo
+    // 3. Sincronización periódica controlada (cada 10 min / 600s) solo para roles operativos en vivo
     const backgroundSyncInterval = setInterval(() => {
       if (
         document.visibilityState === "visible" &&
@@ -3788,13 +3802,13 @@ export default function App() {
       ) {
         loadDatabaseData(false, true);
       }
-    }, 300000);
+    }, 600000);
 
-    // 4. Sincronización inteligente al regresar a la pestaña (si pasaron >3 min de inactividad)
+    // 4. Sincronización inteligente al regresar a la pestaña (si pasaron >5 min de inactividad)
     const handleFocusOrVisibility = () => {
       if (document.visibilityState === "visible") {
         const now = Date.now();
-        if (now - lastFetchTimestampRef.current > 180000) {
+        if (now - lastFetchTimestampRef.current > 300000) {
           loadDatabaseData(false, true);
         }
       }

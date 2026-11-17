@@ -36,20 +36,19 @@ router.get('/', async (req, res) => {
           model: db.Corbatin,
           as: 'corbatines',
           attributes: ['id_corbatin', 'numero', 'estatus', 'fecha_vencimiento', 'qr_token'],
-          required: false
+          separate: true
         },
         {
           model: db.Sancion,
           as: 'sanciones',
           attributes: ['id_sancion', 'estatus', 'fecha_inicio', 'fecha_fin', 'numero_reincidencia', 'id_regla', 'motivo'],
           where: { estatus: { [Op.notIn]: ['CANCELADA', 'ACLARADA', 'CANCELADO', 'ACLARADO', 'cancelada', 'aclarada'] } },
-          required: false
+          separate: true
         }
       ],
       order: [['created_at', 'DESC']],
       limit: parsedLimit,
-      offset: parsedOffset,
-      subQuery: false
+      offset: parsedOffset
     });
 
     const formatFoto = (url) => {
