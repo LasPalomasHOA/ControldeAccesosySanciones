@@ -3319,7 +3319,9 @@ export default function App() {
         });
         setBitacora(mappedBit);
       }
-      reloadVisitantes();
+      if (resVisitantes.status === "fulfilled" && Array.isArray(resVisitantes.value)) {
+        setVisitantesList(resVisitantes.value);
+      }
 
       if (resReportes.status === "fulfilled" && Array.isArray(resReportes.value)) {
         const rawVehs = resVehicles.status === "fulfilled" && Array.isArray(resVehicles.value) ? resVehicles.value : [];
@@ -3546,7 +3548,8 @@ export default function App() {
   };
 
   // Recarga granular de Visitantes
-  const reloadVisitantes = useCallback(async () => {
+  const reloadVisitantes = useCallback(async (force: boolean = false) => {
+    if (shouldSkipGranularReload("visitantes", force)) return;
     try {
       setIsLoadingVisitantes(true);
       const res = await api.getVisitantes();
@@ -8528,7 +8531,7 @@ export default function App() {
             </div>
             <button
               type="button"
-              onClick={reloadVisitantes}
+              onClick={() => reloadVisitantes(true)}
               disabled={isLoadingVisitantes}
               className="px-3.5 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs shrink-0 disabled:opacity-50"
             >
