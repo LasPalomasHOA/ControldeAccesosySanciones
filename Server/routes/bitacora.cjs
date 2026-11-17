@@ -50,8 +50,9 @@ router.get('/', async (req, res) => {
 
     const resultado = accesos.map(a => {
       const plain = a.get({ plain: true });
-      const isCorbatinVerde = (plain.corbatin?.tipos || '').toUpperCase() === 'VERDE' || Boolean(plain.observaciones && plain.observaciones.includes('CORBATÍN VERDE'));
-      const empNombre = plain.corbatin?.empresa_nombre || plain.vehiculo?.empresa?.razon_social || plain.conductor?.empresa?.razon_social || '';
+      const isVisitante = Boolean(plain.observaciones && plain.observaciones.includes('[VISITANTE]')) || (plain.ubicacion_trabajo && plain.ubicacion_trabajo.includes('Visitante'));
+      const isCorbatinVerde = !isVisitante && ((plain.corbatin?.tipos || '').toUpperCase() === 'VERDE' || Boolean(plain.observaciones && plain.observaciones.includes('CORBATÍN VERDE')));
+      const empNombre = isVisitante ? 'Visitante' : (plain.corbatin?.empresa_nombre || plain.vehiculo?.empresa?.razon_social || plain.conductor?.empresa?.razon_social || '');
 
       let conductorNombre = 'Conductor Acreditado';
       if (plain.conductor) {
@@ -67,7 +68,10 @@ router.get('/', async (req, res) => {
       }
 
       let corbatinNum = '';
-      if (plain.corbatin?.numero) {
+      if (isVisitante && plain.observaciones && plain.observaciones.includes('Corbatín:')) {
+        const m = plain.observaciones.match(/Corbat[íi]n:\s*#?([0-9]+)/i);
+        if (m && m[1]) corbatinNum = String(parseInt(m[1], 10));
+      } else if (plain.corbatin?.numero) {
         corbatinNum = isCorbatinVerde
           ? `00${parseInt(String(plain.corbatin.numero).replace(/[^0-9]/g, ''), 10) || plain.corbatin.numero}`
           : String(plain.corbatin.numero);
@@ -78,13 +82,19 @@ router.get('/', async (req, res) => {
         if (m && m[1]) corbatinNum = `00${parseInt(m[1], 10)}`;
       }
 
+      let vehiculoTexto = '';
+      if (plain.observaciones && plain.observaciones.includes('Vehículo:')) {
+        const m = plain.observaciones.match(/Veh[íi]culo:\s*([^|\]]+)/i);
+        if (m && m[1]) vehiculoTexto = m[1].trim();
+      }
+
       let placasFinal = plain.vehiculo?.placas;
       if (!placasFinal && plain.observaciones && plain.observaciones.includes('Placas:')) {
         const m = plain.observaciones.match(/Placas:\s*([^|\]]+)/i);
         if (m && m[1]) placasFinal = m[1].trim();
       }
       if (!placasFinal) {
-        placasFinal = isCorbatinVerde ? 'PROYECTO' : (plain.id_vehiculo ? 'VEHICULAR' : 'PEATONAL');
+        placasFinal = isVisitante ? 'VISITANTE' : (isCorbatinVerde ? 'PROYECTO' : (plain.id_vehiculo ? 'VEHICULAR' : 'PEATONAL'));
       }
 
       const rawHoraEntrada = plain.hora_entrada
@@ -96,11 +106,11 @@ router.get('/', async (req, res) => {
 
       const trabajoLimpio = (plain.ubicacion_trabajo && plain.ubicacion_trabajo.trim() !== 'x')
         ? plain.ubicacion_trabajo.trim()
-        : (plain.observaciones && plain.observaciones.trim() !== 'x' && !plain.observaciones.startsWith('Chofer [') && !plain.observaciones.startsWith('Peatonal [') && !plain.observaciones.startsWith('[CORBATÍN VERDE')
+        : (plain.observaciones && plain.observaciones.trim() !== 'x' && !plain.observaciones.startsWith('Chofer [') && !plain.observaciones.startsWith('Peatonal [') && !plain.observaciones.startsWith('[CORBATÍN VERDE') && !plain.observaciones.startsWith('[VISITANTE')
           ? plain.observaciones.trim()
-          : (isCorbatinVerde ? `Proyecto Temporal — ${empNombre || 'Contratista'}` : (plain.id_vehiculo ? 'Mantenimiento / Acceso regular' : 'Labores y mantenimiento a pie')));
+          : (isVisitante ? 'Visita autorizada al complejo' : (isCorbatinVerde ? `Proyecto Temporal — ${empNombre || 'Contratista'}` : (plain.id_vehiculo ? 'Mantenimiento / Acceso regular' : 'Labores y mantenimiento a pie'))));
 
-      const tipoFinal = isCorbatinVerde ? 'Corbatín Verde' : (plain.id_vehiculo ? 'Vehicular' : 'Peatonal');
+      const tipoFinal = isVisitante ? 'Vehicular' : (isCorbatinVerde ? 'Corbatín Verde' : (plain.id_vehiculo ? 'Vehicular' : 'Peatonal'));
 
       return {
         ...plain,
@@ -113,7 +123,8 @@ router.get('/', async (req, res) => {
         telefono: plain.corbatin?.telefono || plain.vehiculo?.empresa?.telefono || plain.conductor?.telefono || '',
         corbatinNumero: corbatinNum || '—',
         corbatinNum: corbatinNum || '—',
-        tipoCorbatin: isCorbatinVerde ? 'VERDE' : 'NORMAL',
+        tipoCorbatin: isVisitante ? 'VISITANTE' : (isCorbatinVerde ? 'VERDE' : 'NORMAL'),
+        color: vehiculoTexto || plain.vehiculo?.color || 'N/A',
         ubicacion_trabajo: trabajoLimpio,
         trabajos: trabajoLimpio,
         raw_hora_entrada: rawHoraEntrada || plain.hora_entrada,
@@ -200,6 +211,55 @@ router.post('/', async (req, res) => {
       }
     }
 
+    // Validación de corbatín físico de visitante (1 al 30): regla de no repetición en el mismo día (salvo si ya se agotaron los 30)
+    if (!esSalida && observaciones && String(observaciones).includes('[VISITANTE]')) {
+      const m = String(observaciones).match(/Corbat[íi]n:\s*#?([0-9]+)/i);
+      if (m && m[1]) {
+        const numVis = parseInt(m[1], 10);
+        const hoyFecha = ahora.toISOString().split('T')[0];
+        const schema = process.env.DB_SCHEMA || 'control_acceso';
+
+        // Consultar cuántos corbatines únicos del 1 al 30 ya se usaron hoy
+        let totalUsadosHoy = 0;
+        try {
+          const [cntRows] = await db.sequelize.query(`
+            SELECT COUNT(DISTINCT corbatin_num) as total
+            FROM "${schema}"."visitantes"
+            WHERE fecha = :fecha AND corbatin_num BETWEEN 1 AND 30
+          `, { replacements: { fecha: hoyFecha } }).catch(() => [[]]);
+          totalUsadosHoy = Number(cntRows?.[0]?.total || 0);
+        } catch (e) { }
+
+        if (totalUsadosHoy < 30) {
+          const visitUsadoHoy = await db.BitacoraAcceso.findOne({
+            where: {
+              observaciones: { [db.Sequelize.Op.like]: `%[VISITANTE]%Corbatín: #${numVis}%` },
+              fecha: hoyFecha
+            }
+          });
+          if (visitUsadoHoy) {
+            return res.status(400).json({
+              error: `El Corbatín de Visitante #${numVis} ya fue utilizado el día de hoy (${hoyFecha}). Para evitar duplicidad diaria, selecciona otro corbatín disponible del 1 al 30 (la reutilización se permite únicamente al agotarse los 30 del día).`
+            });
+          }
+        } else {
+          // Si los 30 ya se entregaron hoy, verificar que no siga actualmente adentro sin salida
+          const visitAdentro = await db.BitacoraAcceso.findOne({
+            where: {
+              observaciones: { [db.Sequelize.Op.like]: `%[VISITANTE]%Corbatín: #${numVis}%` },
+              fecha: hoyFecha,
+              hora_salida: null
+            }
+          });
+          if (visitAdentro) {
+            return res.status(400).json({
+              error: `El Corbatín de Visitante #${numVis} se encuentra actualmente dentro del complejo. Debe registrarse su salida antes de poder reasignarlo.`
+            });
+          }
+        }
+      }
+    }
+
     const nuevoAcceso = await db.BitacoraAcceso.create({
       id_caseta: finalCasetaId,
       id_vehiculo: finalVehiculoId,
@@ -215,6 +275,169 @@ router.post('/', async (req, res) => {
       motivo_rechazo: motivo_rechazo || null,
       observaciones: observaciones || null
     });
+
+    // Replicar en tabla dedicada 'visitantes' si es un acceso de visitante
+    if (esSalida && observaciones && String(observaciones).includes('[VISITANTE]')) {
+      try {
+        const schema = process.env.DB_SCHEMA || 'control_acceso';
+        const mPlacas = String(observaciones).match(/Placas:\s*([^|\]]+)/i);
+        const mCorb = String(observaciones).match(/Corbat[íi]n:\s*#?([0-9]+)/i);
+        const pl = mPlacas ? mPlacas[1].trim().toUpperCase() : null;
+        const corb = mCorb ? parseInt(mCorb[1], 10) : null;
+
+        await db.sequelize.query(`
+          UPDATE "${schema}"."visitantes"
+          SET "hora_salida" = :hora, "id_bitacora" = COALESCE("id_bitacora", :id_acceso)
+          WHERE "hora_salida" IS NULL 
+            AND (:pl != '' AND "placas" = :pl OR :corb > 0 AND "corbatin_num" = :corb);
+        `, {
+          replacements: {
+            hora: ahora,
+            id_acceso: nuevoAcceso.id_acceso,
+            pl: pl || '',
+            corb: corb || -1
+          }
+        }).catch(() => {});
+      } catch (err) {
+        console.warn('Nota al actualizar salida en tabla visitantes:', err.message);
+      }
+    }
+
+    if (!esSalida && observaciones && String(observaciones).includes('[VISITANTE]')) {
+      try {
+        const schema = process.env.DB_SCHEMA || 'control_acceso';
+        const mChofer = String(observaciones).match(/Chofer:\s*([^|\]]+)/i);
+        const mMarca = String(observaciones).match(/Marca:\s*([^|\]]+)/i);
+        const mModelo = String(observaciones).match(/Modelo:\s*([^|\]]+)/i);
+        const mAnio = String(observaciones).match(/A[ñn]o:\s*([^|\]]+)/i);
+        const mPlacas = String(observaciones).match(/Placas:\s*([^|\]]+)/i);
+        const mColor = String(observaciones).match(/Color:\s*([^|\]]+)/i);
+        const mCorb = String(observaciones).match(/Corbat[íi]n:\s*#?([0-9]+)/i);
+        const mDestino = String(observaciones).match(/Destino:\s*([^|\]]+)/i);
+        const mObs = String(observaciones).match(/Obs:\s*([^|\]]+)/i);
+
+        const choferVal = mChofer ? mChofer[1].trim() : 'Visitante';
+        const marcaVal = mMarca ? mMarca[1].trim() : '';
+        const modeloVal = mModelo ? mModelo[1].trim() : '';
+        const anioVal = mAnio ? mAnio[1].trim() : '';
+        const placasVal = mPlacas ? mPlacas[1].trim().toUpperCase() : 'VISITANTE';
+        const colorVal = mColor ? mColor[1].trim() : '';
+        const corbNumVal = mCorb ? parseInt(mCorb[1], 10) : 1;
+        const destinoVal = mDestino ? mDestino[1].trim() : (ubicacion_trabajo || null);
+        const pasajerosVal = num_pasajeros !== undefined && num_pasajeros !== null ? Number(num_pasajeros) : 0;
+        const obsVal = mObs ? mObs[1].trim() : null;
+        const fechaVal = ahora.toISOString().split('T')[0];
+
+        let safeUsuarioId = null;
+        if (finalUsuarioId) {
+          try {
+            const u = await db.Usuario.findByPk(finalUsuarioId);
+            if (u) safeUsuarioId = finalUsuarioId;
+          } catch (e) {}
+        }
+
+        let saved = false;
+        if (db.Visitante) {
+          try {
+            await db.Visitante.create({
+              nombre_conductor: choferVal,
+              marca: marcaVal,
+              modelo: modeloVal,
+              año: anioVal,
+              placas: placasVal,
+              color: colorVal,
+              corbatin_num: corbNumVal,
+              destino: destinoVal,
+              pasajeros: pasajerosVal,
+              observaciones: obsVal,
+              id_usuario: safeUsuarioId,
+              id_bitacora: nuevoAcceso.id_acceso,
+              fecha: fechaVal,
+              hora_entrada: ahora,
+              hora_salida: null
+            });
+            saved = true;
+          } catch (seqErr) {
+            console.warn('Fallo Visitante.create con Sequelize en bitácora:', seqErr.message);
+          }
+        }
+
+        // Respaldo SQL directo en la tabla "visitantes"
+        if (!saved) {
+          // Intentar primero con id_bitacora e id_usuario
+          await db.sequelize.query(`
+            INSERT INTO "${schema}"."visitantes" 
+            ("nombre_conductor", "marca", "modelo", "año", "placas", "color", "corbatin_num", "destino", "pasajeros", "observaciones", "id_usuario", "id_bitacora", "fecha", "hora_entrada")
+            VALUES (:chofer, :marca, :modelo, :anio, :placas, :color, :corb, :destino, :pasajeros, :obs, :id_usuario, :id_bitacora, :fecha, :hora)
+          `, {
+            replacements: {
+              chofer: choferVal,
+              marca: marcaVal,
+              modelo: modeloVal,
+              anio: anioVal,
+              placas: placasVal,
+              color: colorVal,
+              corb: corbNumVal,
+              destino: destinoVal,
+              pasajeros: pasajerosVal,
+              obs: obsVal,
+              id_usuario: safeUsuarioId,
+              id_bitacora: nuevoAcceso.id_acceso,
+              fecha: fechaVal,
+              hora: ahora
+            }
+          }).catch(async (err1) => {
+            // Reintento con "anio" por si la columna no lleva tilde
+            await db.sequelize.query(`
+              INSERT INTO "${schema}"."visitantes" 
+              ("nombre_conductor", "marca", "modelo", "anio", "placas", "color", "corbatin_num", "destino", "pasajeros", "observaciones", "id_usuario", "id_bitacora", "fecha", "hora_entrada")
+              VALUES (:chofer, :marca, :modelo, :anio, :placas, :color, :corb, :destino, :pasajeros, :obs, :id_usuario, :id_bitacora, :fecha, :hora)
+            `, {
+              replacements: {
+                chofer: choferVal,
+                marca: marcaVal,
+                modelo: modeloVal,
+                anio: anioVal,
+                placas: placasVal,
+                color: colorVal,
+                corb: corbNumVal,
+                destino: destinoVal,
+                pasajeros: pasajerosVal,
+                obs: obsVal,
+                id_usuario: safeUsuarioId,
+                id_bitacora: nuevoAcceso.id_acceso,
+                fecha: fechaVal,
+                hora: ahora
+              }
+            }).catch(async () => {
+              // Si falla por columnas id_usuario/id_bitacora en alguna versión vieja
+              await db.sequelize.query(`
+                INSERT INTO "${schema}"."visitantes" 
+                ("nombre_conductor", "marca", "modelo", "año", "placas", "color", "corbatin_num", "destino", "pasajeros", "observaciones", "fecha", "hora_entrada")
+                VALUES (:chofer, :marca, :modelo, :anio, :placas, :color, :corb, :destino, :pasajeros, :obs, :fecha, :hora)
+              `, {
+                replacements: {
+                  chofer: choferVal,
+                  marca: marcaVal,
+                  modelo: modeloVal,
+                  anio: anioVal,
+                  placas: placasVal,
+                  color: colorVal,
+                  corb: corbNumVal,
+                  destino: destinoVal,
+                  pasajeros: pasajerosVal,
+                  obs: obsVal,
+                  fecha: fechaVal,
+                  hora: ahora
+                }
+              }).catch(() => {});
+            });
+          });
+        }
+      } catch (visErr) {
+        console.warn('Nota: Excepción al replicar en tabla visitantes:', visErr.message);
+      }
+    }
 
     try {
       events.broadcastEvent('NUEVO_ACCESO', {
@@ -240,6 +463,38 @@ router.put('/:id/salida', async (req, res) => {
     acceso.hora_salida = new Date();
     acceso.estatus_acceso = 'SALIDA';
     await acceso.save();
+
+    if (db.Visitante) {
+      await db.Visitante.update(
+        { hora_salida: acceso.hora_salida },
+        { where: { id_bitacora: acceso.id_acceso } }
+      ).catch(() => { });
+    }
+
+    // Asegurar actualización directa en tabla "visitantes" (por id_bitacora o placas)
+    const schema = process.env.DB_SCHEMA || 'control_acceso';
+    try {
+      let placaVisitante = '';
+      if (acceso.observaciones) {
+        const mPlacas = String(acceso.observaciones).match(/Placas:\s*([^|\]]+)/i);
+        if (mPlacas) placaVisitante = mPlacas[1].trim().toUpperCase();
+      }
+
+      await db.sequelize.query(`
+        UPDATE "${schema}"."visitantes"
+        SET "hora_salida" = :hora, "id_bitacora" = COALESCE("id_bitacora", :id_acceso)
+        WHERE "id_bitacora" = :id_acceso
+           OR ("hora_salida" IS NULL AND :placa != '' AND "placas" = :placa);
+      `, {
+        replacements: {
+          hora: acceso.hora_salida,
+          id_acceso: acceso.id_acceso,
+          placa: placaVisitante
+        }
+      });
+    } catch (e) {
+      console.warn('Nota al sincronizar salida en tabla visitantes:', e.message);
+    }
 
     try {
       events.broadcastEvent('SALIDA_REGISTRADA', {

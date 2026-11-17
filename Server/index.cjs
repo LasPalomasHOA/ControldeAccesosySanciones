@@ -120,7 +120,24 @@ async function ensureDbInit() {
 
   dbInitPromise = (async () => {
     try {
-      await db.sequelize.authenticate();
+      let connected = false;
+      let lastErr = null;
+      for (let intento = 1; intento <= 3; intento++) {
+        try {
+          await db.sequelize.authenticate();
+          connected = true;
+          break;
+        } catch (authErr) {
+          lastErr = authErr;
+          console.warn(`Intento ${intento}/3 de conexión a Supabase falló (${authErr.message}). Reintentando...`);
+          if (intento < 3) {
+            await new Promise(r => setTimeout(r, 2000));
+          }
+        }
+      }
+      if (!connected) {
+        throw lastErr || new Error('No se pudo conectar a la base de datos tras 3 intentos.');
+      }
       console.log('✅ Conexión a base de datos Supabase / PostgreSQL verificada.');
 
       // Estructura de tablas y migraciones DDL (solo si se especifica explícitamente RUN_MIGRATIONS=true)
@@ -156,6 +173,56 @@ async function ensureDbInit() {
             ALTER TABLE IF EXISTS "${schemaName}"."reglamentos" 
             ADD COLUMN IF NOT EXISTS "contenido_secciones" JSONB;
           `).catch(() => {});
+
+          await db.sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "${schemaName}"."visitantes" (
+              "id" BIGSERIAL PRIMARY KEY,
+              "nombre_conductor" VARCHAR(200) NOT NULL,
+              "marca" VARCHAR(100) NOT NULL,
+              "modelo" VARCHAR(100) NOT NULL,
+              "año" VARCHAR(10) DEFAULT '',
+              "placas" VARCHAR(30) NOT NULL,
+              "color" VARCHAR(60) DEFAULT '',
+              "corbatin_num" INTEGER NOT NULL,
+              "destino" VARCHAR(255),
+              "pasajeros" INTEGER DEFAULT 0,
+              "observaciones" TEXT,
+              "id_usuario" BIGINT,
+              "id_bitacora" BIGINT,
+              "fecha" DATE,
+              "hora_entrada" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+              "hora_salida" TIMESTAMP WITH TIME ZONE,
+              "created_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+              "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            );
+          `).catch(() => {});
+
+          // Asegurar todas las columnas en la tabla "visitantes" (plural)
+          const columnasVisitantes = [
+            `ALTER TABLE IF EXISTS "${schemaName}"."visitantes" ADD COLUMN IF NOT EXISTS "id" BIGSERIAL;`,
+            `ALTER TABLE IF EXISTS "${schemaName}"."visitantes" ADD COLUMN IF NOT EXISTS "nombre_conductor" VARCHAR(200) DEFAULT '';`,
+            `ALTER TABLE IF EXISTS "${schemaName}"."visitantes" ADD COLUMN IF NOT EXISTS "marca" VARCHAR(100) DEFAULT '';`,
+            `ALTER TABLE IF EXISTS "${schemaName}"."visitantes" ADD COLUMN IF NOT EXISTS "modelo" VARCHAR(100) DEFAULT '';`,
+            `ALTER TABLE IF EXISTS "${schemaName}"."visitantes" ADD COLUMN IF NOT EXISTS "año" VARCHAR(10) DEFAULT '';`,
+            `ALTER TABLE IF EXISTS "${schemaName}"."visitantes" ADD COLUMN IF NOT EXISTS "anio" VARCHAR(10) DEFAULT '';`,
+            `ALTER TABLE IF EXISTS "${schemaName}"."visitantes" ADD COLUMN IF NOT EXISTS "placas" VARCHAR(30) DEFAULT '';`,
+            `ALTER TABLE IF EXISTS "${schemaName}"."visitantes" ADD COLUMN IF NOT EXISTS "color" VARCHAR(60) DEFAULT '';`,
+            `ALTER TABLE IF EXISTS "${schemaName}"."visitantes" ADD COLUMN IF NOT EXISTS "corbatin_num" INTEGER DEFAULT 1;`,
+            `ALTER TABLE IF EXISTS "${schemaName}"."visitantes" ADD COLUMN IF NOT EXISTS "destino" VARCHAR(255);`,
+            `ALTER TABLE IF EXISTS "${schemaName}"."visitantes" ADD COLUMN IF NOT EXISTS "pasajeros" INTEGER DEFAULT 0;`,
+            `ALTER TABLE IF EXISTS "${schemaName}"."visitantes" ADD COLUMN IF NOT EXISTS "observaciones" TEXT;`,
+            `ALTER TABLE IF EXISTS "${schemaName}"."visitantes" ADD COLUMN IF NOT EXISTS "id_usuario" BIGINT;`,
+            `ALTER TABLE IF EXISTS "${schemaName}"."visitantes" ADD COLUMN IF NOT EXISTS "id_bitacora" BIGINT;`,
+            `ALTER TABLE IF EXISTS "${schemaName}"."visitantes" ADD COLUMN IF NOT EXISTS "fecha" DATE;`,
+            `ALTER TABLE IF EXISTS "${schemaName}"."visitantes" ADD COLUMN IF NOT EXISTS "hora_entrada" TIMESTAMP WITH TIME ZONE DEFAULT NOW();`,
+            `ALTER TABLE IF EXISTS "${schemaName}"."visitantes" ADD COLUMN IF NOT EXISTS "hora_salida" TIMESTAMP WITH TIME ZONE;`,
+            `ALTER TABLE IF EXISTS "${schemaName}"."visitantes" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW();`,
+            `ALTER TABLE IF EXISTS "${schemaName}"."visitantes" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW();`
+          ];
+
+          for (const colQuery of columnasVisitantes) {
+            await db.sequelize.query(colQuery).catch(() => {});
+          }
         } catch (colErr) {
           // Ignorar si ya existe o no aplica
         }
@@ -262,6 +329,7 @@ app.use('/api/reglas', requireAuth, require('./routes/reglas.cjs'));
 app.use('/api/infracciones', requireAuth, require('./routes/infracciones.cjs'));
 app.use('/api/sanciones', requireAuth, require('./routes/sanciones.cjs'));
 app.use('/api/bitacora', requireAuth, require('./routes/bitacora.cjs'));
+app.use('/api/visitantes', requireAuth, require('./routes/visitantes.cjs'));
 
 // Manejador para rutas no encontradas dentro de /api
 app.use('/api/*', (req, res) => {

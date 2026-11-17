@@ -33,6 +33,8 @@ const RevisionReporte = require('./revisionReporte.cjs');
 const Sancion = require('./sancion.cjs');
 // 17. bitacora_accesos
 const BitacoraAcceso = require('./bitacoraAcceso.cjs');
+// 18. visitantes
+const Visitante = require('./visitante.cjs');
 
 // ─── RELACIONES (ASOCIACIONES) ───────────────────────────────────────────────
 
@@ -148,7 +150,8 @@ const db = {
   Evidencia,
   RevisionReporte,
   Sancion,
-  BitacoraAcceso
+  BitacoraAcceso,
+  Visitante
 };
 
 module.exports = db;

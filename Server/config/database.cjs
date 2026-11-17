@@ -56,15 +56,16 @@ sequelize = new Sequelize(connectionUri, {
       require: true,
       rejectUnauthorized: false
     },
-    connectTimeout: 15000,
-    keepAlive: true
+    connectTimeout: 30000,
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 10000
   },
   pool: {
     max: isServerless ? 2 : (process.env.DB_POOL_MAX ? parseInt(process.env.DB_POOL_MAX, 10) : 5),
     min: 0,
-    acquire: 15000,
-    idle: 2000,
-    evict: 1000
+    acquire: 30000,
+    idle: 20000,
+    evict: 10000
   },
   define: {
     schema,
