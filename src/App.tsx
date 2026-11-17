@@ -7514,9 +7514,6 @@ export default function App() {
                   />
                   <span>Recordar sesión</span>
                 </label>
-                <span className="text-slate-400 text-xs">
-                  Soporte: TI Las Palomas
-                </span>
               </div>
 
               <button
