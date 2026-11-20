@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import QRCode from "qrcode";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 import { api } from "./services/api";
 import { compressImageClient } from "./utils/imageCompressor";
 import SupervisorHistorial from "./components/SupervisorHistorial";
@@ -16,549 +15,79 @@ import {
   evaluateOvertimeContractors,
   type ContratistaExcedido
 } from "./utils/scheduleParser";
-import { downloadBitacoraPDF } from "./utils/pdfBitacoraExporter";
 import { exportBitacoraCasetaToExcel } from "./utils/excelReportExporter";
+import {
+  playNotificationChime,
+  normalizeFotoUrl,
+  formatCorbatinVerdeNum,
+  formatFechaLegible,
+  formatHoraLocal,
+  readStorageJson,
+} from "./utils/formatters";
+import {
+  IconSpinner,
+  IconBuilding,
+  IconShield,
+  IconScale,
+  IconServer,
+  IconCar,
+  IconBadge,
+  IconFileText,
+  IconCheckCircle,
+  IconAlertTriangle,
+  IconMail,
+  IconUserPlus,
+  IconLogOut,
+  IconMessageSquare,
+  IconClock,
+  IconKey,
+  IconLock,
+  IconCamera,
+  IconUsers,
+  IconUser,
+  IconEdit,
+  IconTrash,
+  IconPhone,
+  IconSearch,
+  IconUserCheck,
+  IconUserX,
+  IconEye,
+  IconEyeOff,
+  IconWalk,
+  IconFileSpreadsheet,
+  IconDownload,
+  IconChevronDown,
+  IconChevronUp,
+  IconChevronLeft,
+  IconChevronRight,
+  IconChevronsLeft,
+  IconChevronsRight,
+  IconX,
+  IconInfo,
+  IconCopy,
+  IconCheckSimple,
+  EmpresaAvatar,
+  BlurredBackdropImageFrame,
+} from "./components/Icons";
+import {
+  IMG_AERIAL,
+  IMG_GATE,
+  IMG_COAST,
+  LPLogo,
+  StatusBadge,
+  PageHero,
+  CopyableContactCardField,
+  CopyableInlineText,
+  ToastContainer,
+  type ToastNotification,
+} from "./components/AppPrimitives";
+import {
+  DEFAULT_REGLAMENTO_SECTIONS,
+  CorbatinDocument,
+  TarjetaCorbatinVerdePrintable,
+} from "./components/CorbatinPrintable";
 import logoPng from "./assets/logo.png";
 import loginHeroImg from "./assets/image.png";
-
-// ─── SVG Icons (Clean, Modern, Vector) ────────────────────────────────────────
-function IconSparkles({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-    </svg>
-  );
-}
-
-function IconSpinner({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={`${className} animate-spin`} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-    </svg>
-  );
-}
-
-function IconBuilding({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
-      <path d="M9 22v-4h6v4" />
-      <path d="M8 6h.01" /><path d="M16 6h.01" />
-      <path d="M8 10h.01" /><path d="M16 10h.01" />
-      <path d="M8 14h.01" /><path d="M16 14h.01" />
-    </svg>
-  );
-}
-
-function IconShield({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    </svg>
-  );
-}
-
-function IconScale({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
-      <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
-      <path d="M7 21h10" />
-      <path d="M12 3v18" />
-      <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" />
-    </svg>
-  );
-}
-
-function IconServer({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect width="20" height="8" x="2" y="2" rx="2" ry="2" />
-      <rect width="20" height="8" x="2" y="14" rx="2" ry="2" />
-      <line x1="6" x2="6.01" y1="6" y2="6" />
-      <line x1="6" x2="6.01" y1="18" y2="18" />
-    </svg>
-  );
-}
-
-function IconCar({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
-      <circle cx="7" cy="17" r="2" />
-      <path d="M9 17h6" />
-      <circle cx="17" cy="17" r="2" />
-    </svg>
-  );
-}
-
-function IconBadge({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
-      <path d="m9 12 2 2 4-4" />
-    </svg>
-  );
-}
-
-function IconFileText({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-      <path d="M10 9H8" />
-      <path d="M16 13H8" />
-      <path d="M16 17H8" />
-    </svg>
-  );
-}
-
-function IconCheckCircle({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-      <path d="m9 11 3 3L22 4" />
-    </svg>
-  );
-}
-
-function IconAlertTriangle({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-      <line x1="12" y1="9" x2="12" y2="13" />
-      <line x1="12" y1="17" x2="12.01" y2="17" />
-    </svg>
-  );
-}
-
-function IconMail({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect width="20" height="16" x="2" y="4" rx="2" />
-      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-    </svg>
-  );
-}
-
-function IconLock({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-    </svg>
-  );
-}
-
-function IconUserPlus({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <line x1="19" x2="19" y1="8" y2="14" />
-      <line x1="22" x2="16" y1="11" y2="11" />
-    </svg>
-  );
-}
-
-function IconLogOut({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-      <polyline points="16 17 21 12 16 7" />
-      <line x1="21" x2="9" y1="12" y2="12" />
-    </svg>
-  );
-}
-
-function IconMessageSquare({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    </svg>
-  );
-}
-
-function IconClock({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
-  );
-}
-
-function IconKey({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="7.5" cy="15.5" r="5.5" />
-      <path d="m21 2-9.6 9.6" />
-      <path d="m15.5 7.5 3 3L22 7l-3-3" />
-    </svg>
-  );
-}
-
-function IconCamera({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
-      <circle cx="12" cy="13" r="3" />
-    </svg>
-  );
-}
-
-function IconUsers({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  );
-}
-
-function IconUser({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
-    </svg>
-  );
-}
-
-function IconEdit({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-    </svg>
-  );
-}
-
-function IconTrash({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-      <line x1="10" y1="11" x2="10" y2="17" />
-      <line x1="14" y1="11" x2="14" y2="17" />
-    </svg>
-  );
-}
-
-function IconPhone({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-    </svg>
-  );
-}
-
-function IconSearch({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  );
-}
-
-function IconUserCheck({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <polyline points="16 11 18 13 22 9" />
-    </svg>
-  );
-}
-
-function IconUserX({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <line x1="17" y1="8" x2="22" y2="13" />
-      <line x1="22" y1="8" x2="17" y2="13" />
-    </svg>
-  );
-}
-
-function IconEye({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
-
-function IconEyeOff({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-      <line x1="1" y1="1" x2="23" y2="23" />
-    </svg>
-  );
-}
-
-function IconWalk({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="4" r="2" />
-      <path d="m9 20 3-6 3 6" />
-      <path d="m6 8 6 2 6-2" />
-      <path d="M12 10v4" />
-    </svg>
-  );
-}
-
-function IconFileSpreadsheet({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-      <path d="M8 13h2v2H8z" />
-      <path d="M14 13h2v2h-2z" />
-      <path d="M8 17h2v2H8z" />
-      <path d="M14 17h2v2h-2z" />
-    </svg>
-  );
-}
-
-function IconDownload({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="7 10 12 15 17 10" />
-      <line x1="12" y1="15" x2="12" y2="3" />
-    </svg>
-  );
-}
-
-function IconChevronDown({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
-
-function IconChevronUp({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="18 15 12 9 6 15" />
-    </svg>
-  );
-}
-
-function IconChevronLeft({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="15 18 9 12 15 6" />
-    </svg>
-  );
-}
-
-function IconChevronRight({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
-  );
-}
-
-function IconChevronsLeft({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="11 17 6 12 11 7" />
-      <polyline points="18 17 13 12 18 7" />
-    </svg>
-  );
-}
-
-function IconChevronsRight({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="13 17 18 12 13 7" />
-      <polyline points="6 17 11 12 6 7" />
-    </svg>
-  );
-}
-
-function IconX({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  );
-}
-
-function IconInfo({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <line x1="12" y1="16" x2="12" y2="12" />
-      <line x1="12" y1="8" x2="12.01" y2="8" />
-    </svg>
-  );
-}
-
-function IconCopy({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-    </svg>
-  );
-}
-
-function IconCheckSimple({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
-}
-
-const EMPRESA_AVATAR_PALETTES = [
-  { tile: "bg-gradient-to-br from-teal-50 to-teal-100/80 border-teal-200/90 text-[#0D6E5F]", icon: "text-[#0D6E5F]" },
-  { tile: "bg-gradient-to-br from-sky-50 to-blue-100/75 border-sky-200/90 text-sky-900", icon: "text-sky-700" },
-  { tile: "bg-gradient-to-br from-emerald-50 to-emerald-100/75 border-emerald-200/90 text-emerald-900", icon: "text-emerald-700" },
-  { tile: "bg-gradient-to-br from-indigo-50 to-indigo-100/75 border-indigo-200/90 text-indigo-900", icon: "text-indigo-700" },
-  { tile: "bg-gradient-to-br from-amber-50 to-amber-100/75 border-amber-200/90 text-amber-900", icon: "text-amber-700" },
-];
-
-function getEmpresaInitials(nombre: string): string {
-  const stopWords = new Set(["de", "del", "y", "&", "s.a.", "sa", "c.v.", "cv", "s.", "r.l.", "rl", "s.a", "c.v"]);
-  const words = String(nombre || "")
-    .trim()
-    .split(/\s+/)
-    .map((w) => w.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ.&]/g, ""))
-    .filter((w) => w.length > 0 && !stopWords.has(w.toLowerCase()));
-
-  if (words.length >= 2) {
-    return `${words[0][0]}${words[1][0]}`.toUpperCase();
-  }
-  if (words.length === 1) {
-    return words[0].substring(0, 2).toUpperCase();
-  }
-  return String(nombre || "EM").trim().substring(0, 2).toUpperCase();
-}
-
-function getEmpresaRubroKind(nombre: string): "clima" | "construccion" | "mantenimiento" | "pintura" | "empresa" {
-  const n = String(nombre || "").toLowerCase();
-  if (/clima|aire|refriger|hvac/.test(n)) return "clima";
-  if (/construc|obra|ingeni|edif|civil/.test(n)) return "construccion";
-  if (/mantenim|electr|plom|taller|servic|repar/.test(n)) return "mantenimiento";
-  if (/pint|jardin|limp|aseo/.test(n)) return "pintura";
-  return "empresa";
-}
-
-function EmpresaAvatar({ nombre, seed }: { nombre: string; seed?: string }) {
-  const initials = getEmpresaInitials(nombre);
-  const key = `${seed || ""}-${nombre || ""}`;
-  let hash = 0;
-  for (let i = 0; i < key.length; i += 1) {
-    hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
-  }
-  const palette = EMPRESA_AVATAR_PALETTES[hash % EMPRESA_AVATAR_PALETTES.length];
-  const rubro = getEmpresaRubroKind(nombre);
-
-  return (
-    <div className={`relative w-11 h-11 rounded-xl border shadow-2xs flex items-center justify-center shrink-0 select-none ${palette.tile}`}>
-      <span className="font-bold text-[13px] tracking-tight pr-0.5 pb-0.5">{initials}</span>
-      <span className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-md bg-white border border-slate-200 shadow-2xs flex items-center justify-center ${palette.icon}`}>
-        {rubro === "clima" ? (
-          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="2" x2="12" y2="22" />
-            <line x1="4.93" y1="7" x2="19.07" y2="17" />
-            <line x1="19.07" y1="7" x2="4.93" y2="17" />
-          </svg>
-        ) : rubro === "construccion" ? (
-          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v2z" />
-            <path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5" />
-            <path d="M4 15v-3a8 8 0 0 1 16 0v3" />
-          </svg>
-        ) : rubro === "mantenimiento" ? (
-          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-          </svg>
-        ) : rubro === "pintura" ? (
-          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M18.37 2.63 14 7l-1.59-1.59a2 2 0 0 0-2.82 0L8 7l9 9 1.59-1.59a2 2 0 0 0 0-2.82L17 10l4.37-4.37a2.12 2.12 0 1 0-3-3Z" />
-            <path d="M9 8c-2 3-4 3.5-7 4l8 10c2-1 6-5 6-7" />
-          </svg>
-        ) : (
-          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
-            <path d="M9 22v-4h6v4" />
-            <path d="M8 6h.01" />
-            <path d="M16 6h.01" />
-            <path d="M12 6h.01" />
-            <path d="M12 10h.01" />
-            <path d="M12 14h.01" />
-            <path d="M16 10h.01" />
-            <path d="M16 14h.01" />
-            <path d="M8 10h.01" />
-            <path d="M8 14h.01" />
-          </svg>
-        )}
-      </span>
-    </div>
-  );
-}
-
-function BlurredBackdropImageFrame({
-  src,
-  alt,
-  heightClass = "h-[260px] xs:h-[320px] sm:h-[460px]",
-  fallbackIcon,
-  fallbackText,
-}: {
-  src?: string;
-  alt: string;
-  heightClass?: string;
-  fallbackIcon?: React.ReactNode;
-  fallbackText?: string;
-}) {
-  const [hasError, setHasError] = useState(false);
-
-  useEffect(() => {
-    setHasError(false);
-  }, [src]);
-
-  if (!src || hasError) {
-    return (
-      <div className={`w-full ${heightClass} rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 flex flex-col items-center justify-center p-6 text-center text-slate-400`}>
-        {fallbackIcon || <IconCar className="w-16 h-16 text-slate-400" />}
-        {fallbackText && <span className="text-xs font-medium mt-2">{fallbackText}</span>}
-      </div>
-    );
-  }
-
-  return (
-    <div className={`w-full ${heightClass} rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/90 flex items-center justify-center p-3 relative`}>
-      <img
-        src={src}
-        alt=""
-        aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-75 saturate-125 pointer-events-none select-none"
-      />
-      <div className="absolute inset-0 bg-white/15 backdrop-blur-[2px] pointer-events-none" />
-      <img
-        src={src}
-        alt={alt}
-        onError={() => setHasError(true)}
-        className="relative z-10 w-full h-full object-contain rounded-xl drop-shadow-[0_10px_24px_rgba(15,23,42,0.28)]"
-      />
-    </div>
-  );
-}
 
 // ─── Types & Roles ────────────────────────────────────────────────────────────
 
@@ -761,23 +290,8 @@ interface InfraccionReporte {
   resolucionSupervisor?: string;
 }
 
-// ─── Initial Database ─────────────────────────────────────────────────────────
+  // ─── Default Constants ────────────────────────────────────────────────────────
 
-const INITIAL_USERS: UserAccount[] = [
-  { id: "1", username: "admin@laspalomashoa.com", password: "123456", nombre: "Administrador de Seguridad HOA", email: "admin@laspalomashoa.com", role: "admin", fechaCreacion: "2026-01-01", creadoPor: "Sistema Raíz", activo: true },
-  { id: "2", username: "supervisor@laspalomashoa.com", password: "123456", nombre: "Supervisor Operativo", email: "supervisor@laspalomashoa.com", role: "supervisor", turno: "Turno General 24/7", fechaCreacion: "2026-01-10", creadoPor: "Admin TI", activo: true },
-  { id: "5", username: "proveedor@constructoraintegral.com", password: "123456", nombre: "Roberto Silva Morales", email: "proveedor@constructoraintegral.com", role: "contratista", empresaNombre: "Constructora Integral del Noroeste S.A. de C.V.", fechaCreacion: "2026-02-01", creadoPor: "Supervisor HOA", hasAcceptedReglamento: false, activo: true },
-  { id: "4", username: "caseta@laspalomashoa.com", password: "123456", nombre: "Guardia Caseta Principal", email: "caseta@laspalomashoa.com", role: "caseta", turno: "Vespertino (14:00 - 22:00)", fechaCreacion: "2026-02-05", creadoPor: "Supervisor HOA", activo: true },
-  { id: "15", username: "contabilidad@laspalomashoa.com", password: "123456", nombre: "Lic. Marisol Mendoza", email: "contabilidad@laspalomashoa.com", role: "contabilidad", fechaCreacion: "2026-03-01", creadoPor: "Sistema Raíz", activo: true },
-];
-
-const INITIAL_EMPRESAS: Empresa[] = [];
-
-const INITIAL_TRABAJADORES: Trabajador[] = [];
-const INITIAL_VEHICLES: Vehicle[] = [];
-const INITIAL_SANCIONES: Sancion[] = [];
-const INITIAL_BITACORA: RegistroCaseta[] = [];
-const INITIAL_INFRACCIONES_PENDIENTES: InfraccionReporte[] = [];
 export const generateDefaultPoolCorbatinesVerdes = (count = 20): CorbatinVerde[] => {
   return Array.from({ length: count }, (_, idx) => {
     const num = idx + 1;
@@ -801,18 +315,7 @@ export const generateDefaultPoolCorbatinesVerdes = (count = 20): CorbatinVerde[]
   });
 };
 
-const INITIAL_CORBATINES_VERDES: CorbatinVerde[] = generateDefaultPoolCorbatinesVerdes(20);
-
-const DEFAULT_REGLAMENTO_SECTIONS: ReglamentoSection[] = [
-  { title: "1. INGRESO", items: ["Registrar: corbatín, compañía, vehículo, placas, nombre y celular.", "Indicar área de trabajo y horario.", "Portar uniforme, gafete visible y EPP obligatorio."] },
-  { title: "2. ÁREA DE TRABAJO", items: ["Permanecer solo en el área asignada.", "Usar señalización de seguridad (conos, cintas).", "Uso obligatorio de EPP (incluye arnés en altura).", "Consumir alimentos solo en áreas designadas.", "No usar elevadores de huéspedes."] },
-  { title: "3. VEHÍCULOS", items: ["Altura máxima: 2.40 m.", "Estacionarse solo en áreas autorizadas (Sótano 2).", "Colocar corbatín visible en el retrovisor o tablero."] },
-  { title: "4. PROHIBICIONES", items: ['No tirar escombro en "Trash Chute".', "No dejar materiales en áreas comunes.", "No usar bocinas ni generar ruido excesivo.", "No dormir en áreas comunes."] },
-  { title: "5. SANCIONES DISCIPLINARIAS", items: ["1ª: Amonestación escrita", "2ª: Suspensión de 24 a 48 hrs", "3ª: Suspensión de 1 semana", "Reincidencia: Restricción definitiva"] },
-  { title: "6. HORARIOS", items: ["Lunes a viernes: 08:00 a 18:00 hrs", "Sábado: 09:00 a 14:00 hrs", "No generar ruido antes de 09:00 hrs", "Horarios especiales requieren autorización HOA."] },
-];
-
-const REGLAMENTO_TEXT = `REGLAMENTO DE COLABORADORES EXTERNOS — LAS PALOMAS ROCKY POINT HOA
+const DEFAULT_REGLAMENTO_TEXT = `REGLAMENTO DE COLABORADORES EXTERNOS — LAS PALOMAS ROCKY POINT HOA
 
 1. DISPOSICIONES GENERALES
 Todo contratista, proveedor o empresa externa que opere dentro de las instalaciones de Las Palomas debe registrar sus vehículos en este portal antes de su primer acceso. El incumplimiento faculta a la administración a denegar el ingreso inmediato.
@@ -846,8 +349,6 @@ El representante acreditado de la empresa contratista cuenta con el derecho regl
 
 7. RESPONSABILIDADES CIVILES
 La empresa contratista asume plena responsabilidad civil y solidaria por los daños o percances que sus colaboradores o unidades vehiculares ocasionen a la infraestructura o áreas comunes de Las Palomas.`;
-
-const DEFAULT_REGLAMENTO_TEXT = REGLAMENTO_TEXT;
 
 const DEFAULT_REGLAS_REINCIDENCIA: ReglaReincidenciaUI[] = [
   {
@@ -888,874 +389,6 @@ const DEFAULT_REGLAS_REINCIDENCIA: ReglaReincidenciaUI[] = [
   }
 ];
 
-const IMG_AERIAL = "https://images.unsplash.com/photo-1785300674532-87efce12b5ee?w=1600&h=600&fit=crop&auto=format";
-const IMG_GATE = "https://images.unsplash.com/photo-1775112077888-8fa36e9bbc51?w=1600&h=600&fit=crop&auto=format";
-const IMG_PARK = "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=1600&h=600&fit=crop&auto=format";
-const IMG_COAST = "https://images.unsplash.com/photo-1785300550144-6fc8db9cbb95?w=1600&h=600&fit=crop&auto=format";
-
-// ─── Official Brand Logo ───────────────────────────────────────────────────
-function LPLogo({ size = 180, className = "" }: { size?: number; light?: boolean; className?: string }) {
-  return (
-    <img
-      src={logoPng}
-      alt="Las Palomas Rocky Point HOA"
-      className={`object-contain inline-block ${className}`}
-      style={{ width: `${size}px`, maxWidth: "100%", height: "auto" }}
-    />
-  );
-}
-
-// ─── Status Badge ─────────────────────────────────────────────────────────────
-
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    Habilitado: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    Deshabilitado: "bg-slate-100 text-slate-600 border-slate-300",
-    Suspendido: "bg-red-50 text-red-700 border-red-200",
-    Restringido: "bg-amber-50 text-amber-700 border-amber-200",
-    Activa: "bg-red-50 text-red-700 border-red-200",
-    "En Apelación": "bg-sky-50 text-sky-700 border-sky-200",
-    Pendiente: "bg-amber-50 text-amber-700 border-amber-200",
-    Cumplida: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    Aclarada: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    Ratificada: "bg-red-50 text-red-800 border-red-200",
-    Aprobada: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    Rechazada: "bg-slate-100 text-slate-600 border-slate-200",
-    Dentro: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    "Salida Registrada": "bg-slate-100 text-slate-600 border-slate-200",
-    Salida: "bg-slate-100 text-slate-600 border-slate-200",
-  };
-  const label = status === "Salida Registrada" ? "Salida" : status;
-  return (
-    <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10.5px] font-semibold border whitespace-nowrap ${map[status] ?? "bg-slate-100 text-slate-600 border-slate-200"}`}
-      style={{ fontFamily: "var(--font-mono)" }}>
-      {label}
-    </span>
-  );
-}
-
-function playNotificationChime() {
-  try {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContextClass) return;
-    const ctx = new AudioContextClass();
-    const now = ctx.currentTime;
-
-    const osc1 = ctx.createOscillator();
-    const gain1 = ctx.createGain();
-    osc1.type = "sine";
-    osc1.frequency.setValueAtTime(587.33, now); // D5
-    gain1.gain.setValueAtTime(0.15, now);
-    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
-    osc1.connect(gain1);
-    gain1.connect(ctx.destination);
-    osc1.start(now);
-    osc1.stop(now + 0.28);
-
-    const osc2 = ctx.createOscillator();
-    const gain2 = ctx.createGain();
-    osc2.type = "sine";
-    osc2.frequency.setValueAtTime(880, now + 0.12); // A5
-    gain2.gain.setValueAtTime(0.18, now + 0.12);
-    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
-    osc2.connect(gain2);
-    gain2.connect(ctx.destination);
-    osc2.start(now + 0.12);
-    osc2.stop(now + 0.45);
-  } catch (e) {
-    // Silencioso si el navegador restringe el audio antes de interacción
-  }
-}
-
-function normalizeFotoUrl(url?: string | null): string {
-  if (!url) return "";
-  const trimmed = String(url).trim();
-  if (!trimmed || trimmed === "null" || trimmed === "undefined") return "";
-  if (
-    trimmed.startsWith("http://") ||
-    trimmed.startsWith("https://") ||
-    trimmed.startsWith("data:") ||
-    trimmed.startsWith("blob:") ||
-    trimmed.startsWith("/") ||
-    trimmed.startsWith("./")
-  ) {
-    return trimmed;
-  }
-  if (trimmed.startsWith("uploads/")) {
-    return `/${trimmed}`;
-  }
-  return `/uploads/${trimmed}`;
-}
-
-// ─── Page Hero / Title Header (Compact with Brand Background) ─────────────────
-
-function PageHero({
-  img = IMG_COAST,
-  title,
-  subtitle,
-  children,
-}: {
-  img?: string;
-  title: string;
-  subtitle?: string;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div className="relative overflow-hidden no-print shadow-xs border-b border-[#0a5247]">
-      {img && (
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `url(${img})`,
-            filter: "blur(2px) brightness(0.45)",
-            transform: "scale(1.05)",
-          }}
-        />
-      )}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: "linear-gradient(135deg, rgba(13,110,95,0.92) 0%, rgba(13,110,95,0.72) 60%, rgba(6,46,40,0.90) 100%)",
-        }}
-      />
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="min-w-0">
-          <h1
-            className="text-base sm:text-lg font-bold text-white tracking-tight"
-            style={{
-              fontFamily: "var(--font-display)",
-              textShadow: "0 1px 4px rgba(0,0,0,0.35)",
-            }}
-          >
-            {title}
-          </h1>
-          {subtitle && (
-            <p className="text-xs text-white/85 mt-0.5 sm:truncate">
-              {subtitle}
-            </p>
-          )}
-        </div>
-        {children && (
-          <div className="flex items-center gap-2 shrink-0">
-            {children}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Real, Valid, Camera-Scannable QR Code ────────────────────────────────────
-
-function RealQRCode({ value, size = 135 }: { value: string; size?: number }) {
-  const [qrDataUrl, setQrDataUrl] = useState<string>("");
-
-  useEffect(() => {
-    QRCode.toDataURL(
-      value,
-      {
-        width: size * 3,
-        margin: 1,
-        errorCorrectionLevel: "M",
-        color: {
-          dark: "#000000",
-          light: "#ffffff",
-        },
-      },
-      (err, url) => {
-        if (!err && url) {
-          setQrDataUrl(url);
-        }
-      }
-    );
-  }, [value, size]);
-
-  if (!qrDataUrl) {
-    return (
-      <div
-        style={{
-          width: `${size}px`,
-          height: `${size}px`,
-          background: "#f1f5f9",
-          borderRadius: "4px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: "10px",
-          color: "#94a3b8",
-        }}
-      >
-        Cargando QR...
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={qrDataUrl}
-      alt="Código QR Oficial"
-      style={{
-        width: `${size}px`,
-        height: `${size}px`,
-        display: "block",
-        imageRendering: "pixelated",
-      }}
-    />
-  );
-}
-
-// ─── Printable Corbatin Document (50% / 50% Symmetry) ─────────────────────────
-
-function CorbatinDocument({ vehicle, sections }: { vehicle: Vehicle; sections?: ReglamentoSection[] }) {
-  const currentYear = new Date().getFullYear();
-  const nextYear = currentYear + 1;
-
-  // Optimized compact payload for clean, large, high-contrast QR dots
-  const qrPayload = `LP-HOA|CORB:${vehicle.corbatinNum}|PLACAS:${vehicle.placas}|VIG:${currentYear}-${nextYear}`;
-
-  const docSections = sections && sections.length > 0 ? sections : DEFAULT_REGLAMENTO_SECTIONS;
-
-  return (
-    <div
-      id="corbatin-printable"
-      style={{
-        width: "760px",
-        background: "#ffffff",
-        border: "2.5px solid #000000",
-        fontFamily: "Arial, Helvetica, sans-serif",
-        boxShadow: "0 8px 36px rgba(0,0,0,0.14)",
-        borderRadius: "4px",
-        overflow: "hidden",
-        boxSizing: "border-box",
-        margin: "0 auto",
-      }}
-    >
-      <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", margin: 0, padding: 0 }}>
-        <tbody>
-          <tr>
-            {/* LEFT FRONT — EXACT 380px (50% WIDTH) */}
-            <td
-              style={{
-                width: "380px",
-                verticalAlign: "top",
-                borderRight: "2px dashed #444444",
-                padding: "16px 14px",
-                textAlign: "center",
-                background: "#ffffff",
-                boxSizing: "border-box",
-              }}
-            >
-              <div style={{ textAlign: "center", width: "100%" }}>
-                <div style={{ fontSize: "20px", fontWeight: "bold", color: "#000000", textAlign: "center", letterSpacing: "0.5px" }}>
-                  CONTRATISTA
-                </div>
-                <div style={{ borderTop: "2px solid #000", borderBottom: "2px solid #000", height: "4px", margin: "5px auto", width: "100%" }} />
-                <div style={{ padding: "4px 0", textAlign: "center", display: "flex", justifyContent: "center" }}>
-                  <LPLogo size={150} />
-                </div>
-                <div style={{ borderTop: "2px solid #000", borderBottom: "2px solid #000", height: "4px", margin: "5px auto", width: "100%" }} />
-                <div style={{ fontSize: "64px", fontWeight: "bold", color: "#000000", lineHeight: "1", textAlign: "center", width: "100%", padding: "2px 0" }}>
-                  {vehicle.corbatinNum}
-                </div>
-                <div style={{ borderTop: "2px solid #000", borderBottom: "2px solid #000", height: "4px", margin: "5px auto", width: "100%" }} />
-              </div>
-
-              <div style={{ textAlign: "center", fontSize: "11px", color: "#222222", lineHeight: "1.35", padding: "4px 0" }}>
-                <div style={{ fontWeight: "bold", fontSize: "12px", color: "#000" }}>{vehicle.marca} {vehicle.modelo} ({vehicle.anio})</div>
-                <div style={{ fontFamily: "monospace", fontSize: "14px", fontWeight: "bold", color: "#000", letterSpacing: "1px", margin: "1px 0" }}>{vehicle.placas}</div>
-                <div style={{ color: "#444444" }}>{vehicle.conductor}</div>
-                <div style={{ color: "#0D6E5F", fontWeight: "bold", fontSize: "12px" }}>{vehicle.empresaNombre}</div>
-              </div>
-
-              {/* PROMINENT, LARGE, SCANNABLE QR CODE */}
-              <div style={{ borderTop: "1px dashed #aaaaaa", paddingTop: "6px", marginTop: "4px", textAlign: "center" }}>
-                <div style={{ display: "inline-block", background: "#ffffff", padding: "5px", border: "2px solid #000000", borderRadius: "6px", boxShadow: "0 2px 6px rgba(0,0,0,0.06)" }}>
-                  <RealQRCode value={qrPayload} size={125} />
-                </div>
-                <div style={{ fontSize: "9.5px", fontWeight: "bold", color: "#0D6E5F", marginTop: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                  VIGENCIA: 1 AÑO ({currentYear} – {nextYear})
-                </div>
-                <div style={{ fontSize: "9px", fontWeight: "bold", color: "#000000", marginTop: "3px", textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: "1.25" }}>
-                  POR FAVOR DE COLOCAR<br />EN EL RETROVISOR
-                </div>
-              </div>
-            </td>
-
-            {/* RIGHT REVERSE — EXACT 380px (50% WIDTH) WITH FIXED SIZE 10 FONT */}
-            <td
-              style={{
-                width: "380px",
-                verticalAlign: "top",
-                padding: "16px 16px 12px",
-                textAlign: "left",
-                background: "#ffffff",
-                boxSizing: "border-box",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                height: "100%",
-                overflow: "hidden",
-              }}
-            >
-              {(() => {
-                let estLines = docSections.length * 1.5;
-                docSections.forEach((sec) => {
-                  (sec.items || []).forEach((it) => {
-                    estLines += Math.max(1, Math.ceil((it || "").length / 58));
-                  });
-                });
-                const unitPx = Math.min(15.5, Math.max(8.4, 510 / Math.max(1, estLines + docSections.length * 0.25)));
-                const itemFontPx = Math.min(10.0, Math.max(7.2, unitPx * 0.72));
-                const titleFontPx = Math.min(10.5, Math.max(7.8, itemFontPx * 1.06));
-                const secMarginPx = Math.min(6, Math.max(2, unitPx * 0.35));
-                const itemLineHeight = estLines > 44 ? "1.16" : estLines > 36 ? "1.22" : "1.28";
-
-                return (
-                  <div style={{ overflow: "hidden" }}>
-                    <div style={{ fontSize: "11.5px", fontWeight: "900", textAlign: "center", marginBottom: estLines > 36 ? "4px" : "7px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                      Reglamento para externos en áreas comunes:
-                    </div>
-                    {docSections.map((sec, idx) => (
-                      <div key={sec.title || idx} style={{ marginBottom: `${secMarginPx}px` }}>
-                        <div style={{ fontSize: `${titleFontPx}px`, fontWeight: "bold", color: "#000000", marginBottom: "1px", lineHeight: "1.2" }}>{sec.title}</div>
-                        <ul style={{ margin: 0, paddingLeft: "14px", listStyleType: "disc" }}>
-                          {sec.items.map((item, i) => (
-                            <li key={i} style={{ fontSize: `${itemFontPx}px`, color: "#222222", lineHeight: itemLineHeight, marginBottom: "0.5px" }}>{item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
-              <div style={{ borderTop: "1px solid #cccccc", paddingTop: "5px", marginTop: "4px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "8px", color: "#555555", gap: "8px", overflow: "hidden" }}>
-                <span style={{ flexShrink: 0, fontWeight: "600" }}>Las Palomas Rocky Point HOA</span>
-                <span style={{ fontFamily: "monospace", fontWeight: "bold", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>
-                  Corbatín #{vehicle.corbatinNum} · {vehicle.placas} · Vigencia 1 Año ({currentYear}–{nextYear})
-                </span>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-// ─── Helper de Formato de Corbatín Verde (Prefijo '00' obligatorio: 001, 002, 0010, 00100) ───
-const formatCorbatinVerdeNum = (num: number | string): string => {
-  const cleanNum = parseInt(String(num).replace(/[^0-9]/g, ""), 10);
-  if (isNaN(cleanNum) || cleanNum <= 0) return "001";
-  return `00${cleanNum}`;
-};
-
-// ─── Tarjeta Corbatin Verde Printable Component (Reutilizable / Pool Genérico) ───
-function TarjetaCorbatinVerdePrintable({ corb, sections }: { corb: CorbatinVerde; sections?: ReglamentoSection[] }) {
-  const corbNumFormatted = formatCorbatinVerdeNum(corb.corbatinNum);
-  const qrPayload = `LP-HOA|CORB-VERDE:${corbNumFormatted}`;
-  const docSections = sections && sections.length > 0 ? sections : DEFAULT_REGLAMENTO_SECTIONS;
-
-  return (
-    <div
-      id="corbatin-verde-printable"
-      style={{
-        width: "760px",
-        background: "#ffffff",
-        border: "2.5px solid #000000",
-        fontFamily: "Arial, Helvetica, sans-serif",
-        boxShadow: "0 8px 36px rgba(0,0,0,0.14)",
-        borderRadius: "4px",
-        overflow: "hidden",
-        boxSizing: "border-box",
-        margin: "0 auto",
-      }}
-    >
-      <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", margin: 0, padding: 0 }}>
-        <tbody>
-          <tr>
-            {/* ANVERSO (LEFT FRONT — 50% WIDTH) */}
-            <td
-              style={{
-                width: "380px",
-                verticalAlign: "top",
-                borderRight: "2px dashed #444444",
-                padding: "16px 14px",
-                textAlign: "center",
-                background: "#ffffff",
-                boxSizing: "border-box",
-              }}
-            >
-              <div style={{ textAlign: "center", width: "100%" }}>
-                <div style={{ fontSize: "16px", fontWeight: "bold", color: "#000000", textAlign: "center", letterSpacing: "0.5px" }}>
-                  PROVEEDOR — ACCESO TEMPORAL
-                </div>
-                <div style={{ borderTop: "2px solid #000", borderBottom: "2px solid #000", height: "4px", margin: "5px auto", width: "100%" }} />
-                <div style={{ padding: "4px 0", textAlign: "center", display: "flex", justifyContent: "center" }}>
-                  <LPLogo size={150} />
-                </div>
-                <div style={{ borderTop: "2px solid #000", borderBottom: "2px solid #000", height: "4px", margin: "5px auto", width: "100%" }} />
-                <div style={{ fontSize: "64px", fontWeight: "bold", color: "#000000", lineHeight: "1", textAlign: "center", width: "100%", padding: "2px 0", fontFamily: "var(--font-mono, monospace)" }}>
-                  {corbNumFormatted}
-                </div>
-                <div style={{ borderTop: "2px solid #000", borderBottom: "2px solid #000", height: "4px", margin: "5px auto", width: "100%" }} />
-              </div>
-
-              {/* Generic Institutional Header */}
-              <div style={{ textAlign: "center", fontSize: "11px", color: "#222222", lineHeight: "1.35", padding: "4px 0" }}>
-                <div style={{ fontWeight: "bold", fontSize: "13px", color: "#000000", marginBottom: "1.5px" }}>LAS PALOMAS ROCKY POINT HOA</div>
-                <div style={{ color: "#333333", fontWeight: "bold", fontSize: "11px" }}>Control de Acceso Vehicular</div>
-              </div>
-
-              {/* QR CODE */}
-              <div style={{ borderTop: "1px dashed #444444", paddingTop: "8px", marginTop: "4px", textAlign: "center" }}>
-                <div style={{ display: "inline-block", background: "#ffffff", padding: "5px", border: "2px solid #000000", borderRadius: "6px", boxShadow: "0 2px 6px rgba(0,0,0,0.06)" }}>
-                  <RealQRCode value={qrPayload} size={130} />
-                </div>
-                <div style={{ fontSize: "9px", fontWeight: "bold", color: "#000000", marginTop: "8px", textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: "1.3" }}>
-                  POR FAVOR DE COLOCAR<br />EN EL RETROVISOR
-                </div>
-              </div>
-            </td>
-
-            {/* REVERSO (RIGHT REVERSE — 50% WIDTH) */}
-            <td
-              style={{
-                width: "380px",
-                verticalAlign: "top",
-                padding: "16px 16px 12px",
-                textAlign: "left",
-                background: "#ffffff",
-                boxSizing: "border-box",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                height: "100%",
-                overflow: "hidden",
-              }}
-            >
-              {(() => {
-                let estLines = docSections.length * 1.5;
-                docSections.forEach((sec) => {
-                  (sec.items || []).forEach((it) => {
-                    estLines += Math.max(1, Math.ceil((it || "").length / 58));
-                  });
-                });
-                const unitPx = Math.min(15.5, Math.max(8.4, 510 / Math.max(1, estLines + docSections.length * 0.25)));
-                const itemFontPx = Math.min(10.0, Math.max(7.2, unitPx * 0.72));
-                const titleFontPx = Math.min(10.5, Math.max(7.8, itemFontPx * 1.06));
-                const secMarginPx = Math.min(6, Math.max(2, unitPx * 0.35));
-                const itemLineHeight = estLines > 44 ? "1.16" : estLines > 36 ? "1.22" : "1.28";
-
-                return (
-                  <div style={{ overflow: "hidden" }}>
-                    <div style={{ fontSize: "11.5px", fontWeight: "900", textAlign: "center", marginBottom: estLines > 36 ? "4px" : "7px", color: "#000000", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                      Reglamento para externos en áreas comunes:
-                    </div>
-                    {docSections.map((sec, idx) => (
-                      <div key={sec.title || idx} style={{ marginBottom: `${secMarginPx}px` }}>
-                        <div style={{ fontSize: `${titleFontPx}px`, fontWeight: "bold", color: "#000000", marginBottom: "1px", lineHeight: "1.2" }}>{sec.title}</div>
-                        <ul style={{ margin: 0, paddingLeft: "14px", listStyleType: "disc" }}>
-                          {sec.items.map((item, i) => (
-                            <li key={i} style={{ fontSize: `${itemFontPx}px`, color: "#222222", lineHeight: itemLineHeight, marginBottom: "0.5px" }}>{item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
-              <div style={{ borderTop: "1px solid #cccccc", paddingTop: "5px", marginTop: "4px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "8px", color: "#555555", gap: "8px", overflow: "hidden" }}>
-                <span style={{ flexShrink: 0, fontWeight: "600" }}>Las Palomas Rocky Point HOA</span>
-                <span style={{ fontFamily: "monospace", fontWeight: "bold", color: "#000000", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>
-                  Corbatín Verde #{corbNumFormatted}
-                </span>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-// ─── Clipboard Helper Function ───────────────────────────────────────────────
-async function copyTextToClipboard(text: string): Promise<boolean> {
-  if (!text) return false;
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text);
-      return true;
-    }
-  } catch (err) {
-    console.warn("Clipboard API failed, using fallback:", err);
-  }
-
-  try {
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-    textArea.style.position = "fixed";
-    textArea.style.left = "-999999px";
-    textArea.style.top = "-999999px";
-    textArea.setAttribute("readonly", "");
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    const successful = document.execCommand("copy");
-    textArea.remove();
-    return successful;
-  } catch (err) {
-    console.error("Fallback copy failed:", err);
-    return false;
-  }
-}
-
-// ─── Format Date Helper ───────────────────────────────────────────────────────
-function formatFechaLegible(dateStr?: string | null, includeTime = true): string {
-  if (!dateStr || dateStr === "—" || dateStr === "N/A" || dateStr === "S/N") return "—";
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return String(dateStr);
-
-    const day = String(d.getDate()).padStart(2, "0");
-    const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-    const month = months[d.getMonth()];
-    const year = d.getFullYear();
-
-    const hasTime = typeof dateStr === "string" && (dateStr.includes("T") || dateStr.includes(":"));
-    if (!includeTime || !hasTime) {
-      return `${day} ${month} ${year}`;
-    }
-
-    let hours = d.getHours();
-    const minutes = String(d.getMinutes()).padStart(2, "0");
-    const ampm = hours >= 12 ? "PM" : "AM";
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-    const strHours = String(hours).padStart(2, "0");
-
-    return `${day} ${month} ${year}, ${strHours}:${minutes} ${ampm}`;
-  } catch {
-    return String(dateStr);
-  }
-}
-
-// ─── Format Time Helper (Convierte timestamps UTC / ISO a hora local del resort en America/Hermosillo) ──
-function formatHoraLocal(timeStr?: string | Date | null): string {
-  if (!timeStr || timeStr === "—" || timeStr === "N/A" || timeStr === "null" || timeStr === "undefined") return "—";
-  const raw = String(timeStr).trim();
-  if (!raw || raw === "-") return "—";
-
-  // Si ya viene formateado como "08:30" o "08:30 hrs" sin fecha
-  if (/^\d{1,2}:\d{2}(\s*hrs)?$/i.test(raw)) {
-    return raw.replace(/ hrs/i, "");
-  }
-
-  // Si ya tiene formato 12h como "01:13 PM" o "10:27 a. m." o "05:27 p.m."
-  if (/^\d{1,2}:\d{2}\s*([ap]\.?\s*m\.?)(\s*hrs)?$/i.test(raw)) {
-    return raw.replace(/ hrs/i, "");
-  }
-
-  try {
-    let dateObj: Date;
-    if (raw.includes("T") || raw.includes("-") || raw.includes("Z")) {
-      let isoStr = raw;
-      if (/^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}/.test(raw)) {
-        isoStr = raw.replace(" ", "T") + "Z";
-      }
-      dateObj = new Date(isoStr);
-    } else {
-      dateObj = new Date(raw);
-    }
-
-    if (!isNaN(dateObj.getTime())) {
-      try {
-        return dateObj.toLocaleTimeString("en-US", {
-          timeZone: "America/Hermosillo",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        });
-      } catch {
-        const utcMs = dateObj.getTime() + dateObj.getTimezoneOffset() * 60000;
-        const d = new Date(utcMs - 7 * 3600000);
-        let hours = d.getHours();
-        const minutes = String(d.getMinutes()).padStart(2, "0");
-        const ampm = hours >= 12 ? "PM" : "AM";
-        hours = hours % 12;
-        hours = hours ? hours : 12;
-        const strHours = String(hours).padStart(2, "0");
-        return `${strHours}:${minutes} ${ampm}`;
-      }
-    }
-  } catch {
-    // fallback
-  }
-
-  return raw.replace(/ hrs/i, "");
-}
-
-// ─── Copyable UI Components ──────────────────────────────────────────────────
-function CopyableContactCardField({
-  icon,
-  label,
-  value,
-  fallback = "No especificado",
-  colorTheme = "slate",
-  onCopyToast,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value?: string | null;
-  fallback?: string;
-  colorTheme?: "teal" | "blue" | "slate";
-  onCopyToast?: (msg: string, type?: "success" | "error" | "warning" | "info", title?: string) => void;
-}) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (!value) return;
-
-    const ok = await copyTextToClipboard(value);
-    if (ok) {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      if (onCopyToast) {
-        onCopyToast(`${label} copiado al portapapeles: "${value}"`, "success", "¡Copiado!");
-      }
-    } else {
-      if (onCopyToast) {
-        onCopyToast(`No se pudo copiar al portapapeles`, "error", "Error al copiar");
-      }
-    }
-  };
-
-  const bgIconClasses = {
-    teal: "bg-teal-50 text-teal-700 group-hover:bg-teal-100 group-hover:scale-105",
-    blue: "bg-blue-50 text-blue-700 group-hover:bg-blue-100 group-hover:scale-105",
-    slate: "bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:scale-105",
-  }[colorTheme];
-
-  const textClasses = {
-    teal: "text-teal-700 group-hover:text-teal-800 font-mono",
-    blue: "text-blue-700 group-hover:text-blue-800",
-    slate: "text-slate-800 group-hover:text-slate-900",
-  }[colorTheme];
-
-  if (!value) {
-    return (
-      <div className="flex items-center gap-2.5 opacity-60 select-none">
-        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${bgIconClasses}`}>
-          {icon}
-        </div>
-        <div className="min-w-0">
-          <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">{label}</span>
-          <span className="text-slate-400 italic text-xs">{fallback}</span>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={handleCopy}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          handleCopy(e as any);
-        }
-      }}
-      title={`Clic para copiar ${label.toLowerCase()} al portapapeles`}
-      className="group flex items-center gap-2.5 text-left p-1.5 -m-1.5 rounded-xl transition-all hover:bg-slate-100/80 active:scale-[0.98] cursor-pointer relative"
-    >
-      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all ${copied ? "bg-emerald-100 text-emerald-700 scale-105 shadow-xs" : bgIconClasses}`}>
-        {copied ? <IconCheckSimple className="w-4 h-4 text-emerald-700" /> : icon}
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-1">
-          <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">{label}</span>
-          {copied ? (
-            <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/90 border border-emerald-300 px-1.5 py-0.2 rounded-md flex items-center gap-1 animate-pulse">
-              <IconCheckSimple className="w-2.5 h-2.5" /> Copiado
-            </span>
-          ) : (
-            <span className="text-[9px] font-medium text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-slate-200/70 px-1.5 py-0.2 rounded-md">
-              <IconCopy className="w-2.5 h-2.5" /> Copiar
-            </span>
-          )}
-        </div>
-        <span className={`font-semibold truncate block text-xs transition-colors ${copied ? "text-emerald-700 font-bold" : textClasses}`}>
-          {value}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function CopyableInlineText({
-  text,
-  label = "Dato",
-  icon,
-  className = "",
-  onCopyToast,
-}: {
-  text?: string | null;
-  label?: string;
-  icon?: React.ReactNode;
-  className?: string;
-  onCopyToast?: (msg: string, type?: "success" | "error" | "warning" | "info", title?: string) => void;
-}) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (!text || text === "—" || text === "N/A" || text === "Sin registrar" || text === "S/N") return;
-
-    const ok = await copyTextToClipboard(text);
-    if (ok) {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      if (onCopyToast) {
-        onCopyToast(`${label} copiado al portapapeles: "${text}"`, "success", "¡Copiado!");
-      }
-    } else {
-      if (onCopyToast) {
-        onCopyToast(`No se pudo copiar al portapapeles`, "error", "Error al copiar");
-      }
-    }
-  };
-
-  if (!text || text === "—" || text === "N/A" || text === "Sin registrar" || text === "S/N") {
-    return <span className="text-slate-400 italic">{text || "—"}</span>;
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={handleCopy}
-      title={`Clic para copiar ${label.toLowerCase()} al portapapeles`}
-      className={`group inline-flex items-center gap-1.5 px-1.5 py-0.5 -mx-1.5 -my-0.5 rounded-md hover:bg-slate-100 active:scale-95 transition-all cursor-pointer text-left ${className}`}
-    >
-      {icon && (
-        <span className="shrink-0 transition-transform group-hover:scale-110">
-          {copied ? <IconCheckSimple className="w-3.5 h-3.5 text-emerald-600" /> : icon}
-        </span>
-      )}
-      <span className={copied ? "text-emerald-700 font-bold" : ""}>{text}</span>
-      {copied ? (
-        <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1 rounded flex items-center gap-0.5">
-          <IconCheckSimple className="w-2.5 h-2.5" /> Copiado
-        </span>
-      ) : (
-        <IconCopy className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-0.5" />
-      )}
-    </button>
-  );
-}
-
-// ─── Toast Notifications System ───────────────────────────────────────────────
-
-interface ToastNotification {
-  id: string;
-  title: string;
-  message: string;
-  type: "success" | "error" | "warning" | "info";
-  timestamp: number;
-}
-
-function ToastContainer({ toasts, onClose }: { toasts: ToastNotification[]; onClose: (id: string) => void }) {
-  if (toasts.length === 0) return null;
-
-  return (
-    <div className="fixed top-5 right-5 z-[99999] flex flex-col gap-3 max-w-md w-full px-4 pointer-events-none">
-      {toasts.map((toast) => {
-        const isSuccess = toast.type === "success";
-        const isError = toast.type === "error";
-        const isWarning = toast.type === "warning";
-        const isInfo = toast.type === "info";
-
-        return (
-          <div
-            key={toast.id}
-            className={`toast-enter pointer-events-auto relative overflow-hidden rounded-2xl bg-white/95 backdrop-blur-md border p-4 shadow-2xl transition-all ${isSuccess
-              ? "border-emerald-200 shadow-emerald-950/15"
-              : isError
-                ? "border-red-200 shadow-red-950/15"
-                : isWarning
-                  ? "border-amber-200 shadow-amber-950/15"
-                  : "border-sky-200 shadow-sky-950/15"
-              }`}
-          >
-            <div className="flex items-start gap-3.5">
-              <div
-                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isSuccess
-                  ? "bg-emerald-100 text-emerald-700"
-                  : isError
-                    ? "bg-red-100 text-red-700"
-                    : isWarning
-                      ? "bg-amber-100 text-amber-700"
-                      : "bg-sky-100 text-sky-700"
-                  }`}
-              >
-                {isSuccess && <IconCheckCircle className="w-5 h-5" />}
-                {isError && <IconAlertTriangle className="w-5 h-5" />}
-                {isWarning && <IconAlertTriangle className="w-5 h-5" />}
-                {isInfo && <IconInfo className="w-5 h-5" />}
-              </div>
-
-              <div className="flex-1 min-w-0 pr-2">
-                <h4
-                  className={`text-xs font-bold uppercase tracking-wider ${isSuccess
-                    ? "text-emerald-800"
-                    : isError
-                      ? "text-red-800"
-                      : isWarning
-                        ? "text-amber-800"
-                        : "text-sky-800"
-                    }`}
-                >
-                  {toast.title}
-                </h4>
-                <p className="text-xs text-slate-700 mt-0.5 leading-relaxed break-words font-medium">
-                  {toast.message}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => onClose(toast.id)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
-                title="Cerrar notificación"
-              >
-                <IconX className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Progress bar */}
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-100 overflow-hidden">
-              <div
-                className={`toast-progress-bar h-full ${isSuccess
-                  ? "bg-emerald-500"
-                  : isError
-                    ? "bg-red-500"
-                    : isWarning
-                      ? "bg-amber-500"
-                      : "bg-sky-500"
-                  }`}
-              />
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ─── Main Application Component ───────────────────────────────────────────────
 
 export default function App() {
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
@@ -1895,12 +528,12 @@ export default function App() {
   // Estado controlado para la firma de aceptación del contratista
   const [contratistaFirmaNombre, setContratistaFirmaNombre] = useState("");
   const [contratistaAceptoTerminos, setContratistaAceptoTerminos] = useState(false);
-  const [users, setUsers] = useState<UserAccount[]>(INITIAL_USERS);
-  const [empresas, setEmpresas] = useState<Empresa[]>(INITIAL_EMPRESAS);
-  const [vehicles, setVehicles] = useState<Vehicle[]>(INITIAL_VEHICLES);
-  const [sanciones, setSanciones] = useState<Sancion[]>(INITIAL_SANCIONES);
-  const [bitacora, setBitacora] = useState<RegistroCaseta[]>(INITIAL_BITACORA);
-  const [trabajadores, setTrabajadores] = useState<Trabajador[]>(INITIAL_TRABAJADORES);
+  const [users, setUsers] = useState<UserAccount[]>([]);
+  const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [sanciones, setSanciones] = useState<Sancion[]>([]);
+  const [bitacora, setBitacora] = useState<RegistroCaseta[]>([]);
+  const [trabajadores, setTrabajadores] = useState<Trabajador[]>([]);
 
   // Modals & Form State para Trabajadores
   const [showCreateTrabajadorModal, setShowCreateTrabajadorModal] = useState(false);
@@ -1912,7 +545,7 @@ export default function App() {
   const [selectedAdminParaEliminar, setSelectedAdminParaEliminar] = useState<UserAccount | null>(null);
   const [selectedFotoTrabajadorPreview, setSelectedFotoTrabajadorPreview] = useState<Trabajador | null>(null);
 
-  const [infraccionesPendientes, setInfraccionesPendientes] = useState<InfraccionReporte[]>(INITIAL_INFRACCIONES_PENDIENTES);
+  const [infraccionesPendientes, setInfraccionesPendientes] = useState<InfraccionReporte[]>([]);
 
   const [trabajadorNombre, setTrabajadorNombre] = useState("");
   const [trabajadorApellidos, setTrabajadorApellidos] = useState("");
@@ -1938,7 +571,6 @@ export default function App() {
   // PDF Generation State
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [showReporteBitacoraModal, setShowReporteBitacoraModal] = useState(false);
-  const [isGeneratingBitacoraPDF, setIsGeneratingBitacoraPDF] = useState(false);
   const [isGeneratingBitacoraExcel, setIsGeneratingBitacoraExcel] = useState(false);
   const [casetaBitacoraPage, setCasetaBitacoraPage] = useState(1);
   const [casetaBitacoraSearch, setCasetaBitacoraSearch] = useState("");
@@ -2085,7 +717,6 @@ export default function App() {
   const [nuevoCVTelefono, setNuevoCVTelefono] = useState("");
   const [nuevoCVEmail, setNuevoCVEmail] = useState("");
   const [nuevoCVVigencia, setNuevoCVVigencia] = useState("6 Meses (Recomendado)");
-  const [nuevoCVCantidad, setNuevoCVCantidad] = useState(10);
   const [nuevoCVRangoInicio, setNuevoCVRangoInicio] = useState("");
   const [nuevoCVRangoFin, setNuevoCVRangoFin] = useState("");
   const [nuevoCVNumeroIndividual, setNuevoCVNumeroIndividual] = useState("");
@@ -2100,7 +731,6 @@ export default function App() {
   const [vehiculoEditAnio, setVehiculoEditAnio] = useState("");
   const [vehiculoEditPlacas, setVehiculoEditPlacas] = useState("");
   const [vehiculoEditColor, setVehiculoEditColor] = useState("");
-  const [vehiculoEditTelefono, setVehiculoEditTelefono] = useState("");
   const [vehiculoEditEstatus, setVehiculoEditEstatus] = useState<"HABILITADO" | "DESHABILITADO" | "SUSPENDIDO" | "RESTRINGIDO">("HABILITADO");
   const [vehiculoEditFoto, setVehiculoEditFoto] = useState("");
   const [vehiculoEditError, setVehiculoEditError] = useState("");
@@ -2238,10 +868,8 @@ export default function App() {
   const isSubmittingReglamentoRef = useRef(false);
 
   const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
-  const isSubmittingLoginRef = useRef(false);
 
   const [togglingTrabajadorIds, setTogglingTrabajadorIds] = useState<Record<string | number, boolean>>({});
-  const [togglingVehiculoIds, setTogglingVehiculoIds] = useState<Record<string | number, boolean>>({});
   const [togglingUserIds, setTogglingUserIds] = useState<Record<string | number, boolean>>({});
   const togglingUserIdsRef = useRef<Record<string | number, boolean>>({});
   const [marcandoSalidaIds, setMarcandoSalidaIds] = useState<Record<string | number, boolean>>({});
@@ -2390,17 +1018,6 @@ export default function App() {
 
     return mapa;
   }, [bitacora, visitantesList]);
-
-  // Corbatines de visitante actualmente dentro sin salida
-  const corbatinesVisitanteOcupados = useMemo(() => {
-    const mapa = new Map<number, { conductor: string; placas: string; hora: string; vehiculo: string }>();
-    for (const [num, info] of corbatinesVisitanteUsadosHoy.entries()) {
-      if (info.estado === "Dentro") {
-        mapa.set(num, info);
-      }
-    }
-    return mapa;
-  }, [corbatinesVisitanteUsadosHoy]);
 
   // Total de corbatines agotados hoy (los 30 números físicos ya fueron entregados)
   const todosCorbatinesAgotadosHoy = useMemo(() => {
@@ -4265,79 +2882,6 @@ export default function App() {
     }
   };
 
-  const handleQuickLogin = async (role: UserRole) => {
-    const roleEmailMap: Record<UserRole, string> = {
-      admin: "admin@laspalomashoa.com",
-      supervisor: "supervisor@laspalomashoa.com",
-      contratista: "proveedor@constructoraintegral.com",
-      caseta: "caseta@laspalomashoa.com",
-      contabilidad: "contabilidad@laspalomashoa.com",
-    };
-
-    const targetEmail = roleEmailMap[role];
-    setIsSubmittingLogin(true);
-    setLoginError("");
-
-    try {
-      const response = await fetch("/api/usuarios/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ correo: targetEmail, password: "123456" }),
-      });
-      const data = await response.json().catch(() => ({}));
-
-      if (response.ok) {
-        const roleMapped: UserRole =
-          data.rol === "admin" ? "admin" :
-            data.rol === "supervisor" ? "supervisor" :
-              data.rol === "proveedor" ? "contratista" :
-                data.rol === "contabilidad" ? "contabilidad" : "caseta";
-
-        const isAccepted = roleMapped === "contratista"
-          ? (data.hasAcceptedReglamento !== undefined ? data.hasAcceptedReglamento : (localStorage.getItem("hoa_accepted_reglamento_" + (data.id || data.id_usuario)) === "true"))
-          : true;
-
-        const loggedUser: UserAccount = {
-          id: String(data.id || data.id_usuario),
-          username: data.correo,
-          nombre: data.nombre,
-          email: data.correo,
-          role: roleMapped,
-          empresaNombre: data.empresaNombre || "",
-          fechaCreacion: data.created_at || "2026-01-01",
-          creadoPor: "PostgreSQL Database",
-          hasAcceptedReglamento: isAccepted,
-          token: data.token,
-          foto_url: data.foto_url,
-          avatar: data.avatar,
-        };
-
-        try {
-          sessionStorage.setItem("hoa_session_user", JSON.stringify(loggedUser));
-        } catch { }
-
-        setCurrentUser(loggedUser);
-        setLoginError("");
-        if (roleMapped === "contratista" && !loggedUser.hasAcceptedReglamento) {
-          setPortalScreen("reglamento");
-        } else {
-          setPortalScreen("dashboard");
-        }
-        return;
-      } else {
-        const errorMsg = data.error || data.message || "Error al autenticar con la cuenta demo seleccionada.";
-        setLoginError(errorMsg);
-        return;
-      }
-    } catch (e) {
-      console.warn("Inicio rápido por API no disponible:", e);
-      setLoginError("No se pudo conectar con el servidor para iniciar sesión rápida.");
-      return;
-    } finally {
-      setIsSubmittingLogin(false);
-    }
-  };
-
   const handleLogout = () => {
     try {
       sessionStorage.removeItem("hoa_session_user");
@@ -4692,28 +3236,8 @@ export default function App() {
       );
 
       if (isPrintOnly) {
-        pdf.autoPrint({ variant: "non-conform" });
-        const blobUrl = pdf.output("bloburl");
-        const iframe = document.createElement("iframe");
-        iframe.style.position = "fixed";
-        iframe.style.right = "0";
-        iframe.style.bottom = "0";
-        iframe.style.width = "0";
-        iframe.style.height = "0";
-        iframe.style.border = "0";
-        iframe.src = String(blobUrl);
-        document.body.appendChild(iframe);
-        iframe.onload = () => {
-          setTimeout(() => {
-            iframe.contentWindow?.focus();
-            iframe.contentWindow?.print();
-            setTimeout(() => {
-              try { document.body.removeChild(iframe); } catch { }
-            }, 60000);
-          }, 300);
-        };
+        printPdfViaIframe(pdf);
       } else {
-        // Save PDF directly to user download folder
         pdf.save(`Corbatin_${veh.corbatinNum}_${veh.placas}.pdf`);
       }
     } catch (err) {
@@ -4722,6 +3246,132 @@ export default function App() {
     } finally {
       setIsGeneratingPDF(false);
     }
+  };
+
+  const printPdfViaIframe = (pdf: jsPDF) => {
+    pdf.autoPrint({ variant: "non-conform" });
+    const blobUrl = pdf.output("bloburl");
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    iframe.src = String(blobUrl);
+    document.body.appendChild(iframe);
+    iframe.onload = () => {
+      setTimeout(() => {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+        setTimeout(() => {
+          try { document.body.removeChild(iframe); } catch { }
+        }, 60000);
+      }, 300);
+    };
+  };
+
+  const drawCorbatinVerdePage = (
+    pdf: jsPDF,
+    corbNumFormatted: string,
+    qrDataUrl: string,
+    logoDataUrl: string,
+    activeSections: ReglamentoSection[],
+    showFallbackText: boolean = false
+  ) => {
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const cardW = 260;
+    const cardH = 195;
+    const startX = (pageW - cardW) / 2;
+    const startY = (pageH - cardH) / 2;
+    const colW = cardW / 2;
+    const midX = startX + colW;
+    const leftCenterX = startX + colW / 2;
+
+    pdf.setDrawColor(0, 0, 0);
+    pdf.setLineWidth(1.2);
+    pdf.rect(startX, startY, cardW, cardH);
+
+    pdf.setLineDashPattern([2.5, 2.5], 0);
+    pdf.setDrawColor(80, 80, 80);
+    pdf.setLineWidth(0.5);
+    pdf.line(midX, startY, midX, startY + cardH);
+    pdf.setLineDashPattern([], 0);
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(13.5);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text("PROVEEDOR — ACCESO TEMPORAL", leftCenterX, startY + 13, { align: "center" });
+
+    pdf.setLineWidth(0.6);
+    pdf.setDrawColor(0, 0, 0);
+    pdf.line(startX + 7, startY + 17, midX - 7, startY + 17);
+    pdf.line(startX + 7, startY + 18.3, midX - 7, startY + 18.3);
+
+    if (logoDataUrl) {
+      pdf.addImage(logoDataUrl, "PNG", leftCenterX - 26, startY + 21, 52, 17);
+    } else if (showFallbackText) {
+      pdf.setFont("times", "bold");
+      pdf.setFontSize(14);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text("Las Palomas", leftCenterX, startY + 28, { align: "center" });
+      pdf.setFontSize(8.5);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text("Rocky Point HOA, A.C.", leftCenterX, startY + 32.5, { align: "center" });
+    }
+
+    pdf.setDrawColor(0, 0, 0);
+    pdf.line(startX + 7, startY + 41, midX - 7, startY + 41);
+    pdf.line(startX + 7, startY + 42.3, midX - 7, startY + 42.3);
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(56);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text(corbNumFormatted, leftCenterX, startY + 59.5, { align: "center" });
+
+    pdf.line(startX + 7, startY + 65, midX - 7, startY + 65);
+    pdf.line(startX + 7, startY + 66.3, midX - 7, startY + 66.3);
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(11);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text("LAS PALOMAS ROCKY POINT HOA", leftCenterX, startY + 75, { align: "center" });
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(9.5);
+    pdf.setTextColor(60, 60, 60);
+    pdf.text("Control de Acceso Vehicular", leftCenterX, startY + 82, { align: "center" });
+
+    pdf.setLineDashPattern([1.5, 1.5], 0);
+    pdf.setDrawColor(170, 170, 170);
+    pdf.line(startX + 10, startY + 88, midX - 10, startY + 88);
+    pdf.setLineDashPattern([], 0);
+
+    const qrSize = 50;
+    const qrX = leftCenterX - qrSize / 2;
+    const qrY = startY + 95;
+    pdf.setDrawColor(0, 0, 0);
+    pdf.setLineWidth(0.6);
+    pdf.rect(qrX - 1.5, qrY - 1.5, qrSize + 3, qrSize + 3);
+    pdf.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(8.5);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text("POR FAVOR DE COLOCAR EN EL RETROVISOR", leftCenterX, startY + 162, { align: "center" });
+
+    renderReversoReglamentoPDF(
+      pdf,
+      activeSections,
+      midX,
+      colW,
+      startX,
+      startY,
+      cardW,
+      cardH,
+      `Corbatín Verde #${corbNumFormatted}`
+    );
   };
 
   // ─── Native Vector PDF Generator para Corbatines Verdes (Reutilizable Individual) ───
@@ -4745,143 +3395,14 @@ export default function App() {
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "mm",
-        format: "letter", // Hoja Tamaño Carta: 279.4 x 215.9 mm (~28.0 x 21.5 cm)
+        format: "letter",
       });
 
-      const pageW = pdf.internal.pageSize.getWidth(); // 279.4 mm
-      const pageH = pdf.internal.pageSize.getHeight(); // 215.9 mm
-      const cardW = 260; // 26.0 cm total width (13.0 cm por cara)
-      const cardH = 195; // 19.5 cm total height
-      const startX = (pageW - cardW) / 2; // ~9.7 mm
-      const startY = (pageH - cardH) / 2; // ~10.45 mm
-      const colW = cardW / 2; // 130 mm
-      const midX = startX + colW;
-
-      // Outer Solid Black Border
-      pdf.setDrawColor(0, 0, 0);
-      pdf.setLineWidth(1.2);
-      pdf.rect(startX, startY, cardW, cardH);
-
-      // Center Dashed Folding Line
-      pdf.setLineDashPattern([2.5, 2.5], 0);
-      pdf.setDrawColor(80, 80, 80);
-      pdf.setLineWidth(0.5);
-      pdf.line(midX, startY, midX, startY + cardH);
-      pdf.setLineDashPattern([], 0);
-
-      // ── LEFT SIDE: ANVERSO ──
-      const leftCenterX = startX + colW / 2;
-
-      // 1. Title PROVEEDOR — ACCESO TEMPORAL
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(13.5);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text("PROVEEDOR — ACCESO TEMPORAL", leftCenterX, startY + 13, { align: "center" });
-
-      // Double Line 1 (Black)
-      pdf.setLineWidth(0.6);
-      pdf.setDrawColor(0, 0, 0);
-      pdf.line(startX + 7, startY + 17, midX - 7, startY + 17);
-      pdf.line(startX + 7, startY + 18.3, midX - 7, startY + 18.3);
-
-      // 2. Logo HOA
-      if (logoDataUrl) {
-        const logoW = 52;
-        const logoH = 17;
-        pdf.addImage(logoDataUrl, "PNG", leftCenterX - logoW / 2, startY + 21, logoW, logoH);
-      } else {
-        pdf.setFont("times", "bold");
-        pdf.setFontSize(14);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text("Las Palomas", leftCenterX, startY + 28, { align: "center" });
-        pdf.setFontSize(8.5);
-        pdf.setTextColor(100, 116, 139);
-        pdf.text("Rocky Point HOA, A.C.", leftCenterX, startY + 32.5, { align: "center" });
-      }
-
-      // Double Line 2 (Black)
-      pdf.setDrawColor(0, 0, 0);
-      pdf.line(startX + 7, startY + 41, midX - 7, startY + 41);
-      pdf.line(startX + 7, startY + 42.3, midX - 7, startY + 42.3);
-
-      // 3. NUMBER 001 - BOLD BLACK
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(56);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text(corbNumFormatted, leftCenterX, startY + 59.5, { align: "center" });
-
-      // Double Line 3
-      pdf.line(startX + 7, startY + 65, midX - 7, startY + 65);
-      pdf.line(startX + 7, startY + 66.3, midX - 7, startY + 66.3);
-
-      // 4. Branding & Context Information (Generic Reusable)
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(11);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text("LAS PALOMAS ROCKY POINT HOA", leftCenterX, startY + 75, { align: "center" });
-
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(9.5);
-      pdf.setTextColor(60, 60, 60);
-      pdf.text("Control de Acceso Vehicular", leftCenterX, startY + 82, { align: "center" });
-
-      // Divider Line
-      pdf.setLineDashPattern([1.5, 1.5], 0);
-      pdf.setDrawColor(170, 170, 170);
-      pdf.line(startX + 10, startY + 88, midX - 10, startY + 88);
-      pdf.setLineDashPattern([], 0);
-
-      // 5. Large Centered QR Code
-      const qrSize = 50;
-      const qrX = leftCenterX - qrSize / 2;
-      const qrY = startY + 95;
-
-      pdf.setDrawColor(0, 0, 0);
-      pdf.setLineWidth(0.6);
-      pdf.rect(qrX - 1.5, qrY - 1.5, qrSize + 3, qrSize + 3);
-      pdf.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
-
-      // 6. Placement Instructions
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(8.5);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text("POR FAVOR DE COLOCAR EN EL RETROVISOR", leftCenterX, startY + 162, { align: "center" });
-
-      // ── RIGHT SIDE: REVERSO (Reglamento Oficial Completo sin recortes) ──
       const activeSections = reglamentoSecciones && reglamentoSecciones.length > 0 ? reglamentoSecciones : DEFAULT_REGLAMENTO_SECTIONS;
-      renderReversoReglamentoPDF(
-        pdf,
-        activeSections,
-        midX,
-        colW,
-        startX,
-        startY,
-        cardW,
-        cardH,
-        `Corbatín Verde #${corbNumFormatted}`
-      );
+      drawCorbatinVerdePage(pdf, corbNumFormatted, qrDataUrl, logoDataUrl, activeSections, true);
 
       if (isPrintOnly) {
-        pdf.autoPrint({ variant: "non-conform" });
-        const blobUrl = pdf.output("bloburl");
-        const iframe = document.createElement("iframe");
-        iframe.style.position = "fixed";
-        iframe.style.right = "0";
-        iframe.style.bottom = "0";
-        iframe.style.width = "0";
-        iframe.style.height = "0";
-        iframe.style.border = "0";
-        iframe.src = String(blobUrl);
-        document.body.appendChild(iframe);
-        iframe.onload = () => {
-          setTimeout(() => {
-            iframe.contentWindow?.focus();
-            iframe.contentWindow?.print();
-            setTimeout(() => {
-              try { document.body.removeChild(iframe); } catch { }
-            }, 60000);
-          }, 300);
-        };
+        printPdfViaIframe(pdf);
       } else {
         pdf.save(`Corbatin_Verde_${corbNumFormatted}.pdf`);
         showToast(`Corbatín Verde #${corbNumFormatted} generado y descargado exitosamente.`, "success", "PDF Generado");
@@ -4906,140 +3427,27 @@ export default function App() {
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "mm",
-        format: "letter", // Hoja Tamaño Carta: 279.4 x 215.9 mm (~28.0 x 21.5 cm)
+        format: "letter",
       });
-
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-      const cardW = 260;
-      const cardH = 195;
-      const startX = (pageW - cardW) / 2;
-      const startY = (pageH - cardH) / 2;
-      const colW = cardW / 2;
-      const midX = startX + colW;
 
       const activeSections = reglamentoSecciones && reglamentoSecciones.length > 0 ? reglamentoSecciones : DEFAULT_REGLAMENTO_SECTIONS;
 
       for (let i = 0; i < poolParaImprimir.length; i++) {
         if (i > 0) pdf.addPage("letter", "landscape");
 
-        const corb = poolParaImprimir[i];
-        const corbNumFormatted = formatCorbatinVerdeNum(corb.corbatinNum);
-        const qrPayload = `LP-HOA|CORB-VERDE:${corbNumFormatted}`;
-        const qrDataUrl = await QRCode.toDataURL(qrPayload, {
+        const corbNumFormatted = formatCorbatinVerdeNum(poolParaImprimir[i].corbatinNum);
+        const qrDataUrl = await QRCode.toDataURL(`LP-HOA|CORB-VERDE:${corbNumFormatted}`, {
           width: 500,
           margin: 1,
           errorCorrectionLevel: "M",
           color: { dark: "#000000", light: "#ffffff" },
         });
 
-        // Outer Border (Black)
-        pdf.setDrawColor(0, 0, 0);
-        pdf.setLineWidth(1.2);
-        pdf.rect(startX, startY, cardW, cardH);
-
-        // Folding Line
-        pdf.setLineDashPattern([2.5, 2.5], 0);
-        pdf.setDrawColor(80, 80, 80);
-        pdf.setLineWidth(0.5);
-        pdf.line(midX, startY, midX, startY + cardH);
-        pdf.setLineDashPattern([], 0);
-
-        // Anverso
-        const leftCenterX = startX + colW / 2;
-
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(13.5);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text("PROVEEDOR — ACCESO TEMPORAL", leftCenterX, startY + 13, { align: "center" });
-
-        pdf.setLineWidth(0.6);
-        pdf.setDrawColor(0, 0, 0);
-        pdf.line(startX + 7, startY + 17, midX - 7, startY + 17);
-        pdf.line(startX + 7, startY + 18.3, midX - 7, startY + 18.3);
-
-        if (logoDataUrl) {
-          const logoW = 52;
-          const logoH = 17;
-          pdf.addImage(logoDataUrl, "PNG", leftCenterX - logoW / 2, startY + 21, logoW, logoH);
-        }
-
-        pdf.setDrawColor(0, 0, 0);
-        pdf.line(startX + 7, startY + 41, midX - 7, startY + 41);
-        pdf.line(startX + 7, startY + 42.3, midX - 7, startY + 42.3);
-
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(56);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text(corbNumFormatted, leftCenterX, startY + 59.5, { align: "center" });
-
-        pdf.line(startX + 7, startY + 65, midX - 7, startY + 65);
-        pdf.line(startX + 7, startY + 66.3, midX - 7, startY + 66.3);
-
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(11);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text("LAS PALOMAS ROCKY POINT HOA", leftCenterX, startY + 75, { align: "center" });
-
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(9.5);
-        pdf.setTextColor(60, 60, 60);
-        pdf.text("Control de Acceso Vehicular", leftCenterX, startY + 82, { align: "center" });
-
-        pdf.setLineDashPattern([1.5, 1.5], 0);
-        pdf.setDrawColor(170, 170, 170);
-        pdf.line(startX + 10, startY + 88, midX - 10, startY + 88);
-        pdf.setLineDashPattern([], 0);
-
-        const qrSize = 50;
-        const qrX = leftCenterX - qrSize / 2;
-        const qrY = startY + 95;
-
-        pdf.setDrawColor(0, 0, 0);
-        pdf.setLineWidth(0.6);
-        pdf.rect(qrX - 1.5, qrY - 1.5, qrSize + 3, qrSize + 3);
-        pdf.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
-
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(8.5);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text("POR FAVOR DE COLOCAR EN EL RETROVISOR", leftCenterX, startY + 162, { align: "center" });
-
-        // Reverso Completo sin recortes
-        renderReversoReglamentoPDF(
-          pdf,
-          activeSections,
-          midX,
-          colW,
-          startX,
-          startY,
-          cardW,
-          cardH,
-          `Corbatín Verde #${corbNumFormatted}`
-        );
+        drawCorbatinVerdePage(pdf, corbNumFormatted, qrDataUrl, logoDataUrl, activeSections);
       }
 
       if (isPrintOnly) {
-        pdf.autoPrint({ variant: "non-conform" });
-        const blobUrl = pdf.output("bloburl");
-        const iframe = document.createElement("iframe");
-        iframe.style.position = "fixed";
-        iframe.style.right = "0";
-        iframe.style.bottom = "0";
-        iframe.style.width = "0";
-        iframe.style.height = "0";
-        iframe.style.border = "0";
-        iframe.src = String(blobUrl);
-        document.body.appendChild(iframe);
-        iframe.onload = () => {
-          setTimeout(() => {
-            iframe.contentWindow?.focus();
-            iframe.contentWindow?.print();
-            setTimeout(() => {
-              try { document.body.removeChild(iframe); } catch { }
-            }, 60000);
-          }, 300);
-        };
+        printPdfViaIframe(pdf);
       } else {
         pdf.save(`Pool_Corbatines_Verdes_001_al_${formatCorbatinVerdeNum(poolParaImprimir.length)}.pdf`);
         showToast("Lote completo de Corbatines Verdes generado y descargado exitosamente.", "success");
@@ -5450,27 +3858,6 @@ export default function App() {
     }
   };
 
-  const handleToggleActivoCorbatinVerde = async (id: string) => {
-    const itemPrev = corbatinesVerdes.find(c => c.id === id);
-    const newActivo = !itemPrev?.activo;
-    const updated = corbatinesVerdes.map(c => c.id === id ? { ...c, activo: newActivo } : c);
-    setCorbatinesVerdes(updated);
-    try {
-      localStorage.setItem("hoa_corbatines_verdes", JSON.stringify(updated));
-    } catch { }
-
-    try {
-      await api.updateCorbatin(id, {
-        activo: newActivo,
-        estatus: newActivo ? "ACTIVO" : "DESHABILITADO"
-      });
-    } catch (err) {
-      console.warn("Error al actualizar estatus de corbatín verde en API:", err);
-    }
-
-    showToast(`Corbatín Verde #${itemPrev?.corbatinNum} ${newActivo ? "habilitado" : "deshabilitado"} exitosamente en base de datos.`, "info");
-  };
-
   const handleEliminarCorbatinVerde = async (id: string) => {
     const item = corbatinesVerdes.find(c => c.id === id);
     if (!item) return;
@@ -5503,47 +3890,6 @@ export default function App() {
       );
       setCasetaTrabajos(`Labores y mantenimiento autorizado a pie — ${targetVeh.conductor}`);
       setHoraActual();
-    }
-  };
-
-  const handleExportarBitacoraPDF = async () => {
-    if (bitacora.length === 0) {
-      showToast("No hay registros en la bitácora para exportar.", "warning", "Bitácora Vacía");
-      return;
-    }
-    setIsGeneratingBitacoraPDF(true);
-    try {
-      const mapped = bitacora.map((b) => ({
-        id: b.id,
-        fecha: b.fecha || new Date().toISOString().split("T")[0],
-        tipoAcceso: b.tipoAcceso || (b.vehicleId === "PEATONAL" ? "Peatonal" : "Vehicular"),
-        empresaNombre: b.empresaNombre || "—",
-        placas: b.placas || (b.vehicleId === "PEATONAL" ? "PEATONAL" : "—"),
-        color: b.color || "N/A",
-        conductor: b.conductor || "Personal Acreditado",
-        telefono: b.telefono || "N/A",
-        corbatinNum: b.corbatinNum || "—",
-        num_pasajeros: Number(b.num_pasajeros) || 0,
-        horaEntrada: formatHoraLocal(b.horaEntrada),
-        horaSalida: b.horaSalida ? formatHoraLocal(b.horaSalida) : "Dentro",
-        trabajos: b.trabajos || b.observaciones || "Mantenimiento / Acceso regular",
-        guardiaNombre: b.guardiaNombre || currentUser?.nombre || "Oficial en Caseta",
-        estado: b.estado || (b.horaSalida ? "Salida Registrada" : "Dentro"),
-        observaciones: b.observaciones || "Sin observaciones",
-        vehicleId: b.vehicleId
-      }));
-
-      await downloadBitacoraPDF({
-        periodoNombre: `Jornada ${new Date().toLocaleDateString("es-MX")}`,
-        guardiaNombre: currentUser?.nombre || "Oficial en Caseta",
-        records: mapped
-      });
-      showToast("Reporte oficial de bitácora generado en PDF vectorial.", "success", "PDF Oficial");
-    } catch (err: any) {
-      console.error("Error al exportar PDF de bitácora:", err);
-      showToast("Hubo un error al generar el PDF de la bitácora.", "error");
-    } finally {
-      setIsGeneratingBitacoraPDF(false);
     }
   };
 
@@ -5585,52 +3931,6 @@ export default function App() {
       showToast("Hubo un error al generar el archivo Excel.", "error");
     } finally {
       setIsGeneratingBitacoraExcel(false);
-    }
-  };
-
-  const handleToggleEstatusVehiculo = async (v: Vehicle) => {
-    if (togglingVehiculoIds[v.id]) return;
-    setTogglingVehiculoIds((prev) => ({ ...prev, [v.id]: true }));
-
-    const esHabilitado = v.status === "Habilitado";
-    const nuevoEstatus = esHabilitado ? "DESHABILITADO" : "HABILITADO";
-    const nuevoStatusFrontend = esHabilitado ? ("Deshabilitado" as const) : ("Habilitado" as const);
-
-    // Actualización optimista instantánea
-    setVehicles((prev) =>
-      prev.map((item) =>
-        item.id === v.id
-          ? { ...item, status: nuevoStatusFrontend }
-          : item
-      )
-    );
-
-    try {
-      await api.updateVehiculo(v.id, {
-        estatus_acceso: nuevoEstatus
-      });
-      await reloadVehiculos();
-      showToast(
-        `Vehículo ${v.marca} ${v.modelo} (${v.placas}) ha sido ${nuevoStatusFrontend === "Habilitado" ? "Habilitado" : "Deshabilitado"} con éxito.`,
-        nuevoStatusFrontend === "Habilitado" ? "success" : "info"
-      );
-    } catch (err: any) {
-      console.error("Error al actualizar estatus del vehículo:", err);
-      // Revertir en caso de fallo
-      setVehicles((prev) =>
-        prev.map((item) =>
-          item.id === v.id
-            ? { ...item, status: v.status }
-            : item
-        )
-      );
-      showToast("Error al actualizar estatus del vehículo: " + (err.message || err), "error");
-    } finally {
-      setTogglingVehiculoIds((prev) => {
-        const next = { ...prev };
-        delete next[v.id];
-        return next;
-      });
     }
   };
 
@@ -6857,16 +5157,6 @@ export default function App() {
     setShowCreateTrabajadorModal(true);
   };
 
-  const handleAbrirEditarTrabajador = (t: Trabajador) => {
-    setSelectedTrabajadorParaEditar(t);
-    setTrabajadorNombre(t.nombre);
-    setTrabajadorApellidos(t.apellidos);
-    setTrabajadorTelefono(t.telefono || "");
-    setTrabajadorFotoUrl(t.foto_url || "");
-    setTrabajadorActivo(t.activo);
-    setTrabajadorFormError("");
-  };
-
   // ─── Handlers para Edición y Eliminación de Vehículos por Supervisor / Admin ───
   const handleFotoVehiculoUpload = async (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean = false) => {
     const file = e.target.files?.[0];
@@ -6895,7 +5185,6 @@ export default function App() {
     setVehiculoEditAnio(v.año || v.anio || "");
     setVehiculoEditPlacas(v.placas || "");
     setVehiculoEditColor(v.color || "");
-    setVehiculoEditTelefono(v.telefono || "");
     setVehiculoEditEstatus(
       v.status === "Habilitado" ? "HABILITADO" :
         v.status === "Suspendido" ? "SUSPENDIDO" :
