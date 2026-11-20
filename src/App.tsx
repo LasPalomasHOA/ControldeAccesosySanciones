@@ -756,6 +756,7 @@ export default function App() {
   const [isSubmittingResolucionOficina, setIsSubmittingResolucionOficina] = useState(false);
   const [filtroSancionesActivasEmpresa, setFiltroSancionesActivasEmpresa] = useState("all");
   const [busquedaSancionesActivas, setBusquedaSancionesActivas] = useState("");
+  const [paginaSancionesActivas, setPaginaSancionesActivas] = useState(1);
 
   const [selectedFotoVehiculoPreview, setSelectedFotoVehiculoPreview] = useState<Vehicle | null>(null);
   const [genericImagePreview, setGenericImagePreview] = useState<{
@@ -5826,6 +5827,14 @@ export default function App() {
       return matchEmp && matchQ;
     });
 
+    const ITEMS_PER_PAGE_SANCIONES = 6;
+    const totalPaginasSanciones = Math.max(1, Math.ceil(filteredVehiculos.length / ITEMS_PER_PAGE_SANCIONES));
+    const paginaActualSanciones = Math.min(paginaSancionesActivas, totalPaginasSanciones);
+    const paginatedVehiculos = filteredVehiculos.slice(
+      (paginaActualSanciones - 1) * ITEMS_PER_PAGE_SANCIONES,
+      paginaActualSanciones * ITEMS_PER_PAGE_SANCIONES
+    );
+
     return (
       <div className="space-y-6">
         {/* Encabezado y Explicación */}
@@ -5849,7 +5858,10 @@ export default function App() {
               type="text"
               placeholder="Buscar por placa, modelo, empresa o chofer..."
               value={busquedaSancionesActivas}
-              onChange={(e) => setBusquedaSancionesActivas(e.target.value)}
+              onChange={(e) => {
+                setBusquedaSancionesActivas(e.target.value);
+                setPaginaSancionesActivas(1);
+              }}
               className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 text-slate-800"
             />
           </div>
@@ -5857,7 +5869,10 @@ export default function App() {
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             <select
               value={filtroSancionesActivasEmpresa}
-              onChange={(e) => setFiltroSancionesActivasEmpresa(e.target.value)}
+              onChange={(e) => {
+                setFiltroSancionesActivasEmpresa(e.target.value);
+                setPaginaSancionesActivas(1);
+              }}
               className="px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/20 cursor-pointer"
             >
               <option value="all">Todas las Empresas</option>
@@ -5877,7 +5892,7 @@ export default function App() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredVehiculos.map((veh) => {
+            {paginatedVehiculos.map((veh) => {
               const normVehPlaca = (veh.placas || "").replace(/[-\s]/g, "").toUpperCase();
               const sanMatch = sanciones.find(s => {
                 const normSanPlaca = (s.placas || "").replace(/[-\s]/g, "").toUpperCase();
@@ -6073,6 +6088,59 @@ export default function App() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Paginación de Castigos Activos (6 unidades por página para cuadrícula 2x3 equilibrada) */}
+        {filteredVehiculos.length > ITEMS_PER_PAGE_SANCIONES && (
+          <div className="px-5 py-3.5 bg-white rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <span className="text-slate-500 font-medium">
+              Mostrando <strong className="text-slate-800">{(paginaActualSanciones - 1) * ITEMS_PER_PAGE_SANCIONES + 1}–{Math.min(paginaActualSanciones * ITEMS_PER_PAGE_SANCIONES, filteredVehiculos.length)}</strong> de <strong className="text-slate-800">{filteredVehiculos.length}</strong> suspensiones vehiculares
+            </span>
+            <div className="flex items-center gap-1.5 flex-wrap justify-center">
+              <button
+                type="button"
+                onClick={() => setPaginaSancionesActivas((prev) => Math.max(1, prev - 1))}
+                disabled={paginaActualSanciones <= 1}
+                className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all flex items-center gap-1 ${
+                  paginaActualSanciones <= 1
+                    ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+                    : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100 cursor-pointer shadow-2xs"
+                }`}
+              >
+                <IconChevronLeft className="w-3.5 h-3.5" />
+                <span>Anterior</span>
+              </button>
+
+              {Array.from({ length: totalPaginasSanciones }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  type="button"
+                  onClick={() => setPaginaSancionesActivas(pageNum)}
+                  className={`w-7 h-7 rounded-lg text-xs font-bold transition-all flex items-center justify-center cursor-pointer ${
+                    pageNum === paginaActualSanciones
+                      ? "bg-[#0D6E5F] text-white shadow-xs"
+                      : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => setPaginaSancionesActivas((prev) => Math.min(totalPaginasSanciones, prev + 1))}
+                disabled={paginaActualSanciones >= totalPaginasSanciones}
+                className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all flex items-center gap-1 ${
+                  paginaActualSanciones >= totalPaginasSanciones
+                    ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+                    : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100 cursor-pointer shadow-2xs"
+                }`}
+              >
+                <span>Siguiente</span>
+                <IconChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         )}
       </div>
