@@ -6224,65 +6224,77 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center flex-wrap sm:flex-nowrap justify-end">
-                      <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                    <div className="flex items-center gap-2.5 shrink-0 self-end lg:self-center">
+                      {/* COLUMNA 1: CORBATINES (ANCHO Y ALTO FIJO UNIFORME, 1 SOLA LÍNEA) */}
+                      <div className="w-[250px] shrink-0">
                         {emp.corbatin_rango_inicio !== null && emp.corbatin_rango_inicio !== undefined && emp.corbatin_rango_fin !== null && emp.corbatin_rango_fin !== undefined ? (
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border shrink-0 ${empVehicles.length >= (emp.cuposTotales || (emp.corbatin_rango_fin - emp.corbatin_rango_inicio + 1))
+                          <span className={`w-full h-8 inline-flex items-center justify-center gap-1.5 px-3 rounded-lg text-xs font-bold border whitespace-nowrap shadow-2xs ${empVehicles.length >= (emp.cuposTotales || (emp.corbatin_rango_fin - emp.corbatin_rango_inicio + 1))
                             ? "bg-amber-50 text-amber-800 border-amber-300"
                             : "bg-emerald-50 text-emerald-800 border-emerald-200"
                             }`}>
                             <span>Corbatines #{emp.corbatin_rango_inicio}–#{emp.corbatin_rango_fin} ({empVehicles.length}/{emp.cuposTotales || (emp.corbatin_rango_fin - emp.corbatin_rango_inicio + 1)} cupos)</span>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200 shrink-0">
+                          <span className="w-full h-8 inline-flex items-center justify-center gap-1.5 px-3 rounded-lg text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200 whitespace-nowrap">
                             <span>Sin Rango Asignado</span>
                           </span>
                         )}
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
-                          <IconCar className="w-3.5 h-3.5 text-slate-500" />
+                      </div>
+
+                      {/* COLUMNA 2: VEHÍCULOS (ANCHO Y ALTO FIJO UNIFORME, 1 SOLA LÍNEA) */}
+                      <div className="w-[120px] shrink-0">
+                        <span className="w-full h-8 inline-flex items-center justify-center gap-1.5 px-2.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shadow-2xs">
+                          <IconCar className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                           <span>{empVehicles.length} {empVehicles.length === 1 ? "Vehículo" : "Vehículos"}</span>
                         </span>
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
-                          <IconUsers className="w-3.5 h-3.5 text-slate-500" />
+                      </div>
+
+                      {/* COLUMNA 3: TRABAJADORES (ANCHO Y ALTO FIJO UNIFORME, 1 SOLA LÍNEA) */}
+                      <div className="w-[135px] shrink-0">
+                        <span className="w-full h-8 inline-flex items-center justify-center gap-1.5 px-2.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shadow-2xs">
+                          <IconUsers className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                           <span>{empTrabajadores.length} {empTrabajadores.length === 1 ? "Trabajador" : "Trabajadores"}</span>
                         </span>
                       </div>
 
-                      {/* Botón Eliminar Empresa */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedEmpresaParaEliminar(emp);
-                        }}
-                        className="p-2 rounded-xl border border-rose-200 bg-white text-rose-600 hover:bg-rose-50 hover:border-rose-300 transition-all flex items-center justify-center cursor-pointer shadow-2xs shrink-0"
-                        title={`Eliminar permanentemente a ${emp.nombre}`}
-                      >
-                        <IconTrash className="w-3.5 h-3.5 text-rose-600" />
-                      </button>
+                      {/* COLUMNA 4: BOTONES DE ACCIÓN CUADRADOS (32x32px, h-8 w-8) */}
+                      <div className="flex items-center gap-1.5 shrink-0 pl-1">
+                        {/* Botón Eliminar Empresa */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedEmpresaParaEliminar(emp);
+                          }}
+                          className="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition-all flex items-center justify-center cursor-pointer shadow-2xs shrink-0"
+                          title={`Eliminar permanentemente a ${emp.nombre}`}
+                        >
+                          <IconTrash className="w-3.5 h-3.5" />
+                        </button>
 
-                      {/* Botón Editar Empresa */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenEditarEmpresa(emp);
-                        }}
-                        className="p-2 rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 transition-all flex items-center justify-center cursor-pointer shadow-2xs shrink-0"
-                        title="Editar Datos de Empresa y Rango de Corbatines"
-                      >
-                        <IconEdit className="w-3.5 h-3.5 text-slate-500" />
-                      </button>
+                        {/* Botón Editar Empresa */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenEditarEmpresa(emp);
+                          }}
+                          className="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all flex items-center justify-center cursor-pointer shadow-2xs shrink-0"
+                          title="Editar Datos de Empresa y Rango de Corbatines"
+                        >
+                          <IconEdit className="w-3.5 h-3.5 text-slate-500" />
+                        </button>
 
-                      {/* Indicador de Flecha Integrado al Contenedor */}
-                      <div
-                        className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all shrink-0 ${isExpanded
-                          ? "bg-[#0D6E5F] text-white shadow-xs"
-                          : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
-                          }`}
-                        title={isExpanded ? "Contraer" : "Desplegar"}
-                      >
-                        {isExpanded ? <IconChevronUp className="w-4 h-4" /> : <IconChevronDown className="w-4 h-4" />}
+                        {/* Indicador de Flecha Integrado al Contenedor */}
+                        <div
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all shrink-0 ${isExpanded
+                            ? "bg-[#0D6E5F] text-white shadow-xs"
+                            : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
+                            }`}
+                          title={isExpanded ? "Contraer" : "Desplegar"}
+                        >
+                          {isExpanded ? <IconChevronUp className="w-4 h-4" /> : <IconChevronDown className="w-4 h-4" />}
+                        </div>
                       </div>
                     </div>
                   </div>
