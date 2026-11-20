@@ -757,6 +757,7 @@ export default function App() {
   const [filtroSancionesActivasEmpresa, setFiltroSancionesActivasEmpresa] = useState("all");
   const [busquedaSancionesActivas, setBusquedaSancionesActivas] = useState("");
   const [paginaSancionesActivas, setPaginaSancionesActivas] = useState(1);
+  const [paginaApelaciones, setPaginaApelaciones] = useState(1);
 
   const [selectedFotoVehiculoPreview, setSelectedFotoVehiculoPreview] = useState<Vehicle | null>(null);
   const [genericImagePreview, setGenericImagePreview] = useState<{
@@ -8288,16 +8289,27 @@ export default function App() {
                 </div>
               )}
 
-              {supervisorTab === "apelaciones" && (
-                <div className="space-y-4">
-                  {sanciones.filter(s => s.status === "En Apelación").length === 0 ? (
-                    <div className="rounded-2xl border p-12 text-center bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
-                      <IconCheckCircle className="w-10 h-10 text-emerald-600 mx-auto mb-2" />
-                      <h3 className="font-bold text-slate-800">Sin apelaciones pendientes</h3>
-                      <p className="text-xs text-slate-500 mt-1">No hay recursos de reconsideración pendientes de dictamen por parte de los contratistas.</p>
-                    </div>
-                  ) : (
-                    sanciones.filter(s => s.status === "En Apelación").map((s) => {
+              {supervisorTab === "apelaciones" && (() => {
+                const apelacionesPendientes = sanciones.filter(s => s.status === "En Apelación");
+                const ITEMS_PER_PAGE_APELACIONES = 3;
+                const totalPaginasApelaciones = Math.max(1, Math.ceil(apelacionesPendientes.length / ITEMS_PER_PAGE_APELACIONES));
+                const paginaActualApelaciones = Math.min(paginaApelaciones, totalPaginasApelaciones);
+                const paginatedApelaciones = apelacionesPendientes.slice(
+                  (paginaActualApelaciones - 1) * ITEMS_PER_PAGE_APELACIONES,
+                  paginaActualApelaciones * ITEMS_PER_PAGE_APELACIONES
+                );
+
+                return (
+                  <div className="space-y-4">
+                    {apelacionesPendientes.length === 0 ? (
+                      <div className="rounded-2xl border p-12 text-center bg-white shadow-sm" style={{ borderColor: "var(--color-border)" }}>
+                        <IconCheckCircle className="w-10 h-10 text-emerald-600 mx-auto mb-2" />
+                        <h3 className="font-bold text-slate-800">Sin apelaciones pendientes</h3>
+                        <p className="text-xs text-slate-500 mt-1">No hay recursos de reconsideración pendientes de dictamen por parte de los contratistas.</p>
+                      </div>
+                    ) : (
+                      <>
+                        {paginatedApelaciones.map((s) => {
                       const normPlaca = (s.placas || "").replace(/[-\s]/g, "").toUpperCase();
                       const vehMatch = vehicles.find(v => (v.placas && v.placas.replace(/[-\s]/g, "").toUpperCase() === normPlaca) || (v.id && s.vehicleId && String(v.id) === String(s.vehicleId)));
                       const fotoVehiculo = s.vehiculoFoto || vehMatch?.foto || (s as any).vehiculo?.foto_url || "";
@@ -8551,10 +8563,65 @@ export default function App() {
                           </div>
                         </div>
                       );
-                    })
-                  )}
-                </div>
-              )}
+                    })}
+
+                    {/* Paginación de Recursos de Apelación (3 por página) */}
+                    {apelacionesPendientes.length > ITEMS_PER_PAGE_APELACIONES && (
+                      <div className="px-5 py-3.5 bg-white rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                        <span className="text-slate-500 font-medium">
+                          Mostrando <strong className="text-slate-800">{(paginaActualApelaciones - 1) * ITEMS_PER_PAGE_APELACIONES + 1}–{Math.min(paginaActualApelaciones * ITEMS_PER_PAGE_APELACIONES, apelacionesPendientes.length)}</strong> de <strong className="text-slate-800">{apelacionesPendientes.length}</strong> recursos de apelación
+                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                          <button
+                            type="button"
+                            onClick={() => setPaginaApelaciones((prev) => Math.max(1, prev - 1))}
+                            disabled={paginaActualApelaciones <= 1}
+                            className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all flex items-center gap-1 ${
+                              paginaActualApelaciones <= 1
+                                ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+                                : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100 cursor-pointer shadow-2xs"
+                            }`}
+                          >
+                            <IconChevronLeft className="w-3.5 h-3.5" />
+                            <span>Anterior</span>
+                          </button>
+
+                          {Array.from({ length: totalPaginasApelaciones }, (_, i) => i + 1).map((pageNum) => (
+                            <button
+                              key={pageNum}
+                              type="button"
+                              onClick={() => setPaginaApelaciones(pageNum)}
+                              className={`w-7 h-7 rounded-lg text-xs font-bold transition-all flex items-center justify-center cursor-pointer ${
+                                pageNum === paginaActualApelaciones
+                                  ? "bg-[#0D6E5F] text-white shadow-xs"
+                                  : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          ))}
+
+                          <button
+                            type="button"
+                            onClick={() => setPaginaApelaciones((prev) => Math.min(totalPaginasApelaciones, prev + 1))}
+                            disabled={paginaActualApelaciones >= totalPaginasApelaciones}
+                            className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all flex items-center gap-1 ${
+                              paginaActualApelaciones >= totalPaginasApelaciones
+                                ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+                                : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100 cursor-pointer shadow-2xs"
+                            }`}
+                          >
+                            <span>Siguiente</span>
+                            <IconChevronRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })()}
 
               {supervisorTab === "sanciones_activas" && renderSancionesActivasView()}
 
