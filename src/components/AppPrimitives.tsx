@@ -8,6 +8,9 @@ import {
   IconAlertTriangle,
   IconInfo,
   IconX,
+  IconTrash,
+  IconSpinner,
+  BlurredBackdropImageFrame,
 } from "./Icons";
 
 export const IMG_AERIAL = "https://images.unsplash.com/photo-1785300674532-87efce12b5ee?w=1600&h=600&fit=crop&auto=format";
@@ -343,6 +346,155 @@ export function ToastContainer({ toasts, onClose }: { toasts: ToastNotification[
           </div>
         );
       })}
+    </div>
+  );
+}
+
+export function ConfirmDeleteModal({
+  title,
+  question,
+  details,
+  warning,
+  confirmLabel = "Eliminar Definitivamente",
+  isDeleting,
+  onClose,
+  onConfirm,
+}: {
+  title: string;
+  question: string;
+  details: React.ReactNode;
+  warning: string;
+  confirmLabel?: string;
+  isDeleting: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
+        <div className="flex items-center justify-between border-b pb-3">
+          <div className="flex items-center gap-2 text-red-600">
+            <div className="p-2 rounded-xl bg-red-50">
+              <IconTrash className="w-5 h-5" />
+            </div>
+            <h3 className="text-sm font-bold uppercase">{title}</h3>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
+          <p className="font-semibold">{question}</p>
+          <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
+            {details}
+          </div>
+          <p className="text-[11px] text-red-700">{warning}</p>
+        </div>
+
+        <div className="flex justify-end gap-2.5 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
+              isDeleting ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+            }`}
+          >
+            {isDeleting ? (
+              <>
+                <IconSpinner className="w-4 h-4" />
+                <span>Eliminando...</span>
+              </>
+            ) : (
+              <>
+                <IconTrash className="w-4 h-4" />
+                <span>{confirmLabel}</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ImagePreviewModal({
+  title,
+  subtitle,
+  icon,
+  src,
+  alt,
+  maxWidthClass = "max-w-2xl",
+  heightClass,
+  fallbackIcon,
+  fallbackText,
+  footerLeft,
+  footerRight,
+  extraContent,
+  onClose,
+}: {
+  title: string;
+  subtitle?: string;
+  icon?: React.ReactNode;
+  src?: string;
+  alt: string;
+  maxWidthClass?: string;
+  heightClass?: string;
+  fallbackIcon?: React.ReactNode;
+  fallbackText?: string;
+  footerLeft?: React.ReactNode;
+  footerRight?: React.ReactNode;
+  extraContent?: React.ReactNode;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150"
+      onClick={onClose}
+    >
+      <div
+        className={`${maxWidthClass} w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-3 min-w-0">
+            {icon && <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F] shrink-0">{icon}</div>}
+            <div className="min-w-0">
+              <h4 className="font-bold text-base text-slate-900 truncate">{title}</h4>
+              {subtitle && <p className="text-xs text-slate-500 font-mono truncate">{subtitle}</p>}
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors shrink-0"
+          >
+            ✕
+          </button>
+        </div>
+
+        <BlurredBackdropImageFrame
+          src={src}
+          alt={alt}
+          heightClass={heightClass}
+          fallbackIcon={fallbackIcon}
+          fallbackText={fallbackText}
+        />
+
+        {(footerLeft || footerRight) && (
+          <div className="flex justify-between items-center text-xs pt-1">
+            <div>{footerLeft}</div>
+            <div>{footerRight}</div>
+          </div>
+        )}
+
+        {extraContent}
+      </div>
     </div>
   );
 }
