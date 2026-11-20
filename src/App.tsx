@@ -6255,28 +6255,28 @@ export default function App() {
                     <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center flex-wrap sm:flex-nowrap justify-end">
                       <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                         {emp.corbatin_rango_inicio !== null && emp.corbatin_rango_inicio !== undefined && emp.corbatin_rango_fin !== null && emp.corbatin_rango_fin !== undefined ? (
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold border shrink-0 ${empVehicles.length >= (emp.cuposTotales || (emp.corbatin_rango_fin - emp.corbatin_rango_inicio + 1))
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border shrink-0 ${empVehicles.length >= (emp.cuposTotales || (emp.corbatin_rango_fin - emp.corbatin_rango_inicio + 1))
                             ? "bg-amber-50 text-amber-800 border-amber-300"
-                            : "bg-teal-50 text-teal-800 border-teal-300"
+                            : "bg-emerald-50 text-emerald-800 border-emerald-200"
                             }`}>
-                            <span>Corbatines #{emp.corbatin_rango_inicio} al #{emp.corbatin_rango_fin} ({empVehicles.length}/{emp.cuposTotales || (emp.corbatin_rango_fin - emp.corbatin_rango_inicio + 1)} cupos)</span>
+                            <span>Corbatines #{emp.corbatin_rango_inicio}–#{emp.corbatin_rango_fin} ({empVehicles.length}/{emp.cuposTotales || (emp.corbatin_rango_fin - emp.corbatin_rango_inicio + 1)} cupos)</span>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200 shrink-0">
                             <span>Sin Rango Asignado</span>
                           </span>
                         )}
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
-                          <IconCar className="w-3.5 h-3.5" />
-                          <span>{empVehicles.length} Vehículos</span>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
+                          <IconCar className="w-3.5 h-3.5 text-slate-500" />
+                          <span>{empVehicles.length} {empVehicles.length === 1 ? "Vehículo" : "Vehículos"}</span>
                         </span>
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
-                          <IconUsers className="w-3.5 h-3.5" />
-                          <span>{empTrabajadores.length} Trabajadores</span>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
+                          <IconUsers className="w-3.5 h-3.5 text-slate-500" />
+                          <span>{empTrabajadores.length} {empTrabajadores.length === 1 ? "Trabajador" : "Trabajadores"}</span>
                         </span>
                       </div>
 
-                      {/* Botón Eliminar Empresa (a la izquierda de Editar) */}
+                      {/* Botón Eliminar Empresa */}
                       <button
                         type="button"
                         onClick={(e) => {
@@ -6317,9 +6317,9 @@ export default function App() {
 
                   {/* Cuerpo Desplegable (Dropdown / Acordeón) */}
                   {isExpanded && (
-                    <div className="p-5 sm:p-6 bg-slate-50/40 space-y-5">
+                    <div className="p-5 sm:p-6 bg-slate-50/40 space-y-4">
                       {/* Tarjeta de Información y Contacto de la Empresa */}
-                      <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                      <div className="bg-white rounded-xl p-3.5 border border-slate-200 shadow-2xs grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                         <CopyableContactCardField
                           icon={<IconUsers className="w-4 h-4" />}
                           label="Titular / Responsable"
@@ -6334,7 +6334,7 @@ export default function App() {
                           label="Teléfono de Contacto"
                           value={emp.telefono}
                           fallback="Sin teléfono"
-                          colorTheme="teal"
+                          colorTheme="slate"
                           onCopyToast={showToast}
                         />
 
@@ -6343,20 +6343,20 @@ export default function App() {
                           label="Correo Electrónico"
                           value={emp.email}
                           fallback="Sin correo"
-                          colorTheme="blue"
+                          colorTheme="slate"
                           onCopyToast={showToast}
                         />
                       </div>
 
                       {/* Pestañas de Navegación Interna */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3" style={{ borderColor: "var(--color-border)" }}>
-                        <div className="flex gap-2 flex-wrap">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+                        <div className="flex gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200">
                           <button
                             type="button"
                             onClick={() => setEmpresaSubTabMap((prev) => ({ ...prev, [emp.id]: "vehiculos" }))}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${activeSubTab === "vehiculos"
-                              ? "bg-[#0D6E5F] text-white shadow-xs"
-                              : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
+                            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${activeSubTab === "vehiculos"
+                              ? "bg-white text-[#0D6E5F] shadow-xs border border-slate-200/60"
+                              : "text-slate-600 hover:text-slate-900"
                               }`}
                           >
                             <IconCar className="w-4 h-4" />
@@ -6366,9 +6366,9 @@ export default function App() {
                           <button
                             type="button"
                             onClick={() => setEmpresaSubTabMap((prev) => ({ ...prev, [emp.id]: "trabajadores" }))}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${activeSubTab === "trabajadores"
-                              ? "bg-[#0D6E5F] text-white shadow-xs"
-                              : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
+                            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${activeSubTab === "trabajadores"
+                              ? "bg-white text-[#0D6E5F] shadow-xs border border-slate-200/60"
+                              : "text-slate-600 hover:text-slate-900"
                               }`}
                           >
                             <IconUsers className="w-4 h-4" />
@@ -6376,7 +6376,7 @@ export default function App() {
                           </button>
                         </div>
 
-                        <div className="flex items-center gap-2 flex-wrap justify-end">
+                        <div className="flex items-center gap-2">
                           {activeSubTab === "vehiculos" ? (
                             <button
                               type="button"
@@ -6386,11 +6386,10 @@ export default function App() {
                                 setNuevoVehiculoFotoError("");
                                 setShowCreateVehiculoModalAdmin(true);
                               }}
-                              className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer shadow-xs"
-                              style={{ background: "var(--color-primary)" }}
+                              className="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#095247] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
                             >
-                              <IconCar className="w-3.5 h-3.5" />
-                              <span>Agregar Vehículo a {emp.nombre}</span>
+                              <IconCar className="w-4 h-4" />
+                              <span>Agregar Vehículo</span>
                             </button>
                           ) : (
                             <button
@@ -6409,11 +6408,10 @@ export default function App() {
                                 setTrabajadorFormError("");
                                 setShowCreateTrabajadorModal(true);
                               }}
-                              className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white transition-all hover:brightness-110 flex items-center gap-1.5 cursor-pointer shadow-xs"
-                              style={{ background: "var(--color-primary)" }}
+                              className="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#095247] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
                             >
-                              <IconUserPlus className="w-3.5 h-3.5" />
-                              <span>Agregar Colaborador a {emp.nombre}</span>
+                              <IconUserPlus className="w-4 h-4" />
+                              <span>Agregar Colaborador</span>
                             </button>
                           )}
                         </div>
@@ -6429,23 +6427,28 @@ export default function App() {
                               <p className="text-[11px] text-slate-400 mt-0.5">Haz clic en "Agregar Vehículo" para registrar la primera unidad autorizada.</p>
                             </div>
                           ) : (
-                            <div className="overflow-hidden rounded-2xl border bg-white shadow-2xs" style={{ borderColor: "var(--color-border)" }}>
+                            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs">
                               <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
+                                <table className="w-full text-xs">
                                   <thead>
-                                    <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
-                                      {["Foto", "Vehículo", "Placas", "Color", "Corbatín", "Teléfono", "Estatus Acceso", "Acciones (Supervisor)"].map((h) => (
-                                        <th key={h} className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
-                                      ))}
+                                    <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                                      <th className="text-center px-3 py-3 w-16">Foto</th>
+                                      <th className="text-left px-3 py-3">Vehículo</th>
+                                      <th className="text-left px-3 py-3">Placas</th>
+                                      <th className="text-left px-3 py-3">Color</th>
+                                      <th className="text-center px-3 py-3">Corbatín</th>
+                                      <th className="text-left px-3 py-3">Teléfono</th>
+                                      <th className="text-center px-3 py-3">Estatus Acceso</th>
+                                      <th className="text-right px-4 py-3">Acciones</th>
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y divide-slate-100">
                                     {paginatedVehicles.map((v) => (
-                                      <tr key={v.id} className="hover:bg-slate-50/70 transition-colors">
-                                        <td className="px-4 py-2.5">
+                                      <tr key={v.id} className="hover:bg-slate-50/80 transition-colors">
+                                        <td className="px-3 py-2.5 text-center">
                                           <div
                                             onClick={() => setSelectedFotoVehiculoPreview(v)}
-                                            className="w-12 h-9 rounded-lg overflow-hidden border border-slate-200 shadow-2xs cursor-pointer hover:border-[#0D6E5F] hover:scale-105 transition-all relative group bg-slate-100 flex items-center justify-center shrink-0"
+                                            className="w-12 h-9 rounded-lg overflow-hidden border border-slate-200 shadow-2xs cursor-pointer hover:border-[#0D6E5F] hover:scale-105 transition-all relative group bg-slate-100 flex items-center justify-center mx-auto shrink-0"
                                             title="Clic para ver fotografía ampliada"
                                           >
                                             {v.foto ? (
@@ -6462,16 +6465,29 @@ export default function App() {
                                             </div>
                                           </div>
                                         </td>
-                                        <td className="px-4 py-2.5 font-semibold text-slate-900 text-xs">
-                                          {v.marca} {v.modelo} <span className="text-slate-400 font-normal">({v.anio || v.año || "N/A"})</span>
+                                        <td className="px-3 py-2.5">
+                                          <div className="font-bold text-slate-900 text-xs">
+                                            {v.marca} {v.modelo}
+                                          </div>
+                                          <div className="text-[11px] text-slate-400">
+                                            Año {v.anio || v.año || "N/A"}
+                                          </div>
                                         </td>
-                                        <td className="px-4 py-2.5 font-mono font-bold text-xs text-slate-800">{v.placas}</td>
-                                        <td className="px-4 py-2.5 text-xs text-slate-600">{v.color}</td>
-                                        <td className="px-4 py-2.5 font-mono font-bold text-xs" style={{ color: "var(--color-primary)" }}>#{v.corbatinNum}</td>
-                                        <td className="px-4 py-2.5 font-mono text-xs text-slate-500">
+                                        <td className="px-3 py-2.5 font-mono font-bold text-xs">
+                                          <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-800">
+                                            {v.placas}
+                                          </span>
+                                        </td>
+                                        <td className="px-3 py-2.5 text-xs text-slate-600">{v.color || "—"}</td>
+                                        <td className="px-3 py-2.5 text-center font-mono">
+                                          <span className="px-2 py-0.5 rounded-md bg-teal-50 text-teal-800 border border-teal-200 font-bold text-xs inline-block">
+                                            #{v.corbatinNum}
+                                          </span>
+                                        </td>
+                                        <td className="px-3 py-2.5 font-mono text-xs text-slate-500">
                                           <CopyableInlineText text={v.telefono} label="Teléfono" onCopyToast={showToast} />
                                         </td>
-                                        <td className="px-4 py-2.5">
+                                        <td className="px-3 py-2.5 text-center">
                                           {v.permisoTemporal?.activo && new Date(v.permisoTemporal.fechaExpiracion).getTime() > Date.now() ? (
                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 shadow-2xs" title={`Pase provisional vigente hasta ${new Date(v.permisoTemporal.fechaExpiracion).toLocaleDateString("es-MX", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}`}>
                                               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
@@ -6499,16 +6515,16 @@ export default function App() {
                                             </span>
                                           )}
                                         </td>
-                                        <td className="px-4 py-2.5 whitespace-nowrap">
-                                          <div className="flex items-center gap-1.5">
+                                        <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                                          <div className="flex items-center justify-end gap-1.5">
                                             {(v.status === "Suspendido" || v.status === "Restringido" || v.permisoTemporal?.activo) && (
                                               <button
                                                 type="button"
                                                 onClick={() => handleOpenGestionarCastigo(v)}
-                                                className="h-8 px-2.5 rounded-lg text-xs font-bold text-amber-900 bg-amber-50 hover:bg-amber-500 hover:text-white border border-amber-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 whitespace-nowrap"
+                                                className="h-8 px-2.5 rounded-lg text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95 whitespace-nowrap"
                                                 title="Gestionar pase provisional o levantamiento de castigo por orden de Oficina"
                                               >
-                                                <IconShield className="w-3.5 h-3.5 shrink-0" />
+                                                <IconShield className="w-3.5 h-3.5 shrink-0 text-amber-600" />
                                                 <span>Pase Oficina</span>
                                               </button>
                                             )}
@@ -6519,16 +6535,16 @@ export default function App() {
                                                 setSupervisorCorbatinEmpresaFilter(v.empresaNombre || "all");
                                                 setSupervisorTab("corbatines");
                                               }}
-                                              className="h-8 px-2.5 rounded-lg text-xs font-bold text-[#0D6E5F] bg-teal-50 hover:bg-[#0D6E5F] hover:text-white border border-teal-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 whitespace-nowrap"
+                                              className="h-8 px-2.5 rounded-lg text-xs font-bold text-[#0D6E5F] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95 whitespace-nowrap"
                                               title="Ver, descargar e imprimir corbatín"
                                             >
-                                              <IconFileText className="w-3.5 h-3.5 shrink-0" />
+                                              <IconFileText className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
                                               <span>Corbatín</span>
                                             </button>
                                             <button
                                               type="button"
                                               onClick={() => handleOpenEditarVehiculo(v)}
-                                              className="h-8 px-2.5 rounded-lg text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 hover:text-slate-900 border border-slate-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 whitespace-nowrap"
+                                              className="h-8 px-2.5 rounded-lg text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95 whitespace-nowrap"
                                               title="Editar datos y cambiar estatus de acceso"
                                             >
                                               <IconEdit className="w-3.5 h-3.5 text-slate-500 shrink-0" />
@@ -6537,7 +6553,7 @@ export default function App() {
                                             <button
                                               type="button"
                                               onClick={() => setSelectedVehiculoParaEliminar(v)}
-                                              className="h-8 w-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-all flex items-center justify-center cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 shrink-0"
+                                              className="h-8 w-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-all flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 shrink-0"
                                               title="Eliminar vehículo"
                                             >
                                               <IconTrash className="w-3.5 h-3.5" />
@@ -6614,25 +6630,29 @@ export default function App() {
                               <p className="text-[11px] text-slate-400 mt-0.5">Haz clic en "Agregar Colaborador" para dar de alta al personal autorizado.</p>
                             </div>
                           ) : (
-                            <div className="overflow-hidden rounded-2xl border bg-white shadow-2xs" style={{ borderColor: "var(--color-border)" }}>
+                            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs">
                               <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
+                                <table className="w-full text-xs">
                                   <thead>
-                                    <tr className="border-b bg-slate-50 text-slate-500" style={{ borderColor: "var(--color-border)" }}>
-                                      {["Foto", "Nombre Completo", "Teléfono", "Documentación (IMSS / DC-3)", "Fecha Registro", "Estatus Acceso", "Acciones (Supervisor)"].map((h) => (
-                                        <th key={h} className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider">{h}</th>
-                                      ))}
+                                    <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                                      <th className="text-center px-3 py-3 w-16">Foto</th>
+                                      <th className="text-left px-3 py-3">Nombre Completo</th>
+                                      <th className="text-left px-3 py-3">Teléfono</th>
+                                      <th className="text-left px-3 py-3">Documentación</th>
+                                      <th className="text-center px-3 py-3">Fecha Registro</th>
+                                      <th className="text-center px-3 py-3">Estatus Acceso</th>
+                                      <th className="text-right px-4 py-3">Acciones</th>
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y divide-slate-100">
                                     {paginatedTrabajadores.map((t) => (
-                                      <tr key={t.id_trabajador} className="hover:bg-slate-50/70 transition-colors">
-                                        <td className="px-4 py-2.5">
+                                      <tr key={t.id_trabajador} className="hover:bg-slate-50/80 transition-colors">
+                                        <td className="px-3 py-2.5 text-center">
                                           {t.foto_url ? (
                                             <button
                                               type="button"
                                               onClick={() => setSelectedFotoTrabajadorPreview(t)}
-                                              className="cursor-pointer group block relative"
+                                              className="cursor-pointer group block relative mx-auto"
                                               title="Clic para ver credencial ampliada"
                                             >
                                               <img
@@ -6645,19 +6665,19 @@ export default function App() {
                                               />
                                             </button>
                                           ) : (
-                                            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs border border-slate-200">
+                                            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs border border-slate-200 mx-auto">
                                               {t.nombre.charAt(0)}
                                             </div>
                                           )}
                                         </td>
-                                        <td className="px-4 py-2.5">
+                                        <td className="px-3 py-2.5">
                                           <div className="font-bold text-xs text-slate-900">{t.nombre} {t.apellidos}</div>
                                           <div className="text-[11px] text-slate-400 font-mono">ID: #{t.id_trabajador}</div>
                                         </td>
-                                        <td className="px-4 py-2.5 font-mono text-xs text-slate-600">
+                                        <td className="px-3 py-2.5 font-mono text-xs text-slate-600">
                                           <CopyableInlineText text={t.telefono} label="Teléfono" onCopyToast={showToast} />
                                         </td>
-                                        <td className="px-4 py-2.5">
+                                        <td className="px-3 py-2.5">
                                           <div className="flex items-center gap-1.5 flex-wrap">
                                             {t.comprobante_seguro_url ? (
                                               <button
@@ -6704,15 +6724,15 @@ export default function App() {
                                             )}
                                           </div>
                                         </td>
-                                        <td className="px-4 py-2.5 text-xs text-slate-500">
+                                        <td className="px-3 py-2.5 text-center text-xs text-slate-500 font-mono">
                                           {t.created_at ? new Date(t.created_at).toISOString().split("T")[0] : "2026-02-01"}
                                         </td>
-                                        <td className="px-4 py-2.5">
+                                        <td className="px-3 py-2.5 text-center">
                                           <button
                                             type="button"
                                             onClick={() => handleToggleActivoTrabajador(t)}
                                             disabled={Boolean(togglingTrabajadorIds[t.id_trabajador])}
-                                            className={`cursor-pointer group flex items-center gap-1.5 transition-all ${togglingTrabajadorIds[t.id_trabajador] ? "opacity-50 pointer-events-none" : ""
+                                            className={`cursor-pointer inline-flex items-center justify-center transition-all ${togglingTrabajadorIds[t.id_trabajador] ? "opacity-50 pointer-events-none" : ""
                                               }`}
                                             title={t.activo ? "Clic para desactivar acceso" : "Clic para activar acceso"}
                                           >
@@ -6729,12 +6749,12 @@ export default function App() {
                                             )}
                                           </button>
                                         </td>
-                                        <td className="px-4 py-2.5 whitespace-nowrap">
-                                          <div className="flex items-center gap-1.5">
+                                        <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                                          <div className="flex items-center justify-end gap-1.5">
                                             <button
                                               type="button"
                                               onClick={() => handleOpenEditarTrabajador(t)}
-                                              className="h-8 px-2.5 rounded-lg text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 hover:text-slate-900 border border-slate-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 whitespace-nowrap"
+                                              className="h-8 px-2.5 rounded-lg text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95 whitespace-nowrap"
                                               title="Modificar datos del trabajador"
                                             >
                                               <IconEdit className="w-3.5 h-3.5 text-slate-500 shrink-0" />
@@ -6743,7 +6763,7 @@ export default function App() {
                                             <button
                                               type="button"
                                               onClick={() => setSelectedTrabajadorParaEliminar(t)}
-                                              className="h-8 w-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-all flex items-center justify-center cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 shrink-0"
+                                              className="h-8 w-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-all flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 shrink-0"
                                               title="Eliminar trabajador"
                                             >
                                               <IconTrash className="w-3.5 h-3.5" />
