@@ -79,6 +79,8 @@ import {
   CopyableContactCardField,
   CopyableInlineText,
   ToastContainer,
+  ConfirmDeleteModal,
+  ImagePreviewModal,
   type ToastNotification,
 } from "./components/AppPrimitives";
 import {
@@ -5363,35 +5365,26 @@ export default function App() {
     setTrabajadorFormError("");
   };
 
+  const validateTrabajadorForm = (): { nom: string; ape: string; tel: string } | null => {
+    const nom = trabajadorNombre.trim();
+    const ape = trabajadorApellidos.trim();
+    const tel = trabajadorTelefono.trim();
+    if (!nom) { setTrabajadorFormError("El nombre del colaborador es obligatorio (máx 80 caracteres)."); return null; }
+    if (nom.length > 80) { setTrabajadorFormError("El nombre no puede exceder 80 caracteres."); return null; }
+    if (!ape) { setTrabajadorFormError("Los apellidos completos son obligatorios (máx 150 caracteres)."); return null; }
+    if (ape.length > 150) { setTrabajadorFormError("Los apellidos no pueden exceder 150 caracteres."); return null; }
+    if (tel.length > 20) { setTrabajadorFormError("El teléfono no puede exceder 20 caracteres."); return null; }
+    return { nom, ape, tel };
+  };
+
   const handleGuardarNuevoTrabajador = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmittingTrabajadorRef.current) return;
     setTrabajadorFormError("");
 
-    const nom = trabajadorNombre.trim();
-    const ape = trabajadorApellidos.trim();
-    const tel = trabajadorTelefono.trim();
-
-    if (!nom) {
-      setTrabajadorFormError("El nombre del colaborador es obligatorio (máx 80 caracteres).");
-      return;
-    }
-    if (nom.length > 80) {
-      setTrabajadorFormError("El nombre no puede exceder 80 caracteres.");
-      return;
-    }
-    if (!ape) {
-      setTrabajadorFormError("Los apellidos completos son obligatorios (máx 150 caracteres).");
-      return;
-    }
-    if (ape.length > 150) {
-      setTrabajadorFormError("Los apellidos no pueden exceder 150 caracteres.");
-      return;
-    }
-    if (tel.length > 20) {
-      setTrabajadorFormError("El teléfono no puede exceder 20 caracteres.");
-      return;
-    }
+    const parsed = validateTrabajadorForm();
+    if (!parsed) return;
+    const { nom, ape, tel } = parsed;
 
     isSubmittingTrabajadorRef.current = true;
     setIsSubmittingTrabajador(true);
@@ -5439,30 +5432,9 @@ export default function App() {
     if (!selectedTrabajadorParaEditar) return;
     setTrabajadorFormError("");
 
-    const nom = trabajadorNombre.trim();
-    const ape = trabajadorApellidos.trim();
-    const tel = trabajadorTelefono.trim();
-
-    if (!nom) {
-      setTrabajadorFormError("El nombre del colaborador es obligatorio (máx 80 caracteres).");
-      return;
-    }
-    if (nom.length > 80) {
-      setTrabajadorFormError("El nombre no puede exceder 80 caracteres.");
-      return;
-    }
-    if (!ape) {
-      setTrabajadorFormError("Los apellidos completos son obligatorios (máx 150 caracteres).");
-      return;
-    }
-    if (ape.length > 150) {
-      setTrabajadorFormError("Los apellidos no pueden exceder 150 caracteres.");
-      return;
-    }
-    if (tel.length > 20) {
-      setTrabajadorFormError("El teléfono no puede exceder 20 caracteres.");
-      return;
-    }
+    const parsed = validateTrabajadorForm();
+    if (!parsed) return;
+    const { nom, ape, tel } = parsed;
 
     isSubmittingTrabajadorEditRef.current = true;
     setIsSubmittingTrabajadorEdit(true);
@@ -13406,117 +13378,93 @@ export default function App() {
         )
       }
 
-      {/* ─── MODAL 1: ADMIN CREATES SUPERVISOR ─── */}
-      {
-        showCreateSupervisorModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200">
-              <div className="flex items-center justify-between border-b pb-3">
-                <h3 className="text-sm font-bold text-slate-900 uppercase">Crear Cuenta de Supervisor HOA</h3>
-                <button onClick={() => setShowCreateSupervisorModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">✕</button>
-              </div>
-              <form
-                onSubmit={handleGuardarNuevoSupervisor}
-                className="space-y-3"
-              >
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre Completo del Supervisor *</label>
-                  <input name="nombre" required placeholder="Ej. Comandante Fernando Ortiz" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico Oficial *</label>
-                  <input name="email" type="email" required placeholder="seguridad@laspalomasresort.net" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Contraseña *</label>
-                  <input name="password" type="password" required placeholder="Mínimo 6 caracteres" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300" />
-                  <p className="text-[10px] text-slate-400 mt-1">Si se deja en blanco, se usará "123456" por defecto.</p>
-                </div>
-                <div className="flex justify-end gap-2 pt-3">
-                  <button type="button" onClick={() => setShowCreateSupervisorModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer">Cancelar</button>
-                  <button
-                    type="submit"
-                    disabled={isSubmittingSupervisor}
-                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] cursor-pointer flex items-center gap-1.5 ${isSubmittingSupervisor ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                      }`}
-                  >
-                    {isSubmittingSupervisor ? (
-                      <>
-                        <IconSpinner className="w-3.5 h-3.5" />
-                        <span>Guardando...</span>
-                      </>
-                    ) : (
-                      <span>Guardar Supervisor</span>
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )
-      }
-
-      {/* ─── MODAL ADMIN CREA ADMINISTRADOR TI ─── */}
-      {
-        showCreateAdminModal && (
+      {/* ─── MODAL ADMIN CREA SUPERVISOR / ADMINISTRADOR TI ─── */}
+      {(showCreateSupervisorModal || showCreateAdminModal) && (() => {
+        const isAdminModal = showCreateAdminModal;
+        const isSubmitting = isAdminModal ? isSubmittingAdmin : isSubmittingSupervisor;
+        const onClose = () => isAdminModal ? setShowCreateAdminModal(false) : setShowCreateSupervisorModal(false);
+        return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
             <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200">
               <div className="flex items-center justify-between border-b pb-3">
                 <div className="flex items-center gap-2 text-purple-700">
-                  <div className="p-2 rounded-xl bg-purple-50">
-                    <IconServer className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-sm font-bold text-slate-900 uppercase">Crear Cuenta de Administrador</h3>
+                  {isAdminModal && (
+                    <div className="p-2 rounded-xl bg-purple-50">
+                      <IconServer className="w-5 h-5" />
+                    </div>
+                  )}
+                  <h3 className="text-sm font-bold text-slate-900 uppercase">
+                    {isAdminModal ? "Crear Cuenta de Administrador" : "Crear Cuenta de Supervisor HOA"}
+                  </h3>
                 </div>
-                <button onClick={() => setShowCreateAdminModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+                <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
               </div>
-              <form
-                onSubmit={handleGuardarNuevoAdmin}
-                className="space-y-3"
-              >
+              <form onSubmit={isAdminModal ? handleGuardarNuevoAdmin : handleGuardarNuevoSupervisor} className="space-y-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre Completo del Administrador *</label>
-                  <input name="nombre" required placeholder="Ej. Ing. Carlos Mendoza (TI)" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20" />
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                    {isAdminModal ? "Nombre Completo del Administrador *" : "Nombre Completo del Supervisor *"}
+                  </label>
+                  <input
+                    name="nombre"
+                    required
+                    placeholder={isAdminModal ? "Ej. Ing. Carlos Mendoza (TI)" : "Ej. Comandante Fernando Ortiz"}
+                    className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20"
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1">Correo Electrónico Oficial *</label>
-                  <input name="email" type="email" required placeholder="admin@laspalomashoa.com" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20" />
+                  <input
+                    name="email"
+                    type="email"
+                    required
+                    placeholder={isAdminModal ? "admin@laspalomashoa.com" : "seguridad@laspalomasresort.net"}
+                    className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Contraseña de Acceso *</label>
-                  <input name="password" type="password" required placeholder="Mínimo 6 caracteres" className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20" />
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                    {isAdminModal ? "Contraseña de Acceso *" : "Contraseña *"}
+                  </label>
+                  <input
+                    name="password"
+                    type="password"
+                    required
+                    placeholder="Mínimo 6 caracteres"
+                    className="w-full rounded-xl px-3 py-2 text-sm border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0D6E5F]/20"
+                  />
                   <p className="text-[10px] text-slate-400 mt-1">Si se deja en blanco, se usará "123456" por defecto.</p>
                 </div>
-                <div className="p-3 rounded-xl bg-purple-50 border border-purple-100 text-purple-900 text-[11px] space-y-1">
-                  <div className="font-bold flex items-center gap-1.5">
-                    <IconShield className="w-3.5 h-3.5 text-purple-600" />
-                    <span>Privilegios Totales de Administrador</span>
+                {isAdminModal && (
+                  <div className="p-3 rounded-xl bg-purple-50 border border-purple-100 text-purple-900 text-[11px] space-y-1">
+                    <div className="font-bold flex items-center gap-1.5">
+                      <IconShield className="w-3.5 h-3.5 text-purple-600" />
+                      <span>Privilegios Totales de Administrador</span>
+                    </div>
+                    <p className="text-purple-700">Esta cuenta tendrá acceso completo a la consola de sistemas, auditoría de eventos, cambio de contraseñas y gestión de todo el personal.</p>
                   </div>
-                  <p className="text-purple-700">Esta cuenta tendrá acceso completo a la consola de sistemas, auditoría de eventos, cambio de contraseñas y gestión de todo el personal.</p>
-                </div>
+                )}
                 <div className="flex justify-end gap-2 pt-3">
-                  <button type="button" onClick={() => setShowCreateAdminModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer hover:bg-slate-50">Cancelar</button>
+                  <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 cursor-pointer hover:bg-slate-50">Cancelar</button>
                   <button
                     type="submit"
-                    disabled={isSubmittingAdmin}
-                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0b5d50] cursor-pointer flex items-center gap-1.5 shadow-sm ${isSubmittingAdmin ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                      }`}
+                    disabled={isSubmitting}
+                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:bg-[#0b5d50] cursor-pointer flex items-center gap-1.5 shadow-sm ${isSubmitting ? "opacity-60 cursor-not-allowed pointer-events-none" : ""}`}
                   >
-                    {isSubmittingAdmin ? (
+                    {isSubmitting ? (
                       <>
                         <IconSpinner className="w-3.5 h-3.5" />
                         <span>Guardando...</span>
                       </>
                     ) : (
-                      <span>Guardar Administrador</span>
+                      <span>{isAdminModal ? "Guardar Administrador" : "Guardar Supervisor"}</span>
                     )}
                   </button>
                 </div>
               </form>
             </div>
           </div>
-        )
-      }
+        );
+      })()}
 
       {/* ─── MODAL 2: SUPERVISOR CREATES PROVEEDOR EMPRESA ─── */}
       {
@@ -14172,24 +14120,63 @@ export default function App() {
         )
       }
 
-      {/* ─── MODAL ALTA TRABAJADOR (SUPERVISOR / CONTRATISTA) ─── */}
-      {
-        showCreateTrabajadorModal && (
+      {/* ─── MODAL ALTA / MODIFICAR TRABAJADOR (SUPERVISOR / CONTRATISTA) ─── */}
+      {(showCreateTrabajadorModal || selectedTrabajadorParaEditar) && (() => {
+        const isEdit = Boolean(selectedTrabajadorParaEditar);
+        const closeModal = () => isEdit ? setSelectedTrabajadorParaEditar(null) : setShowCreateTrabajadorModal(false);
+        const isSubmitting = isEdit ? isSubmittingTrabajadorEdit : isSubmittingTrabajador;
+        const workerFullName = `${trabajadorNombre} ${trabajadorApellidos}`.trim() || (isEdit ? "Trabajador" : "Nuevo Trabajador");
+        const docFields = [
+          {
+            key: "seguro" as const,
+            label: isEdit ? "Comprobante de Seguro Social (IMSS, etc.)" : "Comprobante de Seguro (IMSS, etc.)",
+            url: trabajadorSeguroUrl,
+            fileName: trabajadorSeguroFileName,
+            fallbackName: "Comprobante de Seguro Adjunto",
+            emptyTitle: isEdit ? "Actualizar / Reemplazar Comprobante de Seguro" : "Subir Comprobante de Seguro (IMSS, ISSSTE, etc.)",
+            modalTitle: "Comprobante de Seguro Social (IMSS)",
+            onChange: handleSeguroTrabajadorUpload,
+            onClear: () => { setTrabajadorSeguroUrl(""); setTrabajadorSeguroFileName(""); },
+            accent: "teal",
+            Icon: IconShield,
+          },
+          {
+            key: "dc3" as const,
+            label: "Constancia de Competencias DC-3",
+            url: trabajadorDC3Url,
+            fileName: trabajadorDC3FileName,
+            fallbackName: "Constancia DC-3 Adjunta",
+            emptyTitle: isEdit ? "Actualizar / Reemplazar Constancia DC-3" : "Subir Constancia DC-3",
+            modalTitle: "Constancia de Competencias Laborales DC-3",
+            onChange: handleDC3TrabajadorUpload,
+            onClear: () => { setTrabajadorDC3Url(""); setTrabajadorDC3FileName(""); },
+            accent: "blue",
+            Icon: IconFileText,
+          },
+        ];
+
+        return (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 backdrop-blur-sm">
             <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl p-4 sm:p-7 space-y-4 sm:space-y-5 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
               <div className="flex items-center justify-between border-b pb-3.5">
                 <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
-                    <IconUserPlus className="w-5 h-5" />
+                  <div className={`p-2 rounded-xl ${isEdit ? "bg-blue-50 text-blue-700" : "bg-emerald-50 text-[#0D6E5F]"}`}>
+                    {isEdit ? <IconEdit className="w-5 h-5" /> : <IconUserPlus className="w-5 h-5" />}
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900 uppercase">Alta de Nuevo Trabajador</h3>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase">
+                      {isEdit ? "Modificar Trabajador" : "Alta de Nuevo Trabajador"}
+                    </h3>
                     <p className="text-xs text-slate-500">
-                      Empresa: <strong className="text-slate-800">{targetEmpresaParaNuevoTrabajador?.nombre || currentUser?.empresaNombre || "Empresa Contratista"}</strong>
+                      {isEdit && selectedTrabajadorParaEditar ? (
+                        <>ID: #{selectedTrabajadorParaEditar.id_trabajador} · {selectedTrabajadorParaEditar.empresaNombre}</>
+                      ) : (
+                        <>Empresa: <strong className="text-slate-800">{targetEmpresaParaNuevoTrabajador?.nombre || currentUser?.empresaNombre || "Empresa Contratista"}</strong></>
+                      )}
                     </p>
                   </div>
                 </div>
-                <button onClick={() => setShowCreateTrabajadorModal(false)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
+                <button onClick={closeModal} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
               </div>
 
               {trabajadorFormError && (
@@ -14199,7 +14186,7 @@ export default function App() {
                 </div>
               )}
 
-              <form onSubmit={handleGuardarNuevoTrabajador} className="space-y-4">
+              <form onSubmit={isEdit ? handleGuardarEdicionTrabajador : handleGuardarNuevoTrabajador} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <div className="flex items-center justify-between mb-1.5 min-h-[1.25rem]">
@@ -14214,8 +14201,8 @@ export default function App() {
                       maxLength={80}
                       value={trabajadorNombre}
                       onChange={(e) => setTrabajadorNombre(e.target.value)}
-                      placeholder="Ej. Juan Carlos"
-                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800"
+                      placeholder={isEdit ? undefined : "Ej. Juan Carlos"}
+                      className={`w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 ${isEdit ? "focus:ring-blue-200" : "focus:ring-emerald-200"} font-medium text-slate-800`}
                     />
                   </div>
 
@@ -14232,8 +14219,8 @@ export default function App() {
                       maxLength={150}
                       value={trabajadorApellidos}
                       onChange={(e) => setTrabajadorApellidos(e.target.value)}
-                      placeholder="Ej. Pérez Hernández"
-                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-medium text-slate-800"
+                      placeholder={isEdit ? undefined : "Ej. Pérez Hernández"}
+                      className={`w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 ${isEdit ? "focus:ring-blue-200" : "focus:ring-emerald-200"} font-medium text-slate-800`}
                     />
                   </div>
                 </div>
@@ -14251,21 +14238,21 @@ export default function App() {
                     value={trabajadorTelefono}
                     onChange={(e) => setTrabajadorTelefono(e.target.value)}
                     placeholder="Ej. +52 81 1234 5678"
-                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-200 font-mono text-slate-800"
+                    className={`w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 ${isEdit ? "focus:ring-blue-200" : "focus:ring-emerald-200"} font-mono text-slate-800`}
                   />
                 </div>
 
                 {/* Fotografía de Credencial */}
                 <div className="space-y-2 pt-1 border-t border-slate-100">
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Fotografía de Credencial / Identificación (URL o Archivo)
+                    {isEdit ? "Actualizar Fotografía de Credencial" : "Fotografía de Credencial / Identificación (URL o Archivo)"}
                   </label>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
                     <div className="sm:col-span-2 space-y-2">
                       <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
-                        <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
-                        <span>Subir Foto desde Dispositivo</span>
+                        <IconCamera className={`w-4 h-4 ${isEdit ? "text-blue-600" : "text-[#0D6E5F]"}`} />
+                        <span>{isEdit ? "Cambiar Foto desde Dispositivo" : "Subir Foto desde Dispositivo"}</span>
                         <input
                           type="file"
                           accept="image/*"
@@ -14285,7 +14272,7 @@ export default function App() {
                             isOpen: true,
                             src: trabajadorFotoUrl,
                             title: "Fotografía de Credencial",
-                            subtitle: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Nuevo Trabajador",
+                            subtitle: workerFullName,
                           })}
                           className="relative w-full h-full group cursor-pointer"
                           title="Clic para ampliar imagen"
@@ -14306,800 +14293,242 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 1. Comprobante de Seguro Social (IMSS, ISSSTE, etc.) */}
-                <div className="space-y-2 pt-2 border-t border-slate-100">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <IconShield className="w-3.5 h-3.5 text-[#0D6E5F]" />
-                      <span>Comprobante de Seguro (IMSS, etc.)</span>
-                    </label>
-                    {trabajadorSeguroUrl && (
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                        Documento Listo ✓
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="border-2 border-dashed border-slate-300 hover:border-[#0D6E5F] rounded-2xl p-4 bg-slate-50/70 hover:bg-teal-50/20 transition-all text-center relative group">
-                    <input
-                      type="file"
-                      accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
-                      onChange={handleSeguroTrabajadorUpload}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    />
-                    {trabajadorSeguroUrl ? (
-                      <div className="flex items-center justify-between gap-3 p-1">
-                        <div className="flex items-center gap-2.5 min-w-0 text-left">
-                          <div className="w-9 h-9 rounded-xl bg-teal-100 text-[#0D6E5F] flex items-center justify-center shrink-0 shadow-2xs">
-                            <IconShield className="w-5 h-5" />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
-                              {trabajadorSeguroFileName || "Comprobante de Seguro Adjunto"}
-                            </div>
-                            <div className="text-[10px] text-teal-700 font-semibold">
-                              {trabajadorSeguroUrl.startsWith("data:application/pdf") || trabajadorSeguroUrl.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1.5 relative z-20">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedDocTrabajadorPreview({
-                                isOpen: true,
-                                url: trabajadorSeguroUrl,
-                                title: "Comprobante de Seguro Social (IMSS)",
-                                workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Nuevo Trabajador",
-                                type: "seguro"
-                              });
-                            }}
-                            className="px-2.5 py-1 text-xs font-bold text-teal-800 bg-white border border-teal-300 rounded-lg hover:bg-teal-50 cursor-pointer shadow-2xs flex items-center gap-1"
-                            title="Visualizar documento"
-                          >
-                            <IconEye className="w-3.5 h-3.5" />
-                            <span>Ver</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setTrabajadorSeguroUrl("");
-                              setTrabajadorSeguroFileName("");
-                            }}
-                            className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
-                            title="Quitar archivo"
-                          >
-                            <IconTrash className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                {/* Documentos del Trabajador (Seguro Social y Constancia DC-3) */}
+                {docFields.map((doc) => {
+                  const DocIcon = doc.Icon;
+                  const isTeal = doc.accent === "teal";
+                  const isPdf = doc.url.startsWith("data:application/pdf") || doc.url.includes(".pdf");
+                  return (
+                    <div key={doc.key} className="space-y-2 pt-2 border-t border-slate-100">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                          <DocIcon className={`w-3.5 h-3.5 ${isTeal ? (isEdit ? "text-blue-600" : "text-[#0D6E5F]") : "text-blue-600"}`} />
+                          <span>{doc.label}</span>
+                        </label>
+                        {doc.url && (
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${isTeal ? "text-emerald-700 bg-emerald-50 border-emerald-200" : "text-blue-700 bg-blue-50 border-blue-200"}`}>
+                            Documento Listo ✓
+                          </span>
+                        )}
                       </div>
-                    ) : (
-                      <div className="py-2 flex flex-col items-center gap-1">
-                        <IconShield className="w-6 h-6 text-slate-400 group-hover:text-[#0D6E5F] transition-colors" />
-                        <span className="text-xs font-bold text-slate-700">Subir Comprobante de Seguro (IMSS, ISSSTE, etc.)</span>
-                        <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
 
-                {/* 2. Constancia de Competencias Laborales DC-3 */}
-                <div className="space-y-2 pt-2 border-t border-slate-100">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <IconFileText className="w-3.5 h-3.5 text-blue-600" />
-                      <span>Constancia de Competencias DC-3</span>
-                    </label>
-                    {trabajadorDC3Url && (
-                      <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                        Documento Listo ✓
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-4 bg-slate-50/70 hover:bg-blue-50/20 transition-all text-center relative group">
-                    <input
-                      type="file"
-                      accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
-                      onChange={handleDC3TrabajadorUpload}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    />
-                    {trabajadorDC3Url ? (
-                      <div className="flex items-center justify-between gap-3 p-1">
-                        <div className="flex items-center gap-2.5 min-w-0 text-left">
-                          <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 shadow-2xs">
-                            <IconFileText className="w-5 h-5" />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
-                              {trabajadorDC3FileName || "Constancia DC-3 Adjunta"}
+                      <div className={`border-2 border-dashed border-slate-300 ${isTeal && !isEdit ? "hover:border-[#0D6E5F] hover:bg-teal-50/20" : "hover:border-blue-500 hover:bg-blue-50/20"} rounded-2xl p-4 bg-slate-50/70 transition-all text-center relative group`}>
+                        <input
+                          type="file"
+                          accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
+                          onChange={doc.onChange}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        />
+                        {doc.url ? (
+                          <div className="flex items-center justify-between gap-3 p-1">
+                            <div className="flex items-center gap-2.5 min-w-0 text-left">
+                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-2xs ${isTeal ? "bg-teal-100 text-[#0D6E5F]" : "bg-blue-100 text-blue-700"}`}>
+                                <DocIcon className="w-5 h-5" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
+                                  {doc.fileName || doc.fallbackName}
+                                </div>
+                                <div className={`text-[10px] font-semibold ${isTeal ? "text-teal-700" : "text-blue-700"}`}>
+                                  {isPdf ? "Documento PDF" : "Imagen"} · Supabase Storage
+                                </div>
+                              </div>
                             </div>
-                            <div className="text-[10px] text-blue-700 font-semibold">
-                              {trabajadorDC3Url.startsWith("data:application/pdf") || trabajadorDC3Url.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
+                            <div className="flex items-center gap-1.5 relative z-20">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedDocTrabajadorPreview({
+                                    isOpen: true,
+                                    url: doc.url,
+                                    title: doc.modalTitle,
+                                    workerName: workerFullName,
+                                    type: doc.key,
+                                  });
+                                }}
+                                className={`px-2.5 py-1 text-xs font-bold bg-white border rounded-lg cursor-pointer shadow-2xs flex items-center gap-1 ${isTeal ? "text-teal-800 border-teal-300 hover:bg-teal-50" : "text-blue-800 border-blue-300 hover:bg-blue-50"}`}
+                                title="Visualizar documento"
+                              >
+                                <IconEye className="w-3.5 h-3.5" />
+                                <span>Ver</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  doc.onClear();
+                                }}
+                                className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
+                                title="Quitar archivo"
+                              >
+                                <IconTrash className="w-3.5 h-3.5" />
+                              </button>
                             </div>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-1.5 relative z-20">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedDocTrabajadorPreview({
-                                isOpen: true,
-                                url: trabajadorDC3Url,
-                                title: "Constancia de Competencias Laborales DC-3",
-                                workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Nuevo Trabajador",
-                                type: "dc3"
-                              });
-                            }}
-                            className="px-2.5 py-1 text-xs font-bold text-blue-800 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 cursor-pointer shadow-2xs flex items-center gap-1"
-                            title="Visualizar documento"
-                          >
-                            <IconEye className="w-3.5 h-3.5" />
-                            <span>Ver</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setTrabajadorDC3Url("");
-                              setTrabajadorDC3FileName("");
-                            }}
-                            className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
-                            title="Quitar archivo"
-                          >
-                            <IconTrash className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                        ) : (
+                          <div className="py-2 flex flex-col items-center gap-1">
+                            <DocIcon className={`w-6 h-6 text-slate-400 ${isTeal && !isEdit ? "group-hover:text-[#0D6E5F]" : "group-hover:text-blue-600"} transition-colors`} />
+                            <span className="text-xs font-bold text-slate-700">{doc.emptyTitle}</span>
+                            <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div className="py-2 flex flex-col items-center gap-1">
-                        <IconFileText className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
-                        <span className="text-xs font-bold text-slate-700">Subir Constancia DC-3</span>
-                        <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                    </div>
+                  );
+                })}
 
+                {isEdit && selectedTrabajadorParaEditar && (
+                  <>
+                    <div className="pt-2 border-t border-slate-100">
+                      <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl bg-slate-50 border border-slate-200">
+                        <input
+                          type="checkbox"
+                          checked={trabajadorActivo}
+                          onChange={(e) => setTrabajadorActivo(e.target.checked)}
+                          className="w-4 h-4 text-blue-600 rounded cursor-pointer"
+                        />
+                        <div>
+                          <div className="text-xs font-bold text-slate-800">Estatus de Autorización: {trabajadorActivo ? "Activo (Autorizado)" : "Inactivo (Sin Acceso)"}</div>
+                          <div className="text-[11px] text-slate-500">Determina si el colaborador puede ingresar por caseta.</div>
+                        </div>
+                      </label>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 font-mono flex flex-col sm:flex-row justify-between gap-1">
+                      <span>Fecha de Alta: {formatFechaLegible(selectedTrabajadorParaEditar.created_at)}</span>
+                      <span>Última modif: {formatFechaLegible(selectedTrabajadorParaEditar.updated_at)}</span>
+                    </div>
+                  </>
+                )}
 
                 <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 pt-3 border-t border-slate-100">
                   <button
                     type="button"
-                    onClick={() => setShowCreateTrabajadorModal(false)}
+                    onClick={closeModal}
                     className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer active:scale-95"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    disabled={isSubmittingTrabajador}
-                    className={`w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 active:scale-95 ${isSubmittingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                      }`}
-                    style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
+                    disabled={isSubmitting}
+                    className={`w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md flex items-center gap-2 active:scale-95 ${isSubmitting ? "opacity-60 cursor-not-allowed pointer-events-none" : ""}`}
+                    style={isEdit ? { backgroundColor: "#0D6E5F" } : { background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-mid))" }}
                   >
-                    {isSubmittingTrabajador ? (
+                    {isSubmitting ? (
                       <>
                         <IconSpinner className="w-3.5 h-3.5" />
-                        <span>Guardando Trabajador...</span>
+                        <span>{isEdit ? "Guardando Cambios..." : "Guardando Trabajador..."}</span>
                       </>
                     ) : (
-                      <span>Guardar Trabajador →</span>
+                      <span>{isEdit ? "Guardar Cambios →" : "Guardar Trabajador →"}</span>
                     )}
                   </button>
                 </div>
               </form>
             </div>
           </div>
-        )
-      }
-
-      {/* ─── MODAL MODIFICAR TRABAJADOR (CONTRATISTA) ─── */}
-      {
-        selectedTrabajadorParaEditar && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between border-b pb-3.5">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-xl bg-blue-50 text-blue-700">
-                    <IconEdit className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900 uppercase">Modificar Trabajador</h3>
-                    <p className="text-xs text-slate-500">ID: #{selectedTrabajadorParaEditar.id_trabajador} · {selectedTrabajadorParaEditar.empresaNombre}</p>
-                  </div>
-                </div>
-                <button onClick={() => setSelectedTrabajadorParaEditar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-              </div>
-
-              {trabajadorFormError && (
-                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
-                  <IconAlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                  <span>{trabajadorFormError}</span>
-                </div>
-              )}
-
-              <form onSubmit={handleGuardarEdicionTrabajador} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5 min-h-[1.25rem]">
-                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                        Nombre(s) <span className="text-red-500">*</span>
-                      </label>
-                      <span className="text-[10px] text-slate-400 font-medium tracking-normal lowercase">(máx 80)</span>
-                    </div>
-                    <input
-                      type="text"
-                      required
-                      maxLength={80}
-                      value={trabajadorNombre}
-                      onChange={(e) => setTrabajadorNombre(e.target.value)}
-                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
-                    />
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5 min-h-[1.25rem]">
-                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                        Apellidos <span className="text-red-500">*</span>
-                      </label>
-                      <span className="text-[10px] text-slate-400 font-medium tracking-normal lowercase">(máx 150)</span>
-                    </div>
-                    <input
-                      type="text"
-                      required
-                      maxLength={150}
-                      value={trabajadorApellidos}
-                      onChange={(e) => setTrabajadorApellidos(e.target.value)}
-                      className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-medium text-slate-800"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1.5 min-h-[1.25rem]">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Teléfono Celular
-                    </label>
-                    <span className="text-[10px] text-slate-400 font-medium tracking-normal lowercase">(opcional, máx 20)</span>
-                  </div>
-                  <input
-                    type="text"
-                    maxLength={20}
-                    value={trabajadorTelefono}
-                    onChange={(e) => setTrabajadorTelefono(e.target.value)}
-                    placeholder="Ej. +52 81 1234 5678"
-                    className="w-full rounded-xl px-4 py-2.5 text-sm border border-slate-300 outline-none focus:ring-2 focus:ring-blue-200 font-mono text-slate-800"
-                  />
-                </div>
-
-                {/* Fotografía de Credencial */}
-                <div className="space-y-2 pt-1 border-t border-slate-100">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Actualizar Fotografía de Credencial
-                  </label>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
-                    <div className="sm:col-span-2 space-y-2">
-                      <label className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
-                        <IconCamera className="w-4 h-4 text-blue-600" />
-                        <span>Cambiar Foto desde Dispositivo</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleFotoTrabajadorUpload}
-                        />
-                      </label>
-                      <p className="text-[11px] text-slate-400">
-                        Fotografía nítida tipo credencial del colaborador (JPG o PNG · Supabase Storage).
-                      </p>
-                    </div>
-
-                    <div className="h-28 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden relative">
-                      {trabajadorFotoUrl ? (
-                        <div
-                          onClick={() => setGenericImagePreview({
-                            isOpen: true,
-                            src: trabajadorFotoUrl,
-                            title: "Fotografía de Credencial",
-                            subtitle: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Trabajador",
-                          })}
-                          className="relative w-full h-full group cursor-pointer"
-                          title="Clic para ampliar imagen"
-                        >
-                          <img src={trabajadorFotoUrl} alt="Preview" className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold gap-1">
-                            <IconEye className="w-3.5 h-3.5" />
-                            <span>Ampliar</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-center p-2 text-slate-400">
-                          <IconUsers className="w-6 h-6 mx-auto mb-1 opacity-50" />
-                          <span className="text-[10px] block">Sin fotografía</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 1. Comprobante de Seguro Social (IMSS, ISSSTE, etc.) */}
-                <div className="space-y-2 pt-2 border-t border-slate-100">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <IconShield className="w-3.5 h-3.5 text-blue-600" />
-                      <span>Comprobante de Seguro Social (IMSS, etc.)</span>
-                    </label>
-                    {trabajadorSeguroUrl && (
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                        Documento Listo ✓
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-4 bg-slate-50/70 hover:bg-blue-50/20 transition-all text-center relative group">
-                    <input
-                      type="file"
-                      accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
-                      onChange={handleSeguroTrabajadorUpload}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    />
-                    {trabajadorSeguroUrl ? (
-                      <div className="flex items-center justify-between gap-3 p-1">
-                        <div className="flex items-center gap-2.5 min-w-0 text-left">
-                          <div className="w-9 h-9 rounded-xl bg-teal-100 text-[#0D6E5F] flex items-center justify-center shrink-0 shadow-2xs">
-                            <IconShield className="w-5 h-5" />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
-                              {trabajadorSeguroFileName || "Comprobante de Seguro Adjunto"}
-                            </div>
-                            <div className="text-[10px] text-teal-700 font-semibold">
-                              {trabajadorSeguroUrl.startsWith("data:application/pdf") || trabajadorSeguroUrl.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1.5 relative z-20">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedDocTrabajadorPreview({
-                                isOpen: true,
-                                url: trabajadorSeguroUrl,
-                                title: "Comprobante de Seguro Social (IMSS)",
-                                workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Trabajador",
-                                type: "seguro"
-                              });
-                            }}
-                            className="px-2.5 py-1 text-xs font-bold text-teal-800 bg-white border border-teal-300 rounded-lg hover:bg-teal-50 cursor-pointer shadow-2xs flex items-center gap-1"
-                            title="Visualizar documento"
-                          >
-                            <IconEye className="w-3.5 h-3.5" />
-                            <span>Ver</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setTrabajadorSeguroUrl("");
-                              setTrabajadorSeguroFileName("");
-                            }}
-                            className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
-                            title="Quitar archivo"
-                          >
-                            <IconTrash className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="py-2 flex flex-col items-center gap-1">
-                        <IconShield className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
-                        <span className="text-xs font-bold text-slate-700">Actualizar / Reemplazar Comprobante de Seguro</span>
-                        <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* 2. Constancia de Competencias Laborales DC-3 */}
-                <div className="space-y-2 pt-2 border-t border-slate-100">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <IconFileText className="w-3.5 h-3.5 text-blue-600" />
-                      <span>Constancia de Competencias DC-3</span>
-                    </label>
-                    {trabajadorDC3Url && (
-                      <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                        Documento Listo ✓
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-4 bg-slate-50/70 hover:bg-blue-50/20 transition-all text-center relative group">
-                    <input
-                      type="file"
-                      accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
-                      onChange={handleDC3TrabajadorUpload}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    />
-                    {trabajadorDC3Url ? (
-                      <div className="flex items-center justify-between gap-3 p-1">
-                        <div className="flex items-center gap-2.5 min-w-0 text-left">
-                          <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 shadow-2xs">
-                            <IconFileText className="w-5 h-5" />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
-                              {trabajadorDC3FileName || "Constancia DC-3 Adjunta"}
-                            </div>
-                            <div className="text-[10px] text-blue-700 font-semibold">
-                              {trabajadorDC3Url.startsWith("data:application/pdf") || trabajadorDC3Url.includes(".pdf") ? "Documento PDF" : "Imagen"} · Supabase Storage
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1.5 relative z-20">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedDocTrabajadorPreview({
-                                isOpen: true,
-                                url: trabajadorDC3Url,
-                                title: "Constancia de Competencias Laborales DC-3",
-                                workerName: `${trabajadorNombre} ${trabajadorApellidos}`.trim() || "Trabajador",
-                                type: "dc3"
-                              });
-                            }}
-                            className="px-2.5 py-1 text-xs font-bold text-blue-800 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 cursor-pointer shadow-2xs flex items-center gap-1"
-                            title="Visualizar documento"
-                          >
-                            <IconEye className="w-3.5 h-3.5" />
-                            <span>Ver</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setTrabajadorDC3Url("");
-                              setTrabajadorDC3FileName("");
-                            }}
-                            className="p-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer shadow-2xs"
-                            title="Quitar archivo"
-                          >
-                            <IconTrash className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="py-2 flex flex-col items-center gap-1">
-                        <IconFileText className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
-                        <span className="text-xs font-bold text-slate-700">Actualizar / Reemplazar Constancia DC-3</span>
-                        <span className="text-[10px] text-slate-400">Archivos PDF o Imágenes PNG, JPG (Supabase Storage · Máx 5 MB)</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Estatus Activo */}
-                <div className="pt-2 border-t border-slate-100">
-                  <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl bg-slate-50 border border-slate-200">
-                    <input
-                      type="checkbox"
-                      checked={trabajadorActivo}
-                      onChange={(e) => setTrabajadorActivo(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded cursor-pointer"
-                    />
-                    <div>
-                      <div className="text-xs font-bold text-slate-800">Estatus de Autorización: {trabajadorActivo ? "Activo (Autorizado)" : "Inactivo (Sin Acceso)"}</div>
-                      <div className="text-[11px] text-slate-500">Determina si el colaborador puede ingresar por caseta.</div>
-                    </div>
-                  </label>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 font-mono flex flex-col sm:flex-row justify-between gap-1">
-                  <span>Fecha de Alta: {formatFechaLegible(selectedTrabajadorParaEditar.created_at)}</span>
-                  <span>Última modif: {formatFechaLegible(selectedTrabajadorParaEditar.updated_at)}</span>
-                </div>
-
-                <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedTrabajadorParaEditar(null)}
-                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmittingTrabajadorEdit}
-                    className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0D6E5F] hover:brightness-110 transition-all cursor-pointer shadow-md flex items-center gap-2 ${isSubmittingTrabajadorEdit ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                      }`}
-                  >
-                    {isSubmittingTrabajadorEdit ? (
-                      <>
-                        <IconSpinner className="w-3.5 h-3.5" />
-                        <span>Guardando Cambios...</span>
-                      </>
-                    ) : (
-                      <span>Guardar Cambios →</span>
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )
-      }
+        );
+      })()}
 
       {/* ─── MODAL ELIMINAR TRABAJADOR ─── */}
-      {
-        selectedTrabajadorParaEliminar && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
-              <div className="flex items-center justify-between border-b pb-3">
-                <div className="flex items-center gap-2 text-red-600">
-                  <div className="p-2 rounded-xl bg-red-50">
-                    <IconTrash className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-sm font-bold uppercase">Eliminar Trabajador</h3>
-                </div>
-                <button onClick={() => setSelectedTrabajadorParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
-                <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este colaborador?</p>
-                <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
-                  <div><strong>Nombre:</strong> {selectedTrabajadorParaEliminar.nombre} {selectedTrabajadorParaEliminar.apellidos}</div>
-                  <div><strong>ID:</strong> <span className="font-mono">#{selectedTrabajadorParaEliminar.id_trabajador}</span></div>
-                  <div><strong>Empresa:</strong> {selectedTrabajadorParaEliminar.empresaNombre}</div>
-                  <div><strong>Teléfono:</strong> {selectedTrabajadorParaEliminar.telefono || "N/A"}</div>
-                </div>
-                <p className="text-[11px] text-red-700">Esta acción no se puede deshacer y revocará su credencial de acceso.</p>
-              </div>
-
-              <div className="flex justify-end gap-2.5 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedTrabajadorParaEliminar(null)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmarEliminarTrabajador}
-                  disabled={isDeletingTrabajador}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingTrabajador ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                    }`}
-                >
-                  {isDeletingTrabajador ? (
-                    <>
-                      <IconSpinner className="w-4 h-4" />
-                      <span>Eliminando...</span>
-                    </>
-                  ) : (
-                    <>
-                      <IconTrash className="w-4 h-4" />
-                      <span>Eliminar Definitivamente</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      }
+      {selectedTrabajadorParaEliminar && (
+        <ConfirmDeleteModal
+          title="Eliminar Trabajador"
+          question="¿Estás seguro de que deseas eliminar permanentemente a este colaborador?"
+          details={
+            <>
+              <div><strong>Nombre:</strong> {selectedTrabajadorParaEliminar.nombre} {selectedTrabajadorParaEliminar.apellidos}</div>
+              <div><strong>ID:</strong> <span className="font-mono">#{selectedTrabajadorParaEliminar.id_trabajador}</span></div>
+              <div><strong>Empresa:</strong> {selectedTrabajadorParaEliminar.empresaNombre}</div>
+              <div><strong>Teléfono:</strong> {selectedTrabajadorParaEliminar.telefono || "N/A"}</div>
+            </>
+          }
+          warning="Esta acción no se puede deshacer y revocará su credencial de acceso."
+          isDeleting={isDeletingTrabajador}
+          onClose={() => setSelectedTrabajadorParaEliminar(null)}
+          onConfirm={handleConfirmarEliminarTrabajador}
+        />
+      )}
 
       {/* ─── MODAL ELIMINAR SUPERVISOR HOA ─── */}
-      {
-        selectedSupervisorParaEliminar && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
-              <div className="flex items-center justify-between border-b pb-3">
-                <div className="flex items-center gap-2 text-red-600">
-                  <div className="p-2 rounded-xl bg-red-50">
-                    <IconTrash className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-sm font-bold uppercase">Eliminar Supervisor HOA</h3>
-                </div>
-                <button onClick={() => setSelectedSupervisorParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
-                <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este Supervisor HOA del sistema?</p>
-                <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
-                  <div><strong>Nombre:</strong> {selectedSupervisorParaEliminar.nombre}</div>
-                  <div><strong>ID:</strong> <span className="font-mono">#{selectedSupervisorParaEliminar.id}</span></div>
-                  <div><strong>Usuario / Correo:</strong> {selectedSupervisorParaEliminar.username}</div>
-                  <div><strong>Rol:</strong> <span className="font-semibold uppercase text-blue-700">Supervisor de Seguridad HOA</span></div>
-                </div>
-                <p className="text-[11px] text-red-700">Esta acción no se puede deshacer y revocará inmediatamente su acceso al portal de administración y a la aplicación móvil.</p>
-              </div>
-
-              <div className="flex justify-end gap-2.5 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedSupervisorParaEliminar(null)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmarEliminarSupervisor}
-                  disabled={isDeletingSupervisor}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingSupervisor ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                    }`}
-                >
-                  {isDeletingSupervisor ? (
-                    <>
-                      <IconSpinner className="w-4 h-4" />
-                      <span>Eliminando...</span>
-                    </>
-                  ) : (
-                    <>
-                      <IconTrash className="w-4 h-4" />
-                      <span>Eliminar Definitivamente</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      }
+      {selectedSupervisorParaEliminar && (
+        <ConfirmDeleteModal
+          title="Eliminar Supervisor HOA"
+          question="¿Estás seguro de que deseas eliminar permanentemente a este Supervisor HOA del sistema?"
+          details={
+            <>
+              <div><strong>Nombre:</strong> {selectedSupervisorParaEliminar.nombre}</div>
+              <div><strong>ID:</strong> <span className="font-mono">#{selectedSupervisorParaEliminar.id}</span></div>
+              <div><strong>Usuario / Correo:</strong> {selectedSupervisorParaEliminar.username}</div>
+              <div><strong>Rol:</strong> <span className="font-semibold uppercase text-blue-700">Supervisor de Seguridad HOA</span></div>
+            </>
+          }
+          warning="Esta acción no se puede deshacer y revocará inmediatamente su acceso al portal de administración y a la aplicación móvil."
+          isDeleting={isDeletingSupervisor}
+          onClose={() => setSelectedSupervisorParaEliminar(null)}
+          onConfirm={handleConfirmarEliminarSupervisor}
+        />
+      )}
 
       {/* ─── MODAL ELIMINAR GUARDIA / OFICIAL DE CASETA ─── */}
-      {
-        selectedGuardiaParaEliminar && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
-            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
-              <div className="flex items-center justify-between border-b pb-3">
-                <div className="flex items-center gap-2 text-red-600">
-                  <div className="p-2 rounded-xl bg-red-50">
-                    <IconTrash className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-sm font-bold uppercase">Eliminar Oficial de Caseta</h3>
-                </div>
-                <button onClick={() => setSelectedGuardiaParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
-                <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este Oficial de Caseta del sistema?</p>
-                <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
-                  <div><strong>Nombre:</strong> {selectedGuardiaParaEliminar.nombre}</div>
-                  <div><strong>ID:</strong> <span className="font-mono">#{selectedGuardiaParaEliminar.id}</span></div>
-                  <div><strong>Usuario / Correo:</strong> {selectedGuardiaParaEliminar.username}</div>
-                  <div><strong>Rol:</strong> <span className="font-semibold uppercase text-emerald-700">Oficial de Caseta</span></div>
-                </div>
-                <p className="text-[11px] text-red-700">Esta acción eliminará permanentemente la cuenta del oficial. Para suspender temporalmente su acceso sin borrarlo, utiliza el botón de estatus (En Servicio / Inactivo).</p>
-              </div>
-
-              <div className="flex justify-end gap-2.5 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedGuardiaParaEliminar(null)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmarEliminarGuardia}
-                  disabled={isDeletingGuardia}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingGuardia ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                    }`}
-                >
-                  {isDeletingGuardia ? (
-                    <>
-                      <IconSpinner className="w-4 h-4" />
-                      <span>Eliminando...</span>
-                    </>
-                  ) : (
-                    <>
-                      <IconTrash className="w-4 h-4" />
-                      <span>Eliminar Definitivamente</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      }
+      {selectedGuardiaParaEliminar && (
+        <ConfirmDeleteModal
+          title="Eliminar Oficial de Caseta"
+          question="¿Estás seguro de que deseas eliminar permanentemente a este Oficial de Caseta del sistema?"
+          details={
+            <>
+              <div><strong>Nombre:</strong> {selectedGuardiaParaEliminar.nombre}</div>
+              <div><strong>ID:</strong> <span className="font-mono">#{selectedGuardiaParaEliminar.id}</span></div>
+              <div><strong>Usuario / Correo:</strong> {selectedGuardiaParaEliminar.username}</div>
+              <div><strong>Rol:</strong> <span className="font-semibold uppercase text-emerald-700">Oficial de Caseta</span></div>
+            </>
+          }
+          warning="Esta acción eliminará permanentemente la cuenta del oficial. Para suspender temporalmente su acceso sin borrarlo, utiliza el botón de estatus (En Servicio / Inactivo)."
+          isDeleting={isDeletingGuardia}
+          onClose={() => setSelectedGuardiaParaEliminar(null)}
+          onConfirm={handleConfirmarEliminarGuardia}
+        />
+      )}
 
       {/* ─── MODAL ELIMINAR ADMINISTRADOR TI ─── */}
-      {
-        selectedAdminParaEliminar && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
-            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
-              <div className="flex items-center justify-between border-b pb-3">
-                <div className="flex items-center gap-2 text-red-600">
-                  <div className="p-2 rounded-xl bg-red-50">
-                    <IconTrash className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-sm font-bold uppercase">Eliminar Administrador TI</h3>
-                </div>
-                <button onClick={() => setSelectedAdminParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
-                <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente a este Administrador TI del sistema?</p>
-                <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
-                  <div><strong>Nombre:</strong> {selectedAdminParaEliminar.nombre}</div>
-                  <div><strong>ID:</strong> <span className="font-mono">#{selectedAdminParaEliminar.id}</span></div>
-                  <div><strong>Usuario / Correo:</strong> {selectedAdminParaEliminar.username}</div>
-                  <div><strong>Rol:</strong> <span className="font-semibold uppercase text-indigo-700">Administrador TI</span></div>
-                </div>
-                <p className="text-[11px] text-red-700">Esta acción eliminará de forma irreversible el acceso administrativo de esta cuenta.</p>
-              </div>
-
-              <div className="flex justify-end gap-2.5 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedAdminParaEliminar(null)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmarEliminarAdmin}
-                  disabled={isDeletingAdmin}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingAdmin ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                    }`}
-                >
-                  {isDeletingAdmin ? (
-                    <>
-                      <IconSpinner className="w-4 h-4" />
-                      <span>Eliminando...</span>
-                    </>
-                  ) : (
-                    <>
-                      <IconTrash className="w-4 h-4" />
-                      <span>Eliminar Definitivamente</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      }
+      {selectedAdminParaEliminar && (
+        <ConfirmDeleteModal
+          title="Eliminar Administrador TI"
+          question="¿Estás seguro de que deseas eliminar permanentemente a este Administrador TI del sistema?"
+          details={
+            <>
+              <div><strong>Nombre:</strong> {selectedAdminParaEliminar.nombre}</div>
+              <div><strong>ID:</strong> <span className="font-mono">#{selectedAdminParaEliminar.id}</span></div>
+              <div><strong>Usuario / Correo:</strong> {selectedAdminParaEliminar.username}</div>
+              <div><strong>Rol:</strong> <span className="font-semibold uppercase text-indigo-700">Administrador TI</span></div>
+            </>
+          }
+          warning="Esta acción eliminará de forma irreversible el acceso administrativo de esta cuenta."
+          isDeleting={isDeletingAdmin}
+          onClose={() => setSelectedAdminParaEliminar(null)}
+          onConfirm={handleConfirmarEliminarAdmin}
+        />
+      )}
 
       {/* ─── MODAL VISTA PREVIA DE FOTOGRAFÍA DE CREDENCIAL ─── */}
-      {
-        selectedFotoTrabajadorPreview && (
-          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoTrabajadorPreview(null)}>
-            <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div>
-                  <h4 className="font-bold text-base text-slate-900">{selectedFotoTrabajadorPreview.nombre} {selectedFotoTrabajadorPreview.apellidos}</h4>
-                  <p className="text-xs text-slate-500 font-mono">Fotografía de Credencial · ID: #{selectedFotoTrabajadorPreview.id_trabajador}</p>
-                </div>
-                <button onClick={() => setSelectedFotoTrabajadorPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
-              </div>
-
-              <BlurredBackdropImageFrame
-                src={selectedFotoTrabajadorPreview.foto_url || selectedFotoTrabajadorPreview.foto ? normalizeFotoUrl(selectedFotoTrabajadorPreview.foto_url || selectedFotoTrabajadorPreview.foto) : undefined}
-                alt="Credencial"
-                fallbackIcon={<IconUsers className="w-20 h-20 text-slate-400" />}
-              />
-
-              <div className="flex justify-between items-center text-xs pt-1">
-                <span className="font-semibold text-slate-700">{selectedFotoTrabajadorPreview.empresaNombre}</span>
-                <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoTrabajadorPreview.activo ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
-                  {selectedFotoTrabajadorPreview.activo ? "Autorizado" : "Inactivo"}
-                </span>
-              </div>
-            </div>
-          </div>
-        )
-      }
+      {selectedFotoTrabajadorPreview && (
+        <ImagePreviewModal
+          title={`${selectedFotoTrabajadorPreview.nombre} ${selectedFotoTrabajadorPreview.apellidos}`}
+          subtitle={`Fotografía de Credencial · ID: #${selectedFotoTrabajadorPreview.id_trabajador}`}
+          src={selectedFotoTrabajadorPreview.foto_url || selectedFotoTrabajadorPreview.foto ? normalizeFotoUrl(selectedFotoTrabajadorPreview.foto_url || selectedFotoTrabajadorPreview.foto) : undefined}
+          alt="Credencial"
+          fallbackIcon={<IconUsers className="w-20 h-20 text-slate-400" />}
+          footerLeft={<span className="font-semibold text-slate-700">{selectedFotoTrabajadorPreview.empresaNombre}</span>}
+          footerRight={
+            <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoTrabajadorPreview.activo ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+              {selectedFotoTrabajadorPreview.activo ? "Autorizado" : "Inactivo"}
+            </span>
+          }
+          onClose={() => setSelectedFotoTrabajadorPreview(null)}
+        />
+      )}
 
       {/* ─── MODAL VISTA PREVIA DE DOCUMENTOS DE TRABAJADOR (SEGURO IMSS / CONSTANCIA DC-3) ─── */}
       {
@@ -15219,55 +14648,39 @@ export default function App() {
       }
 
       {/* ─── MODAL VISTA PREVIA DE FOTOGRAFÍA DE OFICIAL DE CASETA ─── */}
-      {
-        selectedFotoGuardiaPreview && (
-          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoGuardiaPreview(null)}>
-            <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
-                    <IconShield className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-base text-slate-900">{selectedFotoGuardiaPreview.nombre}</h4>
-                    <p className="text-xs text-slate-500 font-mono">Oficial de Caseta · ID: #{selectedFotoGuardiaPreview.id}</p>
-                  </div>
-                </div>
-                <button onClick={() => setSelectedFotoGuardiaPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
-              </div>
-
-              <BlurredBackdropImageFrame
-                src={selectedFotoGuardiaPreview.foto_url}
-                alt={selectedFotoGuardiaPreview.nombre}
-                heightClass="h-[380px] sm:h-[460px]"
-                fallbackIcon={<IconUsers className="w-20 h-20 text-slate-400" />}
-                fallbackText="Fotografía no disponible"
-              />
-
-              <div className="flex justify-between items-center text-xs">
-                <span className="font-mono text-slate-600 font-semibold">{selectedFotoGuardiaPreview.username}</span>
-                <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoGuardiaPreview.activo !== false ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
-                  {selectedFotoGuardiaPreview.activo !== false ? "En Servicio" : "Inactivo"}
-                </span>
-              </div>
-
-              {/* Acción para cambiar o subir fotografía a la Base de Datos */}
-              <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
-                <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-[#0D6E5F] border border-slate-200 hover:border-emerald-300 font-bold text-xs cursor-pointer shadow-sm transition-all hover:scale-[1.01]">
-                  <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
-                  <span>{selectedFotoGuardiaPreview.foto_url ? "Cambiar Fotografía del Oficial" : "Subir Fotografía del Oficial"}</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleUpdateGuardiaFoto(selectedFotoGuardiaPreview.id, e)}
-                  />
-                </label>
-              </div>
+      {selectedFotoGuardiaPreview && (
+        <ImagePreviewModal
+          title={selectedFotoGuardiaPreview.nombre}
+          subtitle={`Oficial de Caseta · ID: #${selectedFotoGuardiaPreview.id}`}
+          icon={<IconShield className="w-5 h-5" />}
+          src={selectedFotoGuardiaPreview.foto_url}
+          alt={selectedFotoGuardiaPreview.nombre}
+          heightClass="h-[380px] sm:h-[460px]"
+          fallbackIcon={<IconUsers className="w-20 h-20 text-slate-400" />}
+          fallbackText="Fotografía no disponible"
+          footerLeft={<span className="font-mono text-slate-600 font-semibold">{selectedFotoGuardiaPreview.username}</span>}
+          footerRight={
+            <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoGuardiaPreview.activo !== false ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+              {selectedFotoGuardiaPreview.activo !== false ? "En Servicio" : "Inactivo"}
+            </span>
+          }
+          extraContent={
+            <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+              <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-[#0D6E5F] border border-slate-200 hover:border-emerald-300 font-bold text-xs cursor-pointer shadow-sm transition-all hover:scale-[1.01]">
+                <IconCamera className="w-4 h-4 text-[#0D6E5F]" />
+                <span>{selectedFotoGuardiaPreview.foto_url ? "Cambiar Fotografía del Oficial" : "Subir Fotografía del Oficial"}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleUpdateGuardiaFoto(selectedFotoGuardiaPreview.id, e)}
+                />
+              </label>
             </div>
-          </div>
-        )
-      }
+          }
+          onClose={() => setSelectedFotoGuardiaPreview(null)}
+        />
+      )}
 
       {/* ─── MODAL EDITAR VEHÍCULO (SUPERVISOR / ADMIN) ─── */}
       {
@@ -15673,198 +15086,93 @@ export default function App() {
       }
 
       {/* ─── MODAL ELIMINAR EMPRESA PROVEEDORA ─── */}
-      {
-        selectedEmpresaParaEliminar && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
-              <div className="flex items-center justify-between border-b pb-3">
-                <div className="flex items-center gap-2 text-red-600">
-                  <div className="p-2 rounded-xl bg-red-50">
-                    <IconTrash className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-sm font-bold uppercase">Eliminar Empresa Proveedora</h3>
-                </div>
-                <button onClick={() => setSelectedEmpresaParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
-                <p className="font-semibold">¿Estás seguro de que deseas eliminar permanentemente esta empresa proveedora?</p>
-                <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
-                  <div><strong>Empresa:</strong> {selectedEmpresaParaEliminar.nombre}</div>
-                  <div><strong>Contacto:</strong> {selectedEmpresaParaEliminar.contacto}</div>
-                  <div><strong>Teléfono:</strong> {selectedEmpresaParaEliminar.telefono || "S/N"}</div>
-                  {selectedEmpresaParaEliminar.corbatin_rango_inicio && selectedEmpresaParaEliminar.corbatin_rango_fin && (
-                    <div><strong>Rango Corbatines:</strong> #{selectedEmpresaParaEliminar.corbatin_rango_inicio} - #{selectedEmpresaParaEliminar.corbatin_rango_fin}</div>
-                  )}
-                </div>
-                <p className="text-[11px] text-red-700">Esta acción eliminará permanentemente la empresa, su cuenta de acceso al portal y todos sus vehículos y trabajadores vinculados.</p>
-              </div>
-
-              <div className="flex justify-end gap-2.5 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedEmpresaParaEliminar(null)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmarEliminarEmpresa}
-                  disabled={isDeletingEmpresa}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingEmpresa ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                    }`}
-                >
-                  {isDeletingEmpresa ? (
-                    <>
-                      <IconSpinner className="w-4 h-4" />
-                      <span>Eliminando...</span>
-                    </>
-                  ) : (
-                    <>
-                      <IconTrash className="w-4 h-4" />
-                      <span>Eliminar Empresa</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      }
+      {selectedEmpresaParaEliminar && (
+        <ConfirmDeleteModal
+          title="Eliminar Empresa Proveedora"
+          question="¿Estás seguro de que deseas eliminar permanentemente esta empresa proveedora?"
+          details={
+            <>
+              <div><strong>Empresa:</strong> {selectedEmpresaParaEliminar.nombre}</div>
+              <div><strong>Contacto:</strong> {selectedEmpresaParaEliminar.contacto}</div>
+              <div><strong>Teléfono:</strong> {selectedEmpresaParaEliminar.telefono || "S/N"}</div>
+              {selectedEmpresaParaEliminar.corbatin_rango_inicio && selectedEmpresaParaEliminar.corbatin_rango_fin && (
+                <div><strong>Rango Corbatines:</strong> #{selectedEmpresaParaEliminar.corbatin_rango_inicio} - #{selectedEmpresaParaEliminar.corbatin_rango_fin}</div>
+              )}
+            </>
+          }
+          warning="Esta acción eliminará permanentemente la empresa, su cuenta de acceso al portal y todos sus vehículos y trabajadores vinculados."
+          confirmLabel="Eliminar Empresa"
+          isDeleting={isDeletingEmpresa}
+          onClose={() => setSelectedEmpresaParaEliminar(null)}
+          onConfirm={handleConfirmarEliminarEmpresa}
+        />
+      )}
 
       {/* ─── MODAL ELIMINAR VEHÍCULO ─── */}
-      {
-        selectedVehiculoParaEliminar && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl border border-red-100">
-              <div className="flex items-center justify-between border-b pb-3">
-                <div className="flex items-center gap-2 text-red-600">
-                  <div className="p-2 rounded-xl bg-red-50">
-                    <IconTrash className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-sm font-bold uppercase">Eliminar Vehículo</h3>
-                </div>
-                <button onClick={() => setSelectedVehiculoParaEliminar(null)} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">✕</button>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 text-xs text-red-900 space-y-2">
-                <p className="font-semibold">¿Estás seguro de que deseas dar de baja y eliminar esta unidad vehicular?</p>
-                <div className="p-2.5 bg-white rounded-xl border border-red-200/60 font-sans space-y-1">
-                  <div><strong>Vehículo:</strong> {selectedVehiculoParaEliminar.marca} {selectedVehiculoParaEliminar.modelo} ({selectedVehiculoParaEliminar.anio || selectedVehiculoParaEliminar.año || "N/A"})</div>
-                  <div><strong>Placas:</strong> <span className="font-mono font-bold text-slate-900">{selectedVehiculoParaEliminar.placas}</span></div>
-                  <div><strong>Corbatín:</strong> #{selectedVehiculoParaEliminar.corbatinNum}</div>
-                  <div><strong>Empresa:</strong> {selectedVehiculoParaEliminar.empresaNombre}</div>
-                </div>
-                <p className="text-[11px] text-red-700">Esta acción eliminará permanentemente la unidad y desvinculará el corbatín QR asociado.</p>
-              </div>
-
-              <div className="flex justify-end gap-2.5 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedVehiculoParaEliminar(null)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmarEliminarVehiculo}
-                  disabled={isDeletingVehiculo}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${isDeletingVehiculo ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
-                    }`}
-                >
-                  {isDeletingVehiculo ? (
-                    <>
-                      <IconSpinner className="w-4 h-4" />
-                      <span>Eliminando...</span>
-                    </>
-                  ) : (
-                    <>
-                      <IconTrash className="w-4 h-4" />
-                      <span>Eliminar Vehículo</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      }
+      {selectedVehiculoParaEliminar && (
+        <ConfirmDeleteModal
+          title="Eliminar Vehículo"
+          question="¿Estás seguro de que deseas dar de baja y eliminar esta unidad vehicular?"
+          details={
+            <>
+              <div><strong>Vehículo:</strong> {selectedVehiculoParaEliminar.marca} {selectedVehiculoParaEliminar.modelo} ({selectedVehiculoParaEliminar.anio || selectedVehiculoParaEliminar.año || "N/A"})</div>
+              <div><strong>Placas:</strong> <span className="font-mono font-bold text-slate-900">{selectedVehiculoParaEliminar.placas}</span></div>
+              <div><strong>Corbatín:</strong> #{selectedVehiculoParaEliminar.corbatinNum}</div>
+              <div><strong>Empresa:</strong> {selectedVehiculoParaEliminar.empresaNombre}</div>
+            </>
+          }
+          warning="Esta acción eliminará permanentemente la unidad y desvinculará el corbatín QR asociado."
+          confirmLabel="Eliminar Vehículo"
+          isDeleting={isDeletingVehiculo}
+          onClose={() => setSelectedVehiculoParaEliminar(null)}
+          onConfirm={handleConfirmarEliminarVehiculo}
+        />
+      )}
 
       {/* ─── MODAL VISTA PREVIA DE FOTOGRAFÍA DE VEHÍCULO ─── */}
-      {
-        selectedFotoVehiculoPreview && (
-          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setSelectedFotoVehiculoPreview(null)}>
-            <div className="max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-emerald-50 text-[#0D6E5F]">
-                    <IconCar className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-base text-slate-900">{selectedFotoVehiculoPreview.marca} {selectedFotoVehiculoPreview.modelo}</h4>
-                    <p className="text-xs text-slate-500 font-mono">Placas: {selectedFotoVehiculoPreview.placas} · Corbatín #{selectedFotoVehiculoPreview.corbatinNum}</p>
-                  </div>
-                </div>
-                <button onClick={() => setSelectedFotoVehiculoPreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
-              </div>
-
-              <BlurredBackdropImageFrame
-                src={selectedFotoVehiculoPreview.foto ? normalizeFotoUrl(selectedFotoVehiculoPreview.foto) : undefined}
-                alt={`${selectedFotoVehiculoPreview.marca} ${selectedFotoVehiculoPreview.modelo}`}
-                fallbackIcon={<IconCar className="w-20 h-20 text-slate-400" />}
-              />
-
-              <div className="flex justify-between items-center text-xs pt-1">
-                <span className="font-semibold text-slate-700">{selectedFotoVehiculoPreview.empresaNombre}</span>
-                <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoVehiculoPreview.status === "Habilitado"
-                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                  : selectedFotoVehiculoPreview.status === "Suspendido"
-                    ? "bg-red-50 text-red-700 border border-red-200"
-                    : "bg-slate-100 text-slate-600 border border-slate-200"
-                  }`}>
-                  {selectedFotoVehiculoPreview.status}
-                </span>
-              </div>
-            </div>
-          </div>
-        )
-      }
+      {selectedFotoVehiculoPreview && (
+        <ImagePreviewModal
+          title={`${selectedFotoVehiculoPreview.marca} ${selectedFotoVehiculoPreview.modelo}`}
+          subtitle={`Placas: ${selectedFotoVehiculoPreview.placas} · Corbatín #${selectedFotoVehiculoPreview.corbatinNum}`}
+          icon={<IconCar className="w-5 h-5" />}
+          src={selectedFotoVehiculoPreview.foto ? normalizeFotoUrl(selectedFotoVehiculoPreview.foto) : undefined}
+          alt={`${selectedFotoVehiculoPreview.marca} ${selectedFotoVehiculoPreview.modelo}`}
+          fallbackIcon={<IconCar className="w-20 h-20 text-slate-400" />}
+          footerLeft={<span className="font-semibold text-slate-700">{selectedFotoVehiculoPreview.empresaNombre}</span>}
+          footerRight={
+            <span className={`px-3 py-1 rounded-full font-bold ${selectedFotoVehiculoPreview.status === "Habilitado"
+              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+              : selectedFotoVehiculoPreview.status === "Suspendido"
+                ? "bg-red-50 text-red-700 border border-red-200"
+                : "bg-slate-100 text-slate-600 border border-slate-200"
+              }`}>
+              {selectedFotoVehiculoPreview.status}
+            </span>
+          }
+          onClose={() => setSelectedFotoVehiculoPreview(null)}
+        />
+      )}
 
       {/* ─── MODAL VISOR GENERAL DE IMÁGENES Y EVIDENCIAS (LIGHTBOX) ─── */}
-      {
-        genericImagePreview && genericImagePreview.isOpen && (
-          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md animate-in fade-in duration-150" onClick={() => setGenericImagePreview(null)}>
-            <div className="max-w-3xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20 p-5 sm:p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div>
-                  <h4 className="font-bold text-base text-slate-900">{genericImagePreview.title || "Fotografía de Evidencia"}</h4>
-                  {genericImagePreview.subtitle && (
-                    <p className="text-xs text-slate-500 mt-0.5">{genericImagePreview.subtitle}</p>
-                  )}
-                </div>
-                <button onClick={() => setGenericImagePreview(null)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-sm font-bold transition-colors">✕</button>
-              </div>
-
-              <BlurredBackdropImageFrame
-                src={genericImagePreview.src}
-                alt="Vista Ampliada"
-                heightClass="h-[400px] sm:h-[500px]"
-              />
-
-              <div className="flex justify-between items-center text-xs pt-1">
-                <span className="text-slate-400 font-mono text-[11px]">Alta Resolución</span>
-                {genericImagePreview.badge && (
-                  <span className="px-3 py-1 rounded-full font-bold bg-[#0D6E5F]/10 text-[#0D6E5F] border border-[#0D6E5F]/20 font-mono">
-                    {genericImagePreview.badge}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        )
-      }
+      {genericImagePreview && genericImagePreview.isOpen && (
+        <ImagePreviewModal
+          title={genericImagePreview.title || "Fotografía de Evidencia"}
+          subtitle={genericImagePreview.subtitle}
+          src={genericImagePreview.src}
+          alt="Vista Ampliada"
+          maxWidthClass="max-w-3xl"
+          heightClass="h-[400px] sm:h-[500px]"
+          footerLeft={<span className="text-slate-400 font-mono text-[11px]">Alta Resolución</span>}
+          footerRight={
+            genericImagePreview.badge && (
+              <span className="px-3 py-1 rounded-full font-bold bg-[#0D6E5F]/10 text-[#0D6E5F] border border-[#0D6E5F]/20 font-mono">
+                {genericImagePreview.badge}
+              </span>
+            )
+          }
+          onClose={() => setGenericImagePreview(null)}
+        />
+      )}
 
       <footer className="mt-16 border-t py-6 px-6 text-center bg-white no-print" style={{ borderColor: "var(--color-border)" }}>
 
