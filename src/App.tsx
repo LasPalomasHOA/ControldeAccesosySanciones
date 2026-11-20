@@ -2811,7 +2811,7 @@ export default function App() {
     const inputPass = loginPassword.trim();
 
     if (!inputEmail) {
-      setLoginError("Por favor ingresa tu correo electrónico institucional.");
+      setLoginError("Por favor ingresa tu correo electrónico.");
       return;
     }
     if (!inputPass) {
@@ -5678,10 +5678,6 @@ export default function App() {
 
           {/* Bloque inferior de información y bienvenida */}
           <div className="relative z-10 space-y-4 max-w-xl">
-            <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-300">
-              <IconShield className="w-4 h-4 text-emerald-400" />
-              Portal Institucional
-            </div>
             <h2 className="text-3xl xl:text-4xl 2xl:text-5xl font-extrabold tracking-tight leading-[1.15] text-white" style={{ fontFamily: "var(--font-display)" }}>
               Bienvenido a Las Palomas Rocky Point
             </h2>
@@ -5704,7 +5700,7 @@ export default function App() {
             <div className="absolute bottom-4 left-6 right-6 flex items-center justify-between text-white">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 block">Las Palomas HOA</span>
-                <h2 className="text-base sm:text-lg font-bold text-white leading-tight">Portal Institucional</h2>
+                <h2 className="text-base sm:text-lg font-bold text-white leading-tight">Portal de Accesos y Servicios</h2>
               </div>
               <div className="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center">
                 <IconShield className="w-4 h-4 text-emerald-400" />
@@ -5730,7 +5726,7 @@ export default function App() {
                 Iniciar Sesión
               </h1>
               <p className="text-sm text-slate-500">
-                Ingresa tus credenciales autorizadas para acceder al sistema institucional.
+                Ingresa tus credenciales autorizadas para acceder al sistema.
               </p>
             </div>
 
@@ -5744,7 +5740,7 @@ export default function App() {
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                  Correo Electrónico Institucional
+                  Correo Electrónico
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
