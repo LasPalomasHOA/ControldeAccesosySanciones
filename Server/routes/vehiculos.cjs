@@ -169,8 +169,8 @@ router.get('/', async (req, res) => {
         estatusEfectivo = 'HABILITADO';
       } else if (tieneCastigoSuspendido) {
         estatusEfectivo = 'SUSPENDIDO';
-        // Sincronizar en segundo plano en BD si había quedado como HABILITADO
-        if (plain.estatus_acceso === 'HABILITADO') {
+        // Sincronizar en segundo plano en BD si había quedado como HABILITADO / PERMITIDO
+        if (plain.estatus_acceso === 'HABILITADO' || plain.estatus_acceso === 'PERMITIDO') {
           db.Vehiculo.update({ estatus_acceso: 'SUSPENDIDO' }, { where: { id_vehiculo: plain.id_vehiculo } }).catch(() => { });
         }
       } else if (plain.estatus_acceso === 'SUSPENDIDO' && tieneSancionVencidaOLevantada && sancionesVigentes.length === 0) {
@@ -211,7 +211,7 @@ router.get('/', async (req, res) => {
             ? `${new Date(sancionBloqueante.fecha_fin).toLocaleString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })} hrs`
             : 'Definitiva'
         } : undefined,
-        status: estatusEfectivo === 'HABILITADO' ? 'Habilitado' : (estatusEfectivo === 'SUSPENDIDO' ? 'Suspendido' : (estatusEfectivo === 'DESHABILITADO' ? 'Deshabilitado' : 'Restringido'))
+        status: (estatusEfectivo === 'HABILITADO' || estatusEfectivo === 'PERMITIDO') ? 'Habilitado' : (estatusEfectivo === 'SUSPENDIDO' ? 'Suspendido' : (estatusEfectivo === 'DESHABILITADO' ? 'Deshabilitado' : 'Restringido'))
       };
     });
 
