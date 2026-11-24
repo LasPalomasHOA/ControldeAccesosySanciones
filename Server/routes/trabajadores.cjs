@@ -156,7 +156,19 @@ router.post('/', async (req, res) => {
       activo
     } = req.body;
 
-    if (!id_empresa || !nombre || !apellidos) {
+    // Validación IDOR para contratistas: asegurar pertenencia a su propia empresa
+    const userRole = (req.user?.rol || '').toLowerCase();
+    const isProveedor = userRole === 'proveedor' || userRole === 'contratista';
+    let targetEmpresaId = id_empresa;
+
+    if (isProveedor) {
+      if (!req.user?.id_empresa) {
+        return res.status(403).json({ error: 'Tu usuario contratista no tiene una empresa asignada.' });
+      }
+      targetEmpresaId = req.user.id_empresa;
+    }
+
+    if (!targetEmpresaId || !nombre || !apellidos) {
       return res.status(400).json({ error: 'id_empresa, nombre y apellidos son campos obligatorios' });
     }
 
@@ -167,7 +179,7 @@ router.post('/', async (req, res) => {
     const dc3Doc = rawDc3 ? await saveBase64Image(rawDc3, 'dc3_documento') : null;
 
     const nuevo = await db.Trabajador.create({
-      id_empresa,
+      id_empresa: targetEmpresaId,
       nombre,
       apellidos,
       telefono: telefono || null,
@@ -209,6 +221,13 @@ router.put('/:id', async (req, res) => {
 
     if (!trabajador) {
       return res.status(404).json({ error: 'Trabajador no encontrado' });
+    }
+
+    // Validación IDOR: un contratista solo puede modificar trabajadores de su propia empresa
+    const userRole = (req.user?.rol || '').toLowerCase();
+    const isProveedor = userRole === 'proveedor' || userRole === 'contratista';
+    if (isProveedor && req.user?.id_empresa && Number(trabajador.id_empresa) !== Number(req.user.id_empresa)) {
+      return res.status(403).json({ error: 'Acceso denegado: este trabajador no pertenece a tu empresa contratista.' });
     }
 
     if (nombre !== undefined) trabajador.nombre = nombre;
@@ -254,6 +273,13 @@ router.delete('/:id', async (req, res) => {
     const trabajador = await db.Trabajador.findByPk(req.params.id);
     if (!trabajador) {
       return res.json({ message: 'El trabajador ya no existe o fue eliminado previamente', id_trabajador: req.params.id });
+    }
+
+    // Validación IDOR: un contratista solo puede eliminar trabajadores de su propia empresa
+    const userRole = (req.user?.rol || '').toLowerCase();
+    const isProveedor = userRole === 'proveedor' || userRole === 'contratista';
+    if (isProveedor && req.user?.id_empresa && Number(trabajador.id_empresa) !== Number(req.user.id_empresa)) {
+      return res.status(403).json({ error: 'Acceso denegado: este trabajador no pertenece a tu empresa contratista.' });
     }
 
     // 1. Desvincular referencias de conductor en la bitácora de accesos

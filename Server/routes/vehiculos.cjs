@@ -264,9 +264,19 @@ router.post('/', async (req, res) => {
       estatus_acceso
     } = req.body;
 
-    const empId = id_empresa || empresaId;
+    let empId = id_empresa || empresaId;
     const finalPlacas = (placas || placa || '').toUpperCase();
     const finalAño = año || anio || null;
+
+    // Validación IDOR: un contratista solo puede registrar vehículos para su propia empresa
+    const userRole = (req.user?.rol || '').toLowerCase();
+    const isProveedor = userRole === 'proveedor' || userRole === 'contratista';
+    if (isProveedor) {
+      if (!req.user?.id_empresa) {
+        return res.status(403).json({ error: 'Tu usuario contratista no tiene una empresa asignada.' });
+      }
+      empId = req.user.id_empresa;
+    }
 
     if (!empId || !marca || !modelo || !finalPlacas || !color) {
       return res.status(400).json({ error: 'Empresa, marca, modelo, placas y color son obligatorios' });
@@ -379,7 +389,19 @@ router.put('/:id', async (req, res) => {
     const vehiculo = await db.Vehiculo.findByPk(req.params.id);
     if (!vehiculo) return res.status(404).json({ error: 'Vehículo no encontrado' });
 
+    // Validación IDOR y de Roles
+    const userRole = (req.user?.rol || '').toLowerCase();
+    const isProveedor = userRole === 'proveedor' || userRole === 'contratista';
+    if (isProveedor && req.user?.id_empresa && Number(vehiculo.id_empresa) !== Number(req.user.id_empresa)) {
+      return res.status(403).json({ error: 'Acceso denegado: este vehículo no pertenece a tu empresa contratista.' });
+    }
+
     const { marca, modelo, año, anio, placas, placa, color, foto_url, foto, estatus_acceso, estadoAcceso } = req.body;
+
+    // Solo Supervisores o Administradores pueden alterar el estatus_acceso del vehículo
+    if (isProveedor && (estatus_acceso !== undefined || estadoAcceso !== undefined)) {
+      return res.status(403).json({ error: 'Acceso denegado: solo personal de Supervisión o Administración puede alterar el estatus de acceso vehicular.' });
+    }
 
     if (marca !== undefined) vehiculo.marca = marca;
     if (modelo !== undefined) vehiculo.modelo = modelo;
@@ -416,6 +438,13 @@ router.delete('/:id', async (req, res) => {
   try {
     const vehiculo = await db.Vehiculo.findByPk(req.params.id);
     if (!vehiculo) return res.json({ message: 'Vehículo ya no existe o fue eliminado previamente', id_vehiculo: req.params.id });
+
+    // Validación IDOR: solo la propia empresa o staff puede eliminar vehículos
+    const userRole = (req.user?.rol || '').toLowerCase();
+    const isProveedor = userRole === 'proveedor' || userRole === 'contratista';
+    if (isProveedor && req.user?.id_empresa && Number(vehiculo.id_empresa) !== Number(req.user.id_empresa)) {
+      return res.status(403).json({ error: 'Acceso denegado: este vehículo no pertenece a tu empresa contratista.' });
+    }
 
     const idVeh = req.params.id;
 

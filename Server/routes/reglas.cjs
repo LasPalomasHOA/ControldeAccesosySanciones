@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
 const db = require('../models/index.cjs');
+const { requireRole } = require('../middlewares/auth.cjs');
 const { DEFAULT_REGLAS, calcularFechasSancion } = require('../utils/sancionReglas.cjs');
 
 /**
@@ -110,8 +111,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// PUT /api/reglas - Actualización masiva de la matriz de reincidencias
-router.put('/', async (req, res) => {
+// PUT /api/reglas - Actualización masiva de la matriz de reincidencias (Requiere Admin/Supervisor)
+router.put('/', requireRole('admin', 'supervisor'), async (req, res) => {
   try {
     await ensureColumnExists();
     const reglasInput = Array.isArray(req.body)

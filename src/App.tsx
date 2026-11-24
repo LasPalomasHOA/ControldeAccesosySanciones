@@ -450,9 +450,9 @@ export default function App() {
   const [supervisorTab, setSupervisorTab] = useState<SupervisorTab>(() => {
     try {
       const saved = sessionStorage.getItem("hoa_session_supervisor_tab");
-      return (saved as SupervisorTab) || "bandeja";
+      return (saved as SupervisorTab) || "proveedores";
     } catch {
-      return "bandeja";
+      return "proveedores";
     }
   });
   const [openSupervisorDropdown, setOpenSupervisorDropdown] = useState<"operacion" | "directorio" | "documentos" | null>(null);
@@ -2869,6 +2869,9 @@ export default function App() {
           setPortalScreen("reglamento");
         } else {
           setPortalScreen("dashboard");
+        }
+        if (roleMapped === "supervisor") {
+          setSupervisorTab("proveedores");
         }
         return;
       } else {

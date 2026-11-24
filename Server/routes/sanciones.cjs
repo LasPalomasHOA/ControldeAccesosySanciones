@@ -242,6 +242,23 @@ router.put('/:id', async (req, res) => {
     if (!sancion) return res.status(404).json({ error: 'Sanción no encontrada' });
 
     const { estatus, fecha_fin, motivo, apelacion, dictamen, resolucionOficina } = req.body;
+
+    // Validación de Autorización RBAC / IDOR
+    const userRole = (req.user?.rol || '').toLowerCase();
+    const isStaff = userRole === 'admin' || userRole === 'supervisor';
+    const isProveedor = userRole === 'proveedor' || userRole === 'contratista';
+
+    if (isProveedor) {
+      // Contratistas solo pueden emitir apelaciones sobre vehículos de su propia empresa
+      if (resolucionOficina || dictamen || (estatus && estatus !== 'EN_APELACION')) {
+        return res.status(403).json({ error: 'Acceso denegado: solo Supervisores y Administradores pueden resolver o dictaminar sanciones.' });
+      }
+      if (req.user?.id_empresa && Number(sancion.id_empresa) !== Number(req.user.id_empresa)) {
+        return res.status(403).json({ error: 'Acceso denegado: esta sanción no pertenece a tu empresa contratista.' });
+      }
+    } else if (!isStaff) {
+      return res.status(403).json({ error: 'Acceso denegado: permisos insuficientes para gestionar sanciones.' });
+    }
     if (estatus) sancion.estatus = estatus;
     if (fecha_fin) sancion.fecha_fin = fecha_fin;
 

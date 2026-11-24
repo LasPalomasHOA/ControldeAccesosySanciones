@@ -31,9 +31,9 @@ function requireAuth(req, res, next) {
   }
 
   // 3. Si no hay token o es inválido:
-  // En entorno local para peticiones de solo lectura (GET) durante hidratación de sesión de la app Vite,
-  // permitir para evitar parpadeos o bloqueos de renderizado inicial.
-  const isLocalDev = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
+  // En entorno local de desarrollo permitir GET únicamente si NODE_ENV !== 'production' Y se solicita desde entorno local
+  const isProd = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+  const isLocalDev = !isProd && (req.hostname === 'localhost' || req.hostname === '127.0.0.1');
   if (req.method === 'GET' && isLocalDev) {
     return next();
   }

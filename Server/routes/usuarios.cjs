@@ -5,7 +5,7 @@ const db = require('../models/index.cjs');
 const { saveBase64Image, resolveFotoToDataUrl } = require('../utils/imageHandler.cjs');
 const { signToken } = require('../utils/jwt.cjs');
 const { checkLoginRateLimit, recordFailedLogin, clearFailedLogins } = require('../middlewares/rateLimiter.cjs');
-const { requireAuth } = require('../middlewares/auth.cjs');
+const { requireAuth, requireRole } = require('../middlewares/auth.cjs');
 
 // POST /api/usuarios/login - Autenticación con contraseña cifrada (bcrypt), protección de fuerza bruta y emisión de JWT
 router.post('/login', checkLoginRateLimit, async (req, res) => {
@@ -102,12 +102,19 @@ router.post('/login', checkLoginRateLimit, async (req, res) => {
   }
 });
 
-// GET /api/usuarios/verificar-sesion/:id - Consulta ultraligera (< 500 bytes)
-router.get('/verificar-sesion/:id', async (req, res) => {
+// GET /api/usuarios/verificar-sesion/:id - Consulta ultraligera (< 500 bytes) protegida por sesión
+router.get('/verificar-sesion/:id', requireAuth, async (req, res) => {
   try {
     const idNum = parseInt(req.params.id, 10);
     if (isNaN(idNum)) {
       return res.status(401).json({ error: 'ID de usuario no válido', activo: false });
+    }
+
+    // Seguridad: Solo el propio usuario autenticado o un administrador pueden consultar/refrescar la sesión
+    const isSelf = Number(req.user?.id_usuario) === idNum;
+    const isAdmin = req.user?.rol === 'admin';
+    if (!isSelf && !isAdmin) {
+      return res.status(403).json({ error: 'Acceso denegado: no autorizado para verificar esta sesión', activo: false });
     }
 
     const usuario = await db.Usuario.findByPk(idNum, {
@@ -285,12 +292,18 @@ router.get('/', requireAuth, async (req, res) => {
   }
 });
 
-// POST /api/usuarios - Crear usuario con contraseña encriptada (Requiere Autenticación)
-router.post('/', requireAuth, async (req, res) => {
+// POST /api/usuarios - Crear usuario con contraseña encriptada (Requiere Autenticación y Rol Admin/Supervisor)
+router.post('/', requireAuth, requireRole('admin', 'supervisor'), async (req, res) => {
   try {
     const { nombre, correo, password, password_hash, id_rol, id_empresa, rol, activo, foto_url } = req.body;
     if (!nombre || !correo) {
       return res.status(400).json({ error: 'Nombre y correo son obligatorios' });
+    }
+
+    // Solo un Administrador puede crear usuarios con rol de Administrador
+    const rolDeseado = String(rol || '').toUpperCase();
+    if ((Number(id_rol) === 1 || rolDeseado === 'ADMINISTRADOR') && req.user?.rol !== 'admin') {
+      return res.status(403).json({ error: 'Solo un Administrador puede crear cuentas con privilegios de Administrador.' });
     }
 
     const emailNormalizado = correo.trim().toLowerCase();
@@ -338,8 +351,8 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
-// PUT /api/usuarios/:id - Actualizar usuario existente (Requiere Autenticación)
-router.put('/:id', requireAuth, async (req, res) => {
+// PUT /api/usuarios/:id - Actualizar usuario existente (Requiere Autenticación y Rol Admin/Supervisor)
+router.put('/:id', requireAuth, requireRole('admin', 'supervisor'), async (req, res) => {
   try {
     const { nombre, correo, password, activo, id_rol, id_empresa, foto_url } = req.body;
     const usuario = await db.Usuario.findByPk(req.params.id, {
@@ -350,6 +363,13 @@ router.put('/:id', requireAuth, async (req, res) => {
     });
     if (!usuario) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    // Solo un Administrador puede modificar a otro Administrador o asignar rol de Administrador
+    const esAdminActual = usuario.id_rol === 1 || String(usuario.rol?.nombre).toUpperCase() === 'ADMINISTRADOR';
+    const asignaAdmin = Number(id_rol) === 1;
+    if ((esAdminActual || asignaAdmin) && req.user?.rol !== 'admin') {
+      return res.status(403).json({ error: 'Solo un Administrador puede modificar cuentas de Administrador o asignar dicho rol.' });
     }
 
     if (nombre !== undefined) usuario.nombre = nombre;
@@ -399,12 +419,17 @@ router.put('/:id', requireAuth, async (req, res) => {
   }
 });
 
-// DELETE /api/usuarios/:id - Eliminar usuario permanentemente (Requiere Autenticación)
-router.delete('/:id', requireAuth, async (req, res) => {
+// DELETE /api/usuarios/:id - Eliminar usuario permanentemente (Requiere Autenticación y Rol Admin)
+router.delete('/:id', requireAuth, requireRole('admin'), async (req, res) => {
   try {
     const usuario = await db.Usuario.findByPk(req.params.id);
     if (!usuario) {
       return res.json({ message: 'El usuario ya no existe o fue eliminado previamente', id: req.params.id });
+    }
+
+    // Prevenir que un administrador se auto-elimine
+    if (Number(usuario.id_usuario) === Number(req.user?.id_usuario)) {
+      return res.status(400).json({ error: 'No puedes eliminar tu propia cuenta de usuario activa.' });
     }
 
     // Desvincular referencias en tablas donde id_usuario sea clave foránea opcional

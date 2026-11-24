@@ -58,9 +58,16 @@ app.use(cors({
     // Permitir peticiones sin origen (same-origin, Postman, curl local, proxies internos)
     if (!origin) return callback(null, true);
 
+    const isVercelProject = origin.endsWith('.vercel.app') && (
+      origin.includes('las-palomas') ||
+      origin.includes('controldeacceso') ||
+      origin.includes('figma') ||
+      (process.env.VERCEL_URL && origin.includes(process.env.VERCEL_URL))
+    );
+
     const isAllowed =
       allowedOrigins.includes(origin) ||
-      origin.endsWith('.vercel.app') ||
+      isVercelProject ||
       origin.includes('localhost') ||
       origin.includes('127.0.0.1');
 

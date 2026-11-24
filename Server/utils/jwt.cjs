@@ -1,6 +1,12 @@
 const crypto = require('crypto');
 
-const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'hoa_las_palomas_secure_key_2026_x89a';
+let JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET;
+if (!JWT_SECRET) {
+  if (process.env.NODE_ENV === 'production' || process.env.VERCEL === '1') {
+    console.warn('⚠️ ADVERTENCIA DE SEGURIDAD: JWT_SECRET no está configurado en las variables de entorno de producción.');
+  }
+  JWT_SECRET = 'hoa_las_palomas_secure_key_2026_x89a';
+}
 
 /**
  * Codifica una cadena o buffer a Base64URL

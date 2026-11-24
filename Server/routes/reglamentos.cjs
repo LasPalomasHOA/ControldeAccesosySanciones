@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../models/index.cjs');
+const { requireRole } = require('../middlewares/auth.cjs');
 
 // GET /api/reglamentos - Obtener reglamento vigente y aceptaciones
 router.get('/', async (req, res) => {
@@ -33,8 +34,8 @@ router.get('/vigente', async (req, res) => {
   }
 });
 
-// PUT /api/reglamentos/vigente/contenido - Actualizar texto y secciones del reglamento vigente
-router.put('/vigente/contenido', async (req, res) => {
+// PUT /api/reglamentos/vigente/contenido - Actualizar texto y secciones del reglamento vigente (Requiere Admin/Supervisor)
+router.put('/vigente/contenido', requireRole('admin', 'supervisor'), async (req, res) => {
   try {
     const { contenido_texto, contenido_secciones, titulo } = req.body;
 
