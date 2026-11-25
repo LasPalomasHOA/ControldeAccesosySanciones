@@ -156,9 +156,15 @@ router.post('/', async (req, res) => {
       activo
     } = req.body;
 
-    // Validación IDOR para contratistas: asegurar pertenencia a su propia empresa
+    // Validación RBAC e IDOR: solo Admin, Supervisor o el propio Contratista para su empresa
     const userRole = (req.user?.rol || '').toLowerCase();
+    const isStaff = userRole === 'admin' || userRole === 'supervisor';
     const isProveedor = userRole === 'proveedor' || userRole === 'contratista';
+
+    if (!isStaff && !isProveedor) {
+      return res.status(403).json({ error: 'Acceso denegado: tu rol no tiene permisos para registrar trabajadores.' });
+    }
+
     let targetEmpresaId = id_empresa;
 
     if (isProveedor) {
@@ -223,9 +229,15 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Trabajador no encontrado' });
     }
 
-    // Validación IDOR: un contratista solo puede modificar trabajadores de su propia empresa
+    // Validación RBAC e IDOR: solo Admin, Supervisor o el propio Contratista para su empresa
     const userRole = (req.user?.rol || '').toLowerCase();
+    const isStaff = userRole === 'admin' || userRole === 'supervisor';
     const isProveedor = userRole === 'proveedor' || userRole === 'contratista';
+
+    if (!isStaff && !isProveedor) {
+      return res.status(403).json({ error: 'Acceso denegado: tu rol no tiene permisos para modificar trabajadores.' });
+    }
+
     if (isProveedor && req.user?.id_empresa && Number(trabajador.id_empresa) !== Number(req.user.id_empresa)) {
       return res.status(403).json({ error: 'Acceso denegado: este trabajador no pertenece a tu empresa contratista.' });
     }
@@ -275,9 +287,15 @@ router.delete('/:id', async (req, res) => {
       return res.json({ message: 'El trabajador ya no existe o fue eliminado previamente', id_trabajador: req.params.id });
     }
 
-    // Validación IDOR: un contratista solo puede eliminar trabajadores de su propia empresa
+    // Validación RBAC e IDOR: solo Admin, Supervisor o el propio Contratista para su empresa
     const userRole = (req.user?.rol || '').toLowerCase();
+    const isStaff = userRole === 'admin' || userRole === 'supervisor';
     const isProveedor = userRole === 'proveedor' || userRole === 'contratista';
+
+    if (!isStaff && !isProveedor) {
+      return res.status(403).json({ error: 'Acceso denegado: tu rol no tiene permisos para eliminar trabajadores.' });
+    }
+
     if (isProveedor && req.user?.id_empresa && Number(trabajador.id_empresa) !== Number(req.user.id_empresa)) {
       return res.status(403).json({ error: 'Acceso denegado: este trabajador no pertenece a tu empresa contratista.' });
     }

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../models/index.cjs');
+const { requireRole } = require('../middlewares/auth.cjs');
 
 // Obtener las columnas reales existentes en la tabla "visitantes"
 async function getVisitantesColumns(schema) {
@@ -168,8 +169,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/visitantes - Registrar vehículo visitante
-router.post('/', async (req, res) => {
+// POST /api/visitantes - Registrar vehículo visitante (Caseta / Guardia / Supervisión / Admin)
+router.post('/', requireRole('admin', 'supervisor', 'caseta', 'guardia'), async (req, res) => {
   try {
     const schema = process.env.DB_SCHEMA || 'control_acceso';
 
@@ -355,8 +356,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/visitantes/:id/salida - Registrar salida de visitante
-router.put('/:id/salida', async (req, res) => {
+// PUT /api/visitantes/:id/salida - Registrar salida de visitante (Caseta / Guardia / Supervisión / Admin)
+router.put('/:id/salida', requireRole('admin', 'supervisor', 'caseta', 'guardia'), async (req, res) => {
   try {
     const ahora = new Date();
     const schema = process.env.DB_SCHEMA || 'control_acceso';

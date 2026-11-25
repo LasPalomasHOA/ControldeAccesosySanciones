@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../models/index.cjs');
 const events = require('../events.cjs');
+const { requireRole } = require('../middlewares/auth.cjs');
 
 // GET /api/bitacora - Listar accesos de caseta (limitado a los 100 más recientes para ahorrar Egress)
 router.get('/', async (req, res) => {
@@ -149,8 +150,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/bitacora - Registrar entrada en caseta
-router.post('/', async (req, res) => {
+// POST /api/bitacora - Registrar entrada en caseta (Caseta / Guardia / Supervisión / Admin)
+router.post('/', requireRole('admin', 'supervisor', 'caseta', 'guardia'), async (req, res) => {
   try {
     const {
       id_caseta,
@@ -454,8 +455,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/bitacora/:id/salida - Registrar salida de caseta
-router.put('/:id/salida', async (req, res) => {
+// PUT /api/bitacora/:id/salida - Registrar salida de caseta (Caseta / Guardia / Supervisión / Admin)
+router.put('/:id/salida', requireRole('admin', 'supervisor', 'caseta', 'guardia'), async (req, res) => {
   try {
     const acceso = await db.BitacoraAcceso.findByPk(req.params.id);
     if (!acceso) return res.status(404).json({ error: 'Registro de acceso no encontrado' });

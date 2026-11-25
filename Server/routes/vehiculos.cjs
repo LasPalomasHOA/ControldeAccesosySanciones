@@ -268,9 +268,15 @@ router.post('/', async (req, res) => {
     const finalPlacas = (placas || placa || '').toUpperCase();
     const finalAño = año || anio || null;
 
-    // Validación IDOR: un contratista solo puede registrar vehículos para su propia empresa
+    // Validación RBAC e IDOR: solo Admin, Supervisor o el propio Contratista para su empresa
     const userRole = (req.user?.rol || '').toLowerCase();
+    const isStaff = userRole === 'admin' || userRole === 'supervisor';
     const isProveedor = userRole === 'proveedor' || userRole === 'contratista';
+
+    if (!isStaff && !isProveedor) {
+      return res.status(403).json({ error: 'Acceso denegado: tu rol no tiene permisos para registrar vehículos.' });
+    }
+
     if (isProveedor) {
       if (!req.user?.id_empresa) {
         return res.status(403).json({ error: 'Tu usuario contratista no tiene una empresa asignada.' });
@@ -389,9 +395,15 @@ router.put('/:id', async (req, res) => {
     const vehiculo = await db.Vehiculo.findByPk(req.params.id);
     if (!vehiculo) return res.status(404).json({ error: 'Vehículo no encontrado' });
 
-    // Validación IDOR y de Roles
+    // Validación RBAC e IDOR: solo Admin, Supervisor o el propio Contratista para su empresa
     const userRole = (req.user?.rol || '').toLowerCase();
+    const isStaff = userRole === 'admin' || userRole === 'supervisor';
     const isProveedor = userRole === 'proveedor' || userRole === 'contratista';
+
+    if (!isStaff && !isProveedor) {
+      return res.status(403).json({ error: 'Acceso denegado: tu rol no tiene permisos para modificar vehículos.' });
+    }
+
     if (isProveedor && req.user?.id_empresa && Number(vehiculo.id_empresa) !== Number(req.user.id_empresa)) {
       return res.status(403).json({ error: 'Acceso denegado: este vehículo no pertenece a tu empresa contratista.' });
     }
@@ -439,9 +451,15 @@ router.delete('/:id', async (req, res) => {
     const vehiculo = await db.Vehiculo.findByPk(req.params.id);
     if (!vehiculo) return res.json({ message: 'Vehículo ya no existe o fue eliminado previamente', id_vehiculo: req.params.id });
 
-    // Validación IDOR: solo la propia empresa o staff puede eliminar vehículos
+    // Validación RBAC e IDOR: solo Admin, Supervisor o el propio Contratista para su empresa
     const userRole = (req.user?.rol || '').toLowerCase();
+    const isStaff = userRole === 'admin' || userRole === 'supervisor';
     const isProveedor = userRole === 'proveedor' || userRole === 'contratista';
+
+    if (!isStaff && !isProveedor) {
+      return res.status(403).json({ error: 'Acceso denegado: tu rol no tiene permisos para eliminar vehículos.' });
+    }
+
     if (isProveedor && req.user?.id_empresa && Number(vehiculo.id_empresa) !== Number(req.user.id_empresa)) {
       return res.status(403).json({ error: 'Acceso denegado: este vehículo no pertenece a tu empresa contratista.' });
     }

@@ -61,7 +61,6 @@ app.use(cors({
     const isVercelProject = origin.endsWith('.vercel.app') && (
       origin.includes('las-palomas') ||
       origin.includes('controldeacceso') ||
-      origin.includes('figma') ||
       (process.env.VERCEL_URL && origin.includes(process.env.VERCEL_URL))
     );
 

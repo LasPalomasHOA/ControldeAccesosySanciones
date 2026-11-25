@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
 const db = require('../models/index.cjs');
+const { requireRole } = require('../middlewares/auth.cjs');
 
 // Helper de Formato Estricto para Corbatín Verde: Prefijo '00' obligatorio (001...009, 0010...0020)
 function formatCorbatinVerdeNum(num) {
@@ -165,7 +166,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/corbatines/verdes/inicializar-pool - Forzar inicialización de los 20 corbatines del pool
-router.post('/verdes/inicializar-pool', async (req, res) => {
+router.post('/verdes/inicializar-pool', requireRole('admin', 'supervisor'), async (req, res) => {
   try {
     await asegurarPoolBaseVerdes();
     const verdes = await db.Corbatin.findAll({
@@ -222,8 +223,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/corbatines/:id/vincular - Vincular temporalmente corbatín verde a una empresa
-router.post('/:id/vincular', async (req, res) => {
+// POST /api/corbatines/:id/vincular - Vincular temporalmente corbatín verde a una empresa (Caseta / Supervisión / Admin)
+router.post('/:id/vincular', requireRole('admin', 'supervisor', 'caseta', 'guardia'), async (req, res) => {
   try {
     const id = req.params.id;
     let corbatin = await db.Corbatin.findByPk(id);
@@ -302,8 +303,8 @@ router.post('/:id/vincular', async (req, res) => {
   }
 });
 
-// POST /api/corbatines/:id/desvincular - Liberar corbatín verde para dejarlo disponible en inventario
-router.post('/:id/desvincular', async (req, res) => {
+// POST /api/corbatines/:id/desvincular - Liberar corbatín verde para dejarlo disponible en inventario (Caseta / Supervisión / Admin)
+router.post('/:id/desvincular', requireRole('admin', 'supervisor', 'caseta', 'guardia'), async (req, res) => {
   try {
     const id = req.params.id;
     let corbatin = await db.Corbatin.findByPk(id);
@@ -341,8 +342,8 @@ router.post('/:id/desvincular', async (req, res) => {
   }
 });
 
-// POST /api/corbatines - Crear uno o varios corbatines (Normales o Verdes)
-router.post('/', async (req, res) => {
+// POST /api/corbatines - Crear uno o varios corbatines (Requiere Admin o Supervisor)
+router.post('/', requireRole('admin', 'supervisor'), async (req, res) => {
   try {
     const body = req.body;
     const items = Array.isArray(body) ? body : (body.items || body.corbatines ? (body.items || body.corbatines) : [body]);
@@ -469,8 +470,8 @@ router.post('/', async (req, res) => {
     }
   });
 
-// PUT /api/corbatines/:id - Actualizar corbatín (activo, estatus, notas, etc.)
-router.put('/:id', async (req, res) => {
+// PUT /api/corbatines/:id - Actualizar corbatín (Requiere Admin o Supervisor)
+router.put('/:id', requireRole('admin', 'supervisor'), async (req, res) => {
   try {
     const id = req.params.id;
     const corbatin = await db.Corbatin.findByPk(id);
@@ -526,8 +527,8 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/corbatines/:id - Eliminar corbatín
-router.delete('/:id', async (req, res) => {
+// DELETE /api/corbatines/:id - Eliminar corbatín (Requiere Admin o Supervisor)
+router.delete('/:id', requireRole('admin', 'supervisor'), async (req, res) => {
   try {
     const id = req.params.id;
     const corbatin = await db.Corbatin.findByPk(id);

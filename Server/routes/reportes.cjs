@@ -4,7 +4,7 @@ const { Op } = require('sequelize');
 const db = require('../models/index.cjs');
 const events = require('../events.cjs');
 const { saveBase64Image } = require('../utils/imageHandler.cjs');
-const { requireAuth } = require('../middlewares/auth.cjs');
+const { requireAuth, requireRole } = require('../middlewares/auth.cjs');
 
 /**
  * Calcula las 7:00 AM (07:00:00.000) del día calendario siguiente en hora local.
@@ -236,11 +236,11 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
-// POST /api/reportes/:id/revisar - Dictamen del supervisor con protección de concurrencia
-router.post('/:id/revisar', requireAuth, async (req, res) => {
+// POST /api/reportes/:id/revisar - Dictamen del supervisor con protección de concurrencia y RBAC
+router.post('/:id/revisar', requireAuth, requireRole('admin', 'supervisor'), async (req, res) => {
   const transaction = await db.sequelize.transaction();
   try {
-    const { decision, comentarios, id_usuario } = req.body;
+    const { decision, comentarios } = req.body;
 
     // 1. Bloquear únicamente la fila del reporte sin LEFT OUTER JOINS para evitar error de PostgreSQL "FOR UPDATE cannot be applied to outer join"
     const reporte = await db.ReporteInfraccion.findByPk(req.params.id, {
@@ -279,12 +279,9 @@ router.post('/:id/revisar', requireAuth, async (req, res) => {
       });
     }
 
-    // 4. Validar id_usuario para respetar integridad referencial
-    let usuarioValidoId = 2; // Default Supervisor Operativo
-    if (id_usuario && !isNaN(Number(id_usuario))) {
-      const uExiste = await db.Usuario.findByPk(Number(id_usuario), { transaction });
-      if (uExiste) usuarioValidoId = Number(id_usuario);
-    }
+    // 4. Validar id_usuario autenticado para respetar integridad referencial y prevenir suplantación
+    let usuarioValidoId = req.user?.id_usuario ? Number(req.user.id_usuario) : 2;
+    if (isNaN(usuarioValidoId)) usuarioValidoId = 2;
 
     // 5. Cargar vehículo asociado con su empresa
     const vehiculo = reporte.id_vehiculo

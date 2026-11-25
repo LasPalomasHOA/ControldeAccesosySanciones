@@ -3,6 +3,7 @@ const router = express.Router();
 const { Op } = require('sequelize');
 const db = require('../models/index.cjs');
 const { optimizeBase64Image } = require('../utils/imageHandler.cjs');
+const { requireRole } = require('../middlewares/auth.cjs');
 
 // GET /api/empresas - Listar empresas con conteos nativos en SQL (sin descargar arrays de IDs)
 router.get('/', async (req, res) => {
@@ -93,8 +94,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/empresas - Registrar nueva empresa
-router.post('/', async (req, res) => {
+// POST /api/empresas - Registrar nueva empresa (Requiere Admin o Supervisor)
+router.post('/', requireRole('admin', 'supervisor'), async (req, res) => {
   try {
     const {
       razon_social,
@@ -164,8 +165,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/empresas/:id - Actualizar empresa
-router.put('/:id', async (req, res) => {
+// PUT /api/empresas/:id - Actualizar empresa (Requiere Admin o Supervisor)
+router.put('/:id', requireRole('admin', 'supervisor'), async (req, res) => {
   try {
     const empresa = await db.Empresa.findByPk(req.params.id);
     if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
@@ -235,8 +236,8 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/empresas/:id - Eliminar empresa permanentemente (con cascada limpia)
-router.delete('/:id', async (req, res) => {
+// DELETE /api/empresas/:id - Eliminar empresa permanentemente (Requiere Rol Admin)
+router.delete('/:id', requireRole('admin'), async (req, res) => {
   try {
     const idEmp = req.params.id;
     const empresa = await db.Empresa.findByPk(idEmp);
