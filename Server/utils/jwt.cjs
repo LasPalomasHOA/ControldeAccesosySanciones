@@ -1,9 +1,6 @@
 const crypto = require('crypto');
 
-// Clave secreta para firma y verificación de tokens de sesión JWT
-// En Vercel / Producción se lee de la variable de entorno JWT_SECRET.
-// Mantiene un fallback estable para evitar que diferentes lambdas serverless desautentiquen al usuario por cambio de clave en memoria.
-const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'hoa_las_palomas_secure_key_2026_x89a';
+const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET;
 
 /**
  * Codifica una cadena o buffer a Base64URL
@@ -52,7 +49,7 @@ function signToken(payload, expiresInSeconds = 86400 * 7) {
  * @returns {object|null} - Payload decodificado si es válido, null si no
  */
 function verifyToken(token) {
-  if (!token || typeof token !== 'string') return null;
+  if (!token || typeof token !== 'string' || !JWT_SECRET) return null;
   const parts = token.split('.');
   if (parts.length !== 3) return null;
 
